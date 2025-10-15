@@ -65,6 +65,14 @@ if ($BuildType -eq "debug") {
     $versionJson | ConvertTo-Json -Depth 10 | Set-Content "version.json"
     Write-Host "version.json atualizado" -ForegroundColor Green
     
+    # 3.5. Atualizar build.gradle.kts
+    $buildGradlePath = "app/build.gradle.kts"
+    $buildGradleContent = Get-Content $buildGradlePath -Raw
+    $buildGradleContent = $buildGradleContent -replace 'versionCode = \d+', "versionCode = $newVersionCode"
+    $buildGradleContent = $buildGradleContent -replace 'versionName = "[\d\.]+"', "versionName = `"$($newVersion.Substring(1))`""
+    $buildGradleContent | Set-Content $buildGradlePath -NoNewline
+    Write-Host "build.gradle.kts atualizado" -ForegroundColor Green
+    
     # 4. Atualizar update.json
     $updateJson = Get-Content "update.json" | ConvertFrom-Json
     $updateJson.version = $newVersion
