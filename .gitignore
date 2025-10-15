@@ -1,0 +1,43 @@
+# Arquivos de build
+app/build/
+build/
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Arquivos de configuração local
+local.properties
+keystore.properties
+*.keystore
+
+# Arquivos temporários
+*.tmp
+*.temp
+*.log
+
+# APKs
+*.apk
+!maxiptv-release.apk
+
+# Arquivos de IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+*.orig
+
+# Arquivos de backup
+*_BACKUP_*
+*_backup_*
+*.bak
+*.backup
+
+# Arquivos de heap dump e logs grandes
+*.hprof
+*.log
+*.dmp

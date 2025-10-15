@@ -1,0 +1,87 @@
+========================================
+  DIAGNÓSTICO DO CRASH - MaxiPTV v2
+========================================
+
+❌ PROBLEMAS ENCONTRADOS:
+--------------------------
+
+1. **CRÍTICO - VodInfoResponse.streamUrl sempre NULL**
+   Arquivo: app/src/main/java/com/maxiptv/data/Models.kt:20
+   
+   Código atual:
+   data class VodInfoResponse(...) { val streamUrl: String? = null }
+   
+   Problema: streamUrl está fixo como null, não calcula a URL do filme!
+   
+
+2. **NÃO HÁ TELA DE LOGIN**
+   O app usa credenciais fixas do build.gradle.kts:
+   - API: https://canais.is/player_api.php
+   - User: max
+   - Pass: 1h2yd90
+   
+   O app tenta conectar automaticamente na inicialização.
+
+
+3. **POSSÍVEL: BannerCarousel faltando**
+   O HomeScreen usa BannerCarousel mas não verifiquei se existe.
+
+
+========================================
+  CORREÇÕES NECESSÁRIAS:
+========================================
+
+1. Corrigir VodInfoResponse.streamUrl para calcular a URL correta
+2. Verificar se BannerCarousel existe
+3. Adicionar tratamento de erros na inicialização
+
+
+========================================
+  PARA CAPTURAR LOGS DO CRASH:
+========================================
+
+1. Conecte o dispositivo via USB
+2. Ative "Depuração USB" nas Configurações
+3. Execute:
+   
+   cd C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2
+   $env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe logcat -c
+   
+   [Abra o app no dispositivo e aguarde o crash]
+   
+   $env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe logcat -d > crash.txt
+
+
+========================================
+  COMANDOS ADB ÚTEIS:
+========================================
+
+# Ver dispositivos conectados:
+adb devices
+
+# Limpar logs:
+adb logcat -c
+
+# Ver logs em tempo real:
+adb logcat | Select-String "maxiptv"
+
+# Ver crash específico:
+adb logcat | Select-String "FATAL|AndroidRuntime"
+
+# Instalar APK:
+adb install -r app-debug.apk
+
+# Desinstalar:
+adb uninstall com.maxiptv
+
+
+========================================
+
+
+
+
+
+
+
+
+

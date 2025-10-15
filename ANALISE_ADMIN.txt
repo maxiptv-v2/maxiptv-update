@@ -1,0 +1,61 @@
+========================================
+  ANÁLISE - TELA ADMIN OCULTA
+========================================
+
+🔍 INVESTIGAÇÃO:
+----------------
+
+MainActivity.kt ATUAL (linha 22-39):
+```kotlin
+MaxiTheme {
+  val nav = rememberNavController()
+  Scaffold(topBar = {
+    TopAppBar(title = {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        Image(painter = painterResource(id = R.mipmap.ic_launcher), 
+              contentDescription = "logo",
+              modifier = Modifier.size(40.dp))
+        Spacer(Modifier.width(12.dp))
+        Text("MaxiPTV")
+      }
+    })
+  }) { pad ->
+    Box(Modifier.fillMaxSize().padding(pad)) {
+      HomeNav(nav)
+    }
+  }
+}
+```
+
+⚠️ PROBLEMA IDENTIFICADO:
+--------------------------
+
+Durante a correção dos erros de compilação, EU REMOVI:
+- var taps by remember { mutableStateOf(0) }
+- var showAdmin by remember { mutableStateOf(false) }
+- .clickable { taps++; if (taps>=5){showAdmin=true; taps=0} }
+- if (showAdmin) AdminPanel(onClose = { showAdmin = false })
+
+A TELA ADMIN OCULTA EXISTIA!
+- Ativada com 5 toques no logo
+- Função AdminPanel() estava referenciada
+- Mas o arquivo AdminPanel.kt NÃO EXISTE no projeto
+
+POSSÍVEIS CENÁRIOS:
+-------------------
+
+1. AdminPanel.kt foi deletado antes
+2. AdminPanel nunca foi criado (estava em desenvolvimento)
+3. AdminPanel está em outro lugar
+
+BUSCA POR ARQUIVOS ADMIN:
+--------------------------
+
+
+
+
+
+
+
+
+

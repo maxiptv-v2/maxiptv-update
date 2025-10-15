@@ -1,0 +1,80 @@
+========================================
+  ANÁLISE - TELA DE LOGIN
+========================================
+
+❌ NÃO HÁ TELA DE LOGIN NO APP!
+
+ARQUIVOS DE TELA ENCONTRADOS:
+------------------------------
+1. HomeScreen.kt - Tela inicial com botões
+2. LiveScreen.kt - Canais ao vivo
+3. VodScreen.kt - Filmes VOD
+4. SeriesScreen.kt - Séries
+5. SeriesDetailsScreen.kt - Detalhes de série
+6. VodDetailsScreen.kt - Detalhes de filme
+7. SettingsScreen.kt - Preferências (apenas texto)
+8. HomeNav.kt - Navegação
+9. BannerCarousel.kt - Carrossel de banners
+10. CategoryChips.kt - Chips de categorias
+11. PlayerSurface.kt - Player de vídeo
+
+BUSCA POR LOGIN:
+----------------
+✗ Nenhum arquivo "LoginScreen.kt"
+✗ Nenhum arquivo "AuthScreen.kt"
+✗ Nenhum TextField de username/password
+✗ Nenhuma função de login/autenticação
+
+COMO O APP FUNCIONA:
+--------------------
+O app NÃO tem tela de login. Ele usa credenciais FIXAS:
+
+1. Credenciais definidas em build.gradle.kts:
+   - DEFAULT_PLAYER_API = "https://canais.is/player_api.php"
+   - DEFAULT_USER = "max"
+   - DEFAULT_PASS = "1h2yd90"
+
+2. Na inicialização (MaxiApp.kt):
+   - Carrega configurações salvas do DataStore
+   - Se não tem configurações salvas, usa as credenciais padrão
+   - Configura a API automaticamente
+   - NÃO pede senha ao usuário
+
+3. Fluxo de abertura:
+   MaxiApp.onCreate()
+   → SettingsRepo.loadBlocking()
+   → XRepo.configure(api, user, pass)
+   → MainActivity abre HomeScreen
+   → HomeScreen carrega canais automaticamente
+
+POSSÍVEL CAUSA DO CRASH:
+-------------------------
+O crash ANTES de abrir qualquer tela indica problema em:
+
+1. MaxiApp.onCreate() - Inicialização do app
+   - Pode estar travando no SettingsRepo.loadBlocking()
+   - Pode estar travando no DataStore
+   - Pode estar travando ao configurar Retrofit
+
+2. MainActivity.onCreate() - Inicialização da UI
+   - Pode estar faltando ícone/recurso
+   - Pode ter erro no Compose
+
+PARA ADICIONAR TELA DE LOGIN:
+------------------------------
+Seria necessário criar:
+1. LoginScreen.kt com TextFields de username/password
+2. Modificar HomeNav.kt para começar em "login"
+3. Salvar credenciais após login bem-sucedido
+4. Validar login com API antes de permitir acesso
+
+========================================
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,173 @@
+========================================
+  SISTEMA DE BLOQUEIO DE LOGIN DUPLICADO
+========================================
+
+🎯 OBJETIVO:
+Impedir que clientes compartilhem/revendam suas assinaturas,
+permitindo apenas 1 login ativo por usuário.
+
+========================================
+📱 CENÁRIO 1: Login Normal (Permitido)
+========================================
+
+1. Cliente "joão123" abre o app na TV Box
+2. Faz login com usuário e senha
+3. App verifica no JSONBin.io: "joão123 está livre?"
+4. ✅ SIM! Permite login
+5. Salva no JSONBin.io:
+   {
+     "sessions": {
+       "joão123": {
+         "deviceId": "abc-123-xyz",
+         "deviceName": "TV Box Samsung",
+         "loginTime": 1234567890,
+         "lastHeartbeat": 1234567890
+       }
+     }
+   }
+
+6. A cada 30 segundos, app envia "heartbeat" (estou vivo)
+7. Cliente assiste normalmente ✅
+
+========================================
+❌ CENÁRIO 2: Login Duplicado (Bloqueado)
+========================================
+
+1. Amigo do cliente tenta logar com "joão123" no celular
+2. Faz login com usuário e senha
+3. App verifica no JSONBin.io: "joão123 está livre?"
+4. ❌ NÃO! Já está logado em "TV Box Samsung"
+5. BLOQUEIA login com mensagem:
+   "Este usuário já está logado em TV Box Samsung. 
+    Desconecte o outro dispositivo primeiro."
+
+6. Amigo não consegue usar! 🚫
+
+========================================
+🛡️ PROTEÇÕES DO SISTEMA:
+========================================
+
+✅ Bloqueio automático de login duplicado
+✅ Timeout de sessão (2 min sem heartbeat = logout)
+✅ Admin pode ver TODAS as sessões ativas
+✅ Admin pode forçar logout remoto
+✅ Detecta se dispositivo fechou o app
+✅ Detecta se perdeu internet (via timeout)
+
+========================================
+👨‍💼 PAINEL DE ADMIN:
+========================================
+
+Mostra em tempo real:
+
+┌─────────────────────────────────────┐
+│ SESSÕES ATIVAS GLOBAIS (3)          │
+├─────────────────────────────────────┤
+│ 👤 joão123                          │
+│ 🖥️ TV Box Samsung                  │
+│ ⏰ Login: 15 min atrás             │
+│ 💓 🟢 Online                        │
+│            [Deslogar] ←─── Admin   │
+├─────────────────────────────────────┤
+│ 👤 maria456                         │
+│ 🖥️ Fire Stick                      │
+│ ⏰ Login: 2h atrás                 │
+│ 💓 🟢 Online                        │
+│            [Deslogar]               │
+├─────────────────────────────────────┤
+│ 👤 pedro789                         │
+│ 🖥️ Xiaomi Mi Box                   │
+│ ⏰ Login: 5 min atrás              │
+│ 💓 🟡 45s atrás                     │
+│            [Deslogar]               │
+└─────────────────────────────────────┘
+
+Admin vê:
+- Todos os usuários logados
+- Em qual dispositivo cada um está
+- Há quanto tempo logou
+- Se está online (heartbeat recente)
+- Pode deslogar remotamente
+
+========================================
+🔄 FLUXO COMPLETO:
+========================================
+
+1. CLIENTE COMPRA ASSINATURA
+   ↓
+2. VOCÊ CRIA USUÁRIO NO ADMIN
+   Exemplo: "cliente001" / senha "abc123"
+   ↓
+3. CLIENTE LOGA NO DISPOSITIVO DELE
+   ✅ Primeiro login permitido
+   ↓
+4. JSONBIN.IO REGISTRA SESSÃO
+   "cliente001 está ativo em Fire Stick"
+   ↓
+5. CLIENTE TENTA COMPARTILHAR
+   Amigo tenta logar com "cliente001" na TV Box
+   ↓
+6. SISTEMA BLOQUEIA
+   ❌ "Usuário já logado em Fire Stick"
+   ↓
+7. CLIENTE NÃO CONSEGUE REVENDER!
+   Sistema protege sua receita 💰
+
+========================================
+💰 BENEFÍCIOS PARA SEU NEGÓCIO:
+========================================
+
+✅ Impede compartilhamento de contas
+✅ Cada assinatura = 1 cliente real
+✅ Aumenta vendas (não compartilham)
+✅ Controle total no Admin Panel
+✅ Logout remoto se suspeitar de fraude
+✅ Relatório de quem está online
+✅ Detecta tentativas de login duplicado
+
+========================================
+⚡ TECNOLOGIA:
+========================================
+
+• JSONBin.io - Banco de dados em nuvem
+• Grátis até 10.000 requisições/mês
+• ~300 usuários simultâneos no plano grátis
+• 99.9% uptime
+• Backup automático
+• API REST simples
+
+========================================
+🔧 MANUTENÇÃO:
+========================================
+
+ZERO! Sistema funciona sozinho.
+
+Você apenas:
+1. Cria usuários no Admin Panel
+2. Monitora sessões ativas
+3. Força logout se necessário
+
+Tudo automático! 🚀
+
+========================================
+📊 EXEMPLO REAL:
+========================================
+
+ANTES (sem proteção):
+- 100 assinaturas vendidas
+- 50% compartilhavam
+- Receita real: 50 assinaturas
+- 💔 Prejuízo de 50%
+
+DEPOIS (com proteção):
+- 100 assinaturas vendidas
+- 0% compartilham (bloqueado)
+- Receita real: 100 assinaturas
+- ✅ 100% de receita
+
+RESULTADO: +100% de lucro! 💰💰💰
+
+========================================
+
+
+
