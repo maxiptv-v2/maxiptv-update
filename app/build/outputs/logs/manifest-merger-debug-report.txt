@@ -385,7 +385,7 @@ ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transfo
 		ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
-permission#com.maxiptv.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+permission#com.maxiptv.debug.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
 		ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
@@ -395,7 +395,7 @@ uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
-uses-permission#com.maxiptv.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+uses-permission#com.maxiptv.debug.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:26:22-94

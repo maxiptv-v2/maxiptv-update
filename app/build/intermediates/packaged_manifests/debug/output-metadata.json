@@ -4,7 +4,7 @@
     "type": "PACKAGED_MANIFESTS",
     "kind": "Directory"
   },
-  "applicationId": "com.maxiptv",
+  "applicationId": "com.maxiptv.debug",
   "variantName": "debug",
   "elements": [
     {

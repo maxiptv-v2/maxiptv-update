@@ -227,7 +227,7 @@ fun HomeScreen(nav: NavHostController) {
   }
   
   Box(Modifier.fillMaxSize()) {
-    Column(Modifier.fillMaxSize()) {
+  Column(Modifier.fillMaxSize()) {
       // TopBar com Botão SAIR e Relógio Digital
       Box(
         modifier = Modifier
