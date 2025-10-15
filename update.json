@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.7",
-    "versionCode":  8,
-    "buildNumber":  8,
-    "downloadUrl":  "https://github.com/maxiptv-v2/maxiptv-update/releases/download/v1.0.7/maxiptv-release.apk",
+    "version":  "v1.0.8",
+    "versionCode":  9,
+    "buildNumber":  9,
+    "downloadUrl":  "https://github.com/maxiptv-v2/maxiptv-update/releases/download/v1.0.8/maxiptv-release.apk",
     "releaseNotes":  "🎉 MaxiPTV v1.0.0 - Versão Inicial\n\n✅ Funcionalidades:\n• Player com controles completos (pause, seek, avançar/retroceder)\n• Reconexão automática quando canal trava\n• Buffer otimizado para reduzir travamentos\n• PIN 0000 para categoria adulta na Live\n• Cache inteligente de 24 horas\n• Interface responsiva (TV Box, Fire Stick, Smartphone)\n• Sistema de sessões centralizadas (JSONBin)\n• APIs modernas (sem warnings de deprecação)\n\n🔧 Melhorias técnicas:\n• ExoPlayer otimizado\n• Tela completamente cheia\n• Focos aprimorados para D-pad\n• Carrossel duplo com players embutidos\n• Relógio digital na top bar",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "18.6 MB",
-    "lastUpdated":  "2025-10-14T22:41:41Z",
+    "lastUpdated":  "2025-10-14T22:49:32Z",
     "checksum":  "sha256:placeholder"
 }

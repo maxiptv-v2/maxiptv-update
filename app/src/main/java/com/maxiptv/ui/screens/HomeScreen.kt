@@ -1147,16 +1147,32 @@ fun EmbeddedPlayer(
   }
   
   val exoPlayer = remember(channel.stream_id) {
-    // Configurar DataSource com User-Agent customizado (igual ao PlayerActivity)
+    // ⚡ DataSource otimizado para carrossel (timeouts mais curtos)
     val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
+      .setConnectTimeoutMs(6000)  // ⚡ 6 segundos (mais rápido que player principal)
+      .setReadTimeoutMs(6000)     // ⚡ 6 segundos
+      .setKeepPostFor302Redirects(true)
     
     val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
       .setDataSourceFactory(dataSourceFactory)
     
+    // ⚡ LoadControl super leve para carrossel (menos buffer)
+    val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
+      .setBufferDurationsMs(
+        5000,   // minBufferMs: 5 segundos (bem leve)
+        15000,  // maxBufferMs: 15 segundos (limitado)
+        1000,   // bufferForPlaybackMs: 1 segundo (inicia rápido)
+        2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
+      )
+      .setPrioritizeTimeOverSizeThresholds(true)
+      .setBackBuffer(5000, true) // Back buffer curto e limpar sempre
+      .build()
+    
     androidx.media3.exoplayer.ExoPlayer.Builder(context)
       .setMediaSourceFactory(mediaSourceFactory)
+      .setLoadControl(loadControl) // ⚡ Aplicar cache leve
       .build().apply {
         val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
         setMediaItem(mediaItem)
@@ -1164,7 +1180,7 @@ fun EmbeddedPlayer(
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
         prepare()
         playWhenReady = true // INICIA TOCANDO AUTOMATICAMENTE
-        android.util.Log.i("EmbeddedPlayer", "▶️ Player criado com DataSource customizado: ${channel.name}")
+        android.util.Log.i("EmbeddedPlayer", "▶️ Player criado (LEVE) para carrossel: ${channel.name}")
         android.util.Log.i("EmbeddedPlayer", "   URL: ${channel.toLiveUrl()}")
       }
   }

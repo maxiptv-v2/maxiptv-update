@@ -25,6 +25,8 @@ class PlayerActivity : ComponentActivity() {
   private var isFullscreen = true // Inicia em fullscreen
   private lateinit var gestureDetector: GestureDetector
   private lateinit var windowInsetsController: WindowInsetsControllerCompat
+  private var reconnectAttempts = 0 // Contador de tentativas de reconexão
+  private val maxReconnectAttempts = 5 // Máximo de tentativas
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -119,20 +121,22 @@ class PlayerActivity : ComponentActivity() {
     val dataSourceFactory = DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
-      .setConnectTimeoutMs(10000) // 10 segundos timeout conexão
-      .setReadTimeoutMs(10000)    // 10 segundos timeout leitura
+      .setConnectTimeoutMs(8000)  // ⚡ 8 segundos timeout conexão (mais rápido)
+      .setReadTimeoutMs(8000)     // ⚡ 8 segundos timeout leitura (mais rápido)
+      .setKeepPostFor302Redirects(true) // Manter método POST em redirects
     
     val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
     
-    // ✅ CACHE OTIMIZADO PARA LIVE (reduz travamentos)
+    // ⚡ CACHE OTIMIZADO PARA LIVE v2 (menos buffer = menos travamentos)
     val loadControl: LoadControl = DefaultLoadControl.Builder()
       .setBufferDurationsMs(
-        15000,  // minBufferMs: 15 segundos (mínimo de buffer antes de reproduzir)
-        50000,  // maxBufferMs: 50 segundos (máximo de buffer)
-        2500,   // bufferForPlaybackMs: 2.5 segundos (buffer mínimo para iniciar)
-        5000    // bufferForPlaybackAfterRebufferMs: 5 segundos (buffer após rebuffer)
+        10000,  // minBufferMs: 10 segundos (reduzido de 15s)
+        30000,  // maxBufferMs: 30 segundos (reduzido de 50s)
+        1500,   // bufferForPlaybackMs: 1.5 segundos (reduzido de 2.5s)
+        5000    // bufferForPlaybackAfterRebufferMs: 5 segundos (mantido)
       )
       .setPrioritizeTimeOverSizeThresholds(true) // Priorizar tempo sobre tamanho
+      .setBackBuffer(10000, true) // Manter 10s de back buffer e limpar periodicamente
       .build()
     
     player = ExoPlayer.Builder(this)
@@ -174,20 +178,35 @@ class PlayerActivity : ComponentActivity() {
             android.util.Log.e("PlayerActivity", "   Tipo: ${error.errorCode}")
             android.util.Log.e("PlayerActivity", "   Causa: ${error.cause}")
             
-            // ✅ TENTAR RECONECTAR AUTOMATICAMENTE
-            android.util.Log.i("PlayerActivity", "🔄 Tentando reconectar em 3 segundos...")
-            
-            pv.postDelayed({
-              try {
-                android.util.Log.i("PlayerActivity", "🔄 Reconectando...")
-                exo.setMediaItem(MediaItem.fromUri(url))
-                exo.prepare()
-                exo.playWhenReady = true
-                android.util.Log.i("PlayerActivity", "✅ Reconexão iniciada")
-              } catch (e: Exception) {
-                android.util.Log.e("PlayerActivity", "❌ Falha na reconexão: ${e.message}")
-              }
-            }, 3000) // 3 segundos de espera antes de reconectar
+            // ⚡ RECONEXÃO AUTOMÁTICA MELHORADA (com limite de tentativas)
+            if (reconnectAttempts < maxReconnectAttempts) {
+              reconnectAttempts++
+              android.util.Log.i("PlayerActivity", "🔄 Tentativa $reconnectAttempts/$maxReconnectAttempts em 2 segundos...")
+              
+              pv.postDelayed({
+                try {
+                  android.util.Log.i("PlayerActivity", "🔄 Reconectando...")
+                  // Limpar buffer antes de reconectar
+                  exo.stop()
+                  exo.clearMediaItems()
+                  exo.setMediaItem(MediaItem.fromUri(url))
+                  exo.prepare()
+                  exo.playWhenReady = true
+                  android.util.Log.i("PlayerActivity", "✅ Reconexão iniciada")
+                } catch (e: Exception) {
+                  android.util.Log.e("PlayerActivity", "❌ Falha na reconexão: ${e.message}")
+                }
+              }, 2000) // ⚡ 2 segundos (reduzido de 3s)
+            } else {
+              android.util.Log.e("PlayerActivity", "❌ Máximo de tentativas atingido. Verifique sua conexão.")
+            }
+          }
+          
+          override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying) {
+              // Reset contador quando voltar a tocar normalmente
+              reconnectAttempts = 0
+            }
           }
         })
       }
