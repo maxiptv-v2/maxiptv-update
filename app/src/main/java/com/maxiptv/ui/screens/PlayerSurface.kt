@@ -12,6 +12,7 @@ fun PlayerSurface(currentUrl: String?) {
     currentUrl?.let {
       val i = Intent(ctx, PlayerActivity::class.java)
       i.putExtra("url", it)
+      i.putExtra("contentType", "live") // PlayerSurface é usado para Live
       ctx.startActivity(i)
     }
   }

@@ -112,32 +112,54 @@ class PlayerActivity : ComponentActivity() {
     
     setContentView(pv)
     val url = intent.getStringExtra("url") ?: return
+    val contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
     
     // Log da URL para debug
     android.util.Log.i("PlayerActivity", "=== REPRODUZINDO URL ===")
     android.util.Log.i("PlayerActivity", "URL: $url")
+    android.util.Log.i("PlayerActivity", "TIPO: $contentType")
     android.util.Log.i("PlayerActivity", "=======================")
+    
+    // ⚡ Configurar DataSource com timeouts diferentes para LIVE vs VOD/SERIES
+    val isLive = contentType == "live"
+    val connectTimeout = if (isLive) 8000 else 15000  // VOD: 15s, LIVE: 8s
+    val readTimeout = if (isLive) 8000 else 15000     // VOD: 15s, LIVE: 8s
     
     val dataSourceFactory = DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
-      .setConnectTimeoutMs(8000)  // ⚡ 8 segundos timeout conexão (mais rápido)
-      .setReadTimeoutMs(8000)     // ⚡ 8 segundos timeout leitura (mais rápido)
-      .setKeepPostFor302Redirects(true) // Manter método POST em redirects
+      .setConnectTimeoutMs(connectTimeout)
+      .setReadTimeoutMs(readTimeout)
+      .setKeepPostFor302Redirects(true)
     
     val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
     
-    // ⚡ CACHE OTIMIZADO PARA LIVE v2 (menos buffer = menos travamentos)
-    val loadControl: LoadControl = DefaultLoadControl.Builder()
-      .setBufferDurationsMs(
-        10000,  // minBufferMs: 10 segundos (reduzido de 15s)
-        30000,  // maxBufferMs: 30 segundos (reduzido de 50s)
-        1500,   // bufferForPlaybackMs: 1.5 segundos (reduzido de 2.5s)
-        5000    // bufferForPlaybackAfterRebufferMs: 5 segundos (mantido)
-      )
-      .setPrioritizeTimeOverSizeThresholds(true) // Priorizar tempo sobre tamanho
-      .setBackBuffer(10000, true) // Manter 10s de back buffer e limpar periodicamente
-      .build()
+    // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES
+    val loadControl: LoadControl = if (isLive) {
+      // 📺 LIVE: Buffers pequenos para menos latência
+      DefaultLoadControl.Builder()
+        .setBufferDurationsMs(
+          10000,  // minBufferMs: 10 segundos
+          30000,  // maxBufferMs: 30 segundos
+          1500,   // bufferForPlaybackMs: 1.5 segundos
+          5000    // bufferForPlaybackAfterRebufferMs: 5 segundos
+        )
+        .setPrioritizeTimeOverSizeThresholds(true)
+        .setBackBuffer(10000, true)
+        .build()
+    } else {
+      // 🎬 VOD/SERIES: Buffers grandes para menos travamentos
+      DefaultLoadControl.Builder()
+        .setBufferDurationsMs(
+          30000,  // minBufferMs: 30 segundos (3x maior que live)
+          120000, // maxBufferMs: 2 minutos (4x maior que live)
+          2500,   // bufferForPlaybackMs: 2.5 segundos
+          10000   // bufferForPlaybackAfterRebufferMs: 10 segundos
+        )
+        .setPrioritizeTimeOverSizeThresholds(false) // VOD prioriza tamanho
+        .setBackBuffer(30000, true) // 30s de back buffer para VOD
+        .build()
+    }
     
     player = ExoPlayer.Builder(this)
       .setMediaSourceFactory(mediaSourceFactory)

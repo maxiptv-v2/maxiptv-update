@@ -116,7 +116,9 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         android.util.Log.i("VodDetails", "Idioma escolhido: $selectedLanguage")
         android.util.Log.i("VodDetails", "Stream ID: $streamId (${targetVersion?.name ?: "padrão"})")
         
-        ctx.startActivity(Intent(ctx, PlayerActivity::class.java).putExtra("url", url))
+        ctx.startActivity(Intent(ctx, PlayerActivity::class.java)
+          .putExtra("url", url)
+          .putExtra("contentType", "vod"))
       },
       modifier = Modifier.fillMaxWidth()
     ) { 

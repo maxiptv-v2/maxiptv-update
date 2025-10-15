@@ -329,7 +329,9 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
                     
                     ep.streamUrl?.let { url ->
                       android.util.Log.i("SeriesDetails", "Idioma: $selectedLanguage, Série: ${targetSeries?.name ?: "padrão"}")
-                      ctx.startActivity(Intent(ctx, PlayerActivity::class.java).putExtra("url", url))
+                      ctx.startActivity(Intent(ctx, PlayerActivity::class.java)
+                        .putExtra("url", url)
+                        .putExtra("contentType", "series"))
                     }
                   }) { 
                     Text("▶") 
