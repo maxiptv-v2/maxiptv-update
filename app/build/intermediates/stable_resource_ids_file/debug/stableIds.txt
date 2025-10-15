@@ -1,3 +1,4 @@
+com.maxiptv.debug:xml/file_paths = 0x7f0f0000
 com.maxiptv.debug:styleable/StateListDrawable = 0x7f0e0017
 com.maxiptv.debug:styleable/RecyclerView = 0x7f0e0016
 com.maxiptv.debug:styleable/NavDeepLink = 0x7f0e000f
@@ -675,7 +676,7 @@ com.maxiptv.debug:attr/ttcIndex = 0x7f020064
 com.maxiptv.debug:id/media_controller_compat_view_tag = 0x7f07007a
 com.maxiptv.debug:dimen/item_touch_helper_swipe_escape_velocity = 0x7f04002f
 com.maxiptv.debug:attr/rewind_icon = 0x7f020047
-com.maxiptv.debug:xml/network_security_config = 0x7f0f0000
+com.maxiptv.debug:xml/network_security_config = 0x7f0f0001
 com.maxiptv.debug:id/all = 0x7f070027
 com.maxiptv.debug:drawable/exo_styled_controls_repeat_one = 0x7f050047
 com.maxiptv.debug:attr/artwork_display_mode = 0x7f020006

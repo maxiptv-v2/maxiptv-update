@@ -30,6 +30,9 @@ import com.maxiptv.MaxiApp
 import com.maxiptv.data.UserManager
 import com.maxiptv.data.SessionManager
 import com.maxiptv.data.XRepo
+import com.maxiptv.data.UpdateManager
+import com.maxiptv.data.UpdateInfo
+import com.maxiptv.data.ApkDownloader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -50,6 +53,29 @@ fun HomeScreen(nav: NavHostController) {
   var eventosCanal by remember { mutableStateOf<com.maxiptv.data.LiveStream?>(null) }
   var conteudosCanal by remember { mutableStateOf<com.maxiptv.data.LiveStream?>(null) }
   val scope = rememberCoroutineScope()
+  
+  // Estados para auto-update
+  var updateAvailable by remember { mutableStateOf<UpdateInfo?>(null) }
+  var showUpdateDialog by remember { mutableStateOf(false) }
+  var isDownloading by remember { mutableStateOf(false) }
+  val context = LocalContext.current
+  
+  // Verificar atualizações ao abrir o app
+  LaunchedEffect(Unit) {
+    try {
+      android.util.Log.i("HomeScreen", "🔍 Verificando atualizações...")
+      val update = UpdateManager.checkForUpdate(context)
+      if (update != null) {
+        android.util.Log.i("HomeScreen", "🆕 Atualização disponível: ${update.version}")
+        updateAvailable = update
+        showUpdateDialog = true
+      } else {
+        android.util.Log.i("HomeScreen", "✅ App está atualizado")
+      }
+    } catch (e: Exception) {
+      android.util.Log.e("HomeScreen", "❌ Erro ao verificar update: ${e.message}")
+    }
+  }
   
   // Buscar canais "Eventos do Dia" e "Conteúdos em Alta" da categoria "Avisos do Servidor"
   LaunchedEffect(liveChannels, liveCategories) {
@@ -221,6 +247,243 @@ fun HomeScreen(nav: NavHostController) {
           Icon(Icons.Default.Close, contentDescription = null)
           Spacer(Modifier.width(8.dp))
           Text("CANCELAR", fontWeight = FontWeight.Bold)
+        }
+      }
+    )
+  }
+  
+  // Dialog de atualização disponível
+  if (showUpdateDialog && updateAvailable != null) {
+    AlertDialog(
+      onDismissRequest = { showUpdateDialog = false },
+      title = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          Icon(
+            imageVector = Icons.Default.Info,
+            contentDescription = null,
+            tint = Color(0xFF00D4FF),
+            modifier = Modifier.size(32.dp)
+          )
+          Spacer(Modifier.width(12.dp))
+          Text("🆕 Atualização Disponível!", fontWeight = FontWeight.Bold)
+        }
+      },
+      text = {
+        Column {
+          Text(
+            "Nova versão: ${updateAvailable!!.version}",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF00D4FF)
+          )
+          Spacer(Modifier.height(8.dp))
+          Text(
+            "Versão atual: ${UpdateManager.getCurrentVersionName(context)}",
+            fontSize = 14.sp,
+            color = Color.Gray
+          )
+          Spacer(Modifier.height(16.dp))
+          Text(
+            updateAvailable!!.releaseNotes,
+            fontSize = 14.sp
+          )
+          Spacer(Modifier.height(12.dp))
+          Text(
+            "Tamanho: ${updateAvailable!!.fileSize}",
+            fontSize = 12.sp,
+            color = Color.Gray
+          )
+        }
+      },
+      confirmButton = {
+        var isUpdateFocused by remember { mutableStateOf(false) }
+        Button(
+          onClick = {
+            isDownloading = true
+            showUpdateDialog = false
+            ApkDownloader.downloadAndInstall(
+              context,
+              updateAvailable!!.downloadUrl,
+              updateAvailable!!.version
+            )
+          },
+          enabled = !isDownloading,
+          modifier = Modifier
+            .onFocusChanged { isUpdateFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isUpdateFocused) 
+                Modifier
+                  .border(4.dp, Color(0xFF00FF00), RoundedCornerShape(8.dp))
+                  .shadow(
+                    elevation = 15.dp,
+                    spotColor = Color(0xFF00FF00).copy(alpha = 0.9f),
+                    ambientColor = Color(0xFF00FF00).copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(8.dp)
+                  )
+              else 
+                Modifier
+            ),
+          colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF00D4FF)
+          )
+        ) {
+          Icon(Icons.Default.Refresh, contentDescription = null)
+          Spacer(Modifier.width(8.dp))
+          Text("ATUALIZAR AGORA", fontWeight = FontWeight.Bold)
+        }
+      },
+      dismissButton = {
+        var isLaterFocused by remember { mutableStateOf(false) }
+        OutlinedButton(
+          onClick = { showUpdateDialog = false },
+          modifier = Modifier
+            .onFocusChanged { isLaterFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isLaterFocused) 
+                Modifier
+                  .border(4.dp, Color(0xFFFF9800), RoundedCornerShape(8.dp))
+                  .shadow(
+                    elevation = 15.dp,
+                    spotColor = Color(0xFFFF9800).copy(alpha = 0.9f),
+                    ambientColor = Color(0xFFFF9800).copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(8.dp)
+                  )
+              else 
+                Modifier
+            )
+        ) {
+          Icon(Icons.Default.Close, contentDescription = null)
+          Spacer(Modifier.width(8.dp))
+          Text("DEPOIS", fontWeight = FontWeight.Bold)
+        }
+      }
+    )
+  }
+  
+  // Dialog de atualização disponível
+  if (showUpdateDialog && updateAvailable != null) {
+    AlertDialog(
+      onDismissRequest = { showUpdateDialog = false },
+      title = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          Icon(
+            imageVector = Icons.Default.Refresh,
+            contentDescription = null,
+            tint = Color(0xFF00FF00),
+            modifier = Modifier.size(32.dp)
+          )
+          Spacer(Modifier.width(12.dp))
+          Text("🆕 Atualização Disponível!", fontWeight = FontWeight.Bold)
+        }
+      },
+      text = {
+        Column {
+          Text(
+            "Nova versão ${updateAvailable!!.version} disponível!",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF00FF00)
+          )
+          Spacer(Modifier.height(12.dp))
+          Text(
+            "Versão atual: ${UpdateManager.getCurrentVersionName(context)}",
+            fontSize = 14.sp,
+            color = Color.Gray
+          )
+          Spacer(Modifier.height(8.dp))
+          Text(
+            "Tamanho: ${updateAvailable!!.fileSize}",
+            fontSize = 14.sp,
+            color = Color.Gray
+          )
+          Spacer(Modifier.height(16.dp))
+          Text(
+            "📋 Novidades:",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+          )
+          Spacer(Modifier.height(8.dp))
+          Text(
+            updateAvailable!!.releaseNotes,
+            fontSize = 14.sp,
+            lineHeight = 20.sp
+          )
+        }
+      },
+      confirmButton = {
+        var isConfirmFocused by remember { mutableStateOf(false) }
+        Button(
+          onClick = {
+            showUpdateDialog = false
+            isDownloading = true
+            ApkDownloader.downloadAndInstall(
+              context,
+              updateAvailable!!.downloadUrl,
+              updateAvailable!!.version
+            )
+          },
+          enabled = !isDownloading,
+          modifier = Modifier
+            .onFocusChanged { isConfirmFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isConfirmFocused) 
+                Modifier
+                  .border(4.dp, Color(0xFF00FF00), RoundedCornerShape(8.dp))
+                  .shadow(
+                    elevation = 15.dp,
+                    spotColor = Color(0xFF00FF00).copy(alpha = 0.9f),
+                    ambientColor = Color(0xFF00FF00).copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(8.dp)
+                  )
+              else 
+                Modifier
+            ),
+          colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF00FF00),
+            contentColor = Color.Black
+          )
+        ) {
+          if (isDownloading) {
+            CircularProgressIndicator(
+              modifier = Modifier.size(20.dp),
+              color = Color.Black,
+              strokeWidth = 2.dp
+            )
+            Spacer(Modifier.width(8.dp))
+          } else {
+            Icon(Icons.Default.Refresh, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+          }
+          Text(if (isDownloading) "BAIXANDO..." else "ATUALIZAR AGORA", fontWeight = FontWeight.Bold)
+        }
+      },
+      dismissButton = {
+        var isDismissFocused by remember { mutableStateOf(false) }
+        OutlinedButton(
+          onClick = { showUpdateDialog = false },
+          modifier = Modifier
+            .onFocusChanged { isDismissFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isDismissFocused) 
+                Modifier
+                  .border(4.dp, Color(0xFF00D4FF), RoundedCornerShape(8.dp))
+                  .shadow(
+                    elevation = 15.dp,
+                    spotColor = Color(0xFF00D4FF).copy(alpha = 0.9f),
+                    ambientColor = Color(0xFF00D4FF).copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(8.dp)
+                  )
+              else 
+                Modifier
+            )
+        ) {
+          Icon(Icons.Default.Close, contentDescription = null)
+          Spacer(Modifier.width(8.dp))
+          Text("DEPOIS", fontWeight = FontWeight.Bold)
         }
       }
     )

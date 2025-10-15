@@ -176,6 +176,7 @@
 # End of content from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\proguard-rules.pro
 # The proguard configuration file for the following section is C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\build\intermediates\aapt_proguard_file\release\aapt_rules.txt
 -keep class androidx.core.app.CoreComponentFactory { <init>(); }
+-keep class androidx.core.content.FileProvider { <init>(); }
 -keep class androidx.profileinstaller.ProfileInstallReceiver { <init>(); }
 -keep class androidx.startup.InitializationProvider { <init>(); }
 -keep class com.maxiptv.MainActivity { <init>(); }

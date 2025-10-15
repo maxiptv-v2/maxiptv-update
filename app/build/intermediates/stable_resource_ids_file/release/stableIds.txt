@@ -1,3 +1,4 @@
+com.maxiptv:xml/file_paths = 0x7f0f0000
 com.maxiptv:styleable/StateListDrawableItem = 0x7f0e0018
 com.maxiptv:styleable/StateListDrawable = 0x7f0e0017
 com.maxiptv:styleable/Navigator = 0x7f0e0013
@@ -336,7 +337,7 @@ com.maxiptv:id/accessibility_custom_action_1 = 0x7f070002
 com.maxiptv:styleable/PlayerView = 0x7f0e0015
 com.maxiptv:string/exo_controls_repeat_one_description = 0x7f0c001e
 com.maxiptv:drawable/exo_styled_controls_audiotrack = 0x7f05003a
-com.maxiptv:xml/network_security_config = 0x7f0f0000
+com.maxiptv:xml/network_security_config = 0x7f0f0001
 com.maxiptv:id/exo_rew = 0x7f07005b
 com.maxiptv:color/androidx_core_ripple_material_light = 0x7f030000
 com.maxiptv:id/exo_subtitles = 0x7f070063
