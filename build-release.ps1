@@ -78,7 +78,8 @@ if ($BuildType -eq "debug") {
     $updateJson.version = $newVersion
     $updateJson.versionCode = $newVersionCode
     $updateJson.buildNumber = $newVersionCode
-    $updateJson.downloadUrl = "https://github.com/$GitHubRepo/releases/download/$newVersion/maxiptv-release.apk"
+    # Usar raw.githubusercontent para download direto do APK
+    $updateJson.downloadUrl = "https://raw.githubusercontent.com/$GitHubRepo/main/maxiptv-release.apk"
     $updateJson.lastUpdated = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
     
     $updateJson | ConvertTo-Json -Depth 10 | Set-Content "update.json"
