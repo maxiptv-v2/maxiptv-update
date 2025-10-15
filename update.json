@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.9",
-    "versionCode":  10,
-    "buildNumber":  10,
-    "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "🎉 MaxiPTV v1.0.0 - Versão Inicial\n\n✅ Funcionalidades:\n• Player com controles completos (pause, seek, avançar/retroceder)\n• Reconexão automática quando canal trava\n• Buffer otimizado para reduzir travamentos\n• PIN 0000 para categoria adulta na Live\n• Cache inteligente de 24 horas\n• Interface responsiva (TV Box, Fire Stick, Smartphone)\n• Sistema de sessões centralizadas (JSONBin)\n• APIs modernas (sem warnings de deprecação)\n\n🔧 Melhorias técnicas:\n• ExoPlayer otimizado\n• Tela completamente cheia\n• Focos aprimorados para D-pad\n• Carrossel duplo com players embutidos\n• Relógio digital na top bar",
-    "minimumVersion":  "1.0.0",
-    "forceUpdate":  false,
-    "fileSize":  "18.6 MB",
-    "lastUpdated":  "2025-10-14T22:58:03Z",
-    "checksum":  "sha256:placeholder"
+  "version": "v1.0.9",
+  "versionCode": 10,
+  "buildNumber": 10,
+  "downloadUrl": "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
+  "releaseNotes": "⚡ MaxiPTV v1.0.9 - Otimização Anti-Travamentos\n\n✅ Melhorias:\n• Buffer otimizado: canais iniciam mais rápido\n• Reconexão melhorada: 2s (antes 3s)\n• Limite de tentativas: máximo 5 reconexões\n• Timeout reduzido: 8s (antes 10s)\n• Back buffer otimizado: limpa memória automaticamente\n• Carrossel super leve: menos buffer, mais estável\n\n🎯 Resultado:\n• Menos travamentos\n• Reprodução mais fluida\n• Menor uso de memória\n• Reconexão mais ágil",
+  "minimumVersion": "1.0.0",
+  "forceUpdate": false,
+  "fileSize": "3.6 MB",
+  "lastUpdated": "2025-10-15T02:50:00Z",
+  "checksum": "sha256:placeholder"
 }
