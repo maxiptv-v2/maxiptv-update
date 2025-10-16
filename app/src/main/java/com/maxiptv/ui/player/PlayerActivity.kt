@@ -19,6 +19,13 @@ import androidx.media3.exoplayer.LoadControl
 import androidx.media3.common.C
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.OnBackPressedCallback
+import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.VideoSize
+import okhttp3.OkHttpClient
+import okhttp3.Dns
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import java.net.InetAddress
+import java.net.Inet4Address
 
 class PlayerActivity : ComponentActivity() {
   private var player: ExoPlayer? = null
@@ -122,37 +129,52 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚡ Configurar DataSource com timeouts diferentes para LIVE vs VOD/SERIES
     val isLive = contentType == "live"
-    val connectTimeout = if (isLive) 8000 else 15000  // VOD: 15s, LIVE: 8s
-    val readTimeout = if (isLive) 8000 else 15000     // VOD: 15s, LIVE: 8s
+    val connectTimeout = if (isLive) 10000 else 15000  // VOD: 15s, LIVE: 10s
+    val readTimeout = if (isLive) 10000 else 15000     // VOD: 15s, LIVE: 10s
     
-    val dataSourceFactory = DefaultHttpDataSource.Factory()
-      .setAllowCrossProtocolRedirects(true)
+    // 🌐 DNS OTIMIZADO: Priorizar IPv4 para melhor compatibilidade
+    val customDns = object : Dns {
+      override fun lookup(hostname: String): List<InetAddress> {
+        val addresses = Dns.SYSTEM.lookup(hostname)
+        // Priorizar endereços IPv4
+        return addresses.sortedBy { if (it is Inet4Address) 0 else 1 }
+      }
+    }
+    
+    // 🚀 OkHttp otimizado para IPTV
+    val okHttpClient = OkHttpClient.Builder()
+      .dns(customDns)
+      .connectTimeout(connectTimeout.toLong(), java.util.concurrent.TimeUnit.MILLISECONDS)
+      .readTimeout(readTimeout.toLong(), java.util.concurrent.TimeUnit.MILLISECONDS)
+      .retryOnConnectionFailure(true)
+      .followRedirects(true)
+      .followSslRedirects(true)
+      .build()
+    
+    val dataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
-      .setConnectTimeoutMs(connectTimeout)
-      .setReadTimeoutMs(readTimeout)
-      .setKeepPostFor302Redirects(true)
     
     val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
     
     // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES
     val loadControl: LoadControl = if (isLive) {
-      // 📺 LIVE: Buffers pequenos para menos latência
+      // 📺 LIVE: Buffers maiores para Wi-Fi instável
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          10000,  // minBufferMs: 10 segundos
-          30000,  // maxBufferMs: 30 segundos
-          1500,   // bufferForPlaybackMs: 1.5 segundos
-          5000    // bufferForPlaybackAfterRebufferMs: 5 segundos
+          20000,  // minBufferMs: 20 segundos (aumentado)
+          50000,  // maxBufferMs: 50 segundos (aumentado)
+          2000,   // bufferForPlaybackMs: 2 segundos
+          8000    // bufferForPlaybackAfterRebufferMs: 8 segundos
         )
         .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(10000, true)
+        .setBackBuffer(20000, true) // 20s de back buffer
         .build()
     } else {
       // 🎬 VOD/SERIES: Buffers grandes para menos travamentos
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          30000,  // minBufferMs: 30 segundos (3x maior que live)
-          120000, // maxBufferMs: 2 minutos (4x maior que live)
+          30000,  // minBufferMs: 30 segundos
+          120000, // maxBufferMs: 2 minutos
           2500,   // bufferForPlaybackMs: 2.5 segundos
           10000   // bufferForPlaybackAfterRebufferMs: 10 segundos
         )
@@ -166,15 +188,34 @@ class PlayerActivity : ComponentActivity() {
       .setLoadControl(loadControl) // ✅ Aplicar cache otimizado
       .build().also { exo ->
         pv.player = exo
-        exo.setMediaItem(MediaItem.fromUri(url))
+        
+        // 🎬 CONFIGURAR MEDIAITEM COM LIVE CONFIGURATION
+        val mediaItem = if (isLive) {
+          MediaItem.Builder()
+            .setUri(url)
+            .setLiveConfiguration(
+              MediaItem.LiveConfiguration.Builder()
+                .setTargetOffsetMs(C.TIME_UNSET) // Offset automático
+                .setMinPlaybackSpeed(0.95f) // Velocidade mínima
+                .setMaxPlaybackSpeed(1.05f) // Velocidade máxima
+                .build()
+            )
+            .build()
+        } else {
+          MediaItem.fromUri(url)
+        }
+        
+        exo.setMediaItem(mediaItem)
+        
+        // 📊 QUALIDADE ADAPTATIVA: Começar em qualidade média para evitar travamentos
+        exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
+          .setPreferredTextLanguage(null) // Sem legendas
+          .setMaxVideoBitrate(if (isLive) 3_000_000 else 8_000_000) // LIVE: 3Mbps, VOD: 8Mbps
+          .setMaxVideoSize(1280, 720) // Começar em 720p
+          .build()
+        
         exo.prepare()
         exo.playWhenReady = true
-        
-        // Desabilitar legendas por padrão
-        exo.trackSelectionParameters = exo.trackSelectionParameters
-          .buildUpon()
-          .setPreferredTextLanguage(null)
-          .build()
         
         // ✅ RECONEXÃO AUTOMÁTICA quando canal trava
         exo.addListener(object : Player.Listener {
@@ -188,11 +229,22 @@ class PlayerActivity : ComponentActivity() {
               }
               Player.STATE_READY -> {
                 android.util.Log.i("PlayerActivity", "✅ Player pronto")
+                // Log de qualidade e performance
+                val format = exo.videoFormat
+                if (format != null) {
+                  val bitrate = format.bitrate / 1000 // Kbps
+                  val resolution = "${format.width}x${format.height}"
+                  android.util.Log.i("PlayerActivity", "📊 Qualidade: $resolution @ ${bitrate}kbps")
+                }
               }
               Player.STATE_ENDED -> {
                 android.util.Log.i("PlayerActivity", "🏁 Reprodução finalizada")
               }
             }
+          }
+          
+          override fun onVideoSizeChanged(videoSize: VideoSize) {
+            android.util.Log.i("PlayerActivity", "📺 Tamanho do vídeo: ${videoSize.width}x${videoSize.height}")
           }
           
           override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
@@ -211,14 +263,14 @@ class PlayerActivity : ComponentActivity() {
                   // Limpar buffer antes de reconectar
                   exo.stop()
                   exo.clearMediaItems()
-                  exo.setMediaItem(MediaItem.fromUri(url))
+                  exo.setMediaItem(mediaItem) // ✅ Usar mediaItem configurado
                   exo.prepare()
                   exo.playWhenReady = true
                   android.util.Log.i("PlayerActivity", "✅ Reconexão iniciada")
                 } catch (e: Exception) {
                   android.util.Log.e("PlayerActivity", "❌ Falha na reconexão: ${e.message}")
                 }
-              }, 2000) // ⚡ 2 segundos (reduzido de 3s)
+              }, 2000)
             } else {
               android.util.Log.e("PlayerActivity", "❌ Máximo de tentativas atingido. Verifique sua conexão.")
             }

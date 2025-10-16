@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-    versionCode = 15
-    versionName = "1.0.14"
+    versionCode = 17
+    versionName = "1.0.16"
     vectorDrawables.useSupportLibrary = true
     buildConfigField("String", "DEFAULT_PLAYER_API", "\"https://canais.is/\"")
     buildConfigField("String", "DEFAULT_USER", "\"max\"")
@@ -74,6 +74,7 @@ dependencies {
   implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
   implementation("androidx.media3:media3-ui:1.4.1")
   implementation("androidx.media3:media3-common:1.4.1")
+  implementation("androidx.media3:media3-datasource-okhttp:1.4.1")
   implementation("com.squareup.okhttp3:okhttp:4.11.0")
   implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
   implementation("com.squareup.retrofit2:retrofit:2.9.0")

@@ -1,5 +1,18 @@
 <libraries>
   <library
+      name="androidx.media3:media3-datasource-okhttp:1.4.1@aar"
+      jars="C:\Users\maxca\.gradle\caches\8.9\transforms\425ab64be4d44334a85f11d8539c3f9f\transformed\media3-datasource-okhttp-1.4.1\jars\classes.jar"
+      resolved="androidx.media3:media3-datasource-okhttp:1.4.1"
+      folder="C:\Users\maxca\.gradle\caches\8.9\transforms\425ab64be4d44334a85f11d8539c3f9f\transformed\media3-datasource-okhttp-1.4.1"
+      manifest="AndroidManifest.xml"
+      resFolder="res"
+      assetsFolder="assets"
+      lintJar="lint.jar"
+      publicResources="public.txt"
+      symbolFile="R.txt"
+      externalAnnotations="annotations.zip"
+      proguardRules="proguard.txt"/>
+  <library
       name="com.squareup.okhttp3:logging-interceptor:4.11.0@jar"
       jars="C:\Users\maxca\.gradle\caches\modules-2\files-2.1\com.squareup.okhttp3\logging-interceptor\4.11.0\87fa769912b1f738f3c2dd87e3bca4d1d7f0e666\logging-interceptor-4.11.0.jar"
       resolved="com.squareup.okhttp3:logging-interceptor:4.11.0"/>

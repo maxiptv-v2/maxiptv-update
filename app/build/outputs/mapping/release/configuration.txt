@@ -193,30 +193,82 @@
 
 
 # End of content from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\build\intermediates\aapt_proguard_file\release\aapt_rules.txt
-# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\21020335aaca8163edb1a6a4f65636f2\transformed\rules\lib\META-INF\proguard\moshi.pro
-# JSR 305 annotations are for embedding nullability information.
--dontwarn javax.annotation.**
+# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\79eae985d7c1e3468d09a557fff99122\transformed\media3-exoplayer-1.4.1\proguard.txt
+# Proguard rules specific to the core module.
 
--keepclasseswithmembers class * {
-    @com.squareup.moshi.* <methods>;
+# Constructors accessed via reflection in DefaultRenderersFactory
+-dontnote androidx.media3.decoder.vp9.LibvpxVideoRenderer
+-keepclassmembers class androidx.media3.decoder.vp9.LibvpxVideoRenderer {
+  <init>(long, android.os.Handler, androidx.media3.exoplayer.video.VideoRendererEventListener, int);
+}
+-dontnote androidx.media3.decoder.av1.Libgav1VideoRenderer
+-keepclassmembers class androidx.media3.decoder.av1.Libgav1VideoRenderer {
+  <init>(long, android.os.Handler, androidx.media3.exoplayer.video.VideoRendererEventListener, int);
+}
+-dontnote androidx.media3.decoder.ffmpeg.ExperimentalFfmpegVideoRenderer
+-keepclassmembers class androidx.media3.decoder.ffmpeg.ExperimentalFfmpegVideoRenderer {
+  <init>(long, android.os.Handler, androidx.media3.exoplayer.video.VideoRendererEventListener, int);
+}
+-dontnote androidx.media3.decoder.opus.LibopusAudioRenderer
+-keepclassmembers class androidx.media3.decoder.opus.LibopusAudioRenderer {
+  <init>(android.os.Handler, androidx.media3.exoplayer.audio.AudioRendererEventListener, androidx.media3.exoplayer.audio.AudioSink);
+}
+-dontnote androidx.media3.decoder.flac.LibflacAudioRenderer
+-keepclassmembers class androidx.media3.decoder.flac.LibflacAudioRenderer {
+  <init>(android.os.Handler, androidx.media3.exoplayer.audio.AudioRendererEventListener, androidx.media3.exoplayer.audio.AudioSink);
+}
+-dontnote androidx.media3.decoder.ffmpeg.FfmpegAudioRenderer
+-keepclassmembers class androidx.media3.decoder.ffmpeg.FfmpegAudioRenderer {
+  <init>(android.os.Handler, androidx.media3.exoplayer.audio.AudioRendererEventListener, androidx.media3.exoplayer.audio.AudioSink);
+}
+-dontnote androidx.media3.decoder.midi.MidiRenderer
+-keepclassmembers class androidx.media3.decoder.midi.MidiRenderer {
+  <init>(android.content.Context);
 }
 
--keep @com.squareup.moshi.JsonQualifier @interface *
-
-# Enum field names are used by the integrated EnumJsonAdapter.
-# values() is synthesized by the Kotlin compiler and is used by EnumJsonAdapter indirectly
-# Annotate enums with @JsonClass(generateAdapter = false) to use them with Moshi.
--keepclassmembers @com.squareup.moshi.JsonClass class * extends java.lang.Enum {
-    <fields>;
-    **[] values();
+# Constructors accessed via reflection in DefaultDownloaderFactory
+-dontnote androidx.media3.exoplayer.dash.offline.DashDownloader
+-keepclassmembers class androidx.media3.exoplayer.dash.offline.DashDownloader {
+  <init>(androidx.media3.common.MediaItem, androidx.media3.datasource.cache.CacheDataSource$Factory, java.util.concurrent.Executor);
+}
+-dontnote androidx.media3.exoplayer.hls.offline.HlsDownloader
+-keepclassmembers class androidx.media3.exoplayer.hls.offline.HlsDownloader {
+  <init>(androidx.media3.common.MediaItem, androidx.media3.datasource.cache.CacheDataSource$Factory, java.util.concurrent.Executor);
+}
+-dontnote androidx.media3.exoplayer.smoothstreaming.offline.SsDownloader
+-keepclassmembers class androidx.media3.exoplayer.smoothstreaming.offline.SsDownloader {
+  <init>(androidx.media3.common.MediaItem, androidx.media3.datasource.cache.CacheDataSource$Factory, java.util.concurrent.Executor);
 }
 
-# Keep helper method to avoid R8 optimisation that would keep all Kotlin Metadata when unwanted
--keepclassmembers class com.squareup.moshi.internal.Util {
-    private static java.lang.String getKotlinMetadataClassName();
+# Constructors accessed via reflection in DefaultMediaSourceFactory
+-dontnote androidx.media3.exoplayer.dash.DashMediaSource$Factory
+-keepclasseswithmembers class androidx.media3.exoplayer.dash.DashMediaSource$Factory {
+  <init>(androidx.media3.datasource.DataSource$Factory);
+}
+-dontnote androidx.media3.exoplayer.hls.HlsMediaSource$Factory
+-keepclasseswithmembers class androidx.media3.exoplayer.hls.HlsMediaSource$Factory {
+  <init>(androidx.media3.datasource.DataSource$Factory);
+}
+-dontnote androidx.media3.exoplayer.smoothstreaming.SsMediaSource$Factory
+-keepclasseswithmembers class androidx.media3.exoplayer.smoothstreaming.SsMediaSource$Factory {
+  <init>(androidx.media3.datasource.DataSource$Factory);
+}
+-dontnote androidx.media3.exoplayer.rtsp.RtspMediaSource$Factory
+-keepclasseswithmembers class androidx.media3.exoplayer.rtsp.RtspMediaSource$Factory {
+  <init>();
 }
 
-# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\21020335aaca8163edb1a6a4f65636f2\transformed\rules\lib\META-INF\proguard\moshi.pro
+# Constructors and methods accessed via reflection in CompositingVideoSinkProvider
+-dontnote androidx.media3.effect.PreviewingSingleInputVideoGraph$Factory
+-keepclasseswithmembers class androidx.media3.effect.PreviewingSingleInputVideoGraph$Factory {
+  <init>(androidx.media3.common.VideoFrameProcessor$Factory);
+}
+-dontnote androidx.media3.effect.DefaultVideoFrameProcessor$Factory$Builder
+-keepclasseswithmembers class androidx.media3.effect.DefaultVideoFrameProcessor$Factory$Builder {
+  androidx.media3.effect.DefaultVideoFrameProcessor$Factory build();
+}
+
+# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\79eae985d7c1e3468d09a557fff99122\transformed\media3-exoplayer-1.4.1\proguard.txt
 # The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\9617ab2180782dd203bb262d99792812\transformed\media3-ui-1.4.1\proguard.txt
 # Proguard rules specific to the UI module.
 
@@ -329,82 +381,88 @@
 -keepclassmembernames class com.google.common.base.Function { *; }
 
 # End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\73c23b314db0984e31f375d53b1355be\transformed\media3-common-1.4.1\proguard.txt
-# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\79eae985d7c1e3468d09a557fff99122\transformed\media3-exoplayer-1.4.1\proguard.txt
-# Proguard rules specific to the core module.
+# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\425ab64be4d44334a85f11d8539c3f9f\transformed\media3-datasource-okhttp-1.4.1\proguard.txt
+# Proguard rules specific to the OkHttp extension.
 
-# Constructors accessed via reflection in DefaultRenderersFactory
--dontnote androidx.media3.decoder.vp9.LibvpxVideoRenderer
--keepclassmembers class androidx.media3.decoder.vp9.LibvpxVideoRenderer {
-  <init>(long, android.os.Handler, androidx.media3.exoplayer.video.VideoRendererEventListener, int);
-}
--dontnote androidx.media3.decoder.av1.Libgav1VideoRenderer
--keepclassmembers class androidx.media3.decoder.av1.Libgav1VideoRenderer {
-  <init>(long, android.os.Handler, androidx.media3.exoplayer.video.VideoRendererEventListener, int);
-}
--dontnote androidx.media3.decoder.ffmpeg.ExperimentalFfmpegVideoRenderer
--keepclassmembers class androidx.media3.decoder.ffmpeg.ExperimentalFfmpegVideoRenderer {
-  <init>(long, android.os.Handler, androidx.media3.exoplayer.video.VideoRendererEventListener, int);
-}
--dontnote androidx.media3.decoder.opus.LibopusAudioRenderer
--keepclassmembers class androidx.media3.decoder.opus.LibopusAudioRenderer {
-  <init>(android.os.Handler, androidx.media3.exoplayer.audio.AudioRendererEventListener, androidx.media3.exoplayer.audio.AudioSink);
-}
--dontnote androidx.media3.decoder.flac.LibflacAudioRenderer
--keepclassmembers class androidx.media3.decoder.flac.LibflacAudioRenderer {
-  <init>(android.os.Handler, androidx.media3.exoplayer.audio.AudioRendererEventListener, androidx.media3.exoplayer.audio.AudioSink);
-}
--dontnote androidx.media3.decoder.ffmpeg.FfmpegAudioRenderer
--keepclassmembers class androidx.media3.decoder.ffmpeg.FfmpegAudioRenderer {
-  <init>(android.os.Handler, androidx.media3.exoplayer.audio.AudioRendererEventListener, androidx.media3.exoplayer.audio.AudioSink);
-}
--dontnote androidx.media3.decoder.midi.MidiRenderer
--keepclassmembers class androidx.media3.decoder.midi.MidiRenderer {
-  <init>(android.content.Context);
+# Options specified by https://github.com/square/okhttp/blob/master/README.md
+-dontwarn okio.**
+-dontwarn javax.annotation.**
+-dontwarn org.conscrypt.**
+
+# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\425ab64be4d44334a85f11d8539c3f9f\transformed\media3-datasource-okhttp-1.4.1\proguard.txt
+# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\355eac197de5ea0d868a676be0244c99\transformed\rules\lib\META-INF\proguard\retrofit2.pro
+# Retrofit does reflection on generic parameters. InnerClasses is required to use Signature and
+# EnclosingMethod is required to use InnerClasses.
+-keepattributes Signature, InnerClasses, EnclosingMethod
+
+# Retrofit does reflection on method and parameter annotations.
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+
+# Retain service method parameters when optimizing.
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
 }
 
-# Constructors accessed via reflection in DefaultDownloaderFactory
--dontnote androidx.media3.exoplayer.dash.offline.DashDownloader
--keepclassmembers class androidx.media3.exoplayer.dash.offline.DashDownloader {
-  <init>(androidx.media3.common.MediaItem, androidx.media3.datasource.cache.CacheDataSource$Factory, java.util.concurrent.Executor);
-}
--dontnote androidx.media3.exoplayer.hls.offline.HlsDownloader
--keepclassmembers class androidx.media3.exoplayer.hls.offline.HlsDownloader {
-  <init>(androidx.media3.common.MediaItem, androidx.media3.datasource.cache.CacheDataSource$Factory, java.util.concurrent.Executor);
-}
--dontnote androidx.media3.exoplayer.smoothstreaming.offline.SsDownloader
--keepclassmembers class androidx.media3.exoplayer.smoothstreaming.offline.SsDownloader {
-  <init>(androidx.media3.common.MediaItem, androidx.media3.datasource.cache.CacheDataSource$Factory, java.util.concurrent.Executor);
+# Ignore annotation used for build tooling.
+-dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+
+# Ignore JSR 305 annotations for embedding nullability information.
+-dontwarn javax.annotation.**
+
+# Guarded by a NoClassDefFoundError try/catch and only used when on the classpath.
+-dontwarn kotlin.Unit
+
+# Top-level functions that can only be used by Kotlin.
+-dontwarn retrofit2.KotlinExtensions
+-dontwarn retrofit2.KotlinExtensions$*
+
+# With R8 full mode, it sees no subtypes of Retrofit interfaces since they are created with a Proxy
+# and replaces all potential values with null. Explicitly keeping the interfaces prevents this.
+-if interface * { @retrofit2.http.* <methods>; }
+-keep,allowobfuscation interface <1>
+
+# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\355eac197de5ea0d868a676be0244c99\transformed\rules\lib\META-INF\proguard\retrofit2.pro
+# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\0e94efab136a3f8463b5ebcbbf15b086\transformed\rules\lib\META-INF\proguard\okhttp3.pro
+# JSR 305 annotations are for embedding nullability information.
+-dontwarn javax.annotation.**
+
+# A resource is loaded with a relative path so the package of this class must be preserved.
+-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+
+# Animal Sniffer compileOnly dependency to ensure APIs are compatible with older versions of Java.
+-dontwarn org.codehaus.mojo.animal_sniffer.*
+
+# OkHttp platform used only on JVM and when Conscrypt and other security providers are available.
+-dontwarn okhttp3.internal.platform.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+
+# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\0e94efab136a3f8463b5ebcbbf15b086\transformed\rules\lib\META-INF\proguard\okhttp3.pro
+# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\21020335aaca8163edb1a6a4f65636f2\transformed\rules\lib\META-INF\proguard\moshi.pro
+# JSR 305 annotations are for embedding nullability information.
+-dontwarn javax.annotation.**
+
+-keepclasseswithmembers class * {
+    @com.squareup.moshi.* <methods>;
 }
 
-# Constructors accessed via reflection in DefaultMediaSourceFactory
--dontnote androidx.media3.exoplayer.dash.DashMediaSource$Factory
--keepclasseswithmembers class androidx.media3.exoplayer.dash.DashMediaSource$Factory {
-  <init>(androidx.media3.datasource.DataSource$Factory);
-}
--dontnote androidx.media3.exoplayer.hls.HlsMediaSource$Factory
--keepclasseswithmembers class androidx.media3.exoplayer.hls.HlsMediaSource$Factory {
-  <init>(androidx.media3.datasource.DataSource$Factory);
-}
--dontnote androidx.media3.exoplayer.smoothstreaming.SsMediaSource$Factory
--keepclasseswithmembers class androidx.media3.exoplayer.smoothstreaming.SsMediaSource$Factory {
-  <init>(androidx.media3.datasource.DataSource$Factory);
-}
--dontnote androidx.media3.exoplayer.rtsp.RtspMediaSource$Factory
--keepclasseswithmembers class androidx.media3.exoplayer.rtsp.RtspMediaSource$Factory {
-  <init>();
+-keep @com.squareup.moshi.JsonQualifier @interface *
+
+# Enum field names are used by the integrated EnumJsonAdapter.
+# values() is synthesized by the Kotlin compiler and is used by EnumJsonAdapter indirectly
+# Annotate enums with @JsonClass(generateAdapter = false) to use them with Moshi.
+-keepclassmembers @com.squareup.moshi.JsonClass class * extends java.lang.Enum {
+    <fields>;
+    **[] values();
 }
 
-# Constructors and methods accessed via reflection in CompositingVideoSinkProvider
--dontnote androidx.media3.effect.PreviewingSingleInputVideoGraph$Factory
--keepclasseswithmembers class androidx.media3.effect.PreviewingSingleInputVideoGraph$Factory {
-  <init>(androidx.media3.common.VideoFrameProcessor$Factory);
-}
--dontnote androidx.media3.effect.DefaultVideoFrameProcessor$Factory$Builder
--keepclasseswithmembers class androidx.media3.effect.DefaultVideoFrameProcessor$Factory$Builder {
-  androidx.media3.effect.DefaultVideoFrameProcessor$Factory build();
+# Keep helper method to avoid R8 optimisation that would keep all Kotlin Metadata when unwanted
+-keepclassmembers class com.squareup.moshi.internal.Util {
+    private static java.lang.String getKotlinMetadataClassName();
 }
 
-# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\79eae985d7c1e3468d09a557fff99122\transformed\media3-exoplayer-1.4.1\proguard.txt
+# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\21020335aaca8163edb1a6a4f65636f2\transformed\rules\lib\META-INF\proguard\moshi.pro
 # The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\25ef72e1e76d3520f8e830eb04e176f7\transformed\media-1.7.0\proguard.txt
 # Copyright (C) 2017 The Android Open Source Project
 #
@@ -821,55 +879,6 @@
 -keep public class androidx.versionedparcelable.ParcelImpl
 
 # End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\9f3dfe8978d1228932782b1bd1629e36\transformed\versionedparcelable-1.1.1\proguard.txt
-# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\355eac197de5ea0d868a676be0244c99\transformed\rules\lib\META-INF\proguard\retrofit2.pro
-# Retrofit does reflection on generic parameters. InnerClasses is required to use Signature and
-# EnclosingMethod is required to use InnerClasses.
--keepattributes Signature, InnerClasses, EnclosingMethod
-
-# Retrofit does reflection on method and parameter annotations.
--keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
-
-# Retain service method parameters when optimizing.
--keepclassmembers,allowshrinking,allowobfuscation interface * {
-    @retrofit2.http.* <methods>;
-}
-
-# Ignore annotation used for build tooling.
--dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
-
-# Ignore JSR 305 annotations for embedding nullability information.
--dontwarn javax.annotation.**
-
-# Guarded by a NoClassDefFoundError try/catch and only used when on the classpath.
--dontwarn kotlin.Unit
-
-# Top-level functions that can only be used by Kotlin.
--dontwarn retrofit2.KotlinExtensions
--dontwarn retrofit2.KotlinExtensions$*
-
-# With R8 full mode, it sees no subtypes of Retrofit interfaces since they are created with a Proxy
-# and replaces all potential values with null. Explicitly keeping the interfaces prevents this.
--if interface * { @retrofit2.http.* <methods>; }
--keep,allowobfuscation interface <1>
-
-# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\355eac197de5ea0d868a676be0244c99\transformed\rules\lib\META-INF\proguard\retrofit2.pro
-# The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\0e94efab136a3f8463b5ebcbbf15b086\transformed\rules\lib\META-INF\proguard\okhttp3.pro
-# JSR 305 annotations are for embedding nullability information.
--dontwarn javax.annotation.**
-
-# A resource is loaded with a relative path so the package of this class must be preserved.
--keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
-
-# Animal Sniffer compileOnly dependency to ensure APIs are compatible with older versions of Java.
--dontwarn org.codehaus.mojo.animal_sniffer.*
-
-# OkHttp platform used only on JVM and when Conscrypt and other security providers are available.
--dontwarn okhttp3.internal.platform.**
--dontwarn org.conscrypt.**
--dontwarn org.bouncycastle.**
--dontwarn org.openjsse.**
-
-# End of content from C:\Users\maxca\.gradle\caches\8.9\transforms\0e94efab136a3f8463b5ebcbbf15b086\transformed\rules\lib\META-INF\proguard\okhttp3.pro
 # The proguard configuration file for the following section is C:\Users\maxca\.gradle\caches\8.9\transforms\bc87155fdff686d44c523870017c2604\transformed\startup-runtime-1.1.1\proguard.txt
 # It's important that we preserve initializer names, given they are used in the AndroidManifest.xml.
 -keepnames class * extends androidx.startup.Initializer
