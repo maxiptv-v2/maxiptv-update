@@ -3,10 +3,10 @@
     "versionCode":  12,
     "buildNumber":  12,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "⚡ MaxiPTV v1.0.9 - Otimização Anti-Travamentos\n\n✅ Melhorias:\n• Buffer otimizado: canais iniciam mais rápido\n• Reconexão melhorada: 2s (antes 3s)\n• Limite de tentativas: máximo 5 reconexões\n• Timeout reduzido: 8s (antes 10s)\n• Back buffer otimizado: limpa memória automaticamente\n• Carrossel super leve: menos buffer, mais estável\n\n🎯 Resultado:\n• Menos travamentos\n• Reprodução mais fluida\n• Menor uso de memória\n• Reconexão mais ágil",
+    "releaseNotes":  "🚀 MaxiPTV v1.0.11 - Layout TV Box + VOD Otimizado\n\n📺 TV Box/Fire Stick:\n• Player ocupa largura total da tela\n• Elimina barras pretas nas laterais\n• Vídeo mais visível e proporcional\n• Smartphone mantém layout atual\n\n🎬 VOD e Séries:\n• Buffers 4x maiores (30s → 120s)\n• Timeouts aumentados (8s → 15s)\n• Carregamento mais rápido\n• Menos travamentos em arquivos grandes\n\n🎯 Resultado:\n• TV Box: Player muito mais visível\n• VOD/Séries: Reprodução mais fluida\n• Live: Mantém otimização anterior",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-15T20:23:06Z",
+    "lastUpdated": "2025-10-15T20:29:37Z",
     "checksum":  "sha256:placeholder"
 }
