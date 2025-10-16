@@ -1217,10 +1217,10 @@ fun EmbeddedPlayer(
       ),
     contentAlignment = Alignment.Center
   ) {
-    // Para TV Box, usar aspect ratio fixo 16:9 para evitar esticamento
+    // Para TV Box, usar largura total para eliminar barras pretas laterais
     val playerContainer = if (deviceType == "tv") {
       Modifier
-        .aspectRatio(16f / 9f)
+        .fillMaxWidth()
         .fillMaxHeight()
     } else {
       Modifier.fillMaxSize()
@@ -1232,9 +1232,9 @@ fun EmbeddedPlayer(
           player = exoPlayer
           useController = false // SEM CONTROLES
           
-          // Para TV Box, configurar para manter aspect ratio original
+          // Para TV Box, usar ZOOM para preencher toda a tela (eliminar barras pretas)
           if (deviceType == "tv") {
-            resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+            resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
           } else {
             resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
           }
