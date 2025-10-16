@@ -40,7 +40,6 @@ import java.util.*
 
 @Composable
 fun HomeScreen(nav: NavHostController) {
-  val featured by XRepo.featured.collectAsState(emptyList())
   val liveChannels by XRepo.liveStreams.collectAsState(emptyList())
   val liveCategories by XRepo.liveCategories.collectAsState(emptyList())
   var focusedButton by remember { mutableStateOf<String?>(null) }
@@ -153,7 +152,6 @@ fun HomeScreen(nav: NavHostController) {
   
   val isTv = MaxiApp.isTv
   val isPhone = MaxiApp.isPhone
-  val isFireStick = MaxiApp.isFireStick
   
   // Dialog de confirmação de logout
   if (showLogoutDialog) {
@@ -162,7 +160,7 @@ fun HomeScreen(nav: NavHostController) {
       title = {
         Row(verticalAlignment = Alignment.CenterVertically) {
           Icon(
-            imageVector = Icons.Default.ExitToApp,
+            imageVector = Icons.Filled.ExitToApp,
             contentDescription = null,
             tint = Color(0xFFFF5252),
             modifier = Modifier.size(32.dp)
@@ -983,7 +981,7 @@ fun LogoutButton(
       )
     } else {
       Icon(
-        imageVector = Icons.Default.ExitToApp,
+        imageVector = Icons.Filled.ExitToApp,
         contentDescription = "Sair",
         modifier = Modifier.size(iconSize)
       )
@@ -1061,12 +1059,11 @@ fun DualCarousel(
   }
   
   val carouselHeight = when (deviceType) {
-    "tv" -> 400.dp  // Aumentado de 320dp para 400dp (25% maior)
+    "tv" -> 320.dp  // Reduzido de 400dp para 320dp (proporcional)
     "phone" -> 200.dp
     else -> 260.dp
   }
   
-  val context = androidx.compose.ui.platform.LocalContext.current
   
   Column(
     modifier = Modifier
@@ -1141,7 +1138,7 @@ fun EmbeddedPlayer(
 ) {
   val context = LocalContext.current
   val playerHeight = when (deviceType) {
-    "tv" -> 300.dp  // Aumentado de 220dp para 300dp (36% maior)
+    "tv" -> 240.dp  // Reduzido de 300dp para 240dp (proporcional)
     "phone" -> 140.dp
     else -> 180.dp
   }
@@ -1206,7 +1203,7 @@ fun EmbeddedPlayer(
     modifier = Modifier
       .fillMaxWidth()
       .height(playerHeight)
-      .padding(horizontal = if (deviceType == "tv") 32.dp else if (deviceType == "phone") 16.dp else 24.dp)
+      .padding(horizontal = if (deviceType == "tv") 48.dp else if (deviceType == "phone") 16.dp else 24.dp)
       .clip(RoundedCornerShape(16.dp))
       .background(Color.Black)
       .border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(16.dp))
