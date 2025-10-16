@@ -1061,7 +1061,7 @@ fun DualCarousel(
   }
   
   val carouselHeight = when (deviceType) {
-    "tv" -> 320.dp
+    "tv" -> 400.dp  // Aumentado de 320dp para 400dp (25% maior)
     "phone" -> 200.dp
     else -> 260.dp
   }
@@ -1141,7 +1141,7 @@ fun EmbeddedPlayer(
 ) {
   val context = LocalContext.current
   val playerHeight = when (deviceType) {
-    "tv" -> 220.dp
+    "tv" -> 300.dp  // Aumentado de 220dp para 300dp (36% maior)
     "phone" -> 140.dp
     else -> 180.dp
   }
