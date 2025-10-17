@@ -1,7 +1,7 @@
 {
-    "version":  "v1.0.16",
-    "versionCode":  17,
-    "buildNumber":  17,
-    "lastUpdated":  "2025-10-15T22:22:05Z",
-    "releaseNotes":  "Versão inicial do MaxiPTV com todas as funcionalidades implementadas"
+    "version":  "v1.0.22",
+    "versionCode":  23,
+    "buildNumber":  23,
+    "lastUpdated":  "2025-10-16T21:15:04Z",
+    "releaseNotes":  "Versão estável v1.0.16 restaurada (Live otimizado funcional)"
 }
