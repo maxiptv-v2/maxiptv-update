@@ -3,10 +3,10 @@
     "versionCode":  23,
     "buildNumber":  23,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.16 - Canais Live Otimizados\n\nCanais Live - Travamentos RESOLVIDOS:\n- Live Configuration com offset automatico\n- Buffers maiores (20s min, 50s max)\n- OkHttp + DNS IPv4 otimizado\n- Qualidade adaptativa (720p inicial)\n- Retry automatico (ate 5 tentativas)\n- Logs de performance (bitrate/resolucao)\n\nRede:\n- Timeout aumentado para 10s\n- DNS priorizando IPv4\n- Reconexao automatica melhorada\n\nVOD/Series mantidos otimizados",
+    "releaseNotes":  "MaxiPTV v1.0.22 - Versao Estavel Restaurada\n\nVersao v1.0.16 restaurada (ultima versao 100% funcional)\n\nCanais Live - Otimizados:\n- Live Configuration com offset automatico\n- Buffers maiores (20s min, 50s max)\n- OkHttp + DNS IPv4 otimizado\n- Qualidade adaptativa (720p inicial)\n- Retry automatico (ate 5 tentativas)\n- Logs de performance (bitrate/resolucao)\n\nRede:\n- Timeout aumentado para 10s\n- DNS priorizando IPv4\n- Reconexao automatica melhorada\n\nVOD/Series mantidos otimizados",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-16T21:15:04Z",
+    "lastUpdated":  "2025-10-17T01:40:00Z",
     "checksum":  "sha256:placeholder"
 }
