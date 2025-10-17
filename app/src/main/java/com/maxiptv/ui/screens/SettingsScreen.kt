@@ -38,7 +38,7 @@ fun SettingsScreen(nav: NavHostController) {
       fontWeight = FontWeight.Bold
     )
     
-    Divider()
+    HorizontalDivider()
     
     // Card com informações atuais
     Card(

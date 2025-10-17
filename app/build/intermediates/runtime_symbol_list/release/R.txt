@@ -458,8 +458,9 @@ int id zoom 0x7f0700a4
 int integer cancel_button_image_alpha 0x7f080000
 int integer exo_media_button_opacity_percentage_disabled 0x7f080001
 int integer exo_media_button_opacity_percentage_enabled 0x7f080002
-int integer m3c_window_layout_in_display_cutout_mode 0x7f080003
-int integer status_bar_notification_info_maxnum 0x7f080004
+int integer is_tv_mode 0x7f080003
+int integer m3c_window_layout_in_display_cutout_mode 0x7f080004
+int integer status_bar_notification_info_maxnum 0x7f080005
 int layout custom_dialog 0x7f090000
 int layout exo_legacy_player_control_view 0x7f090001
 int layout exo_list_divider 0x7f090002

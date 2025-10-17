@@ -459,6 +459,7 @@ id zoom
 integer cancel_button_image_alpha
 integer exo_media_button_opacity_percentage_disabled
 integer exo_media_button_opacity_percentage_enabled
+integer is_tv_mode
 integer m3c_window_layout_in_display_cutout_mode
 integer status_bar_notification_info_maxnum
 layout custom_dialog

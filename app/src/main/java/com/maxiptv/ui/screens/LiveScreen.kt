@@ -137,7 +137,7 @@ fun LiveScreen(nav: NavHostController) {
                 .clickable { current = s }
                 .focusable()
             )
-            Divider()
+            HorizontalDivider()
           } 
         }
       }

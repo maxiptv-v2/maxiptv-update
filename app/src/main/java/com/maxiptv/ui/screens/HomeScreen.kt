@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -160,7 +161,7 @@ fun HomeScreen(nav: NavHostController) {
       title = {
         Row(verticalAlignment = Alignment.CenterVertically) {
           Icon(
-            imageVector = Icons.Filled.ExitToApp,
+            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
             contentDescription = null,
             tint = Color(0xFFFF5252),
             modifier = Modifier.size(32.dp)
@@ -981,7 +982,7 @@ fun LogoutButton(
       )
     } else {
       Icon(
-        imageVector = Icons.Filled.ExitToApp,
+        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
         contentDescription = "Sair",
         modifier = Modifier.size(iconSize)
       )

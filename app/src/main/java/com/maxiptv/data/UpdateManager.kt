@@ -92,7 +92,12 @@ object UpdateManager {
     private fun getCurrentVersionCode(context: Context): Int {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.versionCode
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode.toInt()
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo.versionCode
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao obter versionCode: ${e.message}")
             0

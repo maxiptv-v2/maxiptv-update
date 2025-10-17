@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -513,7 +514,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
             modifier = Modifier.padding(bottom = 16.dp)
           ) {
             Icon(
-              Icons.Default.List,
+              Icons.AutoMirrored.Filled.List,
               contentDescription = null,
               tint = Color(0xFF00D4FF),
               modifier = Modifier.size(24.dp)
@@ -619,7 +620,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                 Spacer(Modifier.weight(1f))
                 
                 Icon(
-                  Icons.Default.ArrowForward,
+                  Icons.AutoMirrored.Filled.ArrowForward,
                   contentDescription = null,
                   tint = Color(0xFF00D4FF),
                   modifier = Modifier.size(24.dp)

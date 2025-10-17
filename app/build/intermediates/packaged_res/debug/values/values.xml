@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_bg">#0A0F1A</color>
+    <integer name="is_tv_mode">0</integer>
     <string name="app_name">MaxiPTV</string>
 </resources>

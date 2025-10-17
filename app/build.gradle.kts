@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-    versionCode = 23
-    versionName = "1.0.22"
+    versionCode = 24
+    versionName = "1.0.23"
     vectorDrawables.useSupportLibrary = true
     buildConfigField("String", "DEFAULT_PLAYER_API", "\"https://canais.is/\"")
     buildConfigField("String", "DEFAULT_USER", "\"max\"")

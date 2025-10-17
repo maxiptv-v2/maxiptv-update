@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Flag para detectar se está em TV (padrão: 0 para telefone/tablet) -->
+    <integer name="is_tv_mode">0</integer>
+</resources>
+
