@@ -129,8 +129,8 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚡ Configurar DataSource com timeouts diferentes para LIVE vs VOD/SERIES
     val isLive = contentType == "live"
-    val connectTimeout = if (isLive) 10000 else 15000  // VOD: 15s, LIVE: 10s
-    val readTimeout = if (isLive) 10000 else 15000     // VOD: 15s, LIVE: 10s
+    val connectTimeout = if (isLive) 8000 else 15000   // VOD: 15s, LIVE: 8s (REDUZIDO)
+    val readTimeout = if (isLive) 8000 else 15000      // VOD: 15s, LIVE: 8s (REDUZIDO)
     
     // 🌐 DNS OTIMIZADO: Priorizar IPv4 para melhor compatibilidade
     val customDns = object : Dns {
@@ -158,28 +158,28 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES
     val loadControl: LoadControl = if (isLive) {
-      // 📺 LIVE: Buffers maiores para Wi-Fi instável
+      // 📺 LIVE: Buffers MENORES para menos travamentos (IPTV precisa de buffers pequenos)
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          20000,  // minBufferMs: 20 segundos (aumentado)
-          50000,  // maxBufferMs: 50 segundos (aumentado)
-          2000,   // bufferForPlaybackMs: 2 segundos
-          8000    // bufferForPlaybackAfterRebufferMs: 8 segundos
+          3000,   // minBufferMs: 3 segundos (REDUZIDO - menos delay)
+          10000,  // maxBufferMs: 10 segundos (REDUZIDO - evita acúmulo)
+          1500,   // bufferForPlaybackMs: 1.5 segundos (start rápido)
+          3000    // bufferForPlaybackAfterRebufferMs: 3 segundos
         )
-        .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(20000, true) // 20s de back buffer
+        .setPrioritizeTimeOverSizeThresholds(true) // Prioriza tempo real
+        .setBackBuffer(5000, true) // 5s de back buffer (REDUZIDO)
         .build()
     } else {
-      // 🎬 VOD/SERIES: Buffers grandes para menos travamentos
+      // 🎬 VOD/SERIES: Buffers maiores para reprodução suave
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          30000,  // minBufferMs: 30 segundos
-          120000, // maxBufferMs: 2 minutos
+          15000,  // minBufferMs: 15 segundos (REDUZIDO)
+          60000,  // maxBufferMs: 60 segundos (REDUZIDO)
           2500,   // bufferForPlaybackMs: 2.5 segundos
-          10000   // bufferForPlaybackAfterRebufferMs: 10 segundos
+          5000    // bufferForPlaybackAfterRebufferMs: 5 segundos (REDUZIDO)
         )
         .setPrioritizeTimeOverSizeThresholds(false) // VOD prioriza tamanho
-        .setBackBuffer(30000, true) // 30s de back buffer para VOD
+        .setBackBuffer(15000, true) // 15s de back buffer para VOD (REDUZIDO)
         .build()
     }
     
@@ -210,8 +210,9 @@ class PlayerActivity : ComponentActivity() {
         // 📊 QUALIDADE ADAPTATIVA: Começar em qualidade média para evitar travamentos
         exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
           .setPreferredTextLanguage(null) // Sem legendas
-          .setMaxVideoBitrate(if (isLive) 3_000_000 else 8_000_000) // LIVE: 3Mbps, VOD: 8Mbps
-          .setMaxVideoSize(1280, 720) // Começar em 720p
+          .setMaxVideoBitrate(if (isLive) 2_500_000 else 5_000_000) // LIVE: 2.5Mbps (REDUZIDO), VOD: 5Mbps
+          .setMaxVideoSize(1280, 720) // Limitar a 720p para performance
+          .setMinVideoBitrate(if (isLive) 500_000 else 800_000) // Bitrate mínimo
           .build()
         
         exo.prepare()
