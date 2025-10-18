@@ -3,7 +3,7 @@
     "versionCode":  26,
     "buildNumber":  26,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.23 - Versao Estavel + Deprecados Corrigidos\n\nVersao v1.0.16 restaurada (100% funcional)\n\nDeprecados Corrigidos:\n- Icons AutoMirrored (ExitToApp, List, ArrowForward)\n- HorizontalDivider\n- longVersionCode (API 28+)\n\nRecursos TV Minimalistas:\n- values-television criado\n- Deteccao automatica\n- Sem quebrar layout\n\nCanais Live Otimizados:\n- Buffers 20s/50s\n- DNS IPv4 + OkHttp\n- Retry automatico\n\nVOD/Series otimizados",
+    "releaseNotes":  "MaxiPTV v1.0.25 - Launcher IPTV + Compatibilidade Universal\n\n🎨 Novo Launcher IPTV:\n- TV roxa com texto IPTV branco\n- Ícones em todas as densidades (48px-192px)\n- Banner TV 1280x720\n- Ícones adaptativos (API 26+)\n\n📺 Compatibilidade Universal:\n- TV Box Android (genéricas)\n- Fire Stick (todas gerações)\n- Chromecast com Google TV\n- Android TV (Sony, Philips, TCL)\n- Smartphones e Tablets\n\n🔧 Recursos Avançados:\n- DensityNormalizer automático\n- Dimensões otimizadas por dispositivo\n- Detecção inteligente de hardware\n- Manifest completo para TV\n\n✨ Layout otimizado para cada dispositivo!",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
