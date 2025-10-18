@@ -21,7 +21,7 @@ class MaxiApp : Application() {
       val ui = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
       val isTvMode = ui.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
       
-      // Detecção precisa de dispositivos
+      // Detecção mais precisa de dispositivos
       val manufacturer = android.os.Build.MANUFACTURER.lowercase()
       val model = android.os.Build.MODEL.lowercase()
       val brand = android.os.Build.BRAND.lowercase()
@@ -42,10 +42,6 @@ class MaxiApp : Application() {
                     model.contains("fire") || 
                     product.contains("fire")
       
-      // Detecta Smartphone e Tablet (apenas quando NÃO é TV)
-      isPhone = !isTv && resources.configuration.screenWidthDp < 600
-      isTablet = !isTv && resources.configuration.screenWidthDp >= 600
-      
       // Log detalhado para debug
       android.util.Log.i("MaxiApp", "═══════════════════════════════════════")
       android.util.Log.i("MaxiApp", "📱 DETECÇÃO DE DISPOSITIVO")
@@ -65,6 +61,8 @@ class MaxiApp : Application() {
         else -> "Desconhecido"
       }}")
       android.util.Log.i("MaxiApp", "═══════════════════════════════════════")
+      isPhone = !isTv && resources.configuration.screenWidthDp <= 600
+      isTablet = !isTv && resources.configuration.screenWidthDp > 600
       
       AppCtx.ctx = applicationContext
       

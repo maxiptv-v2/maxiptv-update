@@ -33,4 +33,3 @@
     <!-- Escala de foco D-Pad (100 = 1.0) -->
     <dimen name="tv_focus_scale">1.0</dimen>
 </resources>
-

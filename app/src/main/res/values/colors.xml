@@ -1,14 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Cor de fundo do launcher (preto) -->
-    <color name="launcher_background">#FF000000</color>
-    
-    <!-- Cor roxa principal da TV -->
-    <color name="tv_purple">#FF8B5CF6</color>
-    <color name="tv_purple_dark">#FF7C3AED</color>
-    <color name="tv_purple_light">#FFA78BFA</color>
-    
-    <!-- Gradientes para efeito 3D -->
-    <color name="tv_gradient_start">#FFA78BFA</color>
-    <color name="tv_gradient_end">#FF7C3AED</color>
-</resources>
+<resources><color name="ic_launcher_bg">#0A0F1A</color></resources>

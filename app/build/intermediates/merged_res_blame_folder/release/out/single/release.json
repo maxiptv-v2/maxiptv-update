@@ -8,20 +8,28 @@
         "source": "com.maxiptv.app-main-59:/drawable/ic_launcher_foreground.xml"
     },
     {
-        "merged": "com.maxiptv.app-merged_res-58:/mipmap-anydpi-v26_ic_launcher_banner.xml.flat",
-        "source": "com.maxiptv.app-main-59:/mipmap-anydpi-v26/ic_launcher_banner.xml"
+        "merged": "com.maxiptv.app-merged_res-58:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.maxiptv.app-main-59:/mipmap-mdpi/ic_launcher.png"
     },
     {
-        "merged": "com.maxiptv.app-merged_res-58:/drawable_launcher_foreground.xml.flat",
-        "source": "com.maxiptv.app-main-59:/drawable/launcher_foreground.xml"
+        "merged": "com.maxiptv.app-merged_res-58:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.maxiptv.app-main-59:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.maxiptv.app-merged_res-58:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.maxiptv.app-main-59:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.maxiptv.app-merged_res-58:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.maxiptv.app-main-59:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.maxiptv.app-merged_res-58:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.maxiptv.app-main-59:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
         "merged": "com.maxiptv.app-merged_res-58:/xml_network_security_config.xml.flat",
         "source": "com.maxiptv.app-main-59:/xml/network_security_config.xml"
-    },
-    {
-        "merged": "com.maxiptv.app-merged_res-58:/drawable_launcher_monochrome.xml.flat",
-        "source": "com.maxiptv.app-main-59:/drawable/launcher_monochrome.xml"
     },
     {
         "merged": "com.maxiptv.app-merged_res-58:/xml_file_paths.xml.flat",

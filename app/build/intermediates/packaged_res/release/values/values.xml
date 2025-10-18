@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="launcher_background">#FF000000</color>
-    <color name="tv_gradient_end">#FF7C3AED</color>
-    <color name="tv_gradient_start">#FFA78BFA</color>
-    <color name="tv_purple">#FF8B5CF6</color>
-    <color name="tv_purple_dark">#FF7C3AED</color>
-    <color name="tv_purple_light">#FFA78BFA</color>
+    <color name="ic_launcher_bg">#0A0F1A</color>
     <dimen name="padding_content">12dp</dimen>
     <dimen name="padding_screen">16dp</dimen>
     <dimen name="text_body">14sp</dimen>

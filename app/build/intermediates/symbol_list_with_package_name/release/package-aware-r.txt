@@ -117,17 +117,12 @@ color exo_edit_mode_background_color
 color exo_styled_error_message_background
 color exo_white
 color exo_white_opacity_70
-color launcher_background
+color ic_launcher_bg
 color notification_action_color_filter
 color notification_icon_bg_color
 color notification_material_background_media_default_color
 color primary_text_default_material_dark
 color secondary_text_default_material_dark
-color tv_gradient_end
-color tv_gradient_start
-color tv_purple
-color tv_purple_dark
-color tv_purple_light
 color vector_tint_color
 color vector_tint_theme_color
 dimen compat_button_inset_horizontal_material
@@ -295,8 +290,6 @@ drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
 drawable ic_launcher_foreground
-drawable launcher_foreground
-drawable launcher_monochrome
 drawable notification_action_background
 drawable notification_bg
 drawable notification_bg_low
@@ -511,7 +504,6 @@ layout notification_template_media_custom
 layout notification_template_part_chronometer
 layout notification_template_part_time
 mipmap ic_launcher
-mipmap ic_launcher_banner
 plurals exo_controls_fastforward_by_amount_description
 plurals exo_controls_rewind_by_amount_description
 string androidx_startup

@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
 import com.maxiptv.ui.screens.*
 import com.maxiptv.ui.theme.MaxiTheme
-import com.maxiptv.ui.tv.DensityNormalizer
 
 class MainActivity : ComponentActivity() {
   @OptIn(ExperimentalMaterial3Api::class)
@@ -22,12 +21,10 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     setContent {
       MaxiTheme {
-        DensityNormalizer {
-          val nav = rememberNavController()
-          
-          Surface(modifier = Modifier.fillMaxSize()) {
-            HomeNav(nav)
-          }
+        val nav = rememberNavController()
+        
+        Surface(modifier = Modifier.fillMaxSize()) {
+          HomeNav(nav)
         }
       }
     }
