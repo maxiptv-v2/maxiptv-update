@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.25",
-    "versionCode":  26,
-    "buildNumber":  26,
+    "version":  "v1.0.26",
+    "versionCode":  27,
+    "buildNumber":  27,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.25 - TV Box Compatibilidade Universal\n\nCompatibilidade Total:\n- Fire Stick\n- TV Box genericas (Android TV)\n- Chromecast\n- Smartphones\n- Tablets\n\nTV Box Otimizacoes:\n- Deteccao automatica de TV Box\n- Prevencao de overscan (32dp)\n- Player maior e mais visivel (380dp)\n- Textos otimizados para TV\n- Layout adaptativo por dispositivo\n\nManifest TV:\n- LEANBACK_LAUNCHER\n- Banner TV 1280x720\n- Touchscreen opcional\n- Navegacao D-Pad otimizada",
+    "releaseNotes":  "MaxiPTV v1.0.26 - TV Box Compatibilidade Universal\n\nCompatibilidade Total:\n- Fire Stick\n- TV Box genericas (Android TV)\n- Chromecast\n- Smartphones\n- Tablets\n\nTV Box Otimizacoes:\n- Deteccao automatica de TV Box\n- Prevencao de overscan (32dp)\n- Player maior e mais visivel (380dp)\n- Textos otimizados para TV\n- Layout adaptativo por dispositivo\n\nManifest TV:\n- LEANBACK_LAUNCHER\n- Banner TV 1280x720\n- Touchscreen opcional\n- Navegacao D-Pad otimizada",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-17T21:12:17Z",
+    "lastUpdated":  "2025-10-18T00:30:00Z",
     "checksum":  "sha256:placeholder"
 }
