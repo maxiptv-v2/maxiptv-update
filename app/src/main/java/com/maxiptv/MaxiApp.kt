@@ -21,14 +21,50 @@ class MaxiApp : Application() {
       val ui = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
       val isTvMode = ui.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
       
-      // Detecção mais precisa de dispositivos
+      // Detecção precisa de dispositivos
       val manufacturer = android.os.Build.MANUFACTURER.lowercase()
       val model = android.os.Build.MODEL.lowercase()
+      val brand = android.os.Build.BRAND.lowercase()
+      val product = android.os.Build.PRODUCT.lowercase()
       
-      isTv = isTvMode || manufacturer.contains("amazon") || model.contains("fire") || model.contains("tv")
-      isFireStick = manufacturer.contains("amazon") || model.contains("fire")
-      isPhone = !isTv && resources.configuration.screenWidthDp <= 600
-      isTablet = !isTv && resources.configuration.screenWidthDp > 600
+      // Detecta TV (incluindo Fire Stick, Chromecast, Android TV, TV Box genéricas)
+      isTv = isTvMode || 
+             manufacturer.contains("amazon") || 
+             model.contains("fire") || 
+             model.contains("chromecast") ||
+             product.contains("fire") ||
+             product.contains("chromecast") ||
+             model.contains("tv") ||
+             product.contains("atv")
+      
+      // Detecta Fire Stick especificamente
+      isFireStick = manufacturer.contains("amazon") || 
+                    model.contains("fire") || 
+                    product.contains("fire")
+      
+      // Detecta Smartphone e Tablet (apenas quando NÃO é TV)
+      isPhone = !isTv && resources.configuration.screenWidthDp < 600
+      isTablet = !isTv && resources.configuration.screenWidthDp >= 600
+      
+      // Log detalhado para debug
+      android.util.Log.i("MaxiApp", "═══════════════════════════════════════")
+      android.util.Log.i("MaxiApp", "📱 DETECÇÃO DE DISPOSITIVO")
+      android.util.Log.i("MaxiApp", "Fabricante: $manufacturer")
+      android.util.Log.i("MaxiApp", "Modelo: $model")
+      android.util.Log.i("MaxiApp", "Marca: $brand")
+      android.util.Log.i("MaxiApp", "Produto: $product")
+      android.util.Log.i("MaxiApp", "UI Mode: ${if (isTvMode) "TELEVISION" else "NORMAL"}")
+      android.util.Log.i("MaxiApp", "Largura: ${resources.configuration.screenWidthDp}dp")
+      android.util.Log.i("MaxiApp", "Altura: ${resources.configuration.screenHeightDp}dp")
+      android.util.Log.i("MaxiApp", "───────────────────────────────────────")
+      android.util.Log.i("MaxiApp", "✅ Tipo detectado: ${when {
+        isFireStick -> "Fire Stick"
+        isTv -> "TV Box / Android TV / Chromecast"
+        isTablet -> "Tablet"
+        isPhone -> "Smartphone"
+        else -> "Desconhecido"
+      }}")
+      android.util.Log.i("MaxiApp", "═══════════════════════════════════════")
       
       AppCtx.ctx = applicationContext
       

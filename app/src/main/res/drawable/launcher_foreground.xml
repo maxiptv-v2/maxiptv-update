@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- TV com efeito 3D e gradiente -->
+    <path
+        android:fillColor="@color/tv_purple"
+        android:pathData="M20,25 L88,25 L88,75 L20,75 Z" />
+    
+    <!-- Tela da TV (área do texto) -->
+    <path
+        android:fillColor="@color/tv_purple_dark"
+        android:pathData="M25,30 L83,30 L83,70 L25,70 Z" />
+    
+    <!-- Antenas V -->
+    <path
+        android:fillColor="@color/tv_purple"
+        android:pathData="M50,20 L45,25 L55,25 Z" />
+    <path
+        android:fillColor="@color/tv_purple"
+        android:pathData="M58,20 L53,25 L63,25 Z" />
+    
+    <!-- Pés da TV -->
+    <path
+        android:fillColor="@color/tv_purple"
+        android:pathData="M30,75 L35,80 L35,85 L30,85 Z" />
+    <path
+        android:fillColor="@color/tv_purple"
+        android:pathData="M73,75 L78,80 L78,85 L73,85 Z" />
+    
+    <!-- Texto IPTV (simulado com retângulos) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M35,40 L40,40 L40,60 L35,60 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M35,45 L40,45 L40,50 L35,50 Z" />
+    
+    <!-- P -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M45,40 L50,40 L50,60 L45,60 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M45,40 L50,40 L50,50 L45,50 Z" />
+    
+    <!-- T -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M55,40 L60,40 L60,60 L55,60 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M55,40 L60,40 L60,45 L55,45 Z" />
+    
+    <!-- V -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M65,40 L70,40 L70,60 L65,60 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M65,55 L70,55 L70,60 L65,60 Z" />
+</vector>

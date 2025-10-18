@@ -1,9 +1,30 @@
 R_DEF: Internal format may change without notice
 local
-color ic_launcher_bg
+color launcher_background
+color tv_gradient_end
+color tv_gradient_start
+color tv_purple
+color tv_purple_dark
+color tv_purple_light
+dimen padding_content
+dimen padding_screen
+dimen text_body
+dimen text_small
+dimen text_title
+dimen tv_card_spacing
+dimen tv_carousel_height
+dimen tv_category_height
+dimen tv_channel_list_width
+dimen tv_focus_scale
+dimen tv_grid_gutter
+dimen tv_player_height
+dimen tv_safe_margin
 drawable ic_launcher_foreground
+drawable launcher_foreground
+drawable launcher_monochrome
 integer is_tv_mode
 mipmap ic_launcher
+mipmap ic_launcher_banner
 string app_name
 xml file_paths
 xml network_security_config

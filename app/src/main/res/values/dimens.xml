@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dimensões padrão para Smartphone e Tablet -->
+    
+    <!-- Margens de segurança -->
+    <dimen name="tv_safe_margin">16dp</dimen>
+    <dimen name="tv_grid_gutter">8dp</dimen>
+    
+    <!-- Altura do player embutido -->
+    <dimen name="tv_player_height">220dp</dimen>
+    
+    <!-- Altura do carrossel de categorias -->
+    <dimen name="tv_carousel_height">280dp</dimen>
+    
+    <!-- Largura da lista de canais -->
+    <dimen name="tv_channel_list_width">280dp</dimen>
+    
+    <!-- Altura dos botões de categoria -->
+    <dimen name="tv_category_height">48dp</dimen>
+    
+    <!-- Espaçamento entre cards -->
+    <dimen name="tv_card_spacing">12dp</dimen>
+    
+    <!-- Textos -->
+    <dimen name="text_title">18sp</dimen>
+    <dimen name="text_body">14sp</dimen>
+    <dimen name="text_small">12sp</dimen>
+    
+    <!-- Padding geral -->
+    <dimen name="padding_screen">16dp</dimen>
+    <dimen name="padding_content">12dp</dimen>
+    
+    <!-- Escala de foco D-Pad (100 = 1.0) -->
+    <dimen name="tv_focus_scale">1.0</dimen>
+</resources>
+

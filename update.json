@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.23",
-    "versionCode":  24,
-    "buildNumber":  24,
+    "version":  "v1.0.25",
+    "versionCode":  26,
+    "buildNumber":  26,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.23 - Versao Estavel + Deprecados Corrigidos\n\nVersao v1.0.16 restaurada (100% funcional)\n\nDeprecados Corrigidos:\n- Icons AutoMirrored (ExitToApp, List, ArrowForward)\n- HorizontalDivider\n- longVersionCode (API 28+)\n\nRecursos TV Minimalistas:\n- values-television criado\n- Deteccao automatica\n- Sem quebrar layout\n\nCanais Live Otimizados:\n- Buffers 20s/50s\n- DNS IPv4 + OkHttp\n- Retry automatico\n\nVOD/Series otimizados",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-17T01:50:00Z",
+    "lastUpdated":  "2025-10-17T20:40:29Z",
     "checksum":  "sha256:placeholder"
 }

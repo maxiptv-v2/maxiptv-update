@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_bg">#0A0F1A</color>
+    <color name="launcher_background">#FF000000</color>
+    <color name="tv_gradient_end">#FF7C3AED</color>
+    <color name="tv_gradient_start">#FFA78BFA</color>
+    <color name="tv_purple">#FF8B5CF6</color>
+    <color name="tv_purple_dark">#FF7C3AED</color>
+    <color name="tv_purple_light">#FFA78BFA</color>
+    <dimen name="padding_content">12dp</dimen>
+    <dimen name="padding_screen">16dp</dimen>
+    <dimen name="text_body">14sp</dimen>
+    <dimen name="text_small">12sp</dimen>
+    <dimen name="text_title">18sp</dimen>
+    <dimen name="tv_card_spacing">12dp</dimen>
+    <dimen name="tv_carousel_height">280dp</dimen>
+    <dimen name="tv_category_height">48dp</dimen>
+    <dimen name="tv_channel_list_width">280dp</dimen>
+    <dimen name="tv_focus_scale">1.0</dimen>
+    <dimen name="tv_grid_gutter">8dp</dimen>
+    <dimen name="tv_player_height">220dp</dimen>
+    <dimen name="tv_safe_margin">16dp</dimen>
     <integer name="is_tv_mode">0</integer>
     <string name="app_name">MaxiPTV</string>
 </resources>
