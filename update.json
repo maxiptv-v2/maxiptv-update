@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.31",
-    "versionCode":  32,
-    "buildNumber":  32,
+    "version":  "v1.0.33",
+    "versionCode":  34,
+    "buildNumber":  34,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.30 - Mini Player para TV\n\nNova Funcionalidade:\n- Mini Player na tela Live (apenas TV)\n- Layout TV otimizado com preview\n- 1x OK = Mini Player\n- 2x OK = Fullscreen (preparado)\n- Navegacao D-Pad melhorada\n\nLayout TV:\n- Lista de canais (esquerda)\n- Mini Player (direita)\n- Preview instantaneo dos canais\n- Sem audio no mini player\n\nCompatibilidade:\n- TV Box (oficiais e genericas)\n- Fire Stick / Chromecast\n- Smartphone/Tablet (layout original)\n\nDetecao universal de TV\nPerformance otimizada",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-19T19:27:32Z",
+    "lastUpdated":  "2025-10-19T19:48:04Z",
     "checksum":  "sha256:placeholder"
 }

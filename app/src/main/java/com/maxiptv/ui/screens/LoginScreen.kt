@@ -49,7 +49,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
           id = "default",
           username = "max",
           password = "1h2yd90",
-          apiUrl = "https://canais.is/player_api.php",
+          apiUrl = "https://aztv.cx/player_api.php",
           expiryDate = "31/12/2030"
         )
         SessionManager.saveUser(defaultGlobalUser)
@@ -62,7 +62,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
           id = "default",
           username = "max",
           password = "1h2yd90",
-          apiUrl = "https://canais.is/player_api.php",
+          apiUrl = "https://aztv.cx/player_api.php",
           expiryDate = "31/12/2030"
         )
         UserManager.addUser(defaultUser)
