@@ -1,10 +1,12 @@
 package com.maxiptv.ui.screens
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -81,68 +83,171 @@ fun LiveScreen(nav: NavHostController) {
         }
       }
     )
-    Row(Modifier.weight(1f)) {
-      Surface(tonalElevation = 2.dp, modifier = Modifier.width(380.dp).fillMaxHeight()) {
-        val filtered = when {
-          selectedCat == "ADULT" && isAdultUnlocked -> {
-            // ✅ Mostrar canais adultos quando desbloqueado
-            streams.filter { 
-              it.category_id in adultCategoryIds || 
-              it.name.contains(Regex("(?i)(adult|xxx|18\\+|porn|sex)"))
+    val isTv = MaxiApp.isTv
+    
+    if (isTv) {
+      // 📺 Layout TV com Mini Player
+      Row(Modifier.weight(1f)) {
+        // Lista de canais (lado esquerdo)
+        Surface(tonalElevation = 2.dp, modifier = Modifier.width(420.dp).fillMaxHeight()) {
+          val filtered = when {
+            selectedCat == "ADULT" && isAdultUnlocked -> {
+              streams.filter { 
+                it.category_id in adultCategoryIds || 
+                it.name.contains(Regex("(?i)(adult|xxx|18\\+|porn|sex)"))
+              }
+            }
+            selectedCat == null -> streams
+            else -> streams.filter { it.category_id == selectedCat }
+          }
+          
+          val headlineSize = 18.sp
+          val supportingSize = 14.sp
+          val iconSize = 48.dp
+          
+          LazyColumn { 
+            items(filtered) { s ->
+              ListItem(
+                headlineContent = { 
+                  Text(
+                    text = s.name,
+                    fontSize = headlineSize,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.SansSerif
+                  ) 
+                }, 
+                supportingContent = { 
+                  Text(
+                    text = s.categoryName ?: "-",
+                    fontSize = supportingSize,
+                    fontFamily = FontFamily.SansSerif
+                  ) 
+                },
+                leadingContent = {
+                  Box(
+                    modifier = Modifier
+                      .size(iconSize + 8.dp)
+                      .padding(4.dp),
+                    contentAlignment = Alignment.Center
+                  ) {
+                    AsyncImage(
+                      model = s.stream_icon,
+                      contentDescription = s.name,
+                      modifier = Modifier
+                        .size(iconSize - 4.dp),
+                      contentScale = ContentScale.Inside
+                    )
+                  }
+                },
+                modifier = Modifier
+                  .clickable { 
+                    // 1x clique = mini player
+                    current = s
+                  }
+                  .focusable()
+              )
+              HorizontalDivider()
+            } 
+          }
+        }
+        
+        // Mini Player (lado direito - espaço azul vazio)
+        Box(
+          modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .padding(16.dp)
+        ) {
+          if (current != null) {
+            MiniPlayer(
+              channel = current!!,
+              onFullscreen = { 
+                // 2x clique = fullscreen (implementar depois)
+                // Por enquanto, apenas log
+                android.util.Log.i("MiniPlayer", "Fullscreen solicitado para: ${current!!.name}")
+              }
+            )
+          } else {
+            // Espaço vazio quando nenhum canal selecionado
+            Box(
+              modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+              contentAlignment = Alignment.Center
+            ) {
+              Text(
+                text = "Selecione um canal para visualizar",
+                fontSize = 20.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.Medium
+              )
             }
           }
-          selectedCat == null -> streams
-          else -> streams.filter { it.category_id == selectedCat }
-        }
-        val isTv = MaxiApp.isTv
-        val headlineSize = if (isTv) 18.sp else 16.sp
-        val supportingSize = if (isTv) 14.sp else 12.sp
-        val iconSize = if (isTv) 48.dp else 40.dp  // Reduzido para evitar corte
-        
-        LazyColumn { 
-          items(filtered) { s ->
-            ListItem(
-              headlineContent = { 
-                Text(
-                  text = s.name,
-                  fontSize = headlineSize,
-                  fontWeight = FontWeight.SemiBold,
-                  fontFamily = FontFamily.SansSerif
-                ) 
-              }, 
-              supportingContent = { 
-                Text(
-                  text = s.categoryName ?: "-",
-                  fontSize = supportingSize,
-                  fontFamily = FontFamily.SansSerif
-                ) 
-              },
-              leadingContent = {
-                Box(
-                  modifier = Modifier
-                    .size(iconSize + 8.dp)  // Espaço extra para evitar corte
-                    .padding(4.dp),
-                  contentAlignment = Alignment.Center
-                ) {
-                  AsyncImage(
-                    model = s.stream_icon,
-                    contentDescription = s.name,
-                    modifier = Modifier
-                      .size(iconSize - 4.dp),  // Ícone um pouco menor que o container
-                    contentScale = ContentScale.Inside  // Garante que a imagem inteira seja visível
-                  )
-                }
-              },
-              modifier = Modifier
-                .clickable { current = s }
-                .focusable()
-            )
-            HorizontalDivider()
-          } 
         }
       }
-      Box(Modifier.weight(1f).fillMaxHeight().padding(8.dp)) {
-        PlayerSurface(currentUrl = current?.toLiveUrl())
+    } else {
+      // 📱 Layout original para smartphone/tablet
+      Row(Modifier.weight(1f)) {
+        Surface(tonalElevation = 2.dp, modifier = Modifier.width(380.dp).fillMaxHeight()) {
+          val filtered = when {
+            selectedCat == "ADULT" && isAdultUnlocked -> {
+              streams.filter { 
+                it.category_id in adultCategoryIds || 
+                it.name.contains(Regex("(?i)(adult|xxx|18\\+|porn|sex)"))
+              }
+            }
+            selectedCat == null -> streams
+            else -> streams.filter { it.category_id == selectedCat }
+          }
+          val headlineSize = 16.sp
+          val supportingSize = 12.sp
+          val iconSize = 40.dp
+          
+          LazyColumn { 
+            items(filtered) { s ->
+              ListItem(
+                headlineContent = { 
+                  Text(
+                    text = s.name,
+                    fontSize = headlineSize,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.SansSerif
+                  ) 
+                }, 
+                supportingContent = { 
+                  Text(
+                    text = s.categoryName ?: "-",
+                    fontSize = supportingSize,
+                    fontFamily = FontFamily.SansSerif
+                  ) 
+                },
+                leadingContent = {
+                  Box(
+                    modifier = Modifier
+                      .size(iconSize + 8.dp)
+                      .padding(4.dp),
+                    contentAlignment = Alignment.Center
+                  ) {
+                    AsyncImage(
+                      model = s.stream_icon,
+                      contentDescription = s.name,
+                      modifier = Modifier
+                        .size(iconSize - 4.dp),
+                      contentScale = ContentScale.Inside
+                    )
+                  }
+                },
+                modifier = Modifier
+                  .clickable { current = s }
+                  .focusable()
+              )
+              HorizontalDivider()
+            } 
+          }
+        }
+        Box(Modifier.weight(1f).fillMaxHeight().padding(8.dp)) {
+          PlayerSurface(currentUrl = current?.toLiveUrl())
+        }
       }
     }
   }
@@ -238,6 +343,145 @@ fun LiveScreen(nav: NavHostController) {
           }
         }
       }
+    }
+  }
+}
+
+@Composable
+fun MiniPlayer(
+  channel: LiveStream,
+  onFullscreen: () -> Unit
+) {
+  val context = androidx.compose.ui.platform.LocalContext.current
+  
+  // ExoPlayer para mini player
+  val exoPlayer = remember(channel.stream_id) {
+    val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
+      .setAllowCrossProtocolRedirects(true)
+      .setUserAgent("MaxiPTV/1.1.1 (Android)")
+      .setConnectTimeoutMs(8000)
+      .setReadTimeoutMs(8000)
+      .setKeepPostFor302Redirects(true)
+    
+    val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
+      .setDataSourceFactory(dataSourceFactory)
+    
+    // LoadControl otimizado para mini player
+    val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
+      .setBufferDurationsMs(
+        3000,   // minBufferMs: 3 segundos
+        10000,  // maxBufferMs: 10 segundos
+        1500,   // bufferForPlaybackMs: 1.5 segundos
+        3000    // bufferForPlaybackAfterRebufferMs: 3 segundos
+      )
+      .setPrioritizeTimeOverSizeThresholds(true)
+      .setBackBuffer(3000, true)
+      .build()
+    
+    androidx.media3.exoplayer.ExoPlayer.Builder(context)
+      .setMediaSourceFactory(mediaSourceFactory)
+      .setLoadControl(loadControl)
+      .build().apply {
+        val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
+        setMediaItem(mediaItem)
+        volume = 0f // SEM ÁUDIO no mini player
+        repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
+        prepare()
+        playWhenReady = true
+        android.util.Log.i("MiniPlayer", "▶️ Mini Player criado para: ${channel.name}")
+      }
+  }
+  
+  // Garantir que o player está tocando
+  LaunchedEffect(channel.stream_id) {
+    android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
+    val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
+    exoPlayer.setMediaItem(mediaItem)
+    exoPlayer.prepare()
+    exoPlayer.playWhenReady = true
+  }
+  
+  DisposableEffect(Unit) {
+    onDispose {
+      android.util.Log.i("MiniPlayer", "⏹️ Mini Player liberado: ${channel.name}")
+      exoPlayer.stop()
+      exoPlayer.release()
+    }
+  }
+  
+  Box(
+    modifier = Modifier
+      .fillMaxSize()
+      .padding(8.dp)
+      .clickable { 
+        // 2x clique = fullscreen
+        onFullscreen()
+      }
+      .focusable(),
+    contentAlignment = Alignment.Center
+  ) {
+    // Player View
+    androidx.compose.ui.viewinterop.AndroidView(
+      factory = { ctx ->
+        androidx.media3.ui.PlayerView(ctx).apply {
+          player = exoPlayer
+          useController = false // SEM CONTROLES
+          resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+          layoutParams = android.view.ViewGroup.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT
+          )
+        }
+      },
+      modifier = Modifier.fillMaxSize()
+    )
+    
+    // Overlay com informações do canal
+    Box(
+      modifier = Modifier
+        .align(Alignment.BottomStart)
+        .padding(16.dp)
+        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+        .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+      Text(
+        text = channel.name,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+      )
+    }
+    
+    // Indicador "AO VIVO"
+    Box(
+      modifier = Modifier
+        .align(Alignment.TopEnd)
+        .padding(16.dp)
+        .background(Color(0xFFFF5252), RoundedCornerShape(6.dp))
+        .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+      Text(
+        text = "● AO VIVO",
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+      )
+    }
+    
+    // Instrução para fullscreen
+    Box(
+      modifier = Modifier
+        .align(Alignment.TopStart)
+        .padding(16.dp)
+        .background(Color(0xFF00D4FF).copy(alpha = 0.8f), RoundedCornerShape(6.dp))
+        .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+      Text(
+        text = "OK = Fullscreen",
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+      )
     }
   }
 }
