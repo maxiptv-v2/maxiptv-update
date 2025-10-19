@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.28",
-    "versionCode":  29,
-    "buildNumber":  29,
+    "version":  "v1.0.29",
+    "versionCode":  30,
+    "buildNumber":  30,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.28 - Layout Otimizado\n\nCorrecoes de Interface:\n- Faixa preta removida abaixo do relogio\n- Texto 'MaxiPTV' reposicionado no TopBar\n- Botao logout nao fica mais no canto\n- Logo 'Max IPTV' movido para esquerda\n- Espacamento responsivo melhorado\n- Layout mais limpo e organizado\n\nTV Box / Fire Stick:\n- Elementos nao colados nas bordas\n- Prevencao overscan mantida\n- Navegacao D-Pad otimizada\n- Interface mais confortavel\n\nCompatibilidade:\n- Smartphone / Tablet / TV Box\n- Fire Stick / Chromecast\n- Android TV",
+    "releaseNotes":  "MaxiPTV v1.0.29 - Deteccao de Dispositivo Corrigida\n\nCorrecoes Importantes:\n- Deteccao de smartphone corrigida (nao mais sobreposicao)\n- Deteccao de TV melhorada (qualquer tamanho)\n- Texto \u0027MaxiPTV\u0027 removido do TopBar\n- Faixa preta reduzida\n- Layout responsivo otimizado\n\nCompatibilidade:\n- Smartphone: Layout compacto sem sobreposicao\n- Tablet: Layout intermediario\n- TV (32\", 40\", 50\", 65\"+): Layout TV completo\n- Fire Stick / Chromecast: Detectados corretamente\n\nDetecao por UI Mode (nao por tamanho da tela)\nElementos sempre dentro da area segura",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-01-27T16:55:00Z",
+    "lastUpdated":  "2025-10-19T17:16:37Z",
     "checksum":  "sha256:placeholder"
 }

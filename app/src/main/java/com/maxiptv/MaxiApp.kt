@@ -27,20 +27,35 @@ class MaxiApp : Application() {
       val brand = android.os.Build.BRAND.lowercase()
       val product = android.os.Build.PRODUCT.lowercase()
       
-      // Detecta TV (incluindo Fire Stick, Chromecast, Android TV, TV Box genéricas)
-      isTv = isTvMode || 
-             manufacturer.contains("amazon") || 
-             model.contains("fire") || 
-             model.contains("chromecast") ||
-             product.contains("fire") ||
-             product.contains("chromecast") ||
-             model.contains("tv") ||
-             product.contains("atv")
-      
-      // Detecta Fire Stick especificamente
+      // Detecta Fire Stick especificamente (ANTES da detecção de TV)
       isFireStick = manufacturer.contains("amazon") || 
                     model.contains("fire") || 
                     product.contains("fire")
+      
+      // Detecta TV (PRIORIZA UI Mode e características específicas)
+      isTv = isTvMode ||  // UI Mode TV é o mais confiável
+             isFireStick ||
+             model.contains("chromecast") ||
+             product.contains("chromecast") ||
+             model.contains("tv") ||
+             product.contains("atv") ||
+             model.contains("android tv") ||
+             product.contains("android tv")
+      
+      // Detecta Phone e Tablet baseado no tamanho da tela (APENAS se NÃO for TV)
+      val screenWidth = resources.configuration.screenWidthDp
+      val screenHeight = resources.configuration.screenHeightDp
+      val smallestWidth = minOf(screenWidth, screenHeight)
+      
+      // Só aplica detecção por tamanho se NÃO for TV
+      if (!isTv) {
+        isPhone = smallestWidth <= 600
+        isTablet = smallestWidth > 600
+      } else {
+        // Se é TV, força Phone e Tablet como false
+        isPhone = false
+        isTablet = false
+      }
       
       // Log detalhado para debug
       android.util.Log.i("MaxiApp", "═══════════════════════════════════════")
@@ -50,8 +65,9 @@ class MaxiApp : Application() {
       android.util.Log.i("MaxiApp", "Marca: $brand")
       android.util.Log.i("MaxiApp", "Produto: $product")
       android.util.Log.i("MaxiApp", "UI Mode: ${if (isTvMode) "TELEVISION" else "NORMAL"}")
-      android.util.Log.i("MaxiApp", "Largura: ${resources.configuration.screenWidthDp}dp")
-      android.util.Log.i("MaxiApp", "Altura: ${resources.configuration.screenHeightDp}dp")
+      android.util.Log.i("MaxiApp", "Largura: ${screenWidth}dp")
+      android.util.Log.i("MaxiApp", "Altura: ${screenHeight}dp")
+      android.util.Log.i("MaxiApp", "Menor largura: ${smallestWidth}dp")
       android.util.Log.i("MaxiApp", "───────────────────────────────────────")
       android.util.Log.i("MaxiApp", "✅ Tipo detectado: ${when {
         isFireStick -> "Fire Stick"
@@ -61,8 +77,6 @@ class MaxiApp : Application() {
         else -> "Desconhecido"
       }}")
       android.util.Log.i("MaxiApp", "═══════════════════════════════════════")
-      isPhone = !isTv && resources.configuration.screenWidthDp <= 600
-      isTablet = !isTv && resources.configuration.screenWidthDp > 600
       
       AppCtx.ctx = applicationContext
       
