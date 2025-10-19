@@ -500,7 +500,22 @@ fun HomeScreen(nav: NavHostController) {
             vertical = if (isTv) 16.dp else if (isPhone) 12.dp else 14.dp
           )
       ) {
-        // Botão SAIR no canto esquerdo
+        // Texto MaxiPTV à esquerda (não no canto)
+        Text(
+          text = "MaxiPTV",
+          fontSize = when {
+            isTv -> 20.sp
+            isPhone -> 16.sp
+            else -> 18.sp
+          },
+          fontWeight = FontWeight.Bold,
+          color = Color(0xFF00D4FF),
+          modifier = Modifier
+            .align(Alignment.CenterStart)
+            .padding(start = if (isTv) 16.dp else if (isPhone) 8.dp else 12.dp)
+        )
+        
+        // Botão SAIR posicionado à esquerda (não no canto)
         LogoutButton(
           isFocused = focusedButton == "logout",
           deviceType = when {
@@ -511,7 +526,9 @@ fun HomeScreen(nav: NavHostController) {
           isLoading = isLoggingOut,
           onFocusChanged = { focusedButton = if (it) "logout" else null },
           onClick = { showLogoutDialog = true },
-          modifier = Modifier.align(Alignment.CenterStart)
+          modifier = Modifier
+            .align(Alignment.CenterStart)
+            .padding(start = if (isTv) 120.dp else if (isPhone) 80.dp else 100.dp)
         )
         
         // Relógio Digital centralizado
@@ -526,18 +543,19 @@ fun HomeScreen(nav: NavHostController) {
         )
       }
       
-      Spacer(Modifier.height(if (isTv) 16.dp else if (isPhone) 8.dp else 12.dp))
-      
-      // Logo Max IPTV com Neon (centralizada)
+      // Logo Max IPTV com Neon (posicionado à esquerda)
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .padding(vertical = if (isTv) 16.dp else if (isPhone) 8.dp else 12.dp),
-        contentAlignment = Alignment.Center
+          .padding(
+            vertical = if (isTv) 16.dp else if (isPhone) 8.dp else 12.dp,
+            horizontal = if (isTv) 32.dp else if (isPhone) 16.dp else 24.dp
+          ),
+        contentAlignment = Alignment.CenterStart
       ) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.Center
+          horizontalArrangement = Arrangement.Start
         ) {
           Icon(
             imageVector = Icons.Default.PlayArrow,

@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.27",
-    "versionCode":  28,
-    "buildNumber":  28,
+    "version":  "v1.0.28",
+    "versionCode":  29,
+    "buildNumber":  29,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.27 - Canais Live Otimizados\n\nCanais Live - Correcao de Travamentos:\n- Buffers REDUZIDOS: 3s-10s (era 20s-50s)\n- Timeout otimizado: 8s para LIVE\n- Bitrate ajustado: 2.5Mbps max\n- BackBuffer reduzido: 5s\n- Inicio mais rapido: 1.5s\n- Menos LAG e delay\n\nTV Box Compatibilidade:\n- Fire Stick / TV Box / Chromecast\n- Deteccao automatica\n- Prevencao overscan (32dp)\n- Player otimizado (380dp)\n- Layout adaptativo\n\nVOD/Series:\n- Buffers: 15s-60s (otimizado)\n- Reproducao suave",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-18T01:00:00Z",
+    "lastUpdated":  "2025-10-19T16:51:19Z",
     "checksum":  "sha256:placeholder"
 }
