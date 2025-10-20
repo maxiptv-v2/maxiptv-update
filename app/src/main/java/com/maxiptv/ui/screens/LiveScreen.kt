@@ -108,6 +108,48 @@ fun LiveScreen(nav: NavHostController) {
   // ✅ Adicionar categoria adulta no início
   val categoriesWithAdult = listOf("🔞 ADULTO" to "ADULT") + normalCats.map { it.category_name to it.category_id }
   
+  val isTv = MaxiApp.isTv
+  
+  // 🔥 SE FULLSCREEN, MOSTRAR SÓ O PLAYER (TELA TODA, SEM TopBar/Categorias)
+  if (isFullscreen && current != null) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+      androidx.compose.ui.viewinterop.AndroidView(
+        factory = { ctx ->
+          androidx.media3.ui.PlayerView(ctx).apply {
+            player = sharedPlayer
+            useController = true // CONTROLES ATIVADOS EM FULLSCREEN
+            controllerShowTimeoutMs = 3000
+            controllerHideOnTouch = true
+            resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+            setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+          }
+        },
+        modifier = Modifier.fillMaxSize()
+      )
+      
+      // Botão de voltar (canto superior esquerdo)
+      IconButton(
+        onClick = {
+          android.util.Log.i("LiveScreen", "🔙 Saindo do fullscreen - volume 30%")
+          sharedPlayer.volume = 0.3f // Voltar volume do mini player
+          isFullscreen = false
+        },
+        modifier = Modifier
+          .align(Alignment.TopStart)
+          .padding(16.dp)
+          .background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.CircleShape)
+      ) {
+        Icon(
+          imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+          contentDescription = "Voltar",
+          tint = Color.White
+        )
+      }
+    }
+    return // IMPORTANTE: Sair da função, não renderizar nada mais
+  }
+  
+  // LAYOUT NORMAL (com TopBar, Categorias, Mini Player)
   Column(Modifier.fillMaxSize()) {
     CategoryChips(
       categories = categoriesWithAdult, 
@@ -130,46 +172,6 @@ fun LiveScreen(nav: NavHostController) {
         }
       }
     )
-    val isTv = MaxiApp.isTv
-    
-    // 🔥 SE FULLSCREEN, MOSTRAR SÓ O PLAYER (mesmo player, só muda layout)
-    if (isFullscreen && current != null) {
-      Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        androidx.compose.ui.viewinterop.AndroidView(
-          factory = { ctx ->
-            androidx.media3.ui.PlayerView(ctx).apply {
-              player = sharedPlayer
-              useController = true // CONTROLES ATIVADOS EM FULLSCREEN
-              controllerShowTimeoutMs = 3000
-              controllerHideOnTouch = true
-              resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
-              setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
-            }
-          },
-          modifier = Modifier.fillMaxSize()
-        )
-        
-        // Botão de voltar (canto superior esquerdo)
-        IconButton(
-          onClick = {
-            android.util.Log.i("LiveScreen", "🔙 Saindo do fullscreen - volume 30%")
-            sharedPlayer.volume = 0.3f // Voltar volume do mini player
-            isFullscreen = false
-          },
-          modifier = Modifier
-            .align(Alignment.TopStart)
-            .padding(16.dp)
-            .background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.CircleShape)
-        ) {
-          Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Voltar",
-            tint = Color.White
-          )
-        }
-      }
-      return // Não mostrar o resto do layout quando em fullscreen
-    }
     
     if (isTv) {
       // 📺 Layout TV com Mini Player

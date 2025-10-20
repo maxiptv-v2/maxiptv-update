@@ -8861,10 +8861,12 @@ androidx.compose.runtime.Composer:
     public abstract void disableReusing()
     public abstract void disableSourceInformation()
     public abstract void enableReusing()
+    public abstract void endToMarker(int)
     public static synthetic void getApplier$annotations()
     public static synthetic void getApplyCoroutineContext$annotations()
     public abstract androidx.compose.runtime.ControlledComposition getComposition()
     public static synthetic void getCompoundKeyHash$annotations()
+    public abstract int getCurrentMarker()
     public static synthetic void getCurrentMarker$annotations()
     public static synthetic void getDefaultsInvalid$annotations()
     public static synthetic void getInserting$annotations()
@@ -8892,9 +8894,11 @@ androidx.compose.runtime.ComposerImpl:
     public void disableReusing()
     public void disableSourceInformation()
     public void enableReusing()
+    public void endToMarker(int)
     public final boolean forceRecomposeScopes$runtime_release()
     public final int getChangeCount$runtime_release()
     public static synthetic void getCompoundKeyHash$annotations()
+    public int getCurrentMarker()
     public static synthetic void getDefaultsInvalid$annotations()
     public final boolean getHasInvalidations()
     public final boolean getHasPendingChanges$runtime_release()
@@ -33928,8 +33932,8 @@ com.maxiptv.ui.screens.ComposableSingletons$SettingsScreenKt$lambda-5$1
 com.maxiptv.ui.screens.ComposableSingletons$SettingsScreenKt$lambda-6$1
 com.maxiptv.ui.screens.ComposableSingletons$SettingsScreenKt$lambda-7$1
 com.maxiptv.ui.screens.ComposableSingletons$SettingsScreenKt
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$2$1$1$invoke$$inlined$items$default$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.SettingsScreenKt$SettingsScreen$1$1
@@ -50641,13 +50645,11 @@ androidx.compose.runtime.Composer:
     public abstract void endReplaceableGroup()
     public abstract androidx.compose.runtime.RecomposeScopeImpl endRestartGroup()
     public abstract void endReusableGroup()
-    public abstract void endToMarker(int)
     public abstract androidx.compose.runtime.Applier getApplier()
     public abstract kotlin.coroutines.CoroutineContext getApplyCoroutineContext()
     public abstract androidx.compose.runtime.tooling.CompositionData getCompositionData()
     public abstract int getCompoundKeyHash()
     public abstract androidx.compose.runtime.PersistentCompositionLocalMap getCurrentCompositionLocalMap()
-    public abstract int getCurrentMarker()
     public abstract boolean getDefaultsInvalid()
     public abstract boolean getInserting()
     public abstract androidx.compose.runtime.RecomposeScope getRecomposeScope()
@@ -51410,6 +51412,7 @@ androidx.compose.runtime.SlotWriter:
     public static boolean indexInCurrentGroup()
     public static boolean indexInParent()
     public static boolean isNode()
+    public final boolean isNode(int)
     public static void markGroup()
     public static void moveAnchors()
     public static void moveGroup()
@@ -68588,10 +68591,10 @@ com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$item
     private static java.lang.Void invoke$com$maxiptv$ui$screens$AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$9()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$1()
     private static java.lang.Void invoke$com$maxiptv$ui$screens$AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$1()
-    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$1()
-    private static java.lang.Void invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$1()
-    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$1()
-    private static java.lang.Void invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$1()
+    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$5$2$1$1$invoke$$inlined$items$default$1()
+    private static java.lang.Void invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$5$2$1$1$invoke$$inlined$items$default$1()
+    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$5$3$1$1$invoke$$inlined$items$default$1()
+    private static java.lang.Void invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$5$3$1$1$invoke$$inlined$items$default$1()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$1()
     private static java.lang.Void invoke$com$maxiptv$ui$screens$SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$1()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$VodScreenKt$VodScreen$2$2$invoke$$inlined$items$default$1()
@@ -68856,29 +68859,29 @@ com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$1:
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$invoke$$inlined$onDispose$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2:
     public final androidx.compose.runtime.DisposableEffectResult invoke(androidx.compose.runtime.DisposableEffectScope)
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$2$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$1$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$1$4
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$2$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$1$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$1$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$1$4
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$4
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$4$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$1$1$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$1$1$2$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$1$1$2$2$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$2$1$1$1$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$2$1$1$1$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$2$1$1$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$2$1$1$invoke$$inlined$items$default$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$2$2$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1$1$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1$1$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1$1$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1$invoke$$inlined$items$default$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1$invoke$$inlined$items$default$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$3$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$7$1$1$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$7$1$1$2$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$7$1$1$2$2$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$7
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$8
 com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$1:
     public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
