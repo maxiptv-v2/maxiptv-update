@@ -94,7 +94,7 @@ fun LiveScreen(nav: NavHostController) {
       // 📺 Layout TV com Mini Player
       Row(Modifier.weight(1f)) {
         // Lista de canais (lado esquerdo)
-        Surface(tonalElevation = 2.dp, modifier = Modifier.width(380.dp).fillMaxHeight()) {
+        Surface(tonalElevation = 2.dp, modifier = Modifier.width(350.dp).fillMaxHeight()) {
           val filtered = when {
             selectedCat == "ADULT" && isAdultUnlocked -> {
               streams.filter { 
@@ -168,7 +168,7 @@ fun LiveScreen(nav: NavHostController) {
         // Mini Player (lado direito - espaço azul vazio)
         Box(
           modifier = Modifier
-            .width(400.dp)
+            .weight(1f) // Ocupar todo o espaço restante
             .fillMaxHeight()
             .padding(8.dp),
           contentAlignment = Alignment.Center
@@ -179,6 +179,7 @@ fun LiveScreen(nav: NavHostController) {
               onFullscreen = { 
                 // Parar mini player completamente antes de abrir fullscreen
                 android.util.Log.i("MiniPlayer", "🎯 Parando mini player para fullscreen")
+                // O mini player será parado automaticamente quando sair da tela
                 
                 // Abrir PlayerActivity em fullscreen (mesmo player)
                 val intent = Intent(context, PlayerActivity::class.java).apply {
@@ -432,8 +433,7 @@ fun MiniPlayer(
   
   Box(
     modifier = Modifier
-      .width(400.dp)
-      .height(300.dp) // Altura fixa para não crescer
+      .fillMaxSize() // Ocupar todo o espaço azul
       .padding(8.dp)
       .clickable { 
         // 2x OK = fullscreen
@@ -461,9 +461,7 @@ fun MiniPlayer(
           )
         }
       },
-      modifier = Modifier
-        .width(384.dp) // 400dp - 16dp padding
-        .height(284.dp) // 300dp - 16dp padding
+      modifier = Modifier.fillMaxSize()
     )
     
     // Overlay com informações do canal e programa atual (apenas no mini player)

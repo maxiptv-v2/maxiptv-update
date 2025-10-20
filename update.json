@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.38",
-    "versionCode":  39,
-    "buildNumber":  39,
+    "version":  "v1.0.40",
+    "versionCode":  41,
+    "buildNumber":  41,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes": "MaxiPTV v1.0.38 - Mini Player Perfeito\n\n✅ Correções Finais:\n- Dimensões fixas (400x300dp)\n- Não cresce mais\n- Posição correta na área azul\n- Controles funcionando perfeitamente\n\n📺 Mini Player TV:\n- 1x OK (canal) = Toca canal selecionado\n- 2x OK (mini player) = Abre fullscreen\n- D-Pad navegação correta\n- Volume ajustado (30%)\n- Sem múltiplas vozes\n\n🎯 PlayerActivity Otimizado:\n- launchMode=\"singleTop\"\n- Reutiliza mesma instância\n- Não cria múltiplos players\n- Performance melhorada\n\n📱 Smartphone/Tablet:\n- Layout original mantido\n- Player direto (1x OK)\n\n🚀 Sistema Completo:\n- API corrigida (aztv.cx)\n- Login funcionando\n- Buffers otimizados\n- Sem travamentos",
+    "releaseNotes":  "MaxiPTV v1.0.38 - Mini Player Perfeito\n\n✅ Correções Finais:\n- Dimensões fixas (400x300dp)\n- Não cresce mais\n- Posição correta na área azul\n- Controles funcionando perfeitamente\n\n📺 Mini Player TV:\n- 1x OK (canal) = Toca canal selecionado\n- 2x OK (mini player) = Abre fullscreen\n- D-Pad navegação correta\n- Volume ajustado (30%)\n- Sem múltiplas vozes\n\n🎯 PlayerActivity Otimizado:\n- launchMode=\"singleTop\"\n- Reutiliza mesma instância\n- Não cria múltiplos players\n- Performance melhorada\n\n📱 Smartphone/Tablet:\n- Layout original mantido\n- Player direto (1x OK)\n\n🚀 Sistema Completo:\n- API corrigida (aztv.cx)\n- Login funcionando\n- Buffers otimizados\n- Sem travamentos",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated": "2025-10-19T21:00:00Z",
+    "lastUpdated":  "2025-10-19T21:09:15Z",
     "checksum":  "sha256:placeholder"
 }
