@@ -146,10 +146,19 @@ fun LiveScreen(nav: NavHostController) {
                 },
                 modifier = Modifier
                   .clickable { 
-                    // 1x clique = mini player
+                    // 1x OK = tocar canal onde está o foco
+                    android.util.Log.i("LiveScreen", "🎯 Canal clicado: ${s.name}")
                     current = s
+                    android.util.Log.i("LiveScreen", "🎯 Canal atual mudou para: ${current?.name}")
                   }
                   .focusable()
+                  .onFocusChanged { focusState ->
+                    if (focusState.isFocused) {
+                      // Quando ganha foco, tocar o canal
+                      android.util.Log.i("LiveScreen", "🎯 Canal com foco: ${s.name}")
+                      current = s
+                    }
+                  }
               )
               HorizontalDivider()
             } 
@@ -161,17 +170,23 @@ fun LiveScreen(nav: NavHostController) {
           modifier = Modifier
             .width(400.dp)
             .fillMaxHeight()
-            .padding(8.dp)
+            .padding(8.dp),
+          contentAlignment = Alignment.Center
         ) {
           if (current != null) {
             MiniPlayer(
               channel = current!!,
               onFullscreen = { 
-                // Abrir PlayerActivity em fullscreen
+                // Parar mini player completamente antes de abrir fullscreen
+                android.util.Log.i("MiniPlayer", "🎯 Parando mini player para fullscreen")
+                
+                // Abrir PlayerActivity em fullscreen (mesmo player)
                 val intent = Intent(context, PlayerActivity::class.java).apply {
                   putExtra("url", current!!.toLiveUrl())
                   putExtra("title", current!!.name)
                   putExtra("isLive", true)
+                  // Flag para reutilizar activity existente
+                  flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
                 context.startActivity(intent)
               }
@@ -363,8 +378,8 @@ fun MiniPlayer(
 ) {
   val context = androidx.compose.ui.platform.LocalContext.current
   
-  // ExoPlayer para mini player - SEMPRE recriar quando canal muda
-  val exoPlayer = remember(channel.stream_id) {
+  // ExoPlayer para mini player - UM ÚNICO player que muda de canal
+  val exoPlayer = remember {
     val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
@@ -391,17 +406,13 @@ fun MiniPlayer(
       .setMediaSourceFactory(mediaSourceFactory)
       .setLoadControl(loadControl)
       .build().apply {
-        val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
-        setMediaItem(mediaItem)
         volume = 0.3f // Volume baixo no mini player
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
-        prepare()
-        playWhenReady = true
-        android.util.Log.i("MiniPlayer", "▶️ Mini Player criado para: ${channel.name}")
+        android.util.Log.i("MiniPlayer", "▶️ Mini Player criado")
       }
   }
   
-  // Atualizar canal quando mudar - FORÇAR nova mídia
+  // Atualizar canal quando mudar - MUDAR MÍDIA NO MESMO PLAYER
   LaunchedEffect(channel.stream_id) {
     android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
     exoPlayer.stop() // Parar player atual
@@ -411,23 +422,30 @@ fun MiniPlayer(
     exoPlayer.playWhenReady = true
   }
   
+  // Parar mini player completamente quando sair da tela
   DisposableEffect(Unit) {
     onDispose {
-      android.util.Log.i("MiniPlayer", "⏹️ Mini Player liberado: ${channel.name}")
+      android.util.Log.i("MiniPlayer", "⏹️ Mini Player parado - saindo da tela")
       exoPlayer.stop()
-      exoPlayer.release()
     }
   }
   
   Box(
     modifier = Modifier
-      .fillMaxSize()
+      .width(400.dp)
+      .height(300.dp) // Altura fixa para não crescer
       .padding(8.dp)
       .clickable { 
-        // 2x clique = fullscreen
+        // 2x OK = fullscreen
+        android.util.Log.i("MiniPlayer", "🎯 2x OK no mini player - abrindo fullscreen")
         onFullscreen()
       }
-      .focusable(),
+      .focusable()
+      .onFocusChanged { focusState ->
+        if (focusState.isFocused) {
+          android.util.Log.i("MiniPlayer", "🎯 Mini player com foco - pronto para 2x OK")
+        }
+      },
     contentAlignment = Alignment.Center
   ) {
     // Player View
@@ -443,7 +461,9 @@ fun MiniPlayer(
           )
         }
       },
-      modifier = Modifier.fillMaxSize()
+      modifier = Modifier
+        .width(384.dp) // 400dp - 16dp padding
+        .height(284.dp) // 300dp - 16dp padding
     )
     
     // Overlay com informações do canal e programa atual (apenas no mini player)
