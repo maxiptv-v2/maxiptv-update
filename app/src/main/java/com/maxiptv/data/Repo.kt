@@ -28,6 +28,10 @@ object XRepo {
 
   val vodInfo = MutableStateFlow<VodInfoResponse?>(null)
   val seriesInfo = MutableStateFlow<SeriesInfoResponse?>(null)
+  
+  // 📺 EPG (Electronic Program Guide)
+  private val _epgData = MutableStateFlow<Map<String, List<EpgProgramme>>>(emptyMap())
+  val epgData = _epgData.asStateFlow()
 
   fun configure(baseUrl: String, u: String, p: String) {
     // Remove player_api.php se existir na URL (para evitar duplicação)
@@ -317,5 +321,19 @@ object XRepo {
     }
     
     return map.values.sortedWith(compareBy({ it.season }, { it.number }))
+  }
+  
+  /**
+   * Carrega o EPG (Electronic Program Guide) em background
+   */
+  suspend fun loadEpg() {
+    try {
+      android.util.Log.i("XRepo", "📡 Carregando EPG...")
+      val epg = EpgParser.fetchEpg()
+      _epgData.emit(epg)
+      android.util.Log.i("XRepo", "✅ EPG carregado: ${epg.size} canais")
+    } catch (e: Exception) {
+      android.util.Log.e("XRepo", "❌ Erro ao carregar EPG: ${e.message}")
+    }
   }
 }

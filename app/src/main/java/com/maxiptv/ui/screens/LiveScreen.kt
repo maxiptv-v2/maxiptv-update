@@ -27,9 +27,12 @@ import androidx.navigation.NavHostController
 import com.maxiptv.MaxiApp
 import com.maxiptv.data.XRepo
 import com.maxiptv.data.LiveStream
+import com.maxiptv.data.EpgProgramme
+import com.maxiptv.data.EpgParser
 import com.maxiptv.ui.player.PlayerActivity
 import coil.compose.AsyncImage
 import android.content.Intent
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.ui.graphics.Color
@@ -56,8 +59,9 @@ fun LiveScreen(nav: NavHostController) {
   
   // Context precisa ser lido FORA do remember
   val context = LocalContext.current
+  val isTv = MaxiApp.isTv
   
-  // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer
+  // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer com RETRY AUTOMÁTICO
   val sharedPlayer = remember {
     val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
@@ -81,12 +85,60 @@ fun LiveScreen(nav: NavHostController) {
       .build().apply {
         volume = 0.3f // Começa baixo no mini player
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
-        android.util.Log.i("SharedPlayer", "🎯 Player compartilhado criado")
+        
+        // 🔄 RETRY AUTOMÁTICO - Reconectar quando travar
+        addListener(object : androidx.media3.common.Player.Listener {
+          override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            android.util.Log.w("SharedPlayer", "⚠️ Erro no player: ${error.message}")
+            android.util.Log.i("SharedPlayer", "🔄 Tentando reconectar em 2 segundos...")
+            
+            // Aguardar 2 segundos e tentar novamente
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+              android.util.Log.i("SharedPlayer", "🔄 Reconectando...")
+              prepare()
+              playWhenReady = true
+            }, 2000)
+          }
+          
+          override fun onPlaybackStateChanged(playbackState: Int) {
+            when (playbackState) {
+              androidx.media3.common.Player.STATE_IDLE -> 
+                android.util.Log.i("SharedPlayer", "⏸️ Player IDLE")
+              androidx.media3.common.Player.STATE_BUFFERING -> 
+                android.util.Log.i("SharedPlayer", "⏳ Buffering...")
+              androidx.media3.common.Player.STATE_READY -> 
+                android.util.Log.i("SharedPlayer", "✅ Player pronto!")
+              androidx.media3.common.Player.STATE_ENDED -> 
+                android.util.Log.i("SharedPlayer", "🏁 Fim da stream")
+            }
+          }
+        })
+        
+        android.util.Log.i("SharedPlayer", "🎯 Player compartilhado criado com retry automático")
       }
+  }
+  
+  // 📡 Carregar EPG em background
+  val epgData by XRepo.epgData.collectAsState()
+  val scope = rememberCoroutineScope()
+  
+  // 🔥 INTERCEPTAR BACK BUTTON (só na TV) - DEPOIS do player ser criado
+  if (isTv) {
+    androidx.activity.compose.BackHandler(enabled = isFullscreen) {
+      // 1x BACK em fullscreen = volta para mini player
+      android.util.Log.i("LiveScreen", "🔙 BACK pressionado - saindo do fullscreen")
+      sharedPlayer.volume = 0.3f
+      isFullscreen = false
+      // Continua na mesma tela (LiveScreen)
+    }
   }
   
   LaunchedEffect(Unit) { 
     XRepo.ensureLiveLoaded()
+    // Carregar EPG em background (não bloqueia a UI)
+    scope.launch {
+      XRepo.loadEpg()
+    }
   }
   
   // Cleanup do player compartilhado quando sair da tela
@@ -108,44 +160,23 @@ fun LiveScreen(nav: NavHostController) {
   // ✅ Adicionar categoria adulta no início
   val categoriesWithAdult = listOf("🔞 ADULTO" to "ADULT") + normalCats.map { it.category_name to it.category_id }
   
-  val isTv = MaxiApp.isTv
-  
   // 🔥 SE FULLSCREEN, MOSTRAR SÓ O PLAYER (TELA TODA, SEM TopBar/Categorias)
   if (isFullscreen && current != null) {
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-      androidx.compose.ui.viewinterop.AndroidView(
-        factory = { ctx ->
-          androidx.media3.ui.PlayerView(ctx).apply {
-            player = sharedPlayer
-            useController = true // CONTROLES ATIVADOS EM FULLSCREEN
-            controllerShowTimeoutMs = 3000
-            controllerHideOnTouch = true
-            resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
-            setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
-          }
-        },
-        modifier = Modifier.fillMaxSize()
-      )
-      
-      // Botão de voltar (canto superior esquerdo)
-      IconButton(
-        onClick = {
-          android.util.Log.i("LiveScreen", "🔙 Saindo do fullscreen - volume 30%")
-          sharedPlayer.volume = 0.3f // Voltar volume do mini player
-          isFullscreen = false
-        },
-        modifier = Modifier
-          .align(Alignment.TopStart)
-          .padding(16.dp)
-          .background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.CircleShape)
-      ) {
-        Icon(
-          imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-          contentDescription = "Voltar",
-          tint = Color.White
-        )
-      }
-    }
+    // Fullscreen limpo - só o player com controles nativos
+    // BACK do controle remoto sai do fullscreen (BackHandler acima)
+    androidx.compose.ui.viewinterop.AndroidView(
+      factory = { ctx ->
+        androidx.media3.ui.PlayerView(ctx).apply {
+          player = sharedPlayer
+          useController = true // CONTROLES ATIVADOS EM FULLSCREEN
+          controllerShowTimeoutMs = 3000
+          controllerHideOnTouch = true
+          resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+          setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+        }
+      },
+      modifier = Modifier.fillMaxSize().background(Color.Black)
+    )
     return // IMPORTANTE: Sair da função, não renderizar nada mais
   }
   
@@ -260,6 +291,7 @@ fun LiveScreen(nav: NavHostController) {
             MiniPlayer(
               player = sharedPlayer,
               channel = current!!,
+              epgData = epgData,
               onFullscreen = { 
                 // 2x OK = Ativar fullscreen (MESMO PLAYER, SÓ MUDA LAYOUT)
                 android.util.Log.i("MiniPlayer", "🎯 Ativando fullscreen - volume 100%")
@@ -451,6 +483,7 @@ fun LiveScreen(nav: NavHostController) {
 fun MiniPlayer(
   player: androidx.media3.exoplayer.ExoPlayer,
   channel: LiveStream,
+  epgData: Map<String, List<EpgProgramme>>,
   onFullscreen: () -> Unit
 ) {
   // Atualizar canal quando mudar - MUDAR MÍDIA NO MESMO PLAYER
@@ -498,51 +531,131 @@ fun MiniPlayer(
       modifier = Modifier.fillMaxSize()
     )
     
-    // Overlay com informações do canal e programa atual (apenas no mini player)
+    // 🎨 Overlay elegante com EPG (APENAS no mini player)
     Box(
       modifier = Modifier
         .align(Alignment.BottomStart)
-        .padding(12.dp)
-        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
-        .padding(horizontal = 8.dp, vertical = 6.dp)
+        .fillMaxWidth()
+        .background(
+          androidx.compose.ui.graphics.Brush.verticalGradient(
+            colors = listOf(
+              Color.Transparent,
+              Color.Black.copy(alpha = 0.85f)
+            )
+          )
+        )
+        .padding(16.dp)
     ) {
-      Column {
-        // Nome do canal
+      // Buscar programa atual e próximo do EPG
+      val currentProgramme = EpgParser.getCurrentProgramme(channel.name, epgData)
+      val nextProgramme = EpgParser.getNextProgramme(channel.name, epgData)
+      
+      Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
+        // 📺 Nome do canal
         Text(
           text = channel.name,
-          fontSize = 12.sp,
+          fontSize = 18.sp,
           fontWeight = FontWeight.Bold,
           color = Color.White,
           maxLines = 1,
-          overflow = TextOverflow.Ellipsis
+          overflow = TextOverflow.Ellipsis,
+          style = androidx.compose.ui.text.TextStyle(
+            shadow = androidx.compose.ui.graphics.Shadow(
+              color = Color.Black.copy(alpha = 0.8f),
+              offset = androidx.compose.ui.geometry.Offset(2f, 2f),
+              blurRadius = 4f
+            )
+          )
         )
         
-        // Categoria do canal
-        Text(
-          text = channel.categoryName ?: "Canal",
-          fontSize = 10.sp,
-          fontWeight = FontWeight.Medium,
-          color = Color(0xFFFFD54F), // Amarelo para destacar
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis
-        )
+        // 🎬 Programa atual (se disponível no EPG)
+        if (currentProgramme != null) {
+          Row(
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+          ) {
+            // Ícone "AO VIVO"
+            Box(
+              modifier = Modifier
+                .background(Color(0xFFE53935), RoundedCornerShape(4.dp))
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+              Text(
+                text = "● AO VIVO",
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+              )
+            }
+            
+            // Título do programa + horário
+            Text(
+              text = "${currentProgramme.title} • ${currentProgramme.startTime()} - ${currentProgramme.stopTime()}",
+              fontSize = 13.sp,
+              fontWeight = FontWeight.Medium,
+              color = Color(0xFFFFEB3B), // Amarelo
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis
+            )
+          }
+          
+          // 📺 Próxima atração
+          if (nextProgramme != null) {
+            Text(
+              text = "Próximo: ${nextProgramme.title} às ${nextProgramme.startTime()}",
+              fontSize = 12.sp,
+              fontWeight = FontWeight.Normal,
+              color = Color(0xFFB0BEC5), // Cinza claro
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis
+            )
+          }
+        } else {
+          // Fallback se não tiver EPG - mostrar categoria + qualidade
+          Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+            Text(
+              text = channel.categoryName ?: "Ao Vivo",
+              fontSize = 13.sp,
+              fontWeight = FontWeight.Medium,
+              color = Color(0xFFB0BEC5),
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis
+            )
+            
+            // Qualidade detectada
+            val quality = when {
+              channel.name.contains("4K", ignoreCase = true) || 
+              channel.name.contains("UHD", ignoreCase = true) -> "4K"
+              channel.name.contains("FHD", ignoreCase = true) -> "Full HD"
+              channel.name.contains("HD", ignoreCase = true) -> "HD"
+              else -> null
+            }
+            
+            if (quality != null) {
+              Box(
+                modifier = Modifier
+                  .background(
+                    when (quality) {
+                      "4K" -> Color(0xFFE91E63)
+                      "Full HD" -> Color(0xFF00BCD4)
+                      "HD" -> Color(0xFF4CAF50)
+                      else -> Color.Gray
+                    },
+                    RoundedCornerShape(4.dp)
+                  )
+                  .padding(horizontal = 6.dp, vertical = 2.dp)
+              ) {
+                Text(
+                  text = quality,
+                  fontSize = 10.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = Color.White
+                )
+              }
+            }
+          }
+        }
       }
-    }
-    
-    // Instrução para fullscreen
-    Box(
-      modifier = Modifier
-        .align(Alignment.TopStart)
-        .padding(16.dp)
-        .background(Color(0xFF00D4FF).copy(alpha = 0.8f), RoundedCornerShape(6.dp))
-        .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-      Text(
-        text = "OK = Fullscreen",
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Bold,
-        color = Color.White
-      )
     }
   }
 }

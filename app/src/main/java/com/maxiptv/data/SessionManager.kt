@@ -195,33 +195,54 @@ object SessionManager {
             
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
+                    val errorBody = response.body?.string() ?: "sem detalhes"
                     Log.e(TAG, "❌ Erro ao buscar sessões: HTTP ${response.code} - ${response.message}")
-                    return null
+                    Log.e(TAG, "   Detalhes: $errorBody")
+                    return SessionsDatabase() // Retorna vazio em vez de null
                 }
                 
-                val body = response.body?.string() ?: return null
-                Log.d(TAG, "📥 Resposta JSONBin recebida (${body.length} chars)")
-                
-                val jsonResponse = Json.parseToJsonElement(body).toString()
-                
-                // JSONBin retorna: { "record": { ... }, "metadata": { ... } }
-                // Precisamos extrair apenas "record"
-                val recordStart = jsonResponse.indexOf("\"record\":")
-                if (recordStart == -1) {
-                    Log.w(TAG, "⚠️ Nenhum record encontrado, retornando database vazia")
+                val body = response.body?.string()
+                if (body == null || body.isEmpty()) {
+                    Log.w(TAG, "⚠️ Resposta vazia do JSONBin")
                     return SessionsDatabase()
                 }
                 
-                val recordJson = jsonResponse.substring(recordStart + 9)
-                val recordEnd = recordJson.indexOf(",\"metadata\"")
-                val finalJson = if (recordEnd != -1) recordJson.substring(0, recordEnd) else recordJson
+                Log.d(TAG, "📥 Resposta JSONBin recebida (${body.length} chars)")
+                Log.d(TAG, "📄 Primeiros 500 chars: ${body.take(500)}")
                 
-                val database = json.decodeFromString<SessionsDatabase>(finalJson.trim())
-                Log.i(TAG, "✅ Sessões carregadas: ${database.sessions.size} ativas")
-                return database
+                // ✅ PARSING ROBUSTO usando Kotlin Serialization
+                try {
+                    // JSONBin retorna: { "record": {...}, "metadata": {...} }
+                    @kotlinx.serialization.Serializable
+                    data class JsonBinResponse(val record: SessionsDatabase)
+                    
+                    val response = json.decodeFromString<JsonBinResponse>(body)
+                    Log.i(TAG, "✅ Sessões carregadas: ${response.record.sessions.size} ativas, ${response.record.users.size} usuários")
+                    return response.record
+                } catch (e: Exception) {
+                    Log.e(TAG, "❌ Erro ao decodificar JSON: ${e.message}")
+                    Log.e(TAG, "   JSON problemático: ${body.take(1000)}")
+                    
+                    // Fallback: tentar extrair record manualmente
+                    try {
+                        val recordRegex = """"record"\s*:\s*(\{.*?\})\s*,\s*"metadata"""".toRegex(RegexOption.DOT_MATCHES_ALL)
+                        val match = recordRegex.find(body)
+                        if (match != null) {
+                            val recordJson = match.groupValues[1]
+                            val database = json.decodeFromString<SessionsDatabase>(recordJson)
+                            Log.i(TAG, "✅ Sessões extraídas via fallback: ${database.sessions.size} ativas")
+                            return database
+                        }
+                    } catch (fallbackError: Exception) {
+                        Log.e(TAG, "❌ Fallback também falhou: ${fallbackError.message}")
+                    }
+                    
+                    return SessionsDatabase()
+                }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Erro ao decodificar sessões: ${e.message}", e)
+            Log.e(TAG, "❌ Erro geral ao buscar sessões: ${e.message}", e)
+            e.printStackTrace()
             return SessionsDatabase()
         }
     }
@@ -267,17 +288,39 @@ object SessionManager {
      */
     private suspend fun sendHeartbeat(username: String, deviceId: String) = withContext(Dispatchers.IO) {
         try {
-            val database = fetchSessions() ?: return@withContext
+            Log.d(TAG, "💓 Enviando heartbeat para $username...")
+            val database = fetchSessions()
+            if (database == null) {
+                Log.e(TAG, "❌ Não foi possível buscar sessões para heartbeat")
+                return@withContext
+            }
+            
             val session = database.sessions[username]
             
-            if (session != null && session.deviceId == deviceId) {
-                val updatedSession = session.copy(lastHeartbeat = System.currentTimeMillis())
-                database.sessions[username] = updatedSession
-                saveSessions(database)
-                Log.d(TAG, "💓 Heartbeat enviado para $username")
+            if (session == null) {
+                Log.w(TAG, "⚠️ Nenhuma sessão encontrada para $username (pode ter expirado)")
+                return@withContext
+            }
+            
+            if (session.deviceId != deviceId) {
+                Log.w(TAG, "⚠️ Device ID não corresponde, parando heartbeat")
+                stopHeartbeat()
+                return@withContext
+            }
+            
+            // Atualizar heartbeat
+            val updatedSession = session.copy(lastHeartbeat = System.currentTimeMillis())
+            database.sessions[username] = updatedSession
+            
+            val saved = saveSessions(database)
+            if (saved) {
+                Log.d(TAG, "✅ Heartbeat enviado com sucesso para $username")
+            } else {
+                Log.e(TAG, "❌ Falha ao salvar heartbeat para $username")
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro no heartbeat: ${e.message}", e)
+            e.printStackTrace()
         }
     }
     

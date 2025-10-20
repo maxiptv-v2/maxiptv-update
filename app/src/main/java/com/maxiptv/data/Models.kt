@@ -85,6 +85,47 @@ data class EpisodeInfo(val plot: String?)
 data class FeaturedItem(val title: String, val imageUrl: String?, val vodId: Int?)
 
 // ============================================================================
+// MODELOS DE EPG (Electronic Program Guide)
+// ============================================================================
+
+/**
+ * Representa um programa de TV no EPG
+ */
+data class EpgProgramme(
+    val channelId: String,          // ID do canal (ex: "GLOBO HD")
+    val title: String,               // Título do programa
+    val subTitle: String?,           // Subtítulo/episódio
+    val description: String?,        // Descrição do programa
+    val start: Long,                 // Timestamp de início (millis)
+    val stop: Long,                  // Timestamp de fim (millis)
+    val rating: String?              // Classificação indicativa
+) {
+    /**
+     * Verifica se o programa está no ar agora
+     */
+    fun isCurrentlyAiring(): Boolean {
+        val now = System.currentTimeMillis()
+        return now in start..stop
+    }
+    
+    /**
+     * Formata o horário de início (HH:mm)
+     */
+    fun startTime(): String {
+        val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        return formatter.format(java.util.Date(start))
+    }
+    
+    /**
+     * Formata o horário de fim (HH:mm)
+     */
+    fun stopTime(): String {
+        val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        return formatter.format(java.util.Date(stop))
+    }
+}
+
+// ============================================================================
 // MODELOS DE AGRUPAMENTO POR IDIOMA (VOD e Séries)
 // ============================================================================
 

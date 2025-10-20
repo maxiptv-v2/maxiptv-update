@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.45",
-    "versionCode":  46,
-    "buildNumber":  46,
+    "version":  "v1.0.47",
+    "versionCode":  48,
+    "buildNumber":  48,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.45 - Fullscreen Perfeito!\n\n🔥 FULLSCREEN CORRIGIDO:\n- Ocupa TELA TODA (sem TopBar/Categorias)\n- Player unico compartilhado\n- SEM duas vozes!\n- Transicao suave (mini ↔ fullscreen)\n- Performance 100%\n\n📺 Mini Player TV:\n- 1x OK (canal) = Toca no mini player (volume 30%)\n- 2x OK (mini player) = Fullscreen TOTAL (volume 100%)\n- Botao VOLTAR = Volta para mini player\n- MESMO PLAYER em todos os modos!\n- D-Pad navegacao perfeita\n\n🎯 Sistema Otimizado:\n- Player compartilhado\n- Troca de canal instantanea\n- Layout inteligente\n- Sem memory leaks\n- Zero multiplas instancias\n\n📱 Smartphone/Tablet:\n- Layout original mantido\n- Funcionamento normal\n\n✅ Tudo Funcionando:\n- API corrigida (aztv.cx)\n- Login OK\n- Buffers otimizados\n- Zero travamentos",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-19T22:01:34Z",
+    "lastUpdated":  "2025-10-20T19:16:05Z",
     "checksum":  "sha256:placeholder"
 }
