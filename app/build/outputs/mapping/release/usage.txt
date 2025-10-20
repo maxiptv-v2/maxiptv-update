@@ -6026,7 +6026,6 @@ androidx.compose.material.icons.Icons:
     public static final int $stable
 androidx.compose.material.icons.IconsKt
 androidx.compose.material.icons.R
-androidx.compose.material.icons.automirrored.filled.ArrowBackKt
 androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeftKt
 androidx.compose.material.icons.automirrored.filled.KeyboardArrowRightKt
 androidx.compose.material.icons.automirrored.filled.SendKt
@@ -8862,12 +8861,10 @@ androidx.compose.runtime.Composer:
     public abstract void disableReusing()
     public abstract void disableSourceInformation()
     public abstract void enableReusing()
-    public abstract void endToMarker(int)
     public static synthetic void getApplier$annotations()
     public static synthetic void getApplyCoroutineContext$annotations()
     public abstract androidx.compose.runtime.ControlledComposition getComposition()
     public static synthetic void getCompoundKeyHash$annotations()
-    public abstract int getCurrentMarker()
     public static synthetic void getCurrentMarker$annotations()
     public static synthetic void getDefaultsInvalid$annotations()
     public static synthetic void getInserting$annotations()
@@ -8895,11 +8892,9 @@ androidx.compose.runtime.ComposerImpl:
     public void disableReusing()
     public void disableSourceInformation()
     public void enableReusing()
-    public void endToMarker(int)
     public final boolean forceRecomposeScopes$runtime_release()
     public final int getChangeCount$runtime_release()
     public static synthetic void getCompoundKeyHash$annotations()
-    public int getCurrentMarker()
     public static synthetic void getDefaultsInvalid$annotations()
     public final boolean getHasInvalidations()
     public final boolean getHasPendingChanges$runtime_release()
@@ -33933,8 +33928,8 @@ com.maxiptv.ui.screens.ComposableSingletons$SettingsScreenKt$lambda-5$1
 com.maxiptv.ui.screens.ComposableSingletons$SettingsScreenKt$lambda-6$1
 com.maxiptv.ui.screens.ComposableSingletons$SettingsScreenKt$lambda-7$1
 com.maxiptv.ui.screens.ComposableSingletons$SettingsScreenKt
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$2$1$1$invoke$$inlined$items$default$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1$invoke$$inlined$items$default$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.SettingsScreenKt$SettingsScreen$1$1
@@ -46313,7 +46308,6 @@ androidx.compose.foundation.FocusablePinnableContainerNode$retrievePinnableConta
     public final kotlin.reflect.jvm.internal.impl.descriptors.ClassDescriptor invoke()
     public static kotlin.reflect.jvm.internal.impl.descriptors.FunctionDescriptor invoke()
     public static kotlin.reflect.jvm.internal.impl.descriptors.impl.ClassDescriptorImpl invoke()
-    public final kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope invoke()
     public final kotlin.reflect.jvm.internal.impl.types.SimpleType invoke$1()
     public final java.lang.String invoke$2()
     public final long invoke-F1C5BW0()
@@ -48018,6 +48012,8 @@ androidx.compose.foundation.shape.RoundedCornerShape:
     public final androidx.compose.foundation.shape.CornerBasedShape copy()
     public static androidx.compose.foundation.shape.RoundedCornerShape copy()
     public final androidx.compose.ui.graphics.Outline createOutline-LjSzlW0()
+androidx.compose.foundation.shape.RoundedCornerShapeKt:
+    public static final androidx.compose.foundation.shape.RoundedCornerShape getCircleShape()
 androidx.compose.foundation.text.AndroidCursorHandle_androidKt$CursorHandle$1
 androidx.compose.foundation.text.AndroidCursorHandle_androidKt$CursorHandle$2:
     public final void invoke(androidx.compose.runtime.Composer,int)
@@ -49228,6 +49224,8 @@ androidx.compose.foundation.text.selection.TextSelectionDelegateKt
 androidx.compose.material.icons.Icons$AutoMirrored$Filled
 androidx.compose.material.icons.Icons$Filled
 androidx.compose.material.icons.Icons
+androidx.compose.material.icons.automirrored.filled.ArrowBackKt:
+    static void <clinit>()
 androidx.compose.material.icons.automirrored.filled.ArrowForwardKt:
     static void <clinit>()
 androidx.compose.material.icons.automirrored.filled.ExitToAppKt:
@@ -50643,11 +50641,13 @@ androidx.compose.runtime.Composer:
     public abstract void endReplaceableGroup()
     public abstract androidx.compose.runtime.RecomposeScopeImpl endRestartGroup()
     public abstract void endReusableGroup()
+    public abstract void endToMarker(int)
     public abstract androidx.compose.runtime.Applier getApplier()
     public abstract kotlin.coroutines.CoroutineContext getApplyCoroutineContext()
     public abstract androidx.compose.runtime.tooling.CompositionData getCompositionData()
     public abstract int getCompoundKeyHash()
     public abstract androidx.compose.runtime.PersistentCompositionLocalMap getCurrentCompositionLocalMap()
+    public abstract int getCurrentMarker()
     public abstract boolean getDefaultsInvalid()
     public abstract boolean getInserting()
     public abstract androidx.compose.runtime.RecomposeScope getRecomposeScope()
@@ -51410,7 +51410,6 @@ androidx.compose.runtime.SlotWriter:
     public static boolean indexInCurrentGroup()
     public static boolean indexInParent()
     public static boolean isNode()
-    public final boolean isNode(int)
     public static void markGroup()
     public static void moveAnchors()
     public static void moveGroup()
@@ -57725,7 +57724,7 @@ androidx.compose.ui.text.font.FontFamilyResolverImpl$createDefaultTypeface$1
 androidx.compose.ui.text.font.FontFamilyResolverImpl$resolve$result$1$$InternalSyntheticThrowCCEIfNotNull$158$3c613764b73eac5fa6a1572373b22a448a58d7af39e9049c6a573cf4edaae59a$0
 androidx.compose.ui.text.font.FontFamilyResolverImpl$resolve$result$1:
     public static androidx.compose.ui.text.font.TypefaceResult invoke()
-    public final androidx.media3.ui.PlayerView invoke()
+    public final androidx.media3.ui.PlayerView invoke(android.content.Context)
     public final java.lang.Boolean invoke(java.lang.Object)
     public static java.lang.Iterable invoke()
     public final java.util.Collection invoke(kotlin.reflect.jvm.internal.impl.name.Name)
@@ -60589,7 +60588,7 @@ androidx.lifecycle.MethodCallsLogger:
     public static coil.request.Parameters build()
     public static java.util.Map build()
     public final java.lang.Object get(kotlinx.serialization.descriptors.SerialDescriptor,kotlin.reflect.jvm.internal.impl.storage.LockBasedStorageManager$ExceptionHandlingStrategy$1)
-    public final java.lang.Object getOrPut(kotlinx.serialization.descriptors.SerialDescriptor,kotlin.reflect.jvm.internal.impl.storage.LockBasedStorageManager$ExceptionHandlingStrategy$1,kotlin.reflect.jvm.internal.impl.load.java.components.JavaAnnotationDescriptor$type$2)
+    public final java.lang.Object getOrPut(kotlinx.serialization.descriptors.SerialDescriptor,kotlin.reflect.jvm.internal.impl.storage.LockBasedStorageManager$ExceptionHandlingStrategy$1,kotlin.reflect.jvm.internal.impl.descriptors.ScopesHolderForClass$getScope$1)
     public static void set()
 androidx.lifecycle.MutableLiveData
 androidx.lifecycle.ProcessLifecycleInitializer:
@@ -61627,11 +61626,11 @@ androidx.media3.datasource.DefaultHttpDataSource$Factory:
     public boolean crossProtocolRedirectsForceOriginal
     public androidx.media3.datasource.TransferListener transferListener
     public static androidx.media3.datasource.DefaultHttpDataSource createDataSource()
-    public static androidx.media3.datasource.DefaultHttpDataSource$Factory setAllowCrossProtocolRedirects()
-    public static androidx.media3.datasource.DefaultHttpDataSource$Factory setConnectTimeoutMs()
-    public static androidx.media3.datasource.DefaultHttpDataSource$Factory setKeepPostFor302Redirects()
-    public static androidx.media3.datasource.DefaultHttpDataSource$Factory setReadTimeoutMs()
-    public static androidx.media3.datasource.DefaultHttpDataSource$Factory setUserAgent()
+    public final void setAllowCrossProtocolRedirects()
+    public final void setConnectTimeoutMs()
+    public final void setKeepPostFor302Redirects()
+    public final void setReadTimeoutMs()
+    public final void setUserAgent()
 androidx.media3.datasource.DefaultHttpDataSource$NullFilteringHeadersMap$$InternalSyntheticLambda$4$db37b170ba6ae89a0a9fbeae77fd746069c3a1692d8fe249916397ed0abaed64$0
 androidx.media3.datasource.DefaultHttpDataSource$NullFilteringHeadersMap:
     public final java.lang.Object delegate()
@@ -68246,6 +68245,9 @@ com.google.common.collect.ImmutableSet:
     public static boolean shouldTrim(int,int)
 com.google.common.collect.Iterables:
     public static final boolean AdminPanelScreen$lambda$1(androidx.compose.runtime.MutableState)
+    public static final java.util.List LiveScreen$lambda$0(androidx.compose.runtime.MutableState)
+    public static final java.lang.String LiveScreen$lambda$3(androidx.compose.runtime.MutableState)
+    public static final com.maxiptv.data.LiveStream LiveScreen$lambda$6(androidx.compose.runtime.MutableState)
     public static final com.maxiptv.data.SeriesInfoResponse SeriesDetailsScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List SeriesDetailsScreen$lambda$1(androidx.compose.runtime.MutableState)
     public static final java.util.List SeriesDetailsScreen$lambda$15(androidx.compose.runtime.MutableState)
@@ -68256,6 +68258,7 @@ com.google.common.collect.Iterables:
     public static final boolean access$LiveScreen$lambda$15(androidx.compose.runtime.MutableState)
     public static final void access$LiveScreen$lambda$16(androidx.compose.runtime.MutableState,boolean)
     public static final boolean access$LiveScreen$lambda$18(androidx.compose.runtime.MutableState)
+    public static final void access$LiveScreen$lambda$25(androidx.compose.runtime.MutableState,boolean)
     public static final com.maxiptv.data.SeriesInfoResponse access$SeriesDetailsScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List access$SeriesDetailsScreen$lambda$1(androidx.compose.runtime.MutableState)
     public static final void access$SeriesDetailsScreen$lambda$10(androidx.compose.runtime.MutableState,java.lang.String)
@@ -68328,6 +68331,7 @@ com.google.common.collect.Lists:
     public static final long mod(long,long)
     public static java.util.ArrayList newArrayList(java.util.Iterator)
     public static kotlin.ranges.IntProgression reversed(kotlin.ranges.IntRange)
+    public static final kotlin.Pair to(java.lang.String,java.lang.String)
     public static java.lang.Throwable tryInternalFastPathGetFailure(com.google.common.util.concurrent.internal.InternalFutureFailureAccess)
     public static java.lang.Object uncheckedNull()
 com.google.common.collect.Maps$1
@@ -68584,10 +68588,10 @@ com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$item
     private static java.lang.Void invoke$com$maxiptv$ui$screens$AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$9()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$1()
     private static java.lang.Void invoke$com$maxiptv$ui$screens$AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$1()
-    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$2$2$1$1$invoke$$inlined$items$default$1()
-    private static java.lang.Void invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$2$2$1$1$invoke$$inlined$items$default$1()
-    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$2$3$1$1$invoke$$inlined$items$default$1()
-    private static java.lang.Void invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$2$3$1$1$invoke$$inlined$items$default$1()
+    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$1()
+    private static java.lang.Void invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$1()
+    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$1()
+    private static java.lang.Void invoke$com$maxiptv$ui$screens$LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$1()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$1()
     private static java.lang.Void invoke$com$maxiptv$ui$screens$SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$1()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$VodScreenKt$VodScreen$2$2$invoke$$inlined$items$default$1()
@@ -68711,11 +68715,13 @@ com.maxiptv.ui.screens.ComposableSingletons$HomeScreenKt:
 com.maxiptv.ui.screens.ComposableSingletons$LiveScreenKt$lambda-1$1
 com.maxiptv.ui.screens.ComposableSingletons$LiveScreenKt$lambda-2$1
 com.maxiptv.ui.screens.ComposableSingletons$LiveScreenKt$lambda-3$1
+com.maxiptv.ui.screens.ComposableSingletons$LiveScreenKt$lambda-4$1
 com.maxiptv.ui.screens.ComposableSingletons$LiveScreenKt:
     public static final com.maxiptv.ui.screens.ComposableSingletons$LiveScreenKt INSTANCE
-    public static kotlin.jvm.functions.Function2 getLambda-1$app_release()
-    public static kotlin.jvm.functions.Function3 getLambda-2$app_release()
+    public static androidx.compose.runtime.internal.ComposableLambdaImpl getLambda-1$app_release()
+    public static kotlin.jvm.functions.Function2 getLambda-2$app_release()
     public static kotlin.jvm.functions.Function3 getLambda-3$app_release()
+    public static kotlin.jvm.functions.Function3 getLambda-4$app_release()
 com.maxiptv.ui.screens.ComposableSingletons$LoginScreenKt$lambda-1$1
 com.maxiptv.ui.screens.ComposableSingletons$LoginScreenKt$lambda-2$1
 com.maxiptv.ui.screens.ComposableSingletons$LoginScreenKt$lambda-3$1
@@ -68847,37 +68853,39 @@ com.maxiptv.ui.screens.HomeScreenKt$NeonText$2
 com.maxiptv.ui.screens.HomeScreenKt
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$2$1$1$1$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$2$1$1$1$4
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$2$1$1$invoke$$inlined$items$default$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$2$1$1$invoke$$inlined$items$default$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1$1$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1$1$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1$1$4
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1$invoke$$inlined$items$default$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1$invoke$$inlined$items$default$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1$invoke$$inlined$items$default$4
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$3$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$4$1$1$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$4$1$1$2$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$4$1$1$2$2$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2$invoke$$inlined$onDispose$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$2:
+    public final androidx.compose.runtime.DisposableEffectResult invoke(androidx.compose.runtime.DisposableEffectScope)
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$2$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$1$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$1$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$1$1$invoke$$inlined$items$default$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$4$2$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$1$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$1$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$1$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1$invoke$$inlined$items$default$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$3$5$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$4$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$1$1$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$1$1$2$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5$1$1$2$2$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6
 com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$1:
     public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$2$invoke$$inlined$onDispose$1
-com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$2:
-    public final androidx.compose.runtime.DisposableEffectResult invoke(androidx.compose.runtime.DisposableEffectScope)
-    public final androidx.media3.ui.PlayerView invoke()
-com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$3$1
-com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$4
-com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$5$1
-com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$6
+com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$2$1
+com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$3
+com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$4$1
+com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$5
 com.maxiptv.ui.screens.LiveScreenKt
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
@@ -70719,7 +70727,15 @@ kotlin.reflect.jvm.internal.impl.descriptors.PropertyAccessorDescriptor:
     public abstract boolean isDefault()
 kotlin.reflect.jvm.internal.impl.descriptors.ReceiverParameterDescriptor
 kotlin.reflect.jvm.internal.impl.descriptors.ScopesHolderForClass$Companion
-kotlin.reflect.jvm.internal.impl.descriptors.ScopesHolderForClass$getScope$1
+kotlin.reflect.jvm.internal.impl.descriptors.ScopesHolderForClass$getScope$1:
+    public final java.util.Set invoke()
+    public final kotlin.reflect.jvm.internal.impl.load.java.JavaTypeQualifiersByElementType invoke()
+    public static kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.LazyJavaPackageFragment invoke()
+    public final kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope invoke()
+    public final kotlin.reflect.jvm.internal.impl.types.KotlinType invoke()
+    public final java.lang.String[] invoke()
+    public final kotlin.reflect.jvm.internal.impl.types.SimpleType invoke$1()
+    public final java.util.Map invoke$2()
 kotlin.reflect.jvm.internal.impl.descriptors.ScopesHolderForClass$scopeForOwnerModule$2
 kotlin.reflect.jvm.internal.impl.descriptors.ScopesHolderForClass:
     public final kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope getScope(kotlin.reflect.jvm.internal.impl.types.checker.KotlinTypeRefiner)
@@ -71499,14 +71515,7 @@ kotlin.reflect.jvm.internal.impl.load.java.SpecialGenericSignatures:
 kotlin.reflect.jvm.internal.impl.load.java.UtilsKt
 kotlin.reflect.jvm.internal.impl.load.java.components.DescriptorResolverUtils$1$1
 kotlin.reflect.jvm.internal.impl.load.java.components.DescriptorResolverUtils
-kotlin.reflect.jvm.internal.impl.load.java.components.JavaAnnotationDescriptor$type$2:
-    public final java.util.Set invoke()
-    public final kotlin.reflect.jvm.internal.impl.load.java.JavaTypeQualifiersByElementType invoke()
-    public static kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.LazyJavaPackageFragment invoke()
-    public final kotlin.reflect.jvm.internal.impl.types.KotlinType invoke()
-    public final java.lang.String[] invoke()
-    public final kotlin.reflect.jvm.internal.impl.types.SimpleType invoke$1()
-    public final java.util.Map invoke$2()
+kotlin.reflect.jvm.internal.impl.load.java.components.JavaAnnotationDescriptor$type$2
 kotlin.reflect.jvm.internal.impl.load.java.components.JavaAnnotationDescriptor:
     public final boolean isIdeExternalAnnotation
     public static kotlin.reflect.jvm.internal.impl.load.java.structure.JavaAnnotationArgument getFirstArgument()

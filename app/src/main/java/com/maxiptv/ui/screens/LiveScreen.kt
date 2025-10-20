@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +31,6 @@ import com.maxiptv.ui.player.PlayerActivity
 import coil.compose.AsyncImage
 import android.content.Intent
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,8 +51,50 @@ fun LiveScreen(nav: NavHostController) {
   var isAdultUnlocked by remember { mutableStateOf(false) }
   var pendingAdultCategory by remember { mutableStateOf<String?>(null) }
   
+  // 🔥 ESTADO PARA FULLSCREEN - MESMO PLAYER, SÓ MUDA O LAYOUT!
+  var isFullscreen by remember { mutableStateOf(false) }
+  
+  // Context precisa ser lido FORA do remember
+  val context = LocalContext.current
+  
+  // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer
+  val sharedPlayer = remember {
+    val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
+      .setAllowCrossProtocolRedirects(true)
+      .setUserAgent("MaxiPTV/1.1.1 (Android)")
+      .setConnectTimeoutMs(8000)
+      .setReadTimeoutMs(8000)
+      .setKeepPostFor302Redirects(true)
+    
+    val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
+      .setDataSourceFactory(dataSourceFactory)
+    
+    val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
+      .setBufferDurationsMs(3000, 10000, 1500, 3000)
+      .setPrioritizeTimeOverSizeThresholds(true)
+      .setBackBuffer(3000, true)
+      .build()
+    
+    androidx.media3.exoplayer.ExoPlayer.Builder(context)
+      .setMediaSourceFactory(mediaSourceFactory)
+      .setLoadControl(loadControl)
+      .build().apply {
+        volume = 0.3f // Começa baixo no mini player
+        repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
+        android.util.Log.i("SharedPlayer", "🎯 Player compartilhado criado")
+      }
+  }
+  
   LaunchedEffect(Unit) { 
     XRepo.ensureLiveLoaded()
+  }
+  
+  // Cleanup do player compartilhado quando sair da tela
+  DisposableEffect(Unit) {
+    onDispose {
+      android.util.Log.i("LiveScreen", "🧹 Parando player compartilhado - saindo da tela")
+      sharedPlayer.stop()
+    }
   }
   
   // ✅ Filtrar categorias adultas (buscar por XXX, ADULTO, 18+)
@@ -87,8 +130,46 @@ fun LiveScreen(nav: NavHostController) {
         }
       }
     )
-    val context = LocalContext.current
     val isTv = MaxiApp.isTv
+    
+    // 🔥 SE FULLSCREEN, MOSTRAR SÓ O PLAYER (mesmo player, só muda layout)
+    if (isFullscreen && current != null) {
+      Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        androidx.compose.ui.viewinterop.AndroidView(
+          factory = { ctx ->
+            androidx.media3.ui.PlayerView(ctx).apply {
+              player = sharedPlayer
+              useController = true // CONTROLES ATIVADOS EM FULLSCREEN
+              controllerShowTimeoutMs = 3000
+              controllerHideOnTouch = true
+              resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+              setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+            }
+          },
+          modifier = Modifier.fillMaxSize()
+        )
+        
+        // Botão de voltar (canto superior esquerdo)
+        IconButton(
+          onClick = {
+            android.util.Log.i("LiveScreen", "🔙 Saindo do fullscreen - volume 30%")
+            sharedPlayer.volume = 0.3f // Voltar volume do mini player
+            isFullscreen = false
+          },
+          modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(16.dp)
+            .background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.CircleShape)
+        ) {
+          Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = "Voltar",
+            tint = Color.White
+          )
+        }
+      }
+      return // Não mostrar o resto do layout quando em fullscreen
+    }
     
     if (isTv) {
       // 📺 Layout TV com Mini Player
@@ -175,21 +256,13 @@ fun LiveScreen(nav: NavHostController) {
         ) {
           if (current != null) {
             MiniPlayer(
+              player = sharedPlayer,
               channel = current!!,
               onFullscreen = { 
-                // Parar mini player completamente antes de abrir fullscreen
-                android.util.Log.i("MiniPlayer", "🎯 Parando mini player para fullscreen")
-                // O mini player será parado automaticamente quando sair da tela
-                
-                // Abrir PlayerActivity em fullscreen (mesmo player)
-                val intent = Intent(context, PlayerActivity::class.java).apply {
-                  putExtra("url", current!!.toLiveUrl())
-                  putExtra("title", current!!.name)
-                  putExtra("isLive", true)
-                  // Flag para reutilizar activity existente
-                  flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }
-                context.startActivity(intent)
+                // 2x OK = Ativar fullscreen (MESMO PLAYER, SÓ MUDA LAYOUT)
+                android.util.Log.i("MiniPlayer", "🎯 Ativando fullscreen - volume 100%")
+                sharedPlayer.volume = 1.0f // Volume máximo em fullscreen
+                isFullscreen = true // Trocar para layout fullscreen
               }
             )
           } else {
@@ -374,62 +447,21 @@ fun LiveScreen(nav: NavHostController) {
 
 @Composable
 fun MiniPlayer(
+  player: androidx.media3.exoplayer.ExoPlayer,
   channel: LiveStream,
   onFullscreen: () -> Unit
 ) {
-  val context = androidx.compose.ui.platform.LocalContext.current
-  
-  // ExoPlayer para mini player - UM ÚNICO player que muda de canal
-  val exoPlayer = remember {
-    val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
-      .setAllowCrossProtocolRedirects(true)
-      .setUserAgent("MaxiPTV/1.1.1 (Android)")
-      .setConnectTimeoutMs(8000)
-      .setReadTimeoutMs(8000)
-      .setKeepPostFor302Redirects(true)
-    
-    val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
-      .setDataSourceFactory(dataSourceFactory)
-    
-    // LoadControl otimizado para mini player
-    val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
-      .setBufferDurationsMs(
-        3000,   // minBufferMs: 3 segundos
-        10000,  // maxBufferMs: 10 segundos
-        1500,   // bufferForPlaybackMs: 1.5 segundos
-        3000    // bufferForPlaybackAfterRebufferMs: 3 segundos
-      )
-      .setPrioritizeTimeOverSizeThresholds(true)
-      .setBackBuffer(3000, true)
-      .build()
-    
-    androidx.media3.exoplayer.ExoPlayer.Builder(context)
-      .setMediaSourceFactory(mediaSourceFactory)
-      .setLoadControl(loadControl)
-      .build().apply {
-        volume = 0.3f // Volume baixo no mini player
-        repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
-        android.util.Log.i("MiniPlayer", "▶️ Mini Player criado")
-      }
-  }
-  
   // Atualizar canal quando mudar - MUDAR MÍDIA NO MESMO PLAYER
   LaunchedEffect(channel.stream_id) {
     android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
-    exoPlayer.stop() // Parar player atual
+    player.stop() // Parar player atual
     val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
-    exoPlayer.setMediaItem(mediaItem)
-    exoPlayer.prepare()
-    exoPlayer.playWhenReady = true
+    player.setMediaItem(mediaItem)
+    player.prepare()
+    player.playWhenReady = true
   }
   
-  // Parar mini player completamente quando sair da tela
-  DisposableEffect(Unit) {
-    onDispose {
-      android.util.Log.i("MiniPlayer", "⏹️ Mini Player parado - saindo da tela")
-      exoPlayer.stop()
-    }
-  }
+  val exoPlayer = player // Renomear localmente para evitar conflito
   
   Box(
     modifier = Modifier
@@ -448,11 +480,11 @@ fun MiniPlayer(
       },
     contentAlignment = Alignment.Center
   ) {
-    // Player View
+    // Player View - USANDO PLAYER COMPARTILHADO
     androidx.compose.ui.viewinterop.AndroidView(
       factory = { ctx ->
         androidx.media3.ui.PlayerView(ctx).apply {
-          player = exoPlayer
+          this.player = exoPlayer // Usar o player compartilhado renomeado
           useController = false // SEM CONTROLES
           resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
           layoutParams = android.view.ViewGroup.LayoutParams(
