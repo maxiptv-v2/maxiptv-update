@@ -16,14 +16,18 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.maxiptv.MaxiApp
 import com.maxiptv.data.XRepo
 import com.maxiptv.data.LiveStream
+import com.maxiptv.ui.player.PlayerActivity
 import coil.compose.AsyncImage
+import android.content.Intent
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -83,13 +87,14 @@ fun LiveScreen(nav: NavHostController) {
         }
       }
     )
+    val context = LocalContext.current
     val isTv = MaxiApp.isTv
     
     if (isTv) {
       // 📺 Layout TV com Mini Player
       Row(Modifier.weight(1f)) {
         // Lista de canais (lado esquerdo)
-        Surface(tonalElevation = 2.dp, modifier = Modifier.width(420.dp).fillMaxHeight()) {
+        Surface(tonalElevation = 2.dp, modifier = Modifier.width(380.dp).fillMaxHeight()) {
           val filtered = when {
             selectedCat == "ADULT" && isAdultUnlocked -> {
               streams.filter { 
@@ -154,17 +159,21 @@ fun LiveScreen(nav: NavHostController) {
         // Mini Player (lado direito - espaço azul vazio)
         Box(
           modifier = Modifier
-            .weight(1f)
+            .width(400.dp)
             .fillMaxHeight()
-            .padding(16.dp)
+            .padding(8.dp)
         ) {
           if (current != null) {
             MiniPlayer(
               channel = current!!,
               onFullscreen = { 
-                // 2x clique = fullscreen (implementar depois)
-                // Por enquanto, apenas log
-                android.util.Log.i("MiniPlayer", "Fullscreen solicitado para: ${current!!.name}")
+                // Abrir PlayerActivity em fullscreen
+                val intent = Intent(context, PlayerActivity::class.java).apply {
+                  putExtra("url", current!!.toLiveUrl())
+                  putExtra("title", current!!.name)
+                  putExtra("isLive", true)
+                }
+                context.startActivity(intent)
               }
             )
           } else {
@@ -354,7 +363,7 @@ fun MiniPlayer(
 ) {
   val context = androidx.compose.ui.platform.LocalContext.current
   
-  // ExoPlayer para mini player
+  // ExoPlayer para mini player - SEMPRE recriar quando canal muda
   val exoPlayer = remember(channel.stream_id) {
     val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
@@ -384,7 +393,7 @@ fun MiniPlayer(
       .build().apply {
         val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
         setMediaItem(mediaItem)
-        volume = 0f // SEM ÁUDIO no mini player
+        volume = 0.3f // Volume baixo no mini player
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
         prepare()
         playWhenReady = true
@@ -392,9 +401,10 @@ fun MiniPlayer(
       }
   }
   
-  // Garantir que o player está tocando
+  // Atualizar canal quando mudar - FORÇAR nova mídia
   LaunchedEffect(channel.stream_id) {
     android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
+    exoPlayer.stop() // Parar player atual
     val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
     exoPlayer.setMediaItem(mediaItem)
     exoPlayer.prepare()
@@ -436,36 +446,35 @@ fun MiniPlayer(
       modifier = Modifier.fillMaxSize()
     )
     
-    // Overlay com informações do canal
+    // Overlay com informações do canal e programa atual (apenas no mini player)
     Box(
       modifier = Modifier
         .align(Alignment.BottomStart)
-        .padding(16.dp)
-        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
-        .padding(horizontal = 12.dp, vertical = 8.dp)
+        .padding(12.dp)
+        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+        .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
-      Text(
-        text = channel.name,
-        fontSize = 16.sp,
-        fontWeight = FontWeight.Bold,
-        color = Color.White
-      )
-    }
-    
-    // Indicador "AO VIVO"
-    Box(
-      modifier = Modifier
-        .align(Alignment.TopEnd)
-        .padding(16.dp)
-        .background(Color(0xFFFF5252), RoundedCornerShape(6.dp))
-        .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-      Text(
-        text = "● AO VIVO",
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Bold,
-        color = Color.White
-      )
+      Column {
+        // Nome do canal
+        Text(
+          text = channel.name,
+          fontSize = 12.sp,
+          fontWeight = FontWeight.Bold,
+          color = Color.White,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis
+        )
+        
+        // Categoria do canal
+        Text(
+          text = channel.categoryName ?: "Canal",
+          fontSize = 10.sp,
+          fontWeight = FontWeight.Medium,
+          color = Color(0xFFFFD54F), // Amarelo para destacar
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis
+        )
+      }
     }
     
     // Instrução para fullscreen

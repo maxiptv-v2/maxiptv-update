@@ -1,4 +1,6 @@
 package com.maxiptv.data
+
+import com.maxiptv.data.SettingsRepo
 data class AuthResponse(val user_info: UserInfo?)
 data class UserInfo(val auth: Int?, val status: String?)
 
