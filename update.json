@@ -3,10 +3,10 @@
     "versionCode":  45,
     "buildNumber":  45,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.40 - Layout Perfeito\n\n✅ Layout Corrigido:\n- Mini player ocupa toda área azul vazia\n- Lista de canais: largura fixa (350dp)\n- Não sobrepõe categorias nem canais\n- Posição correta abaixo das categorias\n\n📺 Mini Player TV:\n- 1x OK (canal) = Toca canal selecionado\n- 2x OK (mini player) = Abre fullscreen\n- D-Pad navegação correta\n- Volume ajustado (30%)\n- Sem múltiplas vozes\n\n🎯 PlayerActivity Otimizado:\n- launchMode=\"singleTop\"\n- Reutiliza mesma instância\n- Não cria múltiplos players\n- Performance melhorada\n\n📱 Smartphone/Tablet:\n- Layout original mantido\n- Player direto (1x OK)\n\n🚀 Sistema Completo:\n- API corrigida (aztv.cx)\n- Login funcionando\n- Buffers otimizados\n- Sem travamentos",
+    "releaseNotes":  "MaxiPTV v1.0.44 - Player Unico (SEM Duas Vozes!)\n\n🔥 CORRECAO CRITICA - Player Compartilhado:\n- UM UNICO ExoPlayer para mini player E fullscreen\n- SEM mais duas vozes tocando ao mesmo tempo!\n- SEM abrir PlayerActivity separada\n- APENAS troca o layout (mini ↔ fullscreen)\n- Performance 100% otimizada\n\n📺 Mini Player TV:\n- 1x OK (canal) = Toca no mini player (volume 30%)\n- 2x OK (mini player) = Ativa fullscreen (volume 100%, MESMO PLAYER!)\n- Botao VOLTAR = Volta para mini player (volume 30%, MESMO PLAYER!)\n- D-Pad navegacao perfeita\n- Layout correto (ocupa toda area azul)\n\n🎯 Sistema Inteligente:\n- Player compartilhado gerenciado corretamente\n- Troca de canal instantanea\n- Sem memory leaks\n- Sem multiplas instancias\n\n📱 Smartphone/Tablet:\n- Layout original mantido\n- Sem mudancas no comportamento\n\n✅ Tudo Funcionando:\n- API corrigida (aztv.cx)\n- Login perfeito\n- Buffers otimizados\n- Zero travamentos",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-19T21:52:26Z",
+    "lastUpdated":  "2025-10-20T22:45:00Z",
     "checksum":  "sha256:placeholder"
 }
