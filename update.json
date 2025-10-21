@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.65",
-    "versionCode":  65,
-    "buildNumber":  65,
-    "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.64 - Correcao de Instalacao!\n\nCORRECAO CRITICA - ERRO AO INSTALAR:\n- Corrigido erro ao analisar o pacote\n- App agora solicita permissao para instalar APKs automaticamente\n- Compativel com Android 8.0+ (Oreo)\n- Instalacao funciona em TODAS as TV Boxes\n\nSESSAO PERSISTENTE (v1.0.63):\n- App NAO deslogara mais ao minimizar\n- Sessao mantida em TV Boxes com pouca memoria\n- Verifica automaticamente se ja existe login\n\nNAVEGACAO INTELIGENTE (v1.0.62):\n- Ao assistir filme/serie e apertar BACK, volta para categoria especifica\n- FILMES -\u003e Acao -\u003e Filme -\u003e BACK -\u003e Volta para ACAO\n\nMANTEM:\n- Buffers ultra otimizados (zero travamentos)\n- Mini player com EPG profissional\n- Performance maxima em live channels",
-    "minimumVersion":  "1.0.0",
-    "forceUpdate":  false,
-    "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-21T18:38:29Z",
-    "checksum":  "sha256:placeholder"
+    "version": "v1.0.65",
+    "versionCode": 65,
+    "buildNumber": 65,
+    "downloadUrl": "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
+    "releaseNotes": "MaxiPTV v1.0.65 - PROTECAO USUARIOS GLOBAIS!\n\nCORRECAO CRITICA - NUNCA MAIS PERCA USUARIOS:\n- REMOVIDA criacao automatica de usuario padrao\n- JSONBin NUNCA mais sera sobrescrito\n- Usuarios cadastrados no painel admin sao PRESERVADOS\n- Login simultaneo funcionara para SEMPRE\n\nIMPORTANTE:\n- Usuarios devem ser adicionados APENAS pelo painel admin\n- Acesse: 5 toques no logo + senha 201015\n- Seus usuarios NUNCA mais serao apagados ao atualizar\n\nCORRECOES ANTERIORES:\n- Instalacao automatica funciona (v1.0.64)\n- Sessao persistente em TV Boxes (v1.0.63)\n- Navegacao inteligente (v1.0.62)\n\nMANTEM:\n- Buffers ultra otimizados\n- Mini player com EPG\n- Performance maxima",
+    "minimumVersion": "1.0.0",
+    "forceUpdate": false,
+    "fileSize": "3.6 MB",
+    "lastUpdated": "2025-10-21T19:34:12Z",
+    "checksum": "sha256:placeholder"
 }
