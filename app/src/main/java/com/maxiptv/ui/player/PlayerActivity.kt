@@ -129,8 +129,8 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚡ Configurar DataSource com timeouts diferentes para LIVE vs VOD/SERIES
     val isLive = contentType == "live"
-    val connectTimeout = if (isLive) 8000 else 15000   // VOD: 15s, LIVE: 8s (REDUZIDO)
-    val readTimeout = if (isLive) 8000 else 15000      // VOD: 15s, LIVE: 8s (REDUZIDO)
+    val connectTimeout = if (isLive) 5000 else 15000   // VOD: 15s, LIVE: 5s (ULTRA REDUZIDO)
+    val readTimeout = if (isLive) 5000 else 15000      // VOD: 15s, LIVE: 5s (ULTRA REDUZIDO)
     
     // 🌐 DNS OTIMIZADO: Priorizar IPv4 para melhor compatibilidade
     val customDns = object : Dns {
@@ -158,16 +158,16 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES
     val loadControl: LoadControl = if (isLive) {
-      // 📺 LIVE: Buffers MENORES para menos travamentos (IPTV precisa de buffers pequenos)
+      // 📺 LIVE: Buffers ULTRA MENORES para zero travamentos (IPTV precisa de buffers mínimos)
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          3000,   // minBufferMs: 3 segundos (REDUZIDO - menos delay)
-          10000,  // maxBufferMs: 10 segundos (REDUZIDO - evita acúmulo)
-          1500,   // bufferForPlaybackMs: 1.5 segundos (start rápido)
-          3000    // bufferForPlaybackAfterRebufferMs: 3 segundos
+          2000,   // minBufferMs: 2 segundos (ULTRA REDUZIDO - start instantâneo)
+          6000,   // maxBufferMs: 6 segundos (ULTRA REDUZIDO - evita acúmulo)
+          1000,   // bufferForPlaybackMs: 1 segundo (start ultra rápido)
+          2000    // bufferForPlaybackAfterRebufferMs: 2 segundos (reconexão rápida)
         )
         .setPrioritizeTimeOverSizeThresholds(true) // Prioriza tempo real
-        .setBackBuffer(5000, true) // 5s de back buffer (REDUZIDO)
+        .setBackBuffer(3000, true) // 3s de back buffer (ULTRA REDUZIDO)
         .build()
     } else {
       // 🎬 VOD/SERIES: Buffers maiores para reprodução suave
@@ -210,7 +210,7 @@ class PlayerActivity : ComponentActivity() {
         // 📊 QUALIDADE ADAPTATIVA: Começar em qualidade média para evitar travamentos
         exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
           .setPreferredTextLanguage(null) // Sem legendas
-          .setMaxVideoBitrate(if (isLive) 2_500_000 else 5_000_000) // LIVE: 2.5Mbps (REDUZIDO), VOD: 5Mbps
+          .setMaxVideoBitrate(if (isLive) 1_800_000 else 5_000_000) // LIVE: 1.8Mbps (ULTRA REDUZIDO), VOD: 5Mbps
           .setMaxVideoSize(1280, 720) // Limitar a 720p para performance
           .setMinVideoBitrate(if (isLive) 500_000 else 800_000) // Bitrate mínimo
           .build()
