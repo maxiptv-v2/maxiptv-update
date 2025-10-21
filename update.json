@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.56",
-    "versionCode":  56,
-    "buildNumber":  56,
+    "version":  "v1.0.57",
+    "versionCode":  57,
+    "buildNumber":  57,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.51 - Layout TV Otimizado!\n\n📺 LAYOUT TV MELHORADO:\n- Lista de canais reduzida (350dp → 320dp)\n- Mini player reposicionado para cima\n- EPG overlay ajustado para não cortar\n- Mais espaço para visualização\n\n📡 EPG FUNCIONANDO PERFEITAMENTE:\n- Dados sendo baixados de canais.is\n- User-Agent correto (sem bloqueio)\n- Programas com títulos e horários\n- Overlay posicionado corretamente\n\n🎮 MINI PLAYER OTIMIZADO:\n- Player compartilhado (sem duplicação)\n- Volume 30% no mini, 100% no fullscreen\n- 1x OK = toca no mini player\n- 2x OK = abre fullscreen\n\n🔄 RETRY AUTOMATICO:\n- Reconecta a cada 2s quando canal trava\n- SEM parar de tentar\n- Logs detalhados no sistema\n\n✅ Melhorias:\n- Layout TV mais equilibrado\n- EPG visível sem cortes\n- Interface mais limpa\n- Zero travamentos",
+    "releaseNotes":  "MaxiPTV v1.0.56 - Zero Travamentos + Layout Perfeito!\n\n⚡ BUFFERS ULTRA OTIMIZADOS:\n- minBufferMs: 3s → 2s (start instantâneo)\n- maxBufferMs: 10s → 6s (evita acúmulo)\n- bufferForPlaybackMs: 1.5s → 1s (ultra rápido)\n- backBuffer: 5s → 3s (memória mínima)\n\n🌐 TIMEOUTS REDUZIDOS:\n- connectTimeout: 8s → 5s (conexão rápida)\n- readTimeout: 8s → 5s (leitura rápida)\n- Reconexão automática em 2s\n\n📊 BITRATE OTIMIZADO:\n- maxVideoBitrate: 2.5Mbps → 1.8Mbps\n- Qualidade HD mantida\n- Menos overhead = zero travamentos\n\n📐 MINI PLAYER PERFEITO:\n- Posicionado no topo máximo (0dp padding)\n- Colado nas categorias acima\n- EPG visual profissional\n- Player compartilhado (sem duplicação)\n\n📡 EPG GLOBO/RECORD:\n- Mapeamento regional → São Paulo\n- Todos os canais Globo funcionando\n- Todos os canais Record funcionando\n- Visual moderno com gradientes\n\n✅ RESULTADO:\n- ZERO travamentos em live channels\n- Mini player posicionado perfeitamente\n- Interface TV otimizada\n- Performance máxima",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-20T21:45:10Z",
+    "lastUpdated":  "2025-10-20T21:50:31Z",
     "checksum":  "sha256:placeholder"
 }

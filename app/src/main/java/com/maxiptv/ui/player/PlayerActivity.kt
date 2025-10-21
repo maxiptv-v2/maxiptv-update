@@ -210,7 +210,7 @@ class PlayerActivity : ComponentActivity() {
         // 📊 QUALIDADE ADAPTATIVA: Começar em qualidade média para evitar travamentos
         exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
           .setPreferredTextLanguage(null) // Sem legendas
-          .setMaxVideoBitrate(if (isLive) 1_800_000 else 5_000_000) // LIVE: 1.8Mbps (ULTRA REDUZIDO), VOD: 5Mbps
+          .setMaxVideoBitrate(if (isLive) 2_200_000 else 5_000_000) // LIVE: 2.2Mbps (QUALIDADE BALANCEADA), VOD: 5Mbps
           .setMaxVideoSize(1280, 720) // Limitar a 720p para performance
           .setMinVideoBitrate(if (isLive) 500_000 else 800_000) // Bitrate mínimo
           .build()
