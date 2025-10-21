@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.66",
-    "versionCode":  66,
-    "buildNumber":  66,
-    "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.65 - PROTECAO USUARIOS GLOBAIS!\n\nCORRECAO CRITICA - NUNCA MAIS PERCA USUARIOS:\n- REMOVIDA criacao automatica de usuario padrao\n- JSONBin NUNCA mais sera sobrescrito\n- Usuarios cadastrados no painel admin sao PRESERVADOS\n- Login simultaneo funcionara para SEMPRE\n\nIMPORTANTE:\n- Usuarios devem ser adicionados APENAS pelo painel admin\n- Acesse: 5 toques no logo + senha 201015\n- Seus usuarios NUNCA mais serao apagados ao atualizar\n\nCORRECOES ANTERIORES:\n- Instalacao automatica funciona (v1.0.64)\n- Sessao persistente em TV Boxes (v1.0.63)\n- Navegacao inteligente (v1.0.62)\n\nMANTEM:\n- Buffers ultra otimizados\n- Mini player com EPG\n- Performance maxima",
-    "minimumVersion":  "1.0.0",
-    "forceUpdate":  false,
-    "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-21T19:40:05Z",
-    "checksum":  "sha256:placeholder"
+    "version": "v1.0.66",
+    "versionCode": 66,
+    "buildNumber": 66,
+    "downloadUrl": "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
+    "releaseNotes": "MaxiPTV v1.0.66 - HEARTBEAT AUTOMATICO!\n\nCORRECAO CRITICA - LOGIN SIMULTANEO SEMPRE ATIVO:\n- Heartbeat REINICIA automaticamente ao abrir o app\n- Nao precisa fazer login novamente apos atualizar\n- Controle de login simultaneo SEMPRE funcionando\n- TODOS os usuarios logados aparecem no painel admin\n\nCOMO FUNCIONA:\n- Atualizou o app? Heartbeat reativa sozinho\n- Minimizou e voltou? Heartbeat continua ativo\n- Sessao NUNCA expira sem necessidade\n- Login simultaneo 100% confiavel\n\nCORRECOES MANTIDAS:\n- Protecao usuarios globais (v1.0.65)\n- Instalacao automatica (v1.0.64)\n- Sessao persistente (v1.0.63)\n- Navegacao inteligente (v1.0.62)\n\nMANTEM:\n- Buffers otimizados\n- Mini player com EPG\n- Performance maxima",
+    "minimumVersion": "1.0.0",
+    "forceUpdate": false,
+    "fileSize": "3.6 MB",
+    "lastUpdated": "2025-10-21T19:52:38Z",
+    "checksum": "sha256:placeholder"
 }
