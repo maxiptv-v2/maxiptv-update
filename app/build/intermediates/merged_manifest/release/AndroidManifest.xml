@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maxiptv"
-    android:versionCode="62"
-    android:versionName="1.0.62" >
+    android:versionCode="63"
+    android:versionName="1.0.63" >
 
     <uses-sdk
         android:minSdkVersion="21"
@@ -49,9 +49,11 @@
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name="com.maxiptv.MainActivity"
+            android:alwaysRetainTaskState="true"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
             android:exported="true"
-            android:launchMode="singleTask" >
+            android:launchMode="singleTask"
+            android:stateNotNeeded="false" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
