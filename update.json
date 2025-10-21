@@ -3,10 +3,10 @@
     "versionCode":  50,
     "buildNumber":  50,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes":  "MaxiPTV v1.0.47 - EPG + Painel Admin Corrigido!\n\n📺 EPG COMPLETO (Guia de Programacao):\n- Programa atual ao vivo no mini player\n- Horario (inicio → fim)\n- Proxima atracao\n- Badge AO VIVO vermelho\n- Fallback com categoria + qualidade (HD/FHD/4K)\n\n🔄 RETRY AUTOMATICO:\n- Reconecta a cada 2s quando canal trava\n- SEM parar de tentar\n- Logs detalhados no sistema\n\n🔐 PAINEL ADMIN CORRIGIDO:\n- JSONBin parsing robusto\n- Usuarios aparecem como logado SEMPRE\n- Heartbeat melhorado (logs completos)\n- Fallback em caso de erro\n- Sessoes rastreadas corretamente\n\n🎮 CONTROLE REMOTO:\n- 1x BACK no fullscreen = volta pro mini player\n- 2x BACK = volta pro Home\n- Player continua tocando no mini\n\n🎨 OVERLAY ELEGANTE:\n- Gradiente suave\n- Tipografia bonita\n- Informacoes completas\n\n✅ Tudo Funcionando:\n- EPG de canais.is\n- SessionManager robusto\n- Login/logout rastreado\n- Zero travamentos",
+    "releaseNotes":  "MaxiPTV v1.0.49 - EPG Limpo e Funcional!\n\n📺 EPG REAL APENAS:\n- Overlay antigo removido completamente\n- Só aparece EPG real de canais.is\n- User-Agent adicionado para busca correta\n- Logs detalhados para debug\n\n🎮 MINI PLAYER OTIMIZADO:\n- Player compartilhado (sem duplicação)\n- Volume 30% no mini, 100% no fullscreen\n- 1x OK = toca no mini player\n- 2x OK = abre fullscreen\n\n🔄 RETRY AUTOMATICO:\n- Reconecta a cada 2s quando canal trava\n- SEM parar de tentar\n- Logs detalhados no sistema\n\n🎨 INTERFACE LIMPA:\n- Sem overlays desnecessários\n- EPG aparece apenas quando disponível\n- Fallback removido para clareza\n\n✅ Melhorias:\n- EPG busca melhorada\n- Player único compartilhado\n- Interface mais limpa\n- Zero travamentos",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-20T19:55:30Z",
+    "lastUpdated":  "2025-10-20T20:05:00Z",
     "checksum":  "sha256:placeholder"
 }
