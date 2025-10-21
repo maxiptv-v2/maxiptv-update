@@ -558,20 +558,21 @@ fun MiniPlayer(
       android.util.Log.i("MiniPlayer", "🎬 Programa atual: ${currentProgramme?.title ?: "NÃO ENCONTRADO"}")
       android.util.Log.i("MiniPlayer", "🎬 Próximo programa: ${nextProgramme?.title ?: "NÃO ENCONTRADO"}")
       
-      Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
-        // 📺 Nome do canal
+      Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+        // 📺 Nome do canal com visual profissional
         Text(
           text = channel.name,
-          fontSize = 18.sp,
+          fontSize = 22.sp,
           fontWeight = FontWeight.Bold,
           color = Color.White,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
+          letterSpacing = 0.5.sp,
           style = androidx.compose.ui.text.TextStyle(
             shadow = androidx.compose.ui.graphics.Shadow(
-              color = Color.Black.copy(alpha = 0.8f),
+              color = Color.Black.copy(alpha = 0.9f),
               offset = androidx.compose.ui.geometry.Offset(2f, 2f),
-              blurRadius = 4f
+              blurRadius = 6f
             )
           )
         )
@@ -579,44 +580,96 @@ fun MiniPlayer(
         // 🎬 Programa atual (se disponível no EPG)
         if (currentProgramme != null) {
           Row(
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
           ) {
-            // Ícone "AO VIVO"
+            // Badge "AO VIVO" estilo moderno
             Box(
               modifier = Modifier
-                .background(Color(0xFFE53935), RoundedCornerShape(4.dp))
-                .padding(horizontal = 6.dp, vertical = 2.dp)
+                .background(
+                  androidx.compose.ui.graphics.Brush.horizontalGradient(
+                    colors = listOf(Color(0xFFFF1744), Color(0xFFE91E63))
+                  ),
+                  RoundedCornerShape(6.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
               Text(
                 text = "● AO VIVO",
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+                fontSize = 10.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White,
+                letterSpacing = 0.8.sp
               )
             }
             
-            // Título do programa + horário
+            // Horário do programa
             Text(
-              text = "${currentProgramme.title} • ${currentProgramme.startTime()} - ${currentProgramme.stopTime()}",
+              text = "${currentProgramme.startTime()} - ${currentProgramme.stopTime()}",
               fontSize = 13.sp,
-              fontWeight = FontWeight.Medium,
-              color = Color(0xFFFFEB3B), // Amarelo
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis
+              fontWeight = FontWeight.SemiBold,
+              color = Color(0xFF90CAF9), // Azul claro
+              letterSpacing = 0.3.sp
             )
           }
           
-          // 📺 Próxima atração
-          if (nextProgramme != null) {
-            Text(
-              text = "Próximo: ${nextProgramme.title} às ${nextProgramme.startTime()}",
-              fontSize = 12.sp,
-              fontWeight = FontWeight.Normal,
-              color = Color(0xFFB0BEC5), // Cinza claro
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis
+          // Título do programa atual
+          Text(
+            text = currentProgramme.title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFFFFF59D), // Amarelo suave
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            lineHeight = 20.sp,
+            letterSpacing = 0.2.sp,
+            style = androidx.compose.ui.text.TextStyle(
+              shadow = androidx.compose.ui.graphics.Shadow(
+                color = Color.Black.copy(alpha = 0.7f),
+                offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                blurRadius = 3f
+              )
             )
+          )
+          
+          // 📺 Próxima atração com visual melhorado
+          if (nextProgramme != null) {
+            Row(
+              horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+              verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+              // Label "Em seguida"
+              Text(
+                text = "EM SEGUIDA",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF78909C), // Cinza azulado
+                letterSpacing = 0.8.sp
+              )
+              
+              Text(
+                text = "•",
+                fontSize = 10.sp,
+                color = Color(0xFF78909C)
+              )
+              
+              Text(
+                text = "${nextProgramme.startTime()}h",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFFB0BEC5)
+              )
+              
+              Text(
+                text = nextProgramme.title,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFFCFD8DC), // Cinza claro
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+              )
+            }
           }
         }
         // ❌ OVERLAY ANTIGO REMOVIDO - SÓ EPG AGORA!

@@ -11275,9 +11275,7 @@ androidx.compose.ui.graphics.BlockGraphicsLayerElement:
     public void inspectableProperties(androidx.compose.ui.platform.InspectorInfo)
 androidx.compose.ui.graphics.BlurEffect
 androidx.compose.ui.graphics.Brush$Companion:
-    public final androidx.compose.ui.graphics.Brush horizontalGradient-8A-3gB4(java.util.List,float,float,int)
     public final androidx.compose.ui.graphics.Brush horizontalGradient-8A-3gB4(kotlin.Pair[],float,float,int)
-    public static synthetic androidx.compose.ui.graphics.Brush horizontalGradient-8A-3gB4$default(androidx.compose.ui.graphics.Brush$Companion,java.util.List,float,float,int,int,java.lang.Object)
     public static synthetic androidx.compose.ui.graphics.Brush horizontalGradient-8A-3gB4$default(androidx.compose.ui.graphics.Brush$Companion,kotlin.Pair[],float,float,int,int,java.lang.Object)
     public final androidx.compose.ui.graphics.Brush linearGradient-mHitzGk(kotlin.Pair[],long,long,int)
     public static synthetic androidx.compose.ui.graphics.Brush linearGradient-mHitzGk$default(androidx.compose.ui.graphics.Brush$Companion,kotlin.Pair[],long,long,int,int,java.lang.Object)
@@ -15555,7 +15553,6 @@ androidx.compose.ui.text.font.FontWeight$Companion:
     public final androidx.compose.ui.text.font.FontWeight getBlack()
     public static synthetic void getBlack$annotations()
     public static synthetic void getBold$annotations()
-    public final androidx.compose.ui.text.font.FontWeight getExtraBold()
     public static synthetic void getExtraBold$annotations()
     public final androidx.compose.ui.text.font.FontWeight getExtraLight()
     public static synthetic void getExtraLight$annotations()
@@ -15585,7 +15582,6 @@ androidx.compose.ui.text.font.FontWeight$Companion:
 androidx.compose.ui.text.font.FontWeight:
     public static final int $stable
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getBlack$cp()
-    public static final synthetic androidx.compose.ui.text.font.FontWeight access$getExtraBold$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getExtraLight$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getLight$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getThin$cp()
@@ -52064,6 +52060,7 @@ androidx.compose.runtime.internal.PersistentCompositionLocalHashMap$Companion:
     public static long getZero-F1C5BW0()
     public static long getZero-NH-jbRc()
     public static long getZero-kKHJgLs()
+    public static androidx.compose.ui.graphics.Brush horizontalGradient-8A-3gB4()
     public static boolean isInSnapshot()
     public static androidx.compose.ui.graphics.LinearGradient linearGradient-mHitzGk(java.util.List,long,long,int)
     public static void notifyObjectsInitialized()
@@ -57322,6 +57319,7 @@ androidx.compose.ui.text.TextRange$Companion:
     public static int getEmail-PjHm6EE()
     public static androidx.compose.ui.text.intl.LocaleList getEmpty()
     public static int getEnd-e0LSkKk()
+    public static androidx.compose.ui.text.font.FontWeight getExtraBold()
     public static int getGo-eUduSuo()
     public static int getHighQuality-fcGXIks()
     public static int getItalic-_-LCdwA()
@@ -57810,7 +57808,6 @@ androidx.compose.ui.text.font.FontWeight$Companion
 androidx.compose.ui.text.font.FontWeight:
     public static final androidx.compose.ui.text.font.FontWeight Black
     public static final androidx.compose.ui.text.TextRange$Companion Companion
-    public static final androidx.compose.ui.text.font.FontWeight ExtraBold
     public static final androidx.compose.ui.text.font.FontWeight ExtraLight
     public static final androidx.compose.ui.text.font.FontWeight Light
     public static final androidx.compose.ui.text.font.FontWeight Thin

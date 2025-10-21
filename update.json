@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.51",
-    "versionCode":  51,
-    "buildNumber":  51,
+    "version":  "v1.0.52",
+    "versionCode":  52,
+    "buildNumber":  52,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.51 - Layout TV Otimizado!\n\n📺 LAYOUT TV MELHORADO:\n- Lista de canais reduzida (350dp → 320dp)\n- Mini player reposicionado para cima\n- EPG overlay ajustado para não cortar\n- Mais espaço para visualização\n\n📡 EPG FUNCIONANDO PERFEITAMENTE:\n- Dados sendo baixados de canais.is\n- User-Agent correto (sem bloqueio)\n- Programas com títulos e horários\n- Overlay posicionado corretamente\n\n🎮 MINI PLAYER OTIMIZADO:\n- Player compartilhado (sem duplicação)\n- Volume 30% no mini, 100% no fullscreen\n- 1x OK = toca no mini player\n- 2x OK = abre fullscreen\n\n🔄 RETRY AUTOMATICO:\n- Reconecta a cada 2s quando canal trava\n- SEM parar de tentar\n- Logs detalhados no sistema\n\n✅ Melhorias:\n- Layout TV mais equilibrado\n- EPG visível sem cortes\n- Interface mais limpa\n- Zero travamentos",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-20T20:41:09Z",
+    "lastUpdated":  "2025-10-20T21:10:08Z",
     "checksum":  "sha256:placeholder"
 }

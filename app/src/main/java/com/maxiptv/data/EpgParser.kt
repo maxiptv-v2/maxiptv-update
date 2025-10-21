@@ -157,7 +157,7 @@ object EpgParser {
      */
     fun getCurrentProgramme(channelId: String, epgData: Map<String, List<EpgProgramme>>): EpgProgramme? {
         Log.i("EpgParser", "🔍 Buscando programa atual para: '$channelId'")
-        Log.i("EpgParser", "📡 EPG tem ${epgData.size} canais disponíveis")
+        Log.i("EpgParser", "📡 EPG tem ${epgData.size} canais disponíveis: ${epgData.keys.take(5)}")
         
         // Tentar busca exata primeiro
         epgData[channelId]?.firstOrNull { it.isCurrentlyAiring() }?.let { 
@@ -174,9 +174,53 @@ object EpgParser {
             .replace("fhd", "")
             .replace("4k", "")
             .replace("uhd", "")
+            .replace("tv", "")
+            .replace("canal", "")
         
         Log.i("EpgParser", "🔍 Tentando busca flexível com: '$normalizedChannelId'")
         
+        // Tentar mapeamentos específicos para canais conhecidos
+        // IMPORTANTE: EPG tem "GLOBO SAO PAULO" e "RECORD Sao Paulo" - vamos mapear TODOS os canais regionais para esses
+        val channelMappings = mapOf(
+            "globo" to listOf("globosaopaulo", "globo", "redeglobo", "tvglobo"),
+            "record" to listOf("recordsaopaulo", "record", "recordtv", "tvrecord"),
+            "sbt" to listOf("sbt", "tvsbt"),
+            "band" to listOf("bandhd", "band", "bandeirantes", "tvband"),
+            "rede" to listOf("rede", "redetv"),
+            "cultura" to listOf("cultura", "tvcultura"),
+            "futura" to listOf("futura", "tvfutura")
+        )
+        
+        // Verificar mapeamentos específicos
+        for ((key, variations) in channelMappings) {
+            if (normalizedChannelId.contains(key)) {
+                Log.i("EpgParser", "🎯 Tentando mapeamento específico para '$key'")
+                for (variation in variations) {
+                    for ((epgChannelId, programmes) in epgData) {
+                        val normalizedEpgId = epgChannelId.lowercase()
+                            .replace(" ", "")
+                            .replace("-", "")
+                            .replace("_", "")
+                            .replace("hd", "")
+                            .replace("fhd", "")
+                            .replace("4k", "")
+                            .replace("uhd", "")
+                            .replace("tv", "")
+                            .replace("canal", "")
+                        
+                        if (normalizedEpgId.contains(variation) || variation.contains(normalizedEpgId)) {
+                            Log.i("EpgParser", "🎯 Match específico encontrado: '$epgChannelId' -> '$variation'")
+                            programmes.firstOrNull { it.isCurrentlyAiring() }?.let { 
+                                Log.i("EpgParser", "✅ Programa encontrado: ${it.title}")
+                                return it 
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Busca flexível geral
         for ((epgChannelId, programmes) in epgData) {
             val normalizedEpgId = epgChannelId.lowercase()
                 .replace(" ", "")
@@ -186,9 +230,11 @@ object EpgParser {
                 .replace("fhd", "")
                 .replace("4k", "")
                 .replace("uhd", "")
+                .replace("tv", "")
+                .replace("canal", "")
             
             if (normalizedEpgId.contains(normalizedChannelId) || normalizedChannelId.contains(normalizedEpgId)) {
-                Log.i("EpgParser", "🎯 Match encontrado: '$epgChannelId' -> '$normalizedEpgId'")
+                Log.i("EpgParser", "🎯 Match flexível encontrado: '$epgChannelId' -> '$normalizedEpgId'")
                 programmes.firstOrNull { it.isCurrentlyAiring() }?.let { 
                     Log.i("EpgParser", "✅ Programa encontrado: ${it.title}")
                     return it 
@@ -197,6 +243,7 @@ object EpgParser {
         }
         
         Log.w("EpgParser", "❌ Nenhum programa encontrado para: '$channelId'")
+        Log.w("EpgParser", "📋 Canais EPG disponíveis: ${epgData.keys.joinToString(", ")}")
         return null
     }
     
@@ -206,8 +253,13 @@ object EpgParser {
     fun getNextProgramme(channelId: String, epgData: Map<String, List<EpgProgramme>>): EpgProgramme? {
         val now = System.currentTimeMillis()
         
+        Log.i("EpgParser", "🔍 Buscando próximo programa para: '$channelId'")
+        
         // Tentar busca exata primeiro
-        epgData[channelId]?.firstOrNull { it.start > now }?.let { return it }
+        epgData[channelId]?.firstOrNull { it.start > now }?.let { 
+            Log.i("EpgParser", "✅ Próximo programa encontrado: ${it.title}")
+            return it 
+        }
         
         // Se não encontrar, tentar busca flexível
         val normalizedChannelId = channelId.lowercase()
@@ -218,7 +270,51 @@ object EpgParser {
             .replace("fhd", "")
             .replace("4k", "")
             .replace("uhd", "")
+            .replace("tv", "")
+            .replace("canal", "")
         
+        // Tentar mapeamentos específicos para canais conhecidos
+        // IMPORTANTE: EPG tem "GLOBO SAO PAULO" e "RECORD Sao Paulo" - vamos mapear TODOS os canais regionais para esses
+        val channelMappings = mapOf(
+            "globo" to listOf("globosaopaulo", "globo", "redeglobo", "tvglobo"),
+            "record" to listOf("recordsaopaulo", "record", "recordtv", "tvrecord"),
+            "sbt" to listOf("sbt", "tvsbt"),
+            "band" to listOf("bandhd", "band", "bandeirantes", "tvband"),
+            "rede" to listOf("rede", "redetv"),
+            "cultura" to listOf("cultura", "tvcultura"),
+            "futura" to listOf("futura", "tvfutura")
+        )
+        
+        // Verificar mapeamentos específicos
+        for ((key, variations) in channelMappings) {
+            if (normalizedChannelId.contains(key)) {
+                Log.i("EpgParser", "🎯 Tentando mapeamento específico para '$key'")
+                for (variation in variations) {
+                    for ((epgChannelId, programmes) in epgData) {
+                        val normalizedEpgId = epgChannelId.lowercase()
+                            .replace(" ", "")
+                            .replace("-", "")
+                            .replace("_", "")
+                            .replace("hd", "")
+                            .replace("fhd", "")
+                            .replace("4k", "")
+                            .replace("uhd", "")
+                            .replace("tv", "")
+                            .replace("canal", "")
+                        
+                        if (normalizedEpgId.contains(variation) || variation.contains(normalizedEpgId)) {
+                            Log.i("EpgParser", "🎯 Match específico encontrado: '$epgChannelId' -> '$variation'")
+                            programmes.firstOrNull { it.start > now }?.let { 
+                                Log.i("EpgParser", "✅ Próximo programa encontrado: ${it.title}")
+                                return it 
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Busca flexível geral
         for ((epgChannelId, programmes) in epgData) {
             val normalizedEpgId = epgChannelId.lowercase()
                 .replace(" ", "")
@@ -228,12 +324,19 @@ object EpgParser {
                 .replace("fhd", "")
                 .replace("4k", "")
                 .replace("uhd", "")
+                .replace("tv", "")
+                .replace("canal", "")
             
             if (normalizedEpgId.contains(normalizedChannelId) || normalizedChannelId.contains(normalizedEpgId)) {
-                programmes.firstOrNull { it.start > now }?.let { return it }
+                Log.i("EpgParser", "🎯 Match flexível encontrado: '$epgChannelId' -> '$normalizedEpgId'")
+                programmes.firstOrNull { it.start > now }?.let { 
+                    Log.i("EpgParser", "✅ Próximo programa encontrado: ${it.title}")
+                    return it 
+                }
             }
         }
         
+        Log.w("EpgParser", "❌ Nenhum próximo programa encontrado para: '$channelId'")
         return null
     }
 }
