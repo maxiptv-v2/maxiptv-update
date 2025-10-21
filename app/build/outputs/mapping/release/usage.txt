@@ -68158,6 +68158,7 @@ com.google.common.collect.CompactHashMap:
     public static java.util.Iterator valuesIterator()
 com.google.common.collect.CompactHashing:
     public static final boolean AdminPanelScreen$lambda$1(androidx.compose.runtime.MutableState)
+    public static final java.util.List LiveScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final boolean LiveScreen$lambda$24(androidx.compose.runtime.MutableState)
     public static final java.util.Map LiveScreen$lambda$28(androidx.compose.runtime.MutableState)
     public static final java.lang.String LiveScreen$lambda$3(androidx.compose.runtime.MutableState)
@@ -68339,6 +68340,7 @@ com.google.common.collect.Lists:
     public static final int mod(int,int)
     public static final long mod(long,long)
     public static java.util.ArrayList newArrayList(java.util.Iterator)
+    public static final kotlin.Pair to(java.lang.String,java.lang.String)
     public static java.lang.Throwable tryInternalFastPathGetFailure(com.google.common.util.concurrent.internal.InternalFutureFailureAccess)
     public static java.lang.Object uncheckedNull()
 com.google.common.collect.Maps$1

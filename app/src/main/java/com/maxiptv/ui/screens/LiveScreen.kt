@@ -62,22 +62,28 @@ fun LiveScreen(nav: NavHostController) {
   val context = LocalContext.current
   val isTv = MaxiApp.isTv
   
-  // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer com RETRY AUTOMÁTICO
+  // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer com RETRY AUTOMÁTICO E BUFFERS OTIMIZADOS
   val sharedPlayer = remember {
     val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
-      .setConnectTimeoutMs(8000)
-      .setReadTimeoutMs(8000)
+      .setConnectTimeoutMs(5000) // OTIMIZADO: 8s → 5s
+      .setReadTimeoutMs(5000)    // OTIMIZADO: 8s → 5s
       .setKeepPostFor302Redirects(true)
     
     val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
       .setDataSourceFactory(dataSourceFactory)
     
+    // ⚡ BUFFERS ULTRA OTIMIZADOS PARA LIVE (igual ao PlayerActivity)
     val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
-      .setBufferDurationsMs(3000, 10000, 1500, 3000)
+      .setBufferDurationsMs(
+        2000,   // minBufferMs: 2 segundos (ULTRA REDUZIDO)
+        6000,   // maxBufferMs: 6 segundos (ULTRA REDUZIDO)
+        1000,   // bufferForPlaybackMs: 1 segundo (ultra rápido)
+        2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
+      )
       .setPrioritizeTimeOverSizeThresholds(true)
-      .setBackBuffer(3000, true)
+      .setBackBuffer(3000, true) // 3s de back buffer
       .build()
     
     androidx.media3.exoplayer.ExoPlayer.Builder(context)
@@ -86,6 +92,14 @@ fun LiveScreen(nav: NavHostController) {
       .build().apply {
         volume = 0.3f // Começa baixo no mini player
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
+        
+        // 📊 QUALIDADE ADAPTATIVA OTIMIZADA
+        trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
+          .setPreferredTextLanguage(null)
+          .setMaxVideoBitrate(2_200_000) // 2.2Mbps (qualidade balanceada)
+          .setMaxVideoSize(1280, 720)   // Limitar a 720p
+          .setMinVideoBitrate(500_000)  // Bitrate mínimo
+          .build()
         
         // 🔄 RETRY AUTOMÁTICO - Reconectar quando travar
         addListener(object : androidx.media3.common.Player.Listener {
