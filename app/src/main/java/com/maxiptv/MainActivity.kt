@@ -23,10 +23,40 @@ class MainActivity : ComponentActivity() {
       MaxiTheme {
         val nav = rememberNavController()
         
+        // 🎯 INTERCEPTAR NAVEGAÇÃO INTELIGENTE do PlayerActivity
+        LaunchedEffect(Unit) {
+          // Verificar se veio do PlayerActivity com navegação inteligente
+          val navigateTo = intent.getStringExtra("navigateTo")
+          val returnFromPlayer = intent.getBooleanExtra("returnFromPlayer", false)
+          
+          if (returnFromPlayer && !navigateTo.isNullOrEmpty()) {
+            android.util.Log.i("MainActivity", "🎯 Navegação inteligente recebida: $navigateTo")
+            nav.navigate(navigateTo) {
+              // Limpar o stack até a tela de destino
+              popUpTo("home") { inclusive = false }
+            }
+          }
+        }
+        
         Surface(modifier = Modifier.fillMaxSize()) {
           HomeNav(nav)
         }
       }
+    }
+  }
+  
+  // 🎯 INTERCEPTAR NOVOS INTENTS (quando PlayerActivity navega de volta)
+  override fun onNewIntent(newIntent: android.content.Intent) {
+    super.onNewIntent(newIntent)
+    setIntent(newIntent)
+    
+    // Processar navegação inteligente se necessário
+    val navigateTo = newIntent.getStringExtra("navigateTo")
+    val returnFromPlayer = newIntent.getBooleanExtra("returnFromPlayer", false)
+    
+    if (returnFromPlayer && !navigateTo.isNullOrEmpty()) {
+      android.util.Log.i("MainActivity", "🎯 Novo Intent recebido: $navigateTo")
+      // A navegação será processada no LaunchedEffect acima
     }
   }
 }

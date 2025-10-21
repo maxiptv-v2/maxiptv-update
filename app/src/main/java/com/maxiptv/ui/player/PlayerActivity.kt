@@ -57,7 +57,29 @@ class PlayerActivity : ComponentActivity() {
           // Se está em fullscreen, volta para modo normal
           toggleFullscreen()
         } else {
-          // Se não está em fullscreen, fecha o player
+          // 🎯 NAVEGAÇÃO INTELIGENTE - Voltar para categoria específica
+          val returnToCategory = intent.getStringExtra("returnToCategory")
+          val categoryId = intent.getStringExtra("categoryId")
+          val contentType = intent.getStringExtra("contentType")
+          
+          if (returnToCategory != null && categoryId != null) {
+            // Voltar para a categoria específica (VOD ou Series)
+            val destination = if (contentType == "vod") "vod/$categoryId" else "series/$categoryId"
+            android.util.Log.i("PlayerActivity", "🎯 Navegação inteligente: voltando para $destination")
+            
+            // Usar Intent para navegar de volta para MainActivity com dados extras
+            val returnIntent = android.content.Intent().apply {
+              setClassName(this@PlayerActivity, "com.maxiptv.MainActivity")
+              putExtra("navigateTo", destination)
+              putExtra("returnFromPlayer", true)
+              putExtra("categoryId", categoryId)
+              putExtra("contentType", contentType)
+              flags = android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
+            startActivity(returnIntent)
+          }
+          
+          // Fechar o player
           finish()
         }
       }

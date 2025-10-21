@@ -21,6 +21,12 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   var selectedLanguage by remember { mutableStateOf("") }
   var selectedQuality by remember { mutableStateOf("FHD") }
   
+  // 🎯 DETECTAR RETORNO DO PLAYER para navegação inteligente
+  LaunchedEffect(Unit) {
+    // Configurar listener para resultado do PlayerActivity
+    // (implementação será feita via Activity Result API)
+  }
+  
   // Detectar idiomas disponíveis buscando TODAS as versões na API
   val availableLanguages = remember(info, allVods) {
     val currentTitle = info?.info?.name ?: ""
@@ -116,9 +122,16 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         android.util.Log.i("VodDetails", "Idioma escolhido: $selectedLanguage")
         android.util.Log.i("VodDetails", "Stream ID: $streamId (${targetVersion?.name ?: "padrão"})")
         
-        ctx.startActivity(Intent(ctx, PlayerActivity::class.java)
+        // 🎯 Usar startActivityForResult para navegação inteligente
+        val playerIntent = Intent(ctx, PlayerActivity::class.java)
           .putExtra("url", url)
-          .putExtra("contentType", "vod"))
+          .putExtra("contentType", "vod")
+          .putExtra("returnToCategory", "vod")
+          .putExtra("categoryId", vodId.toString())
+        
+        // Para Compose, vamos usar uma abordagem diferente
+        // O PlayerActivity vai navegar de volta automaticamente
+        ctx.startActivity(playerIntent)
       },
       modifier = Modifier.fillMaxWidth()
     ) { 

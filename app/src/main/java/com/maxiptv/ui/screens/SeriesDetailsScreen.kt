@@ -329,9 +329,16 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
                     
                     ep.streamUrl?.let { url ->
                       android.util.Log.i("SeriesDetails", "Idioma: $selectedLanguage, Série: ${targetSeries?.name ?: "padrão"}")
-                      ctx.startActivity(Intent(ctx, PlayerActivity::class.java)
+                      // 🎯 Usar startActivityForResult para navegação inteligente
+                      val playerIntent = Intent(ctx, PlayerActivity::class.java)
                         .putExtra("url", url)
-                        .putExtra("contentType", "series"))
+                        .putExtra("contentType", "series")
+                        .putExtra("returnToCategory", "series")
+                        .putExtra("categoryId", seriesId.toString())
+                      
+                      // Para Compose, vamos usar uma abordagem diferente
+                      // O PlayerActivity vai navegar de volta automaticamente
+                      ctx.startActivity(playerIntent)
                     }
                   }) { 
                     Text("▶") 
