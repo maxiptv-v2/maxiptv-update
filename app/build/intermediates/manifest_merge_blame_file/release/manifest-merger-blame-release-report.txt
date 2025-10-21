@@ -2,7 +2,7 @@
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
 3    package="com.maxiptv"
 4    android:versionCode="50"
-5    android:versionName="1.0.49" >
+5    android:versionName="1.0.50" >
 6
 7    <uses-sdk
 8        android:minSdkVersion="21"

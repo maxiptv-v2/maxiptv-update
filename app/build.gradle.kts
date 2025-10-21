@@ -15,7 +15,7 @@ android {
     minSdk = 21
     targetSdk = 34
         versionCode = 50
-        versionName = "1.0.49"
+        versionName = "1.0.50"
     vectorDrawables.useSupportLibrary = true
     buildConfigField("String", "DEFAULT_PLAYER_API", "\"https://aztv.cx/\"")
     buildConfigField("String", "DEFAULT_USER", "\"max\"")
