@@ -38,39 +38,12 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
   val scope = rememberCoroutineScope()
   val context = LocalContext.current
   
-  // Criar usuário padrão se não existir (apenas criar, não fazer login automático)
+  // 🛡️ PROTEÇÃO MÁXIMA: Não criar NENHUM usuário automaticamente
+  // Todos os usuários devem ser adicionados APENAS pelo painel admin (5 toques no logo)
+  // Isso garante que o JSONBin NUNCA será sobrescrito e os usuários cadastrados são preservados
   LaunchedEffect(Unit) {
-    try {
-      // Verificar se usuário padrão existe no JSONBin
-      val globalUsers = SessionManager.getAllUsers()
-      if (globalUsers.isEmpty()) {
-        // Primeira vez - criar usuário padrão no JSONBin
-        val defaultGlobalUser = com.maxiptv.data.GlobalUser(
-          id = "default",
-          username = "max",
-          password = "1h2yd90",
-          apiUrl = "https://aztv.cx/player_api.php",
-          expiryDate = "31/12/2030"
-        )
-        SessionManager.saveUser(defaultGlobalUser)
-      }
-      
-      // Criar localmente também se não existir
-      val localUsers = UserManager.getUsers()
-      if (localUsers.isEmpty()) {
-        val defaultUser = UserAccount(
-          id = "default",
-          username = "max",
-          password = "1h2yd90",
-          apiUrl = "https://aztv.cx/player_api.php",
-          expiryDate = "31/12/2030"
-        )
-        UserManager.addUser(defaultUser)
-      }
-      // NÃO fazer login automático - usuário precisa digitar
-    } catch (e: Exception) {
-      // Ignora erros na primeira inicialização
-    }
+    android.util.Log.i("LoginScreen", "🔐 LoginScreen carregada")
+    android.util.Log.i("LoginScreen", "👥 Usuários devem ser gerenciados pelo painel admin")
   }
   
   Column(

@@ -68909,6 +68909,7 @@ com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$5:
     public final void invoke(androidx.compose.runtime.Composer,int)
 com.maxiptv.ui.screens.LiveScreenKt
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$1:
+    public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$2$2
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$2$3$1

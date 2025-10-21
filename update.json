@@ -1,12 +1,12 @@
 {
-    "version": "v1.0.64",
-    "versionCode": 64,
-    "buildNumber": 64,
-    "downloadUrl": "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes": "MaxiPTV v1.0.64 - Correcao de Instalacao!\n\nCORRECAO CRITICA - ERRO AO INSTALAR:\n- Corrigido erro ao analisar o pacote\n- App agora solicita permissao para instalar APKs automaticamente\n- Compativel com Android 8.0+ (Oreo)\n- Instalacao funciona em TODAS as TV Boxes\n\nSESSAO PERSISTENTE (v1.0.63):\n- App NAO deslogara mais ao minimizar\n- Sessao mantida em TV Boxes com pouca memoria\n- Verifica automaticamente se ja existe login\n\nNAVEGACAO INTELIGENTE (v1.0.62):\n- Ao assistir filme/serie e apertar BACK, volta para categoria especifica\n- FILMES -> Acao -> Filme -> BACK -> Volta para ACAO\n\nMANTEM:\n- Buffers ultra otimizados (zero travamentos)\n- Mini player com EPG profissional\n- Performance maxima em live channels",
-    "minimumVersion": "1.0.0",
-    "forceUpdate": false,
-    "fileSize": "3.6 MB",
-    "lastUpdated": "2025-10-21T18:16:22Z",
-    "checksum": "sha256:placeholder"
+    "version":  "v1.0.65",
+    "versionCode":  65,
+    "buildNumber":  65,
+    "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
+    "releaseNotes":  "MaxiPTV v1.0.64 - Correcao de Instalacao!\n\nCORRECAO CRITICA - ERRO AO INSTALAR:\n- Corrigido erro ao analisar o pacote\n- App agora solicita permissao para instalar APKs automaticamente\n- Compativel com Android 8.0+ (Oreo)\n- Instalacao funciona em TODAS as TV Boxes\n\nSESSAO PERSISTENTE (v1.0.63):\n- App NAO deslogara mais ao minimizar\n- Sessao mantida em TV Boxes com pouca memoria\n- Verifica automaticamente se ja existe login\n\nNAVEGACAO INTELIGENTE (v1.0.62):\n- Ao assistir filme/serie e apertar BACK, volta para categoria especifica\n- FILMES -\u003e Acao -\u003e Filme -\u003e BACK -\u003e Volta para ACAO\n\nMANTEM:\n- Buffers ultra otimizados (zero travamentos)\n- Mini player com EPG profissional\n- Performance maxima em live channels",
+    "minimumVersion":  "1.0.0",
+    "forceUpdate":  false,
+    "fileSize":  "3.6 MB",
+    "lastUpdated":  "2025-10-21T18:38:29Z",
+    "checksum":  "sha256:placeholder"
 }
