@@ -284,7 +284,7 @@ fun LiveScreen(nav: NavHostController) {
           modifier = Modifier
           .weight(1f) // Ocupar todo o espaço restante
           .fillMaxHeight()
-          .padding(top = 32.dp, start = 8.dp, end = 8.dp, bottom = 8.dp), // Padding superior para posicionar o mini player
+          .padding(top = 4.dp, start = 8.dp, end = 8.dp, bottom = 8.dp), // Padding mínimo no topo para subir o mini player
           contentAlignment = Alignment.TopCenter // Alinhado ao topo centralizado
         ) {
           if (current != null) {
