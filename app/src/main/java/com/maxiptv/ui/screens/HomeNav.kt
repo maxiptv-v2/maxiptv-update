@@ -9,6 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.maxiptv.data.UserManager
+import com.maxiptv.data.SessionManager
 
 @Composable
 fun HomeNav(nav: NavHostController) {
@@ -19,14 +20,36 @@ fun HomeNav(nav: NavHostController) {
     android.util.Log.i("HomeNav", "🔍 Verificando sessão existente...")
     val currentUser = UserManager.getCurrentUser()
     
-    initialRoute = if (currentUser != null) {
+    if (currentUser != null) {
       android.util.Log.i("HomeNav", "✅ Usuário logado encontrado: ${currentUser.username}")
+      
+      // 🔄 REATIVAR HEARTBEAT para controle de login simultâneo
+      try {
+        val deviceId = UserManager.getDeviceId()
+        val deviceName = UserManager.getDeviceName()
+        
+        android.util.Log.i("HomeNav", "💓 Reativando heartbeat para ${currentUser.username}...")
+        val (success, message) = SessionManager.tryLogin(
+          username = currentUser.username,
+          deviceId = deviceId,
+          deviceName = deviceName
+        )
+        
+        if (success) {
+          android.util.Log.i("HomeNav", "✅ Heartbeat reativado! Sessão global restaurada")
+        } else {
+          android.util.Log.w("HomeNav", "⚠️ Erro ao reativar heartbeat: $message")
+        }
+      } catch (e: Exception) {
+        android.util.Log.e("HomeNav", "❌ Erro ao reativar sessão: ${e.message}")
+      }
+      
       android.util.Log.i("HomeNav", "🏠 Navegando direto para HOME")
-      "home"
+      initialRoute = "home"
     } else {
       android.util.Log.i("HomeNav", "❌ Nenhum usuário logado")
       android.util.Log.i("HomeNav", "🔑 Navegando para LOGIN")
-      "login"
+      initialRoute = "login"
     }
   }
   
