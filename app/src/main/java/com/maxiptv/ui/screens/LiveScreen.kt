@@ -207,8 +207,8 @@ fun LiveScreen(nav: NavHostController) {
     if (isTv) {
       // 📺 Layout TV com Mini Player
       Row(Modifier.weight(1f)) {
-        // Lista de canais (lado esquerdo)
-        Surface(tonalElevation = 2.dp, modifier = Modifier.width(350.dp).fillMaxHeight()) {
+        // Lista de canais (lado esquerdo - reduzida)
+        Surface(tonalElevation = 2.dp, modifier = Modifier.width(320.dp).fillMaxHeight()) {
           val filtered = when {
             selectedCat == "ADULT" && isAdultUnlocked -> {
               streams.filter { 
@@ -285,7 +285,7 @@ fun LiveScreen(nav: NavHostController) {
             .weight(1f) // Ocupar todo o espaço restante
             .fillMaxHeight()
             .padding(8.dp),
-          contentAlignment = Alignment.Center
+          contentAlignment = Alignment.TopCenter // Mudado de Center para TopCenter
         ) {
           if (current != null) {
             MiniPlayer(
@@ -546,7 +546,7 @@ fun MiniPlayer(
             )
           )
         )
-        .padding(16.dp)
+        .padding(16.dp, 8.dp, 16.dp, 16.dp) // Padding reduzido no topo
     ) {
       // Buscar programa atual e próximo do EPG
       val currentProgramme = EpgParser.getCurrentProgramme(channel.name, epgData)

@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.50",
-    "versionCode":  50,
-    "buildNumber":  50,
+    "version":  "v1.0.51",
+    "versionCode":  51,
+    "buildNumber":  51,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.50 - Atualização Corrigida!\n\n🔧 CORREÇÃO DE ATUALIZAÇÃO:\n- VersionCode corrigido para detecção correta\n- APK compilado com script oficial\n- Mesma chave de assinatura mantida\n- Processo de atualização funcionando\n\n📺 EPG REAL APENAS:\n- Overlay antigo removido completamente\n- Só aparece EPG real de canais.is\n- User-Agent adicionado para busca correta\n- Logs detalhados para debug\n\n🎮 MINI PLAYER OTIMIZADO:\n- Player compartilhado (sem duplicação)\n- Volume 30% no mini, 100% no fullscreen\n- 1x OK = toca no mini player\n- 2x OK = abre fullscreen\n\n🔄 RETRY AUTOMATICO:\n- Reconecta a cada 2s quando canal trava\n- SEM parar de tentar\n- Logs detalhados no sistema\n\n✅ Garantia:\n- Atualização funcionando corretamente\n- VersionCode incrementado automaticamente\n- APK enviado para GitHub\n- Zero problemas de instalação",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-20T20:27:03Z",
+    "lastUpdated":  "2025-10-20T20:41:09Z",
     "checksum":  "sha256:placeholder"
 }

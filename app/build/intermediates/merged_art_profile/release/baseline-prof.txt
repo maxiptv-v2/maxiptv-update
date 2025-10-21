@@ -1829,7 +1829,7 @@ HSPLandroidx/compose/foundation/layout/HorizontalAlignElement;->hashCode()I
 HSPLandroidx/compose/foundation/layout/HorizontalAlignElement;->k(Lx0/p;)V
 Lt/w;
 HSPLt/w;->Z(Ljava/lang/Object;)Ljava/lang/Object;
-HSPLandroidx/compose/foundation/layout/b;->o(Lx0/q;)Lx0/q;
+HSPLandroidx/compose/foundation/layout/b;->p(Lx0/q;)Lx0/q;
 Lt/x;
 Landroidx/compose/foundation/layout/IntrinsicWidthElement;
 HSPLandroidx/compose/foundation/layout/IntrinsicWidthElement;-><init>()V
@@ -1862,7 +1862,8 @@ HSPLandroidx/compose/foundation/layout/b;->j(Lx0/q;Lt/a0;)Lx0/q;
 HSPLandroidx/compose/foundation/layout/b;->k(Lx0/q;F)Lx0/q;
 HSPLandroidx/compose/foundation/layout/b;->l(Lx0/q;FF)Lx0/q;
 HSPLandroidx/compose/foundation/layout/b;->m(Lx0/q;FFI)Lx0/q;
-HSPLandroidx/compose/foundation/layout/b;->n(Lx0/q;FFFFI)Lx0/q;
+HSPLandroidx/compose/foundation/layout/b;->n(Lx0/q;FFFF)Lx0/q;
+HSPLandroidx/compose/foundation/layout/b;->o(Lx0/q;FFFFI)Lx0/q;
 HSPLd/c;-><init>(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;I)V
 Lt/z;
 HSPLt/z;->e(Ls1/p0;Ls1/m0;J)Ls1/o0;
