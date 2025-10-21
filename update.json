@@ -1,12 +1,12 @@
 {
-    "version": "v1.0.63",
-    "versionCode": 63,
-    "buildNumber": 63,
-    "downloadUrl": "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
-    "releaseNotes": "MaxiPTV v1.0.63 - Sessao Persistente!\n\nCORRECAO CRITICA - TV BOXES GENERICAS:\n- App NAO deslogara mais ao minimizar/voltar ao launcher!\n- Sessao mantida mesmo em TV Boxes com pouca memoria\n- Verifica automaticamente se ja existe login ao abrir\n- Preserva estado da navegacao\n\nCOMO FUNCIONA:\n- Antes: Saia do app -> Volta -> Pede login novamente\n- Agora: Saia do app -> Volta -> Continua logado!\n- Sistema inteligente de persistencia de sessao\n- Compativel com TODAS as TV Boxes (genericas e oficiais)\n\nNAVEGACAO INTELIGENTE (v1.0.62):\n- Ao assistir filme/serie e apertar BACK, volta para categoria especifica\n- FILMES -> Acao -> Filme -> BACK -> Volta para ACAO!\n- Funciona para FILMES e SERIES\n\nMANTEM:\n- Buffers ultra otimizados (zero travamentos)\n- Mini player com EPG profissional\n- Performance maxima em live channels",
-    "minimumVersion": "1.0.0",
-    "forceUpdate": false,
-    "fileSize": "3.6 MB",
-    "lastUpdated": "2025-10-21T17:09:45Z",
-    "checksum": "sha256:placeholder"
+    "version":  "v1.0.64",
+    "versionCode":  64,
+    "buildNumber":  64,
+    "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
+    "releaseNotes":  "MaxiPTV v1.0.63 - Sessao Persistente!\n\nCORRECAO CRITICA - TV BOXES GENERICAS:\n- App NAO deslogara mais ao minimizar/voltar ao launcher!\n- Sessao mantida mesmo em TV Boxes com pouca memoria\n- Verifica automaticamente se ja existe login ao abrir\n- Preserva estado da navegacao\n\nCOMO FUNCIONA:\n- Antes: Saia do app -\u003e Volta -\u003e Pede login novamente\n- Agora: Saia do app -\u003e Volta -\u003e Continua logado!\n- Sistema inteligente de persistencia de sessao\n- Compativel com TODAS as TV Boxes (genericas e oficiais)\n\nNAVEGACAO INTELIGENTE (v1.0.62):\n- Ao assistir filme/serie e apertar BACK, volta para categoria especifica\n- FILMES -\u003e Acao -\u003e Filme -\u003e BACK -\u003e Volta para ACAO!\n- Funciona para FILMES e SERIES\n\nMANTEM:\n- Buffers ultra otimizados (zero travamentos)\n- Mini player com EPG profissional\n- Performance maxima em live channels",
+    "minimumVersion":  "1.0.0",
+    "forceUpdate":  false,
+    "fileSize":  "3.6 MB",
+    "lastUpdated":  "2025-10-21T17:31:10Z",
+    "checksum":  "sha256:placeholder"
 }
