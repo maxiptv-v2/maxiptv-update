@@ -23,11 +23,20 @@ object EpgParser {
     suspend fun fetchEpg(): Map<String, List<EpgProgramme>> = withContext(Dispatchers.IO) {
         try {
             Log.i("EpgParser", "📡 Baixando EPG de $EPG_URL...")
-            val xml = URL(EPG_URL).readText()
+            
+            // Usar conexão com User-Agent para evitar bloqueio
+            val connection = URL(EPG_URL).openConnection()
+            connection.setRequestProperty("User-Agent", "MaxiPTV/1.1.1 (Android)")
+            connection.setRequestProperty("Accept", "application/xml, text/xml, */*")
+            connection.connectTimeout = 10000
+            connection.readTimeout = 15000
+            
+            val xml = connection.getInputStream().bufferedReader().use { it.readText() }
             Log.i("EpgParser", "✅ EPG baixado (${xml.length} bytes)")
             parseXmlTv(xml)
         } catch (e: Exception) {
             Log.e("EpgParser", "❌ Erro ao baixar EPG: ${e.message}")
+            e.printStackTrace()
             emptyMap()
         }
     }
@@ -147,7 +156,48 @@ object EpgParser {
      * Busca o programa atual para um canal
      */
     fun getCurrentProgramme(channelId: String, epgData: Map<String, List<EpgProgramme>>): EpgProgramme? {
-        return epgData[channelId]?.firstOrNull { it.isCurrentlyAiring() }
+        Log.i("EpgParser", "🔍 Buscando programa atual para: '$channelId'")
+        Log.i("EpgParser", "📡 EPG tem ${epgData.size} canais disponíveis")
+        
+        // Tentar busca exata primeiro
+        epgData[channelId]?.firstOrNull { it.isCurrentlyAiring() }?.let { 
+            Log.i("EpgParser", "✅ Encontrado programa exato: ${it.title}")
+            return it 
+        }
+        
+        // Se não encontrar, tentar busca flexível
+        val normalizedChannelId = channelId.lowercase()
+            .replace(" ", "")
+            .replace("-", "")
+            .replace("_", "")
+            .replace("hd", "")
+            .replace("fhd", "")
+            .replace("4k", "")
+            .replace("uhd", "")
+        
+        Log.i("EpgParser", "🔍 Tentando busca flexível com: '$normalizedChannelId'")
+        
+        for ((epgChannelId, programmes) in epgData) {
+            val normalizedEpgId = epgChannelId.lowercase()
+                .replace(" ", "")
+                .replace("-", "")
+                .replace("_", "")
+                .replace("hd", "")
+                .replace("fhd", "")
+                .replace("4k", "")
+                .replace("uhd", "")
+            
+            if (normalizedEpgId.contains(normalizedChannelId) || normalizedChannelId.contains(normalizedEpgId)) {
+                Log.i("EpgParser", "🎯 Match encontrado: '$epgChannelId' -> '$normalizedEpgId'")
+                programmes.firstOrNull { it.isCurrentlyAiring() }?.let { 
+                    Log.i("EpgParser", "✅ Programa encontrado: ${it.title}")
+                    return it 
+                }
+            }
+        }
+        
+        Log.w("EpgParser", "❌ Nenhum programa encontrado para: '$channelId'")
+        return null
     }
     
     /**
@@ -155,7 +205,36 @@ object EpgParser {
      */
     fun getNextProgramme(channelId: String, epgData: Map<String, List<EpgProgramme>>): EpgProgramme? {
         val now = System.currentTimeMillis()
-        return epgData[channelId]?.firstOrNull { it.start > now }
+        
+        // Tentar busca exata primeiro
+        epgData[channelId]?.firstOrNull { it.start > now }?.let { return it }
+        
+        // Se não encontrar, tentar busca flexível
+        val normalizedChannelId = channelId.lowercase()
+            .replace(" ", "")
+            .replace("-", "")
+            .replace("_", "")
+            .replace("hd", "")
+            .replace("fhd", "")
+            .replace("4k", "")
+            .replace("uhd", "")
+        
+        for ((epgChannelId, programmes) in epgData) {
+            val normalizedEpgId = epgChannelId.lowercase()
+                .replace(" ", "")
+                .replace("-", "")
+                .replace("_", "")
+                .replace("hd", "")
+                .replace("fhd", "")
+                .replace("4k", "")
+                .replace("uhd", "")
+            
+            if (normalizedEpgId.contains(normalizedChannelId) || normalizedChannelId.contains(normalizedEpgId)) {
+                programmes.firstOrNull { it.start > now }?.let { return it }
+            }
+        }
+        
+        return null
     }
 }
 

@@ -522,6 +522,8 @@ fun MiniPlayer(
           this.player = exoPlayer // Usar o player compartilhado renomeado
           useController = false // SEM CONTROLES
           resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+          // Desabilitar overlay nativo do ExoPlayer para mostrar nosso EPG
+          setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_NEVER)
           layoutParams = android.view.ViewGroup.LayoutParams(
             android.view.ViewGroup.LayoutParams.MATCH_PARENT,
             android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -549,6 +551,12 @@ fun MiniPlayer(
       // Buscar programa atual e próximo do EPG
       val currentProgramme = EpgParser.getCurrentProgramme(channel.name, epgData)
       val nextProgramme = EpgParser.getNextProgramme(channel.name, epgData)
+      
+      // Log para debug do EPG
+      android.util.Log.i("MiniPlayer", "📺 Canal: ${channel.name}")
+      android.util.Log.i("MiniPlayer", "📡 EPG carregado: ${epgData.size} canais")
+      android.util.Log.i("MiniPlayer", "🎬 Programa atual: ${currentProgramme?.title ?: "NÃO ENCONTRADO"}")
+      android.util.Log.i("MiniPlayer", "🎬 Próximo programa: ${nextProgramme?.title ?: "NÃO ENCONTRADO"}")
       
       Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
         // 📺 Nome do canal
@@ -610,51 +618,8 @@ fun MiniPlayer(
               overflow = TextOverflow.Ellipsis
             )
           }
-        } else {
-          // Fallback se não tiver EPG - mostrar categoria + qualidade
-          Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-            Text(
-              text = channel.categoryName ?: "Ao Vivo",
-              fontSize = 13.sp,
-              fontWeight = FontWeight.Medium,
-              color = Color(0xFFB0BEC5),
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis
-            )
-            
-            // Qualidade detectada
-            val quality = when {
-              channel.name.contains("4K", ignoreCase = true) || 
-              channel.name.contains("UHD", ignoreCase = true) -> "4K"
-              channel.name.contains("FHD", ignoreCase = true) -> "Full HD"
-              channel.name.contains("HD", ignoreCase = true) -> "HD"
-              else -> null
-            }
-            
-            if (quality != null) {
-              Box(
-                modifier = Modifier
-                  .background(
-                    when (quality) {
-                      "4K" -> Color(0xFFE91E63)
-                      "Full HD" -> Color(0xFF00BCD4)
-                      "HD" -> Color(0xFF4CAF50)
-                      else -> Color.Gray
-                    },
-                    RoundedCornerShape(4.dp)
-                  )
-                  .padding(horizontal = 6.dp, vertical = 2.dp)
-              ) {
-                Text(
-                  text = quality,
-                  fontSize = 10.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = Color.White
-                )
-              }
-            }
-          }
         }
+        // ❌ OVERLAY ANTIGO REMOVIDO - SÓ EPG AGORA!
       }
     }
   }
