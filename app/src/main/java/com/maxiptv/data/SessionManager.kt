@@ -81,12 +81,10 @@ object SessionManager {
                 if (existingSession.deviceId == deviceId) {
                     Log.i(TAG, "✅ Mesmo dispositivo, permitindo re-login")
                 } 
-                // Se for dispositivo DIFERENTE, verificar timeout
-                else if (timeSinceLastHeartbeat < SESSION_TIMEOUT) {
+                // Se for dispositivo DIFERENTE, BLOQUEAR SEMPRE (sem timeout automático)
+                else {
                     Log.w(TAG, "❌ Login bloqueado: usuário já está ativo em ${existingSession.deviceName}")
                     return@withContext Pair(false, "Este usuário já está logado em ${existingSession.deviceName}. Desconecte o outro dispositivo primeiro.")
-                } else {
-                    Log.i(TAG, "⏰ Sessão anterior expirou (sem heartbeat), permitindo novo login")
                 }
             } else {
                 Log.i(TAG, "✨ Nenhuma sessão existente, criando nova")
