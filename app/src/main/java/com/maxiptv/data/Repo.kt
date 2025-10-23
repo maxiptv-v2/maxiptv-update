@@ -72,26 +72,27 @@ object XRepo {
   }
 
   suspend fun ensureLiveLoaded() {
-    // Tentar carregar do cache primeiro
-    if (_live.value.isEmpty()) {
-      val cachedLive = CacheManager.loadLiveCache()
-      val cachedCats = CacheManager.loadLiveCategories()
-      if (cachedLive != null && cachedLive.isNotEmpty() && cachedCats != null) {
-        // 🚫 FILTRAR CANAIS ADULT SWIM DO CACHE TAMBÉM
-        val filteredCachedLive = cachedLive.filter { stream ->
-          val name = stream.name.lowercase()
-          !name.contains("adult swim", ignoreCase = true)
-        }
-        _live.emit(filteredCachedLive)
-        _liveCats.emit(cachedCats)
-        android.util.Log.i("XRepo", "✅ LIVE carregado do CACHE (${filteredCachedLive.size} canais, ${cachedCats.size} categorias) - Adult Swim removidos")
-        return
-      } else {
-        android.util.Log.w("XRepo", "⚠️ Cache LIVE não encontrado ou vazio")
-      }
-    } else {
-      android.util.Log.i("XRepo", "✅ LIVE já carregado na memória")
+    // ⚡ OTIMIZAÇÃO: Se já tem dados na memória, não recarregar
+    if (_live.value.isNotEmpty()) {
+      android.util.Log.i("XRepo", "✅ LIVE já carregado na memória (${_live.value.size} canais)")
       return
+    }
+    
+    // Tentar carregar do cache primeiro
+    val cachedLive = CacheManager.loadLiveCache()
+    val cachedCats = CacheManager.loadLiveCategories()
+    if (cachedLive != null && cachedLive.isNotEmpty() && cachedCats != null) {
+      // 🚫 FILTRAR CANAIS ADULT SWIM DO CACHE TAMBÉM
+      val filteredCachedLive = cachedLive.filter { stream ->
+        val name = stream.name.lowercase()
+        !name.contains("adult swim", ignoreCase = true)
+      }
+      _live.emit(filteredCachedLive)
+      _liveCats.emit(cachedCats)
+      android.util.Log.i("XRepo", "✅ LIVE carregado do CACHE (${filteredCachedLive.size} canais, ${cachedCats.size} categorias) - Adult Swim removidos")
+      return
+    } else {
+      android.util.Log.w("XRepo", "⚠️ Cache LIVE não encontrado ou vazio")
     }
     
     // Se não tem cache, buscar da API
@@ -120,19 +121,20 @@ object XRepo {
     }
   }
   suspend fun ensureVodLoaded() {
+    // ⚡ OTIMIZAÇÃO: Se já tem dados na memória, não recarregar
+    if (_vod.value.isNotEmpty()) {
+      android.util.Log.i("XRepo", "✅ VOD já carregado na memória (${_vod.value.size} itens)")
+      return
+    }
+    
     // Tentar carregar do cache primeiro
-    if (_vod.value.isEmpty()) {
-      val cachedVods = CacheManager.loadVodCache()
-      val cachedCats = CacheManager.loadVodCategories()
-      if (cachedVods != null && cachedVods.isNotEmpty() && cachedCats != null) {
-        _vod.emit(cachedVods)
-        _vodCats.emit(cachedCats)
-        _vodGrouped.emit(groupVod(cachedVods))
-        android.util.Log.i("XRepo", "✅ VOD carregado do CACHE (${cachedVods.size} itens, ${cachedCats.size} categorias)")
-        return
-      }
-    } else {
-      android.util.Log.i("XRepo", "✅ VOD já carregado na memória")
+    val cachedVods = CacheManager.loadVodCache()
+    val cachedCats = CacheManager.loadVodCategories()
+    if (cachedVods != null && cachedVods.isNotEmpty() && cachedCats != null) {
+      _vod.emit(cachedVods)
+      _vodCats.emit(cachedCats)
+      _vodGrouped.emit(groupVod(cachedVods))
+      android.util.Log.i("XRepo", "✅ VOD carregado do CACHE (${cachedVods.size} itens, ${cachedCats.size} categorias)")
       return
     }
     
@@ -153,19 +155,20 @@ object XRepo {
     }
   }
   suspend fun ensureSeriesLoaded() {
+    // ⚡ OTIMIZAÇÃO: Se já tem dados na memória, não recarregar
+    if (_series.value.isNotEmpty()) {
+      android.util.Log.i("XRepo", "✅ SERIES já carregado na memória (${_series.value.size} itens)")
+      return
+    }
+    
     // Tentar carregar do cache primeiro
-    if (_series.value.isEmpty()) {
-      val cachedSeries = CacheManager.loadSeriesCache()
-      val cachedCats = CacheManager.loadSeriesCategories()
-      if (cachedSeries != null && cachedSeries.isNotEmpty() && cachedCats != null) {
-        _series.emit(cachedSeries)
-        _seriesCats.emit(cachedCats)
-        _seriesGrouped.emit(groupSeries(cachedSeries))
-        android.util.Log.i("XRepo", "✅ SERIES carregado do CACHE (${cachedSeries.size} itens, ${cachedCats.size} categorias)")
-        return
-      }
-    } else {
-      android.util.Log.i("XRepo", "✅ SERIES já carregado na memória")
+    val cachedSeries = CacheManager.loadSeriesCache()
+    val cachedCats = CacheManager.loadSeriesCategories()
+    if (cachedSeries != null && cachedSeries.isNotEmpty() && cachedCats != null) {
+      _series.emit(cachedSeries)
+      _seriesCats.emit(cachedCats)
+      _seriesGrouped.emit(groupSeries(cachedSeries))
+      android.util.Log.i("XRepo", "✅ SERIES carregado do CACHE (${cachedSeries.size} itens, ${cachedCats.size} categorias)")
       return
     }
     

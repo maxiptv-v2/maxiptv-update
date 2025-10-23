@@ -1,9 +1,15 @@
 package com.maxiptv.ui.screens
 import android.content.Intent
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -95,6 +101,9 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     }
     
     Spacer(Modifier.height(16.dp))
+    
+    // 🎨 BOTÃO ASSISTIR COM FOCO MAIS FORTE
+    var isAssistirFocused by remember { mutableStateOf(false) }
     Button(
       onClick = { 
         // Buscar o stream_id correto baseado no idioma escolhido
@@ -133,7 +142,23 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         // O PlayerActivity vai navegar de volta automaticamente
         ctx.startActivity(playerIntent)
       },
-      modifier = Modifier.fillMaxWidth()
+      modifier = Modifier
+        .fillMaxWidth()
+        .onFocusChanged { isAssistirFocused = it.isFocused }
+        .focusable()
+        .then(
+          if (isAssistirFocused) 
+            Modifier
+              .border(4.dp, Color(0xFFFF5722), androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+              .shadow(
+                elevation = 16.dp,
+                spotColor = Color(0xFFFF5722).copy(alpha = 0.9f),
+                ambientColor = Color(0xFFFF5722).copy(alpha = 0.7f),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+              )
+          else 
+            Modifier
+        )
     ) { 
       Text("▶ Assistir") 
     }
@@ -162,8 +187,52 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
             
             Text("Qualidade:", style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-              FilterChip(selected = selectedQuality == "FHD", onClick = { selectedQuality = "FHD" }, label = { Text("FHD") })
-              FilterChip(selected = selectedQuality == "HD", onClick = { selectedQuality = "HD" }, label = { Text("HD") })
+              // 🎨 FILTERCHIPS COM FOCO MAIS FORTE
+              var isFhdFocused by remember { mutableStateOf(false) }
+              var isHdFocused by remember { mutableStateOf(false) }
+              
+              FilterChip(
+                selected = selectedQuality == "FHD", 
+                onClick = { selectedQuality = "FHD" }, 
+                label = { Text("FHD") },
+                modifier = Modifier
+                  .onFocusChanged { isFhdFocused = it.isFocused }
+                  .focusable()
+                  .then(
+                    if (isFhdFocused) 
+                      Modifier
+                        .border(3.dp, Color(0xFF4CAF50), androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                        .shadow(
+                          elevation = 12.dp,
+                          spotColor = Color(0xFF4CAF50).copy(alpha = 0.8f),
+                          ambientColor = Color(0xFF4CAF50).copy(alpha = 0.6f),
+                          shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        )
+                    else 
+                      Modifier
+                  )
+              )
+              FilterChip(
+                selected = selectedQuality == "HD", 
+                onClick = { selectedQuality = "HD" }, 
+                label = { Text("HD") },
+                modifier = Modifier
+                  .onFocusChanged { isHdFocused = it.isFocused }
+                  .focusable()
+                  .then(
+                    if (isHdFocused) 
+                      Modifier
+                        .border(3.dp, Color(0xFF4CAF50), androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                        .shadow(
+                          elevation = 12.dp,
+                          spotColor = Color(0xFF4CAF50).copy(alpha = 0.8f),
+                          ambientColor = Color(0xFF4CAF50).copy(alpha = 0.6f),
+                          shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        )
+                    else 
+                      Modifier
+                  )
+              )
             }
             
             Spacer(Modifier.height(16.dp))

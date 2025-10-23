@@ -526,6 +526,7 @@ fun HomeScreen(nav: NavHostController) {
           },
           modifier = Modifier.align(Alignment.Center)
         )
+        
       }
       
       // Logo Max IPTV com Neon (posicionado à esquerda)
@@ -668,6 +669,7 @@ fun HomeScreen(nav: NavHostController) {
         onClick = { nav.navigate("series") },
           modifier = Modifier.weight(1f)
         )
+        
       }
     }
     

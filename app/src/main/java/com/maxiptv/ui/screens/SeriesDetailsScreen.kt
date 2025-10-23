@@ -237,8 +237,52 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
               
               Text("Qualidade:", style = MaterialTheme.typography.labelLarge)
               Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = selectedQuality == "FHD", onClick = { selectedQuality = "FHD" }, label = { Text("FHD") })
-                FilterChip(selected = selectedQuality == "HD", onClick = { selectedQuality = "HD" }, label = { Text("HD") })
+                // 🎨 FILTERCHIPS COM FOCO MAIS FORTE
+                var isFhdFocused by remember { mutableStateOf(false) }
+                var isHdFocused by remember { mutableStateOf(false) }
+                
+                FilterChip(
+                  selected = selectedQuality == "FHD", 
+                  onClick = { selectedQuality = "FHD" }, 
+                  label = { Text("FHD") },
+                  modifier = Modifier
+                    .onFocusChanged { isFhdFocused = it.isFocused }
+                    .focusable()
+                    .then(
+                      if (isFhdFocused) 
+                        Modifier
+                          .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(16.dp))
+                          .shadow(
+                            elevation = 12.dp,
+                            spotColor = Color(0xFF4CAF50).copy(alpha = 0.8f),
+                            ambientColor = Color(0xFF4CAF50).copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(16.dp)
+                          )
+                      else 
+                        Modifier
+                    )
+                )
+                FilterChip(
+                  selected = selectedQuality == "HD", 
+                  onClick = { selectedQuality = "HD" }, 
+                  label = { Text("HD") },
+                  modifier = Modifier
+                    .onFocusChanged { isHdFocused = it.isFocused }
+                    .focusable()
+                    .then(
+                      if (isHdFocused) 
+                        Modifier
+                          .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(16.dp))
+                          .shadow(
+                            elevation = 12.dp,
+                            spotColor = Color(0xFF4CAF50).copy(alpha = 0.8f),
+                            ambientColor = Color(0xFF4CAF50).copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(16.dp)
+                          )
+                      else 
+                        Modifier
+                    )
+                )
               }
               
               Spacer(Modifier.height(16.dp))
@@ -310,37 +354,57 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
                 headlineContent = { Text("Episódio ${ep.episode_num ?: "?"}: ${ep.title ?: "Sem título"}") },
                 supportingContent = { Text(ep.info?.plot ?: "") },
                 trailingContent = { 
-                  Button(onClick = { 
-                    // Buscar série na versão correta (dublado/legendado)
-                    val currentTitle = info?.info?.name ?: ""
-                    val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
-                    
-                    val targetSeries = allSeries.find { series ->
-                      val seriesBase = series.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
-                      val matchesTitle = seriesBase == baseTitle
-                      val matchesLanguage = when (selectedLanguage) {
-                        "Legendado" -> series.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
-                        "Dublado" -> series.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
-                        "Original" -> !series.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
-                        else -> !series.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
-                      }
-                      matchesTitle && matchesLanguage
-                    }
-                    
-                    ep.streamUrl?.let { url ->
-                      android.util.Log.i("SeriesDetails", "Idioma: $selectedLanguage, Série: ${targetSeries?.name ?: "padrão"}")
-                      // 🎯 Usar startActivityForResult para navegação inteligente
-                      val playerIntent = Intent(ctx, PlayerActivity::class.java)
-                        .putExtra("url", url)
-                        .putExtra("contentType", "series")
-                        .putExtra("returnToCategory", "series")
-                        .putExtra("categoryId", seriesId.toString())
+                  // 🎨 BOTÃO PLAY COM FOCO MAIS FORTE
+                  var isPlayFocused by remember { mutableStateOf(false) }
+                  Button(
+                    onClick = { 
+                      // Buscar série na versão correta (dublado/legendado)
+                      val currentTitle = info?.info?.name ?: ""
+                      val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
                       
-                      // Para Compose, vamos usar uma abordagem diferente
-                      // O PlayerActivity vai navegar de volta automaticamente
-                      ctx.startActivity(playerIntent)
-                    }
-                  }) { 
+                      val targetSeries = allSeries.find { series ->
+                        val seriesBase = series.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
+                        val matchesTitle = seriesBase == baseTitle
+                        val matchesLanguage = when (selectedLanguage) {
+                          "Legendado" -> series.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
+                          "Dublado" -> series.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
+                          "Original" -> !series.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+                          else -> !series.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+                        }
+                        matchesTitle && matchesLanguage
+                      }
+                      
+                      ep.streamUrl?.let { url ->
+                        android.util.Log.i("SeriesDetails", "Idioma: $selectedLanguage, Série: ${targetSeries?.name ?: "padrão"}")
+                        // 🎯 Usar startActivityForResult para navegação inteligente
+                        val playerIntent = Intent(ctx, PlayerActivity::class.java)
+                          .putExtra("url", url)
+                          .putExtra("contentType", "series")
+                          .putExtra("returnToCategory", "series")
+                          .putExtra("categoryId", seriesId.toString())
+                        
+                        // Para Compose, vamos usar uma abordagem diferente
+                        // O PlayerActivity vai navegar de volta automaticamente
+                        ctx.startActivity(playerIntent)
+                      }
+                    },
+                    modifier = Modifier
+                      .onFocusChanged { isPlayFocused = it.isFocused }
+                      .focusable()
+                      .then(
+                        if (isPlayFocused) 
+                          Modifier
+                            .border(3.dp, Color(0xFFFF5722), RoundedCornerShape(8.dp))
+                            .shadow(
+                              elevation = 12.dp,
+                              spotColor = Color(0xFFFF5722).copy(alpha = 0.9f),
+                              ambientColor = Color(0xFFFF5722).copy(alpha = 0.7f),
+                              shape = RoundedCornerShape(8.dp)
+                            )
+                        else 
+                          Modifier
+                      )
+                  ) { 
                     Text("▶") 
                   } 
                 }

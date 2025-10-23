@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.maxiptv.data.UserManager
 import com.maxiptv.data.SessionManager
 
@@ -59,7 +60,10 @@ fun HomeNav(nav: NavHostController) {
     return
   }
   
-  NavHost(navController = nav, startDestination = initialRoute!!) {
+  NavHost(
+    navController = nav, 
+    startDestination = initialRoute!!
+  ) {
     composable("login") { 
       LoginScreen(onLoginSuccess = { 
         nav.navigate("home") {
