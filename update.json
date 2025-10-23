@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.69",
-    "versionCode":  69,
-    "buildNumber":  69,
+    "version":  "v1.0.70",
+    "versionCode":  70,
+    "buildNumber":  70,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.66 - HEARTBEAT AUTOMATICO!\n\nCORRECAO CRITICA - LOGIN SIMULTANEO SEMPRE ATIVO:\n- Heartbeat REINICIA automaticamente ao abrir o app\n- Nao precisa fazer login novamente apos atualizar\n- Controle de login simultaneo SEMPRE funcionando\n- TODOS os usuarios logados aparecem no painel admin\n\nCOMO FUNCIONA:\n- Atualizou o app? Heartbeat reativa sozinho\n- Minimizou e voltou? Heartbeat continua ativo\n- Sessao NUNCA expira sem necessidade\n- Login simultaneo 100% confiavel\n\nCORRECOES MANTIDAS:\n- Protecao usuarios globais (v1.0.65)\n- Instalacao automatica (v1.0.64)\n- Sessao persistente (v1.0.63)\n- Navegacao inteligente (v1.0.62)\n\nMANTEM:\n- Buffers otimizados\n- Mini player com EPG\n- Performance maxima",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-22T19:32:19Z",
+    "lastUpdated":  "2025-10-22T20:09:20Z",
     "checksum":  "sha256:placeholder"
 }

@@ -77,9 +77,14 @@ object XRepo {
       val cachedLive = CacheManager.loadLiveCache()
       val cachedCats = CacheManager.loadLiveCategories()
       if (cachedLive != null && cachedLive.isNotEmpty() && cachedCats != null) {
-        _live.emit(cachedLive)
+        // 🚫 FILTRAR CANAIS ADULT SWIM DO CACHE TAMBÉM
+        val filteredCachedLive = cachedLive.filter { stream ->
+          val name = stream.name.lowercase()
+          !name.contains("adult swim", ignoreCase = true)
+        }
+        _live.emit(filteredCachedLive)
         _liveCats.emit(cachedCats)
-        android.util.Log.i("XRepo", "✅ LIVE carregado do CACHE (${cachedLive.size} canais, ${cachedCats.size} categorias)")
+        android.util.Log.i("XRepo", "✅ LIVE carregado do CACHE (${filteredCachedLive.size} canais, ${cachedCats.size} categorias) - Adult Swim removidos")
         return
       } else {
         android.util.Log.w("XRepo", "⚠️ Cache LIVE não encontrado ou vazio")
@@ -96,7 +101,14 @@ object XRepo {
       val liveCats = a.liveCategories(user, pass)
       val liveStreams = a.liveStreams(user, pass)
       val catMap = liveCats.associateBy { it.category_id }
-      val enhanced = liveStreams.onEach { it.categoryName = catMap[it.category_id]?.category_name }
+      
+      // 🚫 FILTRAR CANAIS ADULT SWIM
+      val filteredStreams = liveStreams.filter { stream ->
+        val name = stream.name.lowercase()
+        !name.contains("adult swim", ignoreCase = true)
+      }
+      
+      val enhanced = filteredStreams.onEach { it.categoryName = catMap[it.category_id]?.category_name }
       _liveCats.emit(liveCats)
       _live.emit(enhanced)
       CacheManager.saveLiveCache(enhanced)
