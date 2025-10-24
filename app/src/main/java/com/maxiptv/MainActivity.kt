@@ -19,6 +19,17 @@ class MainActivity : ComponentActivity() {
   @OptIn(ExperimentalMaterial3Api::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    
+    // 🔥 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK D-PAD
+    if (MaxiApp.isFireStick) {
+      android.util.Log.i("MainActivity", "🔥 Configurando D-pad para Fire Stick")
+      // Configurações específicas para controle remoto do Fire Stick
+      window.setFlags(
+        android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
+      )
+    }
+    
     setContent {
       MaxiTheme {
         val nav = rememberNavController()
@@ -58,5 +69,23 @@ class MainActivity : ComponentActivity() {
       android.util.Log.i("MainActivity", "🎯 Novo Intent recebido: $navigateTo")
       // A navegação será processada no LaunchedEffect acima
     }
+  }
+  
+  // 🎮 INTERCEPTAR EVENTOS DE D-PAD PARA FIRE STICK
+  override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+    if (MaxiApp.isFireStick) {
+      android.util.Log.i("MainActivity", "🔥 D-pad pressionado: $keyCode")
+      // Log específico para debug do Fire Stick
+      when (keyCode) {
+        android.view.KeyEvent.KEYCODE_DPAD_UP -> android.util.Log.i("MainActivity", "⬆️ D-pad UP")
+        android.view.KeyEvent.KEYCODE_DPAD_DOWN -> android.util.Log.i("MainActivity", "⬇️ D-pad DOWN")
+        android.view.KeyEvent.KEYCODE_DPAD_LEFT -> android.util.Log.i("MainActivity", "⬅️ D-pad LEFT")
+        android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> android.util.Log.i("MainActivity", "➡️ D-pad RIGHT")
+        android.view.KeyEvent.KEYCODE_DPAD_CENTER -> android.util.Log.i("MainActivity", "🔘 D-pad CENTER")
+        android.view.KeyEvent.KEYCODE_BACK -> android.util.Log.i("MainActivity", "🔙 BACK")
+        android.view.KeyEvent.KEYCODE_MENU -> android.util.Log.i("MainActivity", "📋 MENU")
+      }
+    }
+    return super.onKeyDown(keyCode, event)
   }
 }

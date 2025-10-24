@@ -155,19 +155,19 @@ fun HomeScreen(nav: NavHostController) {
   val isPhone = MaxiApp.isPhone
   val isFireStick = MaxiApp.isFireStick
   
-  // 🔥 PADDING ESPECÍFICO PARA FIRE STICK
+  // 🔥 PADDING ESPECÍFICO PARA FIRE STICK APENAS
   val horizontalPadding = when {
-    isFireStick -> MaxiApp.fireStickOverscanPadding.dp
-    isTv -> 32.dp
-    isPhone -> 16.dp
-    else -> 24.dp
+    isFireStick -> MaxiApp.fireStickOverscanPadding.dp  // APENAS Fire Stick
+    isTv -> 32.dp  // TV Box Android/Genéricos mantêm original
+    isPhone -> 16.dp  // Smartphones mantêm original
+    else -> 24.dp  // Tablets mantêm original
   }
   
   val verticalPadding = when {
-    isFireStick -> MaxiApp.fireStickSafeAreaPadding.dp
-    isTv -> 16.dp
-    isPhone -> 12.dp
-    else -> 14.dp
+    isFireStick -> MaxiApp.fireStickSafeAreaPadding.dp  // APENAS Fire Stick
+    isTv -> 16.dp  // TV Box Android/Genéricos mantêm original
+    isPhone -> 12.dp  // Smartphones mantêm original
+    else -> 14.dp  // Tablets mantêm original
   }
   
   // Dialog de confirmação de logout
@@ -552,7 +552,7 @@ fun HomeScreen(nav: NavHostController) {
         modifier = Modifier
           .fillMaxWidth()
           .padding(
-            vertical = if (isFireStick) 12.dp else if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp,
+            vertical = if (isFireStick) 12.dp else if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp,  // APENAS Fire Stick tem mais espaço
             horizontal = horizontalPadding
           ),
         contentAlignment = Alignment.CenterStart
@@ -636,10 +636,10 @@ fun HomeScreen(nav: NavHostController) {
           ),
         horizontalArrangement = Arrangement.spacedBy(
           when {
-            isFireStick -> 24.dp  // Mais espaço para Fire Stick
-            isTv -> 20.dp
-            isPhone -> 8.dp
-            else -> 12.dp
+            isFireStick -> 24.dp  // APENAS Fire Stick - mais espaço
+            isTv -> 20.dp  // TV Box Android/Genéricos mantêm original
+            isPhone -> 8.dp  // Smartphones mantêm original
+            else -> 12.dp  // Tablets mantêm original
           }
         )
       ) {
@@ -888,31 +888,31 @@ fun CategoryButton(
   )
   
   val buttonHeight = when (deviceType) {
-    "firestick" -> 90.dp  // Mais alto para Fire Stick
-    "tv" -> 80.dp
-    "phone" -> 65.dp
-    else -> 72.dp
+    "firestick" -> 90.dp  // APENAS Fire Stick - mais alto
+    "tv" -> 80.dp  // TV Box Android/Genéricos mantêm original
+    "phone" -> 65.dp  // Smartphones mantêm original
+    else -> 72.dp  // Tablets mantêm original
   }
   
   val fontSize = when (deviceType) {
-    "firestick" -> 20.sp  // Texto maior para Fire Stick
-    "tv" -> 18.sp
-    "phone" -> 12.sp
-    else -> 15.sp
+    "firestick" -> 20.sp  // APENAS Fire Stick - texto maior
+    "tv" -> 18.sp  // TV Box Android/Genéricos mantêm original
+    "phone" -> 12.sp  // Smartphones mantêm original
+    else -> 15.sp  // Tablets mantêm original
   }
   
   val emojiSize = when (deviceType) {
-    "firestick" -> 28.sp  // Emoji maior para Fire Stick
-    "tv" -> 24.sp
-    "phone" -> 16.sp
-    else -> 20.sp
+    "firestick" -> 28.sp  // APENAS Fire Stick - emoji maior
+    "tv" -> 24.sp  // TV Box Android/Genéricos mantêm original
+    "phone" -> 16.sp  // Smartphones mantêm original
+    else -> 20.sp  // Tablets mantêm original
   }
   
   val padding = when (deviceType) {
-    "firestick" -> PaddingValues(horizontal = 20.dp, vertical = 18.dp)  // Mais padding para Fire Stick
-    "tv" -> PaddingValues(horizontal = 16.dp, vertical = 16.dp)
-    "phone" -> PaddingValues(horizontal = 6.dp, vertical = 8.dp)
-    else -> PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+    "firestick" -> PaddingValues(horizontal = 20.dp, vertical = 18.dp)  // APENAS Fire Stick - mais padding
+    "tv" -> PaddingValues(horizontal = 16.dp, vertical = 16.dp)  // TV Box Android/Genéricos mantêm original
+    "phone" -> PaddingValues(horizontal = 6.dp, vertical = 8.dp)  // Smartphones mantêm original
+    else -> PaddingValues(horizontal = 12.dp, vertical = 12.dp)  // Tablets mantêm original
   }
   
   Button(

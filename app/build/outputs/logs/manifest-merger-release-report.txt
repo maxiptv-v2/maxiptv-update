@@ -11,10 +11,10 @@ INJECTED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidMan
 	android:name
 		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:40:7-56
 manifest
-ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:2:1-55:12
-INJECTED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:2:1-55:12
-INJECTED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:2:1-55:12
-INJECTED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:2:1-55:12
+ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:2:1-59:12
+INJECTED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:2:1-59:12
+INJECTED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:2:1-59:12
+INJECTED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:2:1-59:12
 MERGED from [androidx.media3:media3-exoplayer-hls:1.4.1] C:\Users\maxca\.gradle\caches\8.9\transforms\c2da89b771bd1193f34ee07e3fd49fc8\transformed\media3-exoplayer-hls-1.4.1\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.media3:media3-exoplayer:1.4.1] C:\Users\maxca\.gradle\caches\8.9\transforms\79eae985d7c1e3468d09a557fff99122\transformed\media3-exoplayer-1.4.1\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.media3:media3-ui:1.4.1] C:\Users\maxca\.gradle\caches\8.9\transforms\9617ab2180782dd203bb262d99792812\transformed\media3-ui-1.4.1\AndroidManifest.xml:17:1-22:12
@@ -212,6 +212,18 @@ ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManife
 		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:54:61-85
 	android:name
 		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:54:17-60
+uses-feature#android.hardware.gamepad
+ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:57:3-84
+	android:required
+		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:57:57-81
+	android:name
+		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:57:17-56
+uses-feature#android.software.input_methods
+ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:58:3-90
+	android:required
+		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:58:63-87
+	android:name
+		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:58:17-62
 meta-data#android.support.FILE_PROVIDER_PATHS
 ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:44:7-46:46
 	android:resource

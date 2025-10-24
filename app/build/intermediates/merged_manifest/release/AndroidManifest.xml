@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maxiptv"
-    android:versionCode="83"
-    android:versionName="1.0.83" >
+    android:versionCode="85"
+    android:versionName="1.0.85" >
 
     <uses-sdk
         android:minSdkVersion="21"
@@ -17,6 +17,14 @@
         android:required="false" />
     <uses-feature
         android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <!-- 🎮 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK D-PAD -->
+    <uses-feature
+        android:name="android.hardware.gamepad"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.input_methods"
         android:required="false" />
 
     <permission
