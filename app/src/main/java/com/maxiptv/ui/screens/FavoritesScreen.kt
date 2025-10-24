@@ -290,16 +290,19 @@ fun <T> FavoritesSection(
           is LiveStream -> FavoriteChannelCard(
             channel = item,
             onRemove = { onRemoveFavorite(item.stream_id) },
+            onChannelClick = { onItemClick(item) },
             deviceType = deviceType
           )
           is VodItem -> FavoriteMovieCard(
             movie = item,
             onRemove = { onRemoveFavorite(item.stream_id) },
+            onMovieClick = { onItemClick(item) },
             deviceType = deviceType
           )
           is SeriesItem -> FavoriteSeriesCard(
             series = item,
             onRemove = { onRemoveFavorite(item.series_id) },
+            onSeriesClick = { onItemClick(item) },
             deviceType = deviceType
           )
         }
@@ -312,6 +315,7 @@ fun <T> FavoritesSection(
 fun FavoriteChannelCard(
   channel: LiveStream,
   onRemove: () -> Unit,
+  onChannelClick: () -> Unit,
   deviceType: String
 ) {
   var isFocused by remember { mutableStateOf(false) }
@@ -321,6 +325,7 @@ fun FavoriteChannelCard(
       .width(if (deviceType == "tv") 200.dp else if (deviceType == "phone") 140.dp else 170.dp)
       .onFocusChanged { isFocused = it.isFocused }
       .focusable()
+      .clickable { onChannelClick() }
       .then(
         if (isFocused)
           Modifier
@@ -402,6 +407,7 @@ fun FavoriteChannelCard(
 fun FavoriteMovieCard(
   movie: VodItem,
   onRemove: () -> Unit,
+  onMovieClick: () -> Unit,
   deviceType: String
 ) {
   var isFocused by remember { mutableStateOf(false) }
@@ -411,6 +417,7 @@ fun FavoriteMovieCard(
       .width(if (deviceType == "tv") 200.dp else if (deviceType == "phone") 140.dp else 170.dp)
       .onFocusChanged { isFocused = it.isFocused }
       .focusable()
+      .clickable { onMovieClick() }
       .then(
         if (isFocused)
           Modifier
@@ -492,6 +499,7 @@ fun FavoriteMovieCard(
 fun FavoriteSeriesCard(
   series: SeriesItem,
   onRemove: () -> Unit,
+  onSeriesClick: () -> Unit,
   deviceType: String
 ) {
   var isFocused by remember { mutableStateOf(false) }
@@ -501,6 +509,7 @@ fun FavoriteSeriesCard(
       .width(if (deviceType == "tv") 200.dp else if (deviceType == "phone") 140.dp else 170.dp)
       .onFocusChanged { isFocused = it.isFocused }
       .focusable()
+      .clickable { onSeriesClick() }
       .then(
         if (isFocused)
           Modifier

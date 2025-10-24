@@ -46177,8 +46177,8 @@ androidx.compose.foundation.BackgroundKt$background$$inlined$debugInspectorInfo$
     public final void invoke(androidx.compose.ui.graphics.drawscope.ContentDrawScope)
     public final void invoke(androidx.compose.ui.layout.Placeable$PlacementScope)
     public final void invoke$5()
-androidx.compose.foundation.BackgroundKt$background-bw27NRU$$inlined$debugInspectorInfo$1$$InternalSyntheticThrowCCEIfNotNull$304$49d48bdd57a43688916bf720c9f1c8604e89606ecd2f15d5db59b86220e72ff1$0
 androidx.compose.foundation.BackgroundKt$background-bw27NRU$$inlined$debugInspectorInfo$1$$InternalSyntheticThrowCCEIfNotNull$31$0218922573d5caa704f39c1ea923b3986df78355f3d4cc23bb5cc445809bc10f$0
+androidx.compose.foundation.BackgroundKt$background-bw27NRU$$inlined$debugInspectorInfo$1$$InternalSyntheticThrowCCEIfNotNull$317$49d48bdd57a43688916bf720c9f1c8604e89606ecd2f15d5db59b86220e72ff1$0
 androidx.compose.foundation.BackgroundKt$background-bw27NRU$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.BackgroundKt:
     public static synthetic androidx.compose.ui.Modifier background-bw27NRU$default(androidx.compose.ui.Modifier,long)
@@ -47803,7 +47803,7 @@ androidx.compose.foundation.lazy.layout.LazyLayoutItemAnimation:
     public static void setPlacementSpec()
     public static void setRawOffset--gyyYBs()
 androidx.compose.foundation.lazy.layout.LazyLayoutItemAnimationKt
-androidx.compose.foundation.lazy.layout.LazyLayoutItemAnimator$$InternalSyntheticThrowCCEIfNotNull$304$161f01ba9cc2df10221af4821985724b230c25f25f90e55dcabb596fb344c031$0
+androidx.compose.foundation.lazy.layout.LazyLayoutItemAnimator$$InternalSyntheticThrowCCEIfNotNull$317$161f01ba9cc2df10221af4821985724b230c25f25f90e55dcabb596fb344c031$0
 androidx.compose.foundation.lazy.layout.LazyLayoutItemAnimator$DisplayingDisappearingItemsElement:
     public static androidx.compose.foundation.lazy.layout.LazyLayoutItemAnimator$DisplayingDisappearingItemsNode create()
     public static void update$23()
@@ -48238,6 +48238,7 @@ androidx.compose.foundation.text.HeightInLinesModifierKt$heightInLines$2:
     public final androidx.compose.ui.Modifier invoke(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer)
 androidx.compose.foundation.text.HeightInLinesModifierKt
 androidx.compose.foundation.text.HorizontalScrollLayoutModifier$measure$1:
+    public final void invoke(androidx.compose.foundation.lazy.LazyListScope)
     public final void invoke(java.lang.Object)
 androidx.compose.foundation.text.HorizontalScrollLayoutModifier:
     public final int getCursorOffset()
@@ -48515,13 +48516,13 @@ androidx.compose.foundation.text.TextLayoutResultProxy:
 androidx.compose.foundation.text.TextLayoutResultProxyKt
 androidx.compose.foundation.text.TextPointerIcon_androidKt:
     public static final androidx.compose.ui.input.pointer.PointerIcon getTextPointerIcon()
-androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$37$01c11eff8cf667263d737dbf00db248b584eddccf1d6e7268f376f33e81874ac$0
-androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$37$0f15e3a698b9a74df54a70e3f31cf36c6b25b48b5b262aaf38657fa6a685ffaa$0
-androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$37$0f15e3a698b9a74df54a70e3f31cf36c6b25b48b5b262aaf38657fa6a685ffaa$1
-androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$37$da55a62c723d1526c02f014b1444351ecff7ccf800ec62537d500e3b7343f7b2$0
-androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$37$da55a62c723d1526c02f014b1444351ecff7ccf800ec62537d500e3b7343f7b2$1
-androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$37$e4cba527ce326004b38d9055047c0137c23d92c448d7230aa093dfe01066891a$0
-androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$37$e4cba527ce326004b38d9055047c0137c23d92c448d7230aa093dfe01066891a$1
+androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$35$01c11eff8cf667263d737dbf00db248b584eddccf1d6e7268f376f33e81874ac$0
+androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$35$0f15e3a698b9a74df54a70e3f31cf36c6b25b48b5b262aaf38657fa6a685ffaa$0
+androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$35$0f15e3a698b9a74df54a70e3f31cf36c6b25b48b5b262aaf38657fa6a685ffaa$1
+androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$35$da55a62c723d1526c02f014b1444351ecff7ccf800ec62537d500e3b7343f7b2$0
+androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$35$da55a62c723d1526c02f014b1444351ecff7ccf800ec62537d500e3b7343f7b2$1
+androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$35$e4cba527ce326004b38d9055047c0137c23d92c448d7230aa093dfe01066891a$0
+androidx.compose.foundation.text.UndoManager$Entry$$InternalSyntheticThrowCCEIfNotNull$35$e4cba527ce326004b38d9055047c0137c23d92c448d7230aa093dfe01066891a$1
 androidx.compose.foundation.text.UndoManager$Entry:
     public void <init>(int)
     public synthetic void <init>(int,java.lang.Object)
@@ -52767,7 +52768,7 @@ androidx.compose.ui.Alignment$Vertical:
 androidx.compose.ui.Alignment:
     public static final androidx.compose.ui.Alignment$Companion Companion
     static void <clinit>()
-androidx.compose.ui.BiasAbsoluteAlignment$Horizontal$$InternalSyntheticThrowCCEIfNotNull$304$1a633662a1acfa9666e217456c273ed63d9ef67c791a4c3492a059e82b09348e$0
+androidx.compose.ui.BiasAbsoluteAlignment$Horizontal$$InternalSyntheticThrowCCEIfNotNull$317$1a633662a1acfa9666e217456c273ed63d9ef67c791a4c3492a059e82b09348e$0
 androidx.compose.ui.BiasAbsoluteAlignment$Horizontal
 androidx.compose.ui.BiasAbsoluteAlignment:
     public final float verticalBias
@@ -53262,7 +53263,6 @@ androidx.compose.ui.geometry.Rect:
     public static float getTop()
     public final long getTopLeft-F1C5BW0()
     public static androidx.compose.ui.geometry.Rect intersect()
-    public final boolean isEmpty()
 androidx.compose.ui.geometry.RectKt
 androidx.compose.ui.geometry.RoundRect$Companion
 androidx.compose.ui.geometry.RoundRect:
@@ -61631,7 +61631,7 @@ androidx.media3.common.StreamKey:
     public static final java.lang.String FIELD_PERIOD_INDEX
     public static final java.lang.String FIELD_STREAM_INDEX
     public static int compareTo()
-androidx.media3.common.SurfaceInfo$$InternalSyntheticThrowCCEIfNotNull$304$ffe8b9db830d6842a60bf3ba12e4ea3b824b7bad7ef141e8509267e9d40abe0a$0
+androidx.media3.common.SurfaceInfo$$InternalSyntheticThrowCCEIfNotNull$317$ffe8b9db830d6842a60bf3ba12e4ea3b824b7bad7ef141e8509267e9d40abe0a$0
 androidx.media3.common.SurfaceInfo
 androidx.media3.common.Timeline$Period:
     public static final java.lang.String FIELD_AD_PLAYBACK_STATE
@@ -62415,9 +62415,9 @@ androidx.media3.exoplayer.ExoPlayerImpl:
 androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticLambda$3$89af8759f52b6a9c6611a48b0920eb44f419d994f45c4bf4583ceae198f5b237$0
 androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticLambda$3$b091fa11a2de6600194cb5a771307fa4899ee630be991abe2c704a3c0037b774$0
 androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticLambda$3$f777839ddc7aa59a94471e13d0a7f6f1b8a5bd0fa65d64d9994c1b15932a69d0$0
-androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticThrowCCEIfNotNull$163$6e220966f1ac55c1964657b4925b9f7f97f57335a027a3b06c403d969db932c1$1
-androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticThrowCCEIfNotNull$163$6e220966f1ac55c1964657b4925b9f7f97f57335a027a3b06c403d969db932c1$3
-androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticThrowCCEIfNotNull$163$6e220966f1ac55c1964657b4925b9f7f97f57335a027a3b06c403d969db932c1$4
+androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticThrowCCEIfNotNull$178$6e220966f1ac55c1964657b4925b9f7f97f57335a027a3b06c403d969db932c1$1
+androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticThrowCCEIfNotNull$178$6e220966f1ac55c1964657b4925b9f7f97f57335a027a3b06c403d969db932c1$3
+androidx.media3.exoplayer.ExoPlayerImplInternal$$InternalSyntheticThrowCCEIfNotNull$178$6e220966f1ac55c1964657b4925b9f7f97f57335a027a3b06c403d969db932c1$4
 androidx.media3.exoplayer.ExoPlayerImplInternal$1:
     public static void onSleep()
 androidx.media3.exoplayer.ExoPlayerImplInternal$MoveMediaItemsMessage
@@ -66283,7 +66283,7 @@ androidx.navigation.NavControllerViewModel:
 androidx.navigation.NavDeepLink$Builder$Companion
 androidx.navigation.NavDeepLink$Builder
 androidx.navigation.NavDeepLink$Companion
-androidx.navigation.NavDeepLink$MimeType$$InternalSyntheticThrowCCEIfNotNull$304$e4f4cca055fa1dcdb2ed22be3761dc1f37e8bfc115734c23a4a8fedea9254082$0
+androidx.navigation.NavDeepLink$MimeType$$InternalSyntheticThrowCCEIfNotNull$317$e4f4cca055fa1dcdb2ed22be3761dc1f37e8bfc115734c23a4a8fedea9254082$0
 androidx.navigation.NavDeepLink$MimeType
 androidx.navigation.NavDeepLink$ParamQuery:
     public static void addArgumentName()
@@ -69216,13 +69216,18 @@ com.maxiptv.ui.screens.ComposableSingletons$VodDetailsScreenKt:
     public static kotlin.jvm.functions.Function2 getLambda-4$app_release()
     public static kotlin.jvm.functions.Function3 getLambda-5$app_release()
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteChannelCard$1$1
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteChannelCard$2$1$1$1$1
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteChannelCard$2$1
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteChannelCard$3$1$1$1$1
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteMovieCard$1$1
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteMovieCard$2$1$1$1$1
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteMovieCard$2
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteMovieCard$2$1
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteMovieCard$3$1$1$1$1
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteMovieCard$3
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteMovieCard$4
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteSeriesCard$1$1
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteSeriesCard$2$1$1$1$1
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteSeriesCard$2
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteSeriesCard$2$1
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteSeriesCard$3$1$1$1$1
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteSeriesCard$3
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoriteSeriesCard$4
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$1$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$1$1
@@ -69247,10 +69252,15 @@ com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$3
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$3
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$2
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$3
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$4
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$5
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$6
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$1
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$4:
-    public final void invoke$74()
+    public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,int,androidx.compose.runtime.Composer,int)
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1:
+    public final void invoke(androidx.compose.foundation.lazy.LazyListScope)
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$2
 com.maxiptv.ui.screens.FavoritesScreenKt
 com.maxiptv.ui.screens.GlobalSessionCardKt$GlobalSessionCard$1
@@ -69286,7 +69296,9 @@ com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$2:
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$3$1
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$3$2
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$3
-com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$4
+com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$4:
+    public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,int,androidx.compose.runtime.Composer,int)
+    public final void invoke$74()
 com.maxiptv.ui.screens.HomeScreenKt$EmbeddedPlayer$1:
     public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
@@ -69397,6 +69409,7 @@ com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$1:
 com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$2$1
 com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$3
 com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$4$1
+com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$5
 com.maxiptv.ui.screens.LiveScreenKt
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$1:
     public int label
@@ -76146,7 +76159,7 @@ kotlin.text.Charsets:
     public static java.nio.charset.Charset UTF32_LE()
 kotlin.text.DelimitedRangesSequence$iterator$1:
     public static kotlin.ranges.IntRange next()
-kotlin.text.MatchGroup$$InternalSyntheticThrowCCEIfNotNull$304$5ca9406d1a5dcd4c12acc4367755014baa888391a69c49fb6dfab5eb78f63cea$0
+kotlin.text.MatchGroup$$InternalSyntheticThrowCCEIfNotNull$317$5ca9406d1a5dcd4c12acc4367755014baa888391a69c49fb6dfab5eb78f63cea$0
 kotlin.text.MatchGroup
 kotlin.text.MatchGroupCollection
 kotlin.text.MatchResult$DefaultImpls
@@ -76373,7 +76386,7 @@ kotlinx.coroutines.CoroutineExceptionHandler:
 kotlinx.coroutines.CoroutineExceptionHandlerKt
 kotlinx.coroutines.CoroutineId$$InternalSyntheticBackport$1$88b55f898e619a095cc84362698f8c48db09cb4c6a8de7e7316829eafb79037d$0
 kotlinx.coroutines.CoroutineId$$InternalSyntheticThrowCCEIfNotNull$21$f32d3c65e79275cc0e34133ff17172a91084ea4fa58ff765934c26285df444a4$0
-kotlinx.coroutines.CoroutineId$$InternalSyntheticThrowCCEIfNotNull$304$a04cd55831796dad4a4038d4eb866607cad4d88ce7c01ff729936a1ef385fb02$0
+kotlinx.coroutines.CoroutineId$$InternalSyntheticThrowCCEIfNotNull$317$a04cd55831796dad4a4038d4eb866607cad4d88ce7c01ff729936a1ef385fb02$0
 kotlinx.coroutines.CoroutineId
 kotlinx.coroutines.CoroutineName$Key
 kotlinx.coroutines.CoroutineName:
@@ -76786,7 +76799,7 @@ kotlinx.coroutines.flow.ReadonlySharedFlow
 kotlinx.coroutines.flow.ReadonlyStateFlow:
     public final kotlinx.coroutines.Job job
 kotlinx.coroutines.flow.SafeFlow
-kotlinx.coroutines.flow.SharedFlowImpl$$InternalSyntheticThrowCCEIfNotNull$220$b38dab834c988858ddee4e60b74eb383caed7af1bf78eca8428bab8b3c852414$0
+kotlinx.coroutines.flow.SharedFlowImpl$$InternalSyntheticThrowCCEIfNotNull$224$b38dab834c988858ddee4e60b74eb383caed7af1bf78eca8428bab8b3c852414$0
 kotlinx.coroutines.flow.SharedFlowImpl$WhenMappings
 kotlinx.coroutines.flow.SharedFlowImpl:
     public static void cancelEmitter()
@@ -76828,7 +76841,7 @@ kotlinx.coroutines.flow.StartedWhileSubscribed$command$1:
 kotlinx.coroutines.flow.StartedWhileSubscribed$command$2:
     public int label
     public final java.lang.Object invoke$53()
-kotlinx.coroutines.flow.StateFlowImpl$$InternalSyntheticThrowCCEIfNotNull$220$48f8e1a998bfe838c6c4c78d934377956702ea666a83e7852d7dcc1778b7fce1$0
+kotlinx.coroutines.flow.StateFlowImpl$$InternalSyntheticThrowCCEIfNotNull$224$48f8e1a998bfe838c6c4c78d934377956702ea666a83e7852d7dcc1778b7fce1$0
 kotlinx.coroutines.flow.StateFlowImpl:
     public final boolean compareAndSet(androidx.compose.runtime.external.kotlinx.collections.immutable.PersistentSet,androidx.compose.runtime.external.kotlinx.collections.immutable.implementations.persistentOrderedSet.PersistentOrderedSet)
     public static kotlinx.coroutines.flow.StateFlowSlot createSlot()
@@ -77006,8 +77019,8 @@ kotlinx.coroutines.internal.StackTraceRecoveryKt:
 kotlinx.coroutines.internal.Symbol
 kotlinx.coroutines.internal.SystemPropsKt
 kotlinx.coroutines.internal.SystemPropsKt__SystemProps_commonKt
-kotlinx.coroutines.internal.ThreadContextKt$countAll$1$$InternalSyntheticThrowCCEIfNotNull$304$a546074a2ed249d1eabefdc79e18209b1ee65e7faf56680f7461c253f28dd8e6$0
-kotlinx.coroutines.internal.ThreadContextKt$countAll$1$$InternalSyntheticThrowCCEIfNotNull$304$a546074a2ed249d1eabefdc79e18209b1ee65e7faf56680f7461c253f28dd8e6$2
+kotlinx.coroutines.internal.ThreadContextKt$countAll$1$$InternalSyntheticThrowCCEIfNotNull$317$a546074a2ed249d1eabefdc79e18209b1ee65e7faf56680f7461c253f28dd8e6$0
+kotlinx.coroutines.internal.ThreadContextKt$countAll$1$$InternalSyntheticThrowCCEIfNotNull$317$a546074a2ed249d1eabefdc79e18209b1ee65e7faf56680f7461c253f28dd8e6$2
 kotlinx.coroutines.internal.ThreadContextKt$countAll$1:
     public static kotlinx.coroutines.internal.ThreadState invoke()
     public static java.lang.Object invoke$56()
