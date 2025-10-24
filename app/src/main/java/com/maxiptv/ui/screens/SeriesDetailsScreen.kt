@@ -21,6 +21,13 @@ import com.maxiptv.ui.player.PlayerActivity
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.maxiptv.data.FavoritesManager
+import kotlinx.coroutines.launch
 
 @Composable
 fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
@@ -32,6 +39,14 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
   var selectedLanguage by remember { mutableStateOf("") }
   var selectedQuality by remember { mutableStateOf("FHD") }
   var allSeasonsMerged by remember { mutableStateOf<List<com.maxiptv.data.Season>>(emptyList()) }
+  var isFavorite by remember { mutableStateOf(false) }
+  
+  val scope = rememberCoroutineScope()
+  
+  // Verificar se é favorito
+  LaunchedEffect(seriesId) {
+    isFavorite = FavoritesManager.isSeriesFavorite(seriesId)
+  }
   
   // Detectar idiomas disponíveis buscando TODAS as versões na API
   val availableLanguages = remember(info, allSeries) {
@@ -208,6 +223,57 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
           Spacer(Modifier.height(8.dp))
           Button(onClick = { showLanguageDialog = true }) {
             Text("🎬 $selectedLanguage | $selectedQuality")
+          }
+          
+          Spacer(Modifier.height(12.dp))
+          
+          // ⭐ BOTÃO FAVORITO
+          var isFavoriteFocused by remember { mutableStateOf(false) }
+          Button(
+            onClick = {
+              scope.launch {
+                if (isFavorite) {
+                  FavoritesManager.removeFavoriteSeries(seriesId)
+                  isFavorite = false
+                  android.util.Log.i("SeriesDetails", "❌ Série $seriesId removida dos favoritos")
+                } else {
+                  FavoritesManager.addFavoriteSeries(seriesId)
+                  isFavorite = true
+                  android.util.Log.i("SeriesDetails", "✅ Série $seriesId adicionada aos favoritos")
+                }
+              }
+            },
+            modifier = Modifier
+              .fillMaxWidth()
+              .onFocusChanged { isFavoriteFocused = it.isFocused }
+              .focusable()
+              .then(
+                if (isFavoriteFocused)
+                  Modifier
+                    .border(3.dp, Color(0xFFFFD700), RoundedCornerShape(8.dp))
+                    .shadow(
+                      elevation = 12.dp,
+                      spotColor = Color(0xFFFFD700).copy(alpha = 0.9f),
+                      ambientColor = Color(0xFFFFD700).copy(alpha = 0.7f),
+                      shape = RoundedCornerShape(8.dp)
+                    )
+                else
+                  Modifier
+              ),
+            colors = ButtonDefaults.buttonColors(
+              containerColor = if (isFavorite) Color(0xFFFFD700) else Color(0xFF666666),
+              contentColor = if (isFavorite) Color.Black else Color.White
+            )
+          ) {
+            Icon(
+              imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.FavoriteBorder,
+              contentDescription = if (isFavorite) "Remover dos favoritos" else "Adicionar aos favoritos"
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+              text = if (isFavorite) "⭐ Favorita" else "⭐ Favoritar",
+              fontWeight = FontWeight.Bold
+            )
           }
         }
       }

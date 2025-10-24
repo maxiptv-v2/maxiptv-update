@@ -77,6 +77,8 @@ fun HomeNav(nav: NavHostController) {
     composable("adult") { AdultContentScreen(nav) }
     composable("series") { SeriesScreen(nav) }
     composable("favorites") { FavoritesScreen(nav) }
+    composable("search") { SearchScreen(nav) }
+    composable("player-settings") { PlayerSettingsScreen(nav) }
     composable("series/{seriesId}") { backStack ->
       val id = backStack.arguments?.getString("seriesId")?.toIntOrNull() ?: 0
       SeriesDetailsScreen(nav, id)

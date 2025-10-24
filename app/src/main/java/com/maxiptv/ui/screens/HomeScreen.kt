@@ -684,6 +684,34 @@ fun HomeScreen(nav: NavHostController) {
           modifier = Modifier.weight(1f)
         )
         
+        CategoryButton(
+          text = "Buscar",
+          emoji = "🔍",
+          isFocused = focusedButton == "search",
+          deviceType = when {
+            isTv -> "tv"
+            isPhone -> "phone"
+            else -> "tablet"
+          },
+          onFocusChanged = { focusedButton = if (it) "search" else null },
+          onClick = { nav.navigate("search") },
+          modifier = Modifier.weight(1f)
+        )
+        
+        CategoryButton(
+          text = "Config",
+          emoji = "⚙️",
+          isFocused = focusedButton == "settings",
+          deviceType = when {
+            isTv -> "tv"
+            isPhone -> "phone"
+            else -> "tablet"
+          },
+          onFocusChanged = { focusedButton = if (it) "settings" else null },
+          onClick = { nav.navigate("player-settings") },
+          modifier = Modifier.weight(1f)
+        )
+        
       }
     }
     
