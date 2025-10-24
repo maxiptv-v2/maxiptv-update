@@ -670,6 +670,20 @@ fun HomeScreen(nav: NavHostController) {
           modifier = Modifier.weight(1f)
         )
         
+        CategoryButton(
+          text = "Favoritos",
+          emoji = "⭐",
+          isFocused = focusedButton == "favorites",
+          deviceType = when {
+            isTv -> "tv"
+            isPhone -> "phone"
+            else -> "tablet"
+          },
+          onFocusChanged = { focusedButton = if (it) "favorites" else null },
+          onClick = { nav.navigate("favorites") },
+          modifier = Modifier.weight(1f)
+        )
+        
       }
     }
     

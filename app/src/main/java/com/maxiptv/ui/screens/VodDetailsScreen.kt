@@ -17,6 +17,13 @@ import com.maxiptv.data.XRepo
 import com.maxiptv.data.SettingsRepo
 import com.maxiptv.ui.player.PlayerActivity
 import coil.compose.AsyncImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.maxiptv.data.FavoritesManager
+import kotlinx.coroutines.launch
 
 @Composable
 fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
@@ -26,6 +33,14 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   var showOptionsDialog by remember { mutableStateOf(false) }
   var selectedLanguage by remember { mutableStateOf("") }
   var selectedQuality by remember { mutableStateOf("FHD") }
+  var isFavorite by remember { mutableStateOf(false) }
+  
+  val scope = rememberCoroutineScope()
+  
+  // Verificar se é favorito
+  LaunchedEffect(vodId) {
+    isFavorite = FavoritesManager.isMovieFavorite(vodId)
+  }
   
   // 🎯 DETECTAR RETORNO DO PLAYER para navegação inteligente
   LaunchedEffect(Unit) {
@@ -161,6 +176,71 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         )
     ) { 
       Text("▶ Assistir") 
+    }
+    
+    Spacer(Modifier.height(12.dp))
+    
+    // ⭐ BOTÃO FAVORITO
+    var isFavoriteFocused by remember { mutableStateOf(false) }
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+      Button(
+        onClick = {
+          scope.launch {
+            if (isFavorite) {
+              FavoritesManager.removeFavoriteMovie(vodId)
+              isFavorite = false
+              android.util.Log.i("VodDetails", "❌ Filme $vodId removido dos favoritos")
+            } else {
+              FavoritesManager.addFavoriteMovie(vodId)
+              isFavorite = true
+              android.util.Log.i("VodDetails", "✅ Filme $vodId adicionado aos favoritos")
+            }
+          }
+        },
+        modifier = Modifier
+          .weight(1f)
+          .onFocusChanged { isFavoriteFocused = it.isFocused }
+          .focusable()
+          .then(
+            if (isFavoriteFocused)
+              Modifier
+                .border(3.dp, Color(0xFFFFD700), RoundedCornerShape(8.dp))
+                .shadow(
+                  elevation = 12.dp,
+                  spotColor = Color(0xFFFFD700).copy(alpha = 0.9f),
+                  ambientColor = Color(0xFFFFD700).copy(alpha = 0.7f),
+                  shape = RoundedCornerShape(8.dp)
+                )
+            else
+              Modifier
+          ),
+        colors = ButtonDefaults.buttonColors(
+          containerColor = if (isFavorite) Color(0xFFFFD700) else Color(0xFF666666),
+          contentColor = if (isFavorite) Color.Black else Color.White
+        )
+      ) {
+        Icon(
+          imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.FavoriteBorder,
+          contentDescription = if (isFavorite) "Remover dos favoritos" else "Adicionar aos favoritos"
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+          text = if (isFavorite) "⭐ Favorito" else "⭐ Favoritar",
+          fontWeight = FontWeight.Bold
+        )
+      }
+      
+      OutlinedButton(
+        onClick = { showOptionsDialog = true },
+        modifier = Modifier.weight(1f)
+      ) {
+        Icon(Icons.Default.Settings, contentDescription = "Opções")
+        Spacer(Modifier.width(8.dp))
+        Text("⚙️ Opções", fontWeight = FontWeight.Bold)
+      }
     }
     
     // Dialog de opções
