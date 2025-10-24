@@ -153,6 +153,22 @@ fun HomeScreen(nav: NavHostController) {
   
   val isTv = MaxiApp.isTv
   val isPhone = MaxiApp.isPhone
+  val isFireStick = MaxiApp.isFireStick
+  
+  // 🔥 PADDING ESPECÍFICO PARA FIRE STICK
+  val horizontalPadding = when {
+    isFireStick -> MaxiApp.fireStickOverscanPadding.dp
+    isTv -> 32.dp
+    isPhone -> 16.dp
+    else -> 24.dp
+  }
+  
+  val verticalPadding = when {
+    isFireStick -> MaxiApp.fireStickSafeAreaPadding.dp
+    isTv -> 16.dp
+    isPhone -> 12.dp
+    else -> 14.dp
+  }
   
   // Dialog de confirmação de logout
   if (showLogoutDialog) {
@@ -496,14 +512,15 @@ fun HomeScreen(nav: NavHostController) {
           .fillMaxWidth()
           .background(Color(0xFF1A1A1A))
           .padding(
-            horizontal = if (isTv) 32.dp else if (isPhone) 16.dp else 24.dp,
-            vertical = if (isTv) 16.dp else if (isPhone) 12.dp else 14.dp
+            horizontal = horizontalPadding,
+            vertical = verticalPadding
           )
       ) {
         // Botão SAIR posicionado à esquerda (não no canto)
         LogoutButton(
           isFocused = focusedButton == "logout",
           deviceType = when {
+            isFireStick -> "firestick"
             isTv -> "tv"
             isPhone -> "phone"
             else -> "tablet"
@@ -520,6 +537,7 @@ fun HomeScreen(nav: NavHostController) {
         DigitalClock(
           time = currentTime,
           deviceType = when {
+            isFireStick -> "firestick"
             isTv -> "tv"
             isPhone -> "phone"
             else -> "tablet"
@@ -534,8 +552,8 @@ fun HomeScreen(nav: NavHostController) {
         modifier = Modifier
           .fillMaxWidth()
           .padding(
-            vertical = if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp,
-            horizontal = if (isTv) 32.dp else if (isPhone) 16.dp else 24.dp
+            vertical = if (isFireStick) 12.dp else if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp,
+            horizontal = horizontalPadding
           ),
         contentAlignment = Alignment.CenterStart
       ) {
@@ -589,7 +607,7 @@ fun HomeScreen(nav: NavHostController) {
           modifier = Modifier
             .fillMaxWidth()
             .height(if (isTv) 320.dp else if (isPhone) 200.dp else 260.dp)
-            .padding(horizontal = if (isTv) 32.dp else if (isPhone) 16.dp else 24.dp)
+            .padding(horizontal = horizontalPadding)
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF1A1A1A))
             .border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(16.dp)),
@@ -614,14 +632,11 @@ fun HomeScreen(nav: NavHostController) {
         modifier = Modifier
           .fillMaxWidth()
           .padding(
-            horizontal = when {
-              isTv -> 32.dp
-              isPhone -> 12.dp
-              else -> 20.dp
-            }
+            horizontal = horizontalPadding
           ),
         horizontalArrangement = Arrangement.spacedBy(
           when {
+            isFireStick -> 24.dp  // Mais espaço para Fire Stick
             isTv -> 20.dp
             isPhone -> 8.dp
             else -> 12.dp
@@ -633,6 +648,7 @@ fun HomeScreen(nav: NavHostController) {
           emoji = "📡",
           isFocused = focusedButton == "live",
           deviceType = when {
+            isFireStick -> "firestick"
             isTv -> "tv"
             isPhone -> "phone"
             else -> "tablet"
@@ -647,6 +663,7 @@ fun HomeScreen(nav: NavHostController) {
           emoji = "🎬",
           isFocused = focusedButton == "vod",
           deviceType = when {
+            isFireStick -> "firestick"
             isTv -> "tv"
             isPhone -> "phone"
             else -> "tablet"
@@ -661,6 +678,7 @@ fun HomeScreen(nav: NavHostController) {
           emoji = "📺",
           isFocused = focusedButton == "series",
           deviceType = when {
+            isFireStick -> "firestick"
             isTv -> "tv"
             isPhone -> "phone"
             else -> "tablet"
@@ -675,6 +693,7 @@ fun HomeScreen(nav: NavHostController) {
           emoji = "⭐",
           isFocused = focusedButton == "favorites",
           deviceType = when {
+            isFireStick -> "firestick"
             isTv -> "tv"
             isPhone -> "phone"
             else -> "tablet"
@@ -689,6 +708,7 @@ fun HomeScreen(nav: NavHostController) {
           emoji = "🔍",
           isFocused = focusedButton == "search",
           deviceType = when {
+            isFireStick -> "firestick"
             isTv -> "tv"
             isPhone -> "phone"
             else -> "tablet"
@@ -703,6 +723,7 @@ fun HomeScreen(nav: NavHostController) {
           emoji = "⚙️",
           isFocused = focusedButton == "settings",
           deviceType = when {
+            isFireStick -> "firestick"
             isTv -> "tv"
             isPhone -> "phone"
             else -> "tablet"
@@ -867,24 +888,28 @@ fun CategoryButton(
   )
   
   val buttonHeight = when (deviceType) {
+    "firestick" -> 90.dp  // Mais alto para Fire Stick
     "tv" -> 80.dp
     "phone" -> 65.dp
     else -> 72.dp
   }
   
   val fontSize = when (deviceType) {
+    "firestick" -> 20.sp  // Texto maior para Fire Stick
     "tv" -> 18.sp
     "phone" -> 12.sp
     else -> 15.sp
   }
   
   val emojiSize = when (deviceType) {
+    "firestick" -> 28.sp  // Emoji maior para Fire Stick
     "tv" -> 24.sp
     "phone" -> 16.sp
     else -> 20.sp
   }
   
   val padding = when (deviceType) {
+    "firestick" -> PaddingValues(horizontal = 20.dp, vertical = 18.dp)  // Mais padding para Fire Stick
     "tv" -> PaddingValues(horizontal = 16.dp, vertical = 16.dp)
     "phone" -> PaddingValues(horizontal = 6.dp, vertical = 8.dp)
     else -> PaddingValues(horizontal = 12.dp, vertical = 12.dp)

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maxiptv"
-    android:versionCode="82"
-    android:versionName="1.0.82" >
+    android:versionCode="83"
+    android:versionName="1.0.83" >
 
     <uses-sdk
         android:minSdkVersion="21"
@@ -53,6 +53,7 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
             android:exported="true"
             android:launchMode="singleTask"
+            android:screenOrientation="landscape"
             android:stateNotNeeded="false" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -33949,17 +33949,19 @@ com.maxiptv.BuildConfig
 com.maxiptv.MainActivity:
     public static final int $stable
 com.maxiptv.MaxiApp$Companion:
-    public final boolean isFireStick()
     public final boolean isTablet()
     public final void setFireStick(boolean)
+    public final void setFireStickOverscanPadding(int)
+    public final void setFireStickSafeAreaPadding(int)
     public final void setPhone(boolean)
     public final void setTablet(boolean)
     public final void setTv(boolean)
 com.maxiptv.MaxiApp:
     public static final int $stable
-    public static final synthetic boolean access$isFireStick$cp()
     public static final synthetic boolean access$isTablet$cp()
     public static final synthetic void access$setFireStick$cp(boolean)
+    public static final synthetic void access$setFireStickOverscanPadding$cp(int)
+    public static final synthetic void access$setFireStickSafeAreaPadding$cp(int)
     public static final synthetic void access$setPhone$cp(boolean)
     public static final synthetic void access$setTablet$cp(boolean)
     public static final synthetic void access$setTv$cp(boolean)
@@ -68927,8 +68929,16 @@ com.maxiptv.MainActivity$onCreate$1
 com.maxiptv.MainActivity:
     static void <clinit>()
 com.maxiptv.MaxiApp$Companion:
+    public static void getFireStickOverscanPadding()
+    public static void getFireStickSafeAreaPadding()
+    public static boolean isFireStick()
     public static boolean isPhone()
     public static boolean isTv()
+com.maxiptv.MaxiApp:
+    public static int fireStickOverscanPadding
+    public static int fireStickSafeAreaPadding
+    public static final synthetic int access$getFireStickOverscanPadding$cp()
+    public static final synthetic int access$getFireStickSafeAreaPadding$cp()
 com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76ef23425c78987b9f66f4863edf70dea637a2adb30518f$0
 com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76ef23425c78987b9f66f4863edf70dea637a2adb30518f$1
 com.maxiptv.data.AuthResponse:

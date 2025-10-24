@@ -13,6 +13,10 @@ class MaxiApp : Application() {
     var isFireStick: Boolean = false
     var isPhone: Boolean = false
     var isTablet: Boolean = false
+    
+    // 🔥 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK
+    var fireStickOverscanPadding: Int = 48 // dp - padding para overscan do Fire Stick
+    var fireStickSafeAreaPadding: Int = 24 // dp - safe area adicional
   }
   
   override fun onCreate() {
@@ -76,6 +80,15 @@ class MaxiApp : Application() {
         isPhone -> "Smartphone"
         else -> "Desconhecido"
       }}")
+      
+      // 🔥 LOG ESPECÍFICO PARA FIRE STICK
+      if (isFireStick) {
+        android.util.Log.i("MaxiApp", "🔥 CONFIGURAÇÃO FIRE STICK:")
+        android.util.Log.i("MaxiApp", "Overscan Padding: ${fireStickOverscanPadding}dp")
+        android.util.Log.i("MaxiApp", "Safe Area Padding: ${fireStickSafeAreaPadding}dp")
+        android.util.Log.i("MaxiApp", "Layout otimizado para controle remoto")
+      }
+      
       android.util.Log.i("MaxiApp", "═══════════════════════════════════════")
       
       AppCtx.ctx = applicationContext
