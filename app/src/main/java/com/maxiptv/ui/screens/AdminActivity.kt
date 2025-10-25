@@ -597,11 +597,11 @@ fun AdminPanelScreen(onClose: () -> Unit) {
               onGenerateCode = {
                 scope.launch {
                   try {
-                    android.util.Log.i("AdminActivity", "🔑 Gerando código para ${user.username}")
-                    val code = ClientCodeManager.createClientCode(user)
+                    android.util.Log.i("AdminActivity", "🔑 Gerando código simples para ${user.username}")
+                    val code = ClientCodeManager.createSimpleCode(user)
                     showCodeDialog(code, user.username)
                   } catch (e: Exception) {
-                    android.util.Log.e("AdminActivity", "❌ Erro ao gerar código: ${e.message}", e)
+                    android.util.Log.e("AdminActivity", "❌ Erro ao gerar código simples: ${e.message}", e)
                   }
                 }
               }

@@ -10,22 +10,20 @@ import kotlinx.serialization.json.Json
 import java.util.UUID
 
 /**
- * Sistema de Códigos PHP para Download Automático
- * Gerencia códigos únicos para cada cliente baixar o app
+ * Sistema de Códigos Simples para Download Automático
+ * Gerencia códigos de 4 dígitos para cada cliente baixar o app
  */
 @Serializable
-data class ClientCode(
-    val userId: String,
-    val username: String,
-    val password: String,
-    val apiUrl: String,
-    val expiryDate: String,
-    val createdAt: Long,
-    val codeExpiresAt: Long, // 6 horas após criação
-    val used: Boolean = false,
-    val usedAt: Long? = null,
-    val usedDevice: String? = null,
-    val downloadsCount: Int = 0
+data class SimpleClientCode(
+    val usuario: String,
+    val senha: String,
+    val api: String,
+    val apk: String,
+    val expira_em: String,
+    val ativo: Boolean = true,
+    val usado: Boolean = false,
+    val usado_em: Long? = null,
+    val usado_device: String? = null
 )
 
 object ClientCodeManager {
@@ -37,108 +35,106 @@ object ClientCodeManager {
     }
     
     /**
-     * Gerar código único para cliente
+     * Gerar código simples de 4 dígitos
      */
-    fun generateClientCode(user: UserAccount): String {
-        val timestamp = System.currentTimeMillis()
-        val hash = "${user.id}_${timestamp}".hashCode().toString(36)
-        return "MAXI_${hash.uppercase()}"
+    fun generateSimpleCode(): String {
+        return (1000..9999).random().toString()
     }
     
     /**
-     * Criar código para usuário
+     * Criar código simples para usuário
      */
-    suspend fun createClientCode(user: UserAccount): String {
-        val code = generateClientCode(user)
-        val now = System.currentTimeMillis()
-        val expiresAt = now + (6 * 60 * 60 * 1000) // 6 horas
+    suspend fun createSimpleCode(user: UserAccount): String {
+        val code = generateSimpleCode()
+        val apkUrl = "https://github.com/maxiptv-v2/maxiptv-update/releases/latest/download/MaxiPTV-v1.0.92.apk"
         
-        val clientCode = ClientCode(
-            userId = user.id,
-            username = user.username,
-            password = user.password,
-            apiUrl = user.apiUrl,
-            expiryDate = user.expiryDate,
-            createdAt = now,
-            codeExpiresAt = expiresAt
+        val simpleCode = SimpleClientCode(
+            usuario = user.username,
+            senha = user.password,
+            api = user.apiUrl,
+            apk = apkUrl,
+            expira_em = user.expiryDate,
+            ativo = true,
+            usado = false,
+            usado_em = null,
+            usado_device = null
         )
         
         // Salvar no JSONBin via SessionManager
-        SessionManager.saveClientCode(code, clientCode)
+        SessionManager.saveSimpleCode(code, simpleCode)
         
-        android.util.Log.i("ClientCodeManager", "✅ Código gerado: $code para ${user.username}")
+        android.util.Log.i("ClientCodeManager", "✅ Código simples gerado: $code para ${user.username}")
         return code
     }
     
     /**
-     * Validar código (para servidor PHP)
+     * Marcar código simples como usado
      */
-    suspend fun validateClientCode(code: String): ClientCode? {
+    suspend fun markSimpleCodeAsUsed(code: String, deviceName: String): Boolean {
         return try {
-            val clientCode = SessionManager.getClientCode(code)
-            
-            if (clientCode == null) {
-                android.util.Log.w("ClientCodeManager", "❌ Código não encontrado: $code")
-                return null
-            }
-            
-            // Verificar se código expirou
-            if (System.currentTimeMillis() > clientCode.codeExpiresAt) {
-                android.util.Log.w("ClientCodeManager", "❌ Código expirado: $code")
-                return null
-            }
-            
-            // Verificar se já foi usado
-            if (clientCode.used) {
-                android.util.Log.w("ClientCodeManager", "❌ Código já usado: $code")
-                return null
-            }
-            
-            // Verificar se conta do usuário não expirou
-            if (isUserExpired(clientCode.expiryDate)) {
-                android.util.Log.w("ClientCodeManager", "❌ Conta do usuário expirada: ${clientCode.username}")
-                return null
-            }
-            
-            android.util.Log.i("ClientCodeManager", "✅ Código válido: $code")
-            return clientCode
-            
-        } catch (e: Exception) {
-            android.util.Log.e("ClientCodeManager", "❌ Erro ao validar código: ${e.message}", e)
-            return null
-        }
-    }
-    
-    /**
-     * Marcar código como usado
-     */
-    suspend fun markCodeAsUsed(code: String, deviceName: String): Boolean {
-        return try {
-            val clientCode = SessionManager.getClientCode(code)
-            if (clientCode == null) {
-                android.util.Log.e("ClientCodeManager", "❌ Código não encontrado para marcar como usado: $code")
+            val simpleCode = SessionManager.getSimpleCode(code)
+            if (simpleCode == null) {
+                android.util.Log.e("ClientCodeManager", "❌ Código simples não encontrado: $code")
                 return false
             }
             
-            val updatedCode = clientCode.copy(
-                used = true,
-                usedAt = System.currentTimeMillis(),
-                usedDevice = deviceName,
-                downloadsCount = clientCode.downloadsCount + 1
+            val updatedCode = simpleCode.copy(
+                usado = true,
+                usado_em = System.currentTimeMillis(),
+                usado_device = deviceName
             )
             
-            val success = SessionManager.updateClientCode(code, updatedCode)
+            val success = SessionManager.updateSimpleCode(code, updatedCode)
             if (success) {
-                android.util.Log.i("ClientCodeManager", "✅ Código marcado como usado: $code em $deviceName")
+                android.util.Log.i("ClientCodeManager", "✅ Código simples marcado como usado: $code em $deviceName")
             } else {
-                android.util.Log.e("ClientCodeManager", "❌ Erro ao marcar código como usado: $code")
+                android.util.Log.e("ClientCodeManager", "❌ Erro ao marcar código simples como usado: $code")
             }
             
             return success
             
         } catch (e: Exception) {
-            android.util.Log.e("ClientCodeManager", "❌ Erro ao marcar código como usado: ${e.message}", e)
+            android.util.Log.e("ClientCodeManager", "❌ Erro ao marcar código simples como usado: ${e.message}", e)
             return false
+        }
+    }
+    
+    /**
+     * Validar código simples (para servidor PHP)
+     */
+    suspend fun validateSimpleCode(code: String): SimpleClientCode? {
+        return try {
+            val simpleCode = SessionManager.getSimpleCode(code)
+            
+            if (simpleCode == null) {
+                android.util.Log.w("ClientCodeManager", "❌ Código simples não encontrado: $code")
+                return null
+            }
+            
+            // Verificar se código está ativo
+            if (!simpleCode.ativo) {
+                android.util.Log.w("ClientCodeManager", "❌ Código simples inativo: $code")
+                return null
+            }
+            
+            // Verificar se já foi usado
+            if (simpleCode.usado) {
+                android.util.Log.w("ClientCodeManager", "❌ Código simples já usado: $code")
+                return null
+            }
+            
+            // Verificar se conta do usuário não expirou
+            if (isUserExpired(simpleCode.expira_em)) {
+                android.util.Log.w("ClientCodeManager", "❌ Conta do usuário expirada: ${simpleCode.usuario}")
+                return null
+            }
+            
+            android.util.Log.i("ClientCodeManager", "✅ Código simples válido: $code")
+            return simpleCode
+            
+        } catch (e: Exception) {
+            android.util.Log.e("ClientCodeManager", "❌ Erro ao validar código simples: ${e.message}", e)
+            return null
         }
     }
     
@@ -168,55 +164,26 @@ object ClientCodeManager {
     }
     
     /**
-     * Obter todos os códigos (para admin)
+     * Obter todos os códigos simples (para admin)
      */
-    suspend fun getAllClientCodes(): Map<String, ClientCode> {
+    suspend fun getAllSimpleCodes(): Map<String, SimpleClientCode> {
         return try {
-            SessionManager.getAllClientCodes()
+            SessionManager.getAllSimpleCodes()
         } catch (e: Exception) {
-            android.util.Log.e("ClientCodeManager", "❌ Erro ao obter códigos: ${e.message}", e)
+            android.util.Log.e("ClientCodeManager", "❌ Erro ao obter códigos simples: ${e.message}", e)
             emptyMap()
         }
     }
     
     /**
-     * Remover código (para admin)
+     * Remover código simples (para admin)
      */
-    suspend fun removeClientCode(code: String): Boolean {
+    suspend fun removeSimpleCode(code: String): Boolean {
         return try {
-            SessionManager.removeClientCode(code)
+            SessionManager.removeSimpleCode(code)
         } catch (e: Exception) {
-            android.util.Log.e("ClientCodeManager", "❌ Erro ao remover código: ${e.message}", e)
+            android.util.Log.e("ClientCodeManager", "❌ Erro ao remover código simples: ${e.message}", e)
             false
-        }
-    }
-    
-    /**
-     * Verificar se código está próximo de expirar (1 hora)
-     */
-    fun isCodeExpiringSoon(code: ClientCode): Boolean {
-        val oneHour = 60 * 60 * 1000 // 1 hora em millis
-        val timeUntilExpiry = code.codeExpiresAt - System.currentTimeMillis()
-        return timeUntilExpiry <= oneHour && timeUntilExpiry > 0
-    }
-    
-    /**
-     * Formatar tempo restante do código
-     */
-    fun getTimeRemaining(code: ClientCode): String {
-        val timeUntilExpiry = code.codeExpiresAt - System.currentTimeMillis()
-        
-        if (timeUntilExpiry <= 0) {
-            return "Expirado"
-        }
-        
-        val hours = timeUntilExpiry / (1000 * 60 * 60)
-        val minutes = (timeUntilExpiry % (1000 * 60 * 60)) / (1000 * 60)
-        
-        return when {
-            hours > 0 -> "${hours}h ${minutes}m"
-            minutes > 0 -> "${minutes}m"
-            else -> "Expirado"
         }
     }
 }
