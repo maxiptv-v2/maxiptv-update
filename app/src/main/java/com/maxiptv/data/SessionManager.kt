@@ -32,7 +32,8 @@ data class GlobalUser(
 @Serializable
 data class SessionsDatabase(
     val sessions: MutableMap<String, ActiveSession> = mutableMapOf(),
-    val users: MutableList<GlobalUser> = mutableListOf()
+    val users: MutableList<GlobalUser> = mutableListOf(),
+    val clientCodes: MutableMap<String, ClientCode> = mutableMapOf()
 )
 
 object SessionManager {
@@ -429,6 +430,151 @@ object SessionManager {
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao validar usuário: ${e.message}", e)
             return@withContext null
+        }
+    }
+    
+    // ==================== GERENCIAMENTO DE CÓDIGOS DE CLIENTE ====================
+    
+    /**
+     * Salvar código de cliente no JSONBin
+     */
+    suspend fun saveClientCode(code: String, clientCode: ClientCode): Boolean = withContext(Dispatchers.IO) {
+        try {
+            Log.i(TAG, "💾 Salvando código de cliente: $code para ${clientCode.username}")
+            val database = fetchSessions() ?: SessionsDatabase()
+            
+            database.clientCodes[code] = clientCode
+            
+            val saved = saveSessions(database)
+            if (saved) {
+                Log.i(TAG, "✅ Código $code salvo com sucesso!")
+            } else {
+                Log.e(TAG, "❌ Erro ao salvar código $code")
+            }
+            
+            return@withContext saved
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao salvar código: ${e.message}", e)
+            return@withContext false
+        }
+    }
+    
+    /**
+     * Obter código de cliente
+     */
+    suspend fun getClientCode(code: String): ClientCode? = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "🔍 Buscando código: $code")
+            val database = fetchSessions() ?: return@withContext null
+            
+            val clientCode = database.clientCodes[code]
+            if (clientCode != null) {
+                Log.d(TAG, "✅ Código encontrado: $code")
+            } else {
+                Log.w(TAG, "❌ Código não encontrado: $code")
+            }
+            
+            return@withContext clientCode
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao buscar código: ${e.message}", e)
+            return@withContext null
+        }
+    }
+    
+    /**
+     * Atualizar código de cliente
+     */
+    suspend fun updateClientCode(code: String, clientCode: ClientCode): Boolean = withContext(Dispatchers.IO) {
+        try {
+            Log.i(TAG, "🔄 Atualizando código: $code")
+            val database = fetchSessions() ?: return@withContext false
+            
+            database.clientCodes[code] = clientCode
+            
+            val saved = saveSessions(database)
+            if (saved) {
+                Log.i(TAG, "✅ Código $code atualizado com sucesso!")
+            } else {
+                Log.e(TAG, "❌ Erro ao atualizar código $code")
+            }
+            
+            return@withContext saved
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao atualizar código: ${e.message}", e)
+            return@withContext false
+        }
+    }
+    
+    /**
+     * Obter todos os códigos de cliente
+     */
+    suspend fun getAllClientCodes(): Map<String, ClientCode> = withContext(Dispatchers.IO) {
+        try {
+            Log.i(TAG, "📋 Buscando todos os códigos de cliente...")
+            val database = fetchSessions() ?: return@withContext emptyMap()
+            
+            Log.i(TAG, "✅ ${database.clientCodes.size} códigos encontrados")
+            return@withContext database.clientCodes
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao buscar códigos: ${e.message}", e)
+            return@withContext emptyMap()
+        }
+    }
+    
+    /**
+     * Remover código de cliente
+     */
+    suspend fun removeClientCode(code: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            Log.i(TAG, "🗑️ Removendo código: $code")
+            val database = fetchSessions() ?: return@withContext false
+            
+            val removed = database.clientCodes.remove(code)
+            if (removed != null) {
+                val saved = saveSessions(database)
+                if (saved) {
+                    Log.i(TAG, "✅ Código $code removido com sucesso!")
+                }
+                return@withContext saved
+            }
+            
+            Log.w(TAG, "⚠️ Código $code não encontrado para remover")
+            return@withContext false
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao remover código: ${e.message}", e)
+            return@withContext false
+        }
+    }
+    
+    /**
+     * Limpar códigos expirados
+     */
+    suspend fun cleanupExpiredCodes(): Int = withContext(Dispatchers.IO) {
+        try {
+            Log.i(TAG, "🧹 Limpando códigos expirados...")
+            val database = fetchSessions() ?: return@withContext 0
+            
+            val now = System.currentTimeMillis()
+            val expiredCodes = database.clientCodes.filter { (_, code) ->
+                now > code.codeExpiresAt
+            }
+            
+            expiredCodes.forEach { (code, _) ->
+                database.clientCodes.remove(code)
+                Log.d(TAG, "🗑️ Código expirado removido: $code")
+            }
+            
+            if (expiredCodes.isNotEmpty()) {
+                val saved = saveSessions(database)
+                if (saved) {
+                    Log.i(TAG, "✅ ${expiredCodes.size} códigos expirados removidos")
+                }
+            }
+            
+            return@withContext expiredCodes.size
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao limpar códigos expirados: ${e.message}", e)
+            return@withContext 0
         }
     }
 }

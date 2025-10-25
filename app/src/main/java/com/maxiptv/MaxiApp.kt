@@ -130,6 +130,9 @@ class MaxiApp : Application() {
         val (b,u,p) = SettingsRepo.loadBlocking()
         if (b.isNotBlank() && u.isNotBlank() && p.isNotBlank()) {
           XRepo.configure(b, u, p)
+          android.util.Log.i("MaxiApp", "✅ Credenciais carregadas: $u")
+        } else {
+          android.util.Log.i("MaxiApp", "⚠️ Nenhuma credencial salva, usando padrão")
         }
       } catch (e: Exception) {
         // Ignora erros ao carregar configurações (usa padrão)

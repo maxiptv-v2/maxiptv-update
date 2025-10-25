@@ -37,6 +37,7 @@ import com.maxiptv.data.UserAccount
 import com.maxiptv.data.UserManager
 import com.maxiptv.data.SessionManager
 import com.maxiptv.data.ActiveSession
+import com.maxiptv.data.ClientCodeManager
 import com.maxiptv.ui.theme.MaxiTheme
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -60,11 +61,21 @@ fun AdminPanelScreen(onClose: () -> Unit) {
   var users by remember { mutableStateOf<List<UserAccount>>(emptyList()) }
   var showAddDialog by remember { mutableStateOf(false) }
   var editingUser by remember { mutableStateOf<UserAccount?>(null) }
+  var showCodeDialog by remember { mutableStateOf(false) }
+  var generatedCode by remember { mutableStateOf("") }
+  var codeUsername by remember { mutableStateOf("") }
   val scope = rememberCoroutineScope()
   
   var activeUsers by remember { mutableStateOf<List<UserAccount>>(emptyList()) }
   var globalSessions by remember { mutableStateOf<List<ActiveSession>>(emptyList()) }
   var globalUsers by remember { mutableStateOf<List<com.maxiptv.data.GlobalUser>>(emptyList()) }
+  
+  // Função para mostrar diálogo do código
+  fun showCodeDialog(code: String, username: String) {
+    generatedCode = code
+    codeUsername = username
+    showCodeDialog = true
+  }
   
   LaunchedEffect(isAuthenticated) {
     if (isAuthenticated) {
@@ -582,6 +593,17 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                   users = UserManager.getUsers()
                   activeUsers = UserManager.getActiveUsers()
                 }
+              },
+              onGenerateCode = {
+                scope.launch {
+                  try {
+                    android.util.Log.i("AdminActivity", "🔑 Gerando código para ${user.username}")
+                    val code = ClientCodeManager.createClientCode(user)
+                    showCodeDialog(code, user.username)
+                  } catch (e: Exception) {
+                    android.util.Log.e("AdminActivity", "❌ Erro ao gerar código: ${e.message}", e)
+                  }
+                }
               }
             )
           }
@@ -709,6 +731,177 @@ fun AdminPanelScreen(onClose: () -> Unit) {
           )
         }
       }
+      
+      // Dialog para mostrar código gerado
+      if (showCodeDialog) {
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.8f)),
+          contentAlignment = Alignment.Center
+        ) {
+          Card(
+            modifier = Modifier
+              .fillMaxWidth(0.9f)
+              .shadow(elevation = 24.dp),
+            colors = CardDefaults.cardColors(
+              containerColor = Color(0xFF1A1A1A)
+            ),
+            shape = RoundedCornerShape(20.dp)
+          ) {
+            Column(
+              modifier = Modifier.padding(24.dp),
+              horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+              // Header
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 24.dp)
+              ) {
+                Box(
+                  modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                      Brush.radialGradient(
+                        colors = listOf(
+                          Color(0xFF00D4FF),
+                          Color(0xFF0099CC)
+                        )
+                      ),
+                      RoundedCornerShape(24.dp)
+                    ),
+                  contentAlignment = Alignment.Center
+                ) {
+                  Icon(
+                    Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                  )
+                }
+                
+                Spacer(Modifier.width(16.dp))
+                
+                Column {
+                  Text(
+                    text = "CÓDIGO GERADO",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF00D4FF)
+                  )
+                  Text(
+                    text = "Para: $codeUsername",
+                    fontSize = 14.sp,
+                    color = Color(0xFF888888)
+                  )
+                }
+                
+                Spacer(Modifier.weight(1f))
+                
+                IconButton(
+                  onClick = { showCodeDialog = false },
+                  modifier = Modifier
+                    .background(Color(0xFF2D2D2D), RoundedCornerShape(12.dp))
+                    .size(40.dp)
+                ) {
+                  Icon(Icons.Default.Close, contentDescription = "Fechar", tint = Color(0xFF888888))
+                }
+              }
+              
+              // Código
+              Card(
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(vertical = 16.dp),
+                colors = CardDefaults.cardColors(
+                  containerColor = Color(0xFF2D2D2D)
+                ),
+                shape = RoundedCornerShape(12.dp)
+              ) {
+                Column(
+                  modifier = Modifier.padding(20.dp),
+                  horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                  Text(
+                    text = "Código PHP:",
+                    fontSize = 14.sp,
+                    color = Color(0xFF888888),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                  )
+                  
+                  Text(
+                    text = generatedCode,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF00D4FF),
+                    modifier = Modifier
+                      .background(
+                        Color(0xFF1A1A1A),
+                        RoundedCornerShape(8.dp)
+                      )
+                      .padding(12.dp)
+                  )
+                  
+                  Text(
+                    text = "⏰ Válido por 6 horas",
+                    fontSize = 12.sp,
+                    color = Color(0xFF888888),
+                    modifier = Modifier.padding(top = 8.dp)
+                  )
+                }
+              }
+              
+              // Instruções
+              Text(
+                text = "📋 Instruções:",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 8.dp)
+              )
+              
+              Text(
+                text = "1. Cliente acessa o downloader\n2. Digita este código\n3. Baixa o app automaticamente\n4. Login automático",
+                fontSize = 14.sp,
+                color = Color(0xFFBBBBBB),
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(bottom = 24.dp)
+              )
+              
+              // Botões
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+              ) {
+                OutlinedButton(
+                  onClick = { showCodeDialog = false },
+                  modifier = Modifier.weight(1f),
+                  colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF888888)
+                  ),
+                  border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF444444))
+                ) {
+                  Text("Fechar", fontWeight = FontWeight.Medium)
+                }
+                
+                Button(
+                  onClick = {
+                    // Copiar código para clipboard
+                    showCodeDialog = false
+                  },
+                  modifier = Modifier.weight(1f),
+                  colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00D4FF),
+                    contentColor = Color.White
+                  )
+                ) {
+                  Text("Copiar", fontWeight = FontWeight.Bold)
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -795,7 +988,7 @@ fun ActiveUserCard(user: UserAccount, onEdit: () -> Unit, onForceLogout: () -> U
 }
 
 @Composable
-fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit) {
+fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit, onGenerateCode: () -> Unit) {
   Card(
     modifier = Modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
@@ -846,6 +1039,16 @@ fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit) {
         }
         
         Row {
+          Button(
+            onClick = onGenerateCode,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D4FF)),
+            modifier = Modifier.padding(end = 8.dp)
+          ) {
+            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("Código", fontSize = 12.sp)
+          }
+          
           Button(
             onClick = onEdit,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
