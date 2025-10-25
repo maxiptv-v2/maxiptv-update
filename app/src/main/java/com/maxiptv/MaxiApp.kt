@@ -14,9 +14,9 @@ class MaxiApp : Application() {
     var isPhone: Boolean = false
     var isTablet: Boolean = false
     
-    // 🔥 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK
-    var fireStickOverscanPadding: Int = 48 // dp - padding para overscan do Fire Stick
-    var fireStickSafeAreaPadding: Int = 24 // dp - safe area adicional
+    // 🔥 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK (AJUSTÁVEIS POR TAMANHO DE TV)
+    var fireStickOverscanPadding: Int = 48 // dp - será ajustado automaticamente
+    var fireStickSafeAreaPadding: Int = 24 // dp - será ajustado automaticamente
   }
   
   override fun onCreate() {
@@ -81,9 +81,22 @@ class MaxiApp : Application() {
         else -> "Desconhecido"
       }}")
       
-      // 🔥 LOG ESPECÍFICO PARA FIRE STICK
+      // 🔥 CONFIGURAÇÃO AUTOMÁTICA POR TAMANHO DE TV (FIRE STICK)
       if (isFireStick) {
+        // Calcular padding baseado no tamanho da tela
+        val diagonalInches = kotlin.math.sqrt((screenWidth * screenWidth + screenHeight * screenHeight).toDouble()) / 160.0
+        
+        fireStickOverscanPadding = when {
+          diagonalInches < 40 -> 32  // TV pequena (32"-39")
+          diagonalInches < 50 -> 40  // TV média (40"-49") 
+          diagonalInches < 60 -> 48  // TV grande (50"-59")
+          else -> 56  // TV muito grande (60"+)
+        }
+        
+        fireStickSafeAreaPadding = fireStickOverscanPadding / 2
+        
         android.util.Log.i("MaxiApp", "🔥 CONFIGURAÇÃO FIRE STICK:")
+        android.util.Log.i("MaxiApp", "Tamanho da tela: ${diagonalInches.toInt()}\"")
         android.util.Log.i("MaxiApp", "Overscan Padding: ${fireStickOverscanPadding}dp")
         android.util.Log.i("MaxiApp", "Safe Area Padding: ${fireStickSafeAreaPadding}dp")
         android.util.Log.i("MaxiApp", "Layout otimizado para controle remoto")

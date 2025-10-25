@@ -68929,16 +68929,11 @@ com.maxiptv.MainActivity$onCreate$1
 com.maxiptv.MainActivity:
     static void <clinit>()
 com.maxiptv.MaxiApp$Companion:
-    public static void getFireStickOverscanPadding()
-    public static void getFireStickSafeAreaPadding()
+    public static int getFireStickOverscanPadding()
+    public static int getFireStickSafeAreaPadding()
     public static boolean isFireStick()
     public static boolean isPhone()
     public static boolean isTv()
-com.maxiptv.MaxiApp:
-    public static int fireStickOverscanPadding
-    public static int fireStickSafeAreaPadding
-    public static final synthetic int access$getFireStickOverscanPadding$cp()
-    public static final synthetic int access$getFireStickSafeAreaPadding$cp()
 com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76ef23425c78987b9f66f4863edf70dea637a2adb30518f$0
 com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76ef23425c78987b9f66f4863edf70dea637a2adb30518f$1
 com.maxiptv.data.AuthResponse:

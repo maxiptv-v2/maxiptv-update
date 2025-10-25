@@ -20,14 +20,13 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     
-    // 🔥 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK D-PAD
-    if (MaxiApp.isFireStick) {
-      android.util.Log.i("MainActivity", "🔥 Configurando D-pad para Fire Stick")
-      // Configurações específicas para controle remoto do Fire Stick
-      window.setFlags(
-        android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
-        android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
-      )
+    // 📺 CONFIGURAÇÕES PARA TODAS AS TVs (Fire Stick + TV Box)
+    if (MaxiApp.isTv) {
+      android.util.Log.i("MainActivity", "📺 Configurando D-pad para TV (${if (MaxiApp.isFireStick) "Fire Stick" else "TV Box"})")
+      // API moderna para fullscreen (sem deprecated)
+      androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+      window.statusBarColor = android.graphics.Color.TRANSPARENT
+      window.navigationBarColor = android.graphics.Color.TRANSPARENT
     }
     
     setContent {
@@ -71,11 +70,12 @@ class MainActivity : ComponentActivity() {
     }
   }
   
-  // 🎮 INTERCEPTAR EVENTOS DE D-PAD PARA FIRE STICK
+  // 🎮 INTERCEPTAR EVENTOS DE D-PAD PARA TODAS AS TVs
   override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
-    if (MaxiApp.isFireStick) {
-      android.util.Log.i("MainActivity", "🔥 D-pad pressionado: $keyCode")
-      // Log específico para debug do Fire Stick
+    if (MaxiApp.isTv) {
+      val deviceType = if (MaxiApp.isFireStick) "Fire Stick" else "TV Box"
+      android.util.Log.i("MainActivity", "📺 D-pad pressionado em $deviceType: $keyCode")
+      // Log específico para debug de TVs
       when (keyCode) {
         android.view.KeyEvent.KEYCODE_DPAD_UP -> android.util.Log.i("MainActivity", "⬆️ D-pad UP")
         android.view.KeyEvent.KEYCODE_DPAD_DOWN -> android.util.Log.i("MainActivity", "⬇️ D-pad DOWN")
