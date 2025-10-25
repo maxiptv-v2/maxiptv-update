@@ -46,15 +46,29 @@ class MaxiApp : Application() {
              model.contains("android tv") ||
              product.contains("android tv")
       
-      // Detecta Phone e Tablet baseado no tamanho da tela (APENAS se NÃO for TV)
+      // 📱 DETECÇÃO MELHORADA DE SMARTPHONE E TABLET
       val screenWidth = resources.configuration.screenWidthDp
       val screenHeight = resources.configuration.screenHeightDp
       val smallestWidth = minOf(screenWidth, screenHeight)
       
+      // Detecção mais precisa baseada em características do dispositivo
+      val hasTouchscreen = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN)
+      val isPhoneLike = manufacturer.contains("samsung") || 
+                       manufacturer.contains("xiaomi") || 
+                       manufacturer.contains("huawei") || 
+                       manufacturer.contains("motorola") ||
+                       manufacturer.contains("lg") ||
+                       manufacturer.contains("oneplus") ||
+                       manufacturer.contains("oppo") ||
+                       manufacturer.contains("vivo") ||
+                       manufacturer.contains("realme")
+      
       // Só aplica detecção por tamanho se NÃO for TV
       if (!isTv) {
-        isPhone = smallestWidth <= 600
-        isTablet = smallestWidth > 600
+        // Detecção mais inteligente de smartphone
+        isPhone = (smallestWidth <= 600 && hasTouchscreen && isPhoneLike) ||
+                 (smallestWidth <= 480 && hasTouchscreen) // Smartphones pequenos
+        isTablet = smallestWidth > 600 && hasTouchscreen && !isPhone
       } else {
         // Se é TV, força Phone e Tablet como false
         isPhone = false
@@ -69,6 +83,8 @@ class MaxiApp : Application() {
       android.util.Log.i("MaxiApp", "Marca: $brand")
       android.util.Log.i("MaxiApp", "Produto: $product")
       android.util.Log.i("MaxiApp", "UI Mode: ${if (isTvMode) "TELEVISION" else "NORMAL"}")
+      android.util.Log.i("MaxiApp", "Touchscreen: $hasTouchscreen")
+      android.util.Log.i("MaxiApp", "Phone-like: $isPhoneLike")
       android.util.Log.i("MaxiApp", "Largura: ${screenWidth}dp")
       android.util.Log.i("MaxiApp", "Altura: ${screenHeight}dp")
       android.util.Log.i("MaxiApp", "Menor largura: ${smallestWidth}dp")

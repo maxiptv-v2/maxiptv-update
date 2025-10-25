@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.86",
-    "versionCode":  86,
-    "buildNumber":  86,
+    "version":  "v1.0.87",
+    "versionCode":  87,
+    "buildNumber":  87,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.76 - OTIMIZACOES DE PERFORMANCE!\n\nMELHORIAS DE WI-FI LENTO:\n- Buffers ULTRA REDUZIDOS para VOD/Series\n- Timeouts otimizados (8s conexao, 10s leitura)\n- Qualidade adaptativa mais agressiva\n- Evita travamentos em Wi-Fi lento\n\nFOCO VISUAL MELHORADO:\n- Botao \u0027Assistir\u0027 com borda laranja forte\n- Botao \u0027Original HD\u0027 com borda verde forte\n- Sombras coloridas para melhor visibilidade\n- Foco mais visivel em TV Box/Fire Stick\n\nNAVEGACAO OTIMIZADA:\n- Carregamento inteligente (evita recarregar dados)\n- Cache em memoria para navegacao rapida\n- Volta mais responsiva entre categorias\n\nFILTRO ADULT SWIM:\n- 3 canais \u0027Adult Swim\u0027 removidos da categoria Adulto\n- Conteudo adulto mais organizado\n- Categorias limpas\n\nCOMPATIBILIDADE:\n- TV Box Android (genéricas)\n- Fire Stick Amazon\n- Smartphones e Tablets\n- Android 14 otimizado\n\nMANTEM:\n- Sistema de login simultaneo\n- Cache inteligente 24h\n- Protecao conteudo adulto\n- Performance maxima",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-10-24T20:03:08Z",
+    "lastUpdated":  "2025-10-24T20:14:48Z",
     "checksum":  "sha256:placeholder"
 }

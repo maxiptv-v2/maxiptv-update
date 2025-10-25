@@ -157,7 +157,7 @@ ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManife
 activity#com.maxiptv.MainActivity
 ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:23:5-36:16
 	android:screenOrientation
-		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:30:7-44
+		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:30:7-41
 	android:stateNotNeeded
 		ADDED from C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:28:7-37
 	android:launchMode

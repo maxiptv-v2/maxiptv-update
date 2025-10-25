@@ -27,7 +27,7 @@
       android:alwaysRetainTaskState="true"
       android:stateNotNeeded="false"
       android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
-      android:screenOrientation="landscape">
+      android:screenOrientation="sensor">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />

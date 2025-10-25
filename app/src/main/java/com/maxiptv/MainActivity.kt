@@ -29,6 +29,15 @@ class MainActivity : ComponentActivity() {
       window.navigationBarColor = android.graphics.Color.TRANSPARENT
     }
     
+    // 📱 CONFIGURAÇÕES ESPECÍFICAS PARA SMARTPHONES
+    if (MaxiApp.isPhone) {
+      android.util.Log.i("MainActivity", "📱 Configurando para smartphone com touchscreen")
+      // Orientação automática para smartphones
+      requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR
+      // Manter barras de sistema visíveis para smartphones
+      androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
+    }
+    
     setContent {
       MaxiTheme {
         val nav = rememberNavController()
