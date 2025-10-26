@@ -92,11 +92,18 @@ fun AdminPanelScreen(onClose: () -> Unit) {
       scope.launch {
         try {
           android.util.Log.i("AdminActivity", "🔄 Sincronizando usuários do JSONBin...")
+          
+          // Carregar usuários locais primeiro
+          val localUsers = UserManager.getUsers()
+          android.util.Log.i("AdminActivity", "📊 Usuários locais: ${localUsers.size}")
+          
+          // Buscar usuários do JSONBin
           val jsonBinUsers = SessionManager.getAllUsers()
+          android.util.Log.i("AdminActivity", "📊 Usuários JSONBin: ${jsonBinUsers.size}")
           
           if (jsonBinUsers.isNotEmpty()) {
             jsonBinUsers.forEach { globalUser ->
-              val existingUser = UserManager.getUsers().find { it.username == globalUser.username }
+              val existingUser = localUsers.find { it.username == globalUser.username }
               
               if (existingUser == null) {
                 android.util.Log.i("AdminActivity", "➕ Adicionando usuário: ${globalUser.username}")
@@ -108,30 +115,32 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                   expiryDate = globalUser.expiryDate
                 )
                 UserManager.addUser(newUser)
+              } else {
+                android.util.Log.d("AdminActivity", "✓ Usuário já existe localmente: ${globalUser.username}")
               }
             }
             
             android.util.Log.i("AdminActivity", "✅ Sincronização concluída!")
           }
+          
+          // Atualizar lista após sincronização
+          users = UserManager.getUsers()
+          activeUsers = UserManager.getActiveUsers()
+          globalSessions = SessionManager.getAllActiveSessions()
+          globalUsers = SessionManager.getAllUsers()
+          
+          android.util.Log.i("AdminActivity", "📊 Usuários finais:")
+          android.util.Log.i("AdminActivity", "  - Locais: ${users.size}")
+          android.util.Log.i("AdminActivity", "  - Ativos: ${activeUsers.size}")
+          android.util.Log.i("AdminActivity", "  - Globais: ${globalUsers.size}")
+          
+          // Debug detalhado dos usuários
+          users.forEachIndexed { index, user ->
+            android.util.Log.i("AdminActivity", "  Usuário $index: ${user.username} (ID: ${user.id})")
+          }
         } catch (e: Exception) {
           android.util.Log.e("AdminActivity", "❌ Erro na sincronização: ${e.message}", e)
         }
-      }
-      
-      // Forçar recarregamento completo
-      users = UserManager.getUsers()
-      activeUsers = UserManager.getActiveUsers()
-      globalSessions = SessionManager.getAllActiveSessions()
-      globalUsers = SessionManager.getAllUsers()
-      
-      android.util.Log.i("AdminActivity", "📊 Usuários carregados:")
-      android.util.Log.i("AdminActivity", "  - Locais: ${users.size}")
-      android.util.Log.i("AdminActivity", "  - Ativos: ${activeUsers.size}")
-      android.util.Log.i("AdminActivity", "  - Globais: ${globalUsers.size}")
-      
-      // Debug detalhado dos usuários
-      users.forEachIndexed { index, user ->
-        android.util.Log.i("AdminActivity", "  Usuário $index: ${user.username} (ID: ${user.id})")
       }
     }
   }
