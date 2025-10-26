@@ -77,12 +77,32 @@ fun AdminPanelScreen(onClose: () -> Unit) {
     showCodeDialog = true
   }
   
+  // Função para mostrar diálogo de revogação
+  fun showRevokeDialog(count: Int, username: String) {
+    generatedCode = "$count códigos revogados"
+    codeUsername = username
+    showCodeDialog = true
+  }
+  
   LaunchedEffect(isAuthenticated) {
     if (isAuthenticated) {
+      android.util.Log.i("AdminActivity", "🔍 Carregando usuários...")
+      
+      // Forçar recarregamento completo
       users = UserManager.getUsers()
       activeUsers = UserManager.getActiveUsers()
       globalSessions = SessionManager.getAllActiveSessions()
       globalUsers = SessionManager.getAllUsers()
+      
+      android.util.Log.i("AdminActivity", "📊 Usuários carregados:")
+      android.util.Log.i("AdminActivity", "  - Locais: ${users.size}")
+      android.util.Log.i("AdminActivity", "  - Ativos: ${activeUsers.size}")
+      android.util.Log.i("AdminActivity", "  - Globais: ${globalUsers.size}")
+      
+      // Debug detalhado dos usuários
+      users.forEachIndexed { index, user ->
+        android.util.Log.i("AdminActivity", "  Usuário $index: ${user.username} (ID: ${user.id})")
+      }
     }
   }
   
@@ -574,38 +594,122 @@ fun AdminPanelScreen(onClose: () -> Unit) {
               fontSize = 16.sp,
               color = Color(0xFF888888)
             )
+            
+            Spacer(Modifier.weight(1f))
+            
+            // Botão para recarregar usuários
+            Button(
+              onClick = {
+                scope.launch {
+                  android.util.Log.i("AdminActivity", "🔄 Recarregando usuários...")
+                  users = UserManager.getUsers()
+                  activeUsers = UserManager.getActiveUsers()
+                  globalUsers = SessionManager.getAllUsers()
+                  android.util.Log.i("AdminActivity", "✅ Usuários recarregados: ${users.size}")
+                }
+              },
+              colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+              modifier = Modifier.padding(start = 8.dp)
+            ) {
+              Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+              Spacer(Modifier.width(4.dp))
+              Text("Recarregar", fontSize = 12.sp)
+            }
           }
           }
           
-          items(users) { user ->
-            UserCard(
-              user = user,
-              onEdit = { editingUser = user },
-              onDelete = {
-                scope.launch {
-                  // Remover localmente
-                  UserManager.removeUser(user.id)
-                  
-                  // Remover globalmente do JSONBin
-                  SessionManager.deleteUser(user.id)
-                  
-                  // Atualizar lista
-                  users = UserManager.getUsers()
-                  activeUsers = UserManager.getActiveUsers()
-                }
-              },
-              onGenerateCode = {
-                scope.launch {
-                  try {
-                    android.util.Log.i("AdminActivity", "🔑 Gerando código simples para ${user.username}")
-                    val code = ClientCodeManager.createSimpleCode(user)
-                    showCodeDialog(code, user.username)
-                  } catch (e: Exception) {
-                    android.util.Log.e("AdminActivity", "❌ Erro ao gerar código simples: ${e.message}", e)
-                  }
+          if (users.isEmpty()) {
+            item {
+              Card(
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                  containerColor = Color(0xFF2D2D2D)
+                )
+              ) {
+                Column(
+                  modifier = Modifier.padding(24.dp),
+                  horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                  Icon(
+                    Icons.Default.Person,
+                    contentDescription = null,
+                    tint = Color(0xFF888888),
+                    modifier = Modifier.size(48.dp)
+                  )
+                  Spacer(Modifier.height(16.dp))
+                  Text(
+                    text = "Nenhum usuário encontrado",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF888888)
+                  )
+                  Spacer(Modifier.height(8.dp))
+                  Text(
+                    text = "Clique em 'Adicionar Novo Usuário' para começar",
+                    fontSize = 14.sp,
+                    color = Color(0xFF666666),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                  )
                 }
               }
-            )
+            }
+          } else {
+            items(users) { user ->
+              android.util.Log.d("AdminActivity", "🎨 Renderizando UserCard para: ${user.username}")
+              UserCard(
+                user = user,
+                onEdit = { editingUser = user },
+                onDelete = {
+                  scope.launch {
+                    // Remover localmente
+                    UserManager.removeUser(user.id)
+                    
+                    // Remover globalmente do JSONBin
+                    SessionManager.deleteUser(user.id)
+                    
+                    // Atualizar lista
+                    users = UserManager.getUsers()
+                    activeUsers = UserManager.getActiveUsers()
+                  }
+                },
+                onGenerateCode = {
+                  scope.launch {
+                    try {
+                      android.util.Log.i("AdminActivity", "🔑 Gerando código simples para ${user.username}")
+                      val code = ClientCodeManager.createSimpleCode(user)
+                      showCodeDialog(code, user.username)
+                    } catch (e: Exception) {
+                      android.util.Log.e("AdminActivity", "❌ Erro ao gerar código simples: ${e.message}", e)
+                    }
+                  }
+                },
+                onRevokeCode = {
+                  scope.launch {
+                    try {
+                      android.util.Log.i("AdminActivity", "🚫 Revogando códigos para ${user.username}")
+                      // Buscar todos os códigos do usuário e revogar
+                      val allCodes = ClientCodeManager.getAllSimpleCodes()
+                      val userCodes = allCodes.filter { (_, code) -> code.usuario == user.username }
+                      
+                      userCodes.forEach { (code, _) ->
+                        ClientCodeManager.removeSimpleCode(code)
+                        android.util.Log.i("AdminActivity", "✅ Código $code revogado para ${user.username}")
+                      }
+                      
+                      if (userCodes.isNotEmpty()) {
+                        showRevokeDialog(userCodes.size, user.username)
+                      } else {
+                        android.util.Log.w("AdminActivity", "⚠️ Nenhum código encontrado para ${user.username}")
+                      }
+                    } catch (e: Exception) {
+                      android.util.Log.e("AdminActivity", "❌ Erro ao revogar códigos: ${e.message}", e)
+                    }
+                  }
+                }
+              )
+            }
           }
           
           // Botão Adicionar Usuário - Profissional
@@ -988,7 +1092,7 @@ fun ActiveUserCard(user: UserAccount, onEdit: () -> Unit, onForceLogout: () -> U
 }
 
 @Composable
-fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit, onGenerateCode: () -> Unit) {
+fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit, onGenerateCode: () -> Unit, onRevokeCode: () -> Unit) {
   Card(
     modifier = Modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
@@ -1047,6 +1151,16 @@ fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit, onGene
             Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
             Text("Código", fontSize = 12.sp)
+          }
+          
+          Button(
+            onClick = onRevokeCode,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
+            modifier = Modifier.padding(end = 8.dp)
+          ) {
+            Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("Revogar", fontSize = 12.sp)
           }
           
           Button(

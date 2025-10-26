@@ -46,7 +46,7 @@ object ClientCodeManager {
      */
     suspend fun createSimpleCode(user: UserAccount): String {
         val code = generateSimpleCode()
-        val apkUrl = "https://github.com/maxiptv-v2/maxiptv-update/releases/latest/download/MaxiPTV-v1.0.92.apk"
+        val apkUrl = "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk"
         
         val simpleCode = SimpleClientCode(
             usuario = user.username,
