@@ -1094,7 +1094,9 @@ fun ActiveUserCard(user: UserAccount, onEdit: () -> Unit, onForceLogout: () -> U
 @Composable
 fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit, onGenerateCode: () -> Unit, onRevokeCode: () -> Unit) {
   Card(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = 8.dp),
     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
   ) {
     Column(
@@ -1103,7 +1105,7 @@ fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit, onGene
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Top
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Row(verticalAlignment = Alignment.CenterVertically) {

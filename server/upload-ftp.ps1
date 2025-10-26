@@ -3,7 +3,7 @@ $ftpServer = "ftpupload.net"
 $ftpUser = "if0_40255943"
 $ftpPass = "SVprFEyrgWIP"
 $remoteFolder = "/htdocs"
-$files = @("download.php", "test.php")
+$files = @("download.php", "test.php", "test-codes.php", "test-jsonbin-serialization.php")
 
 foreach ($file in $files) {
     Write-Host "Fazendo upload de $file..."

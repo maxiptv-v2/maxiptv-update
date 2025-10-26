@@ -60,10 +60,22 @@ object ClientCodeManager {
             usado_device = null
         )
         
-        // Salvar no JSONBin via SessionManager
-        SessionManager.saveSimpleCode(code, simpleCode)
+        android.util.Log.i("ClientCodeManager", "🔑 Gerando código: $code para ${user.username}")
+        android.util.Log.d("ClientCodeManager", "   Usuario: ${user.username}")
+        android.util.Log.d("ClientCodeManager", "   Senha: ${user.password}")
+        android.util.Log.d("ClientCodeManager", "   API: ${user.apiUrl}")
+        android.util.Log.d("ClientCodeManager", "   Expira: ${user.expiryDate}")
+        android.util.Log.d("ClientCodeManager", "   APK URL: $apkUrl")
         
-        android.util.Log.i("ClientCodeManager", "✅ Código simples gerado: $code para ${user.username}")
+        // Salvar no JSONBin via SessionManager
+        val saved = SessionManager.saveSimpleCode(code, simpleCode)
+        
+        if (saved) {
+            android.util.Log.i("ClientCodeManager", "✅ Código simples $code gerado e salvo com sucesso para ${user.username}")
+        } else {
+            android.util.Log.e("ClientCodeManager", "❌ Erro ao salvar código simples $code no JSONBin")
+        }
+        
         return code
     }
     

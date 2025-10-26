@@ -42505,7 +42505,6 @@ kotlinx.serialization.json.JsonBuilder:
     public final void setClassDiscriminatorMode(kotlinx.serialization.json.ClassDiscriminatorMode)
     public final void setCoerceInputValues(boolean)
     public final void setDecodeEnumsCaseInsensitive(boolean)
-    public final void setEncodeDefaults(boolean)
     public final void setExplicitNulls(boolean)
     public final void setNamingStrategy(kotlinx.serialization.json.JsonNamingStrategy)
     public final void setPrettyPrintIndent(java.lang.String)
@@ -77608,6 +77607,7 @@ kotlinx.serialization.json.JsonBuilder:
     public kotlinx.serialization.json.JsonNamingStrategy namingStrategy
     public static kotlinx.serialization.json.JsonConfiguration build$kotlinx_serialization_json()
     public static kotlinx.serialization.modules.SerialModuleImpl getSerializersModule()
+    public static void setEncodeDefaults()
     public static void setIgnoreUnknownKeys()
     public static void setLenient()
     public static void setPrettyPrint()

@@ -42,9 +42,13 @@ if ($httpCode !== 200 || !$response) {
 // Decodificar resposta
 $data = json_decode($response, true);
 
+// Debug: Mostrar estrutura recebida
+error_log("JSONBin Response: " . print_r($data, true));
+
 if (!$data || !isset($data['record']['simpleCodes'])) {
     http_response_code(500);
-    die("❌ Dados do servidor inválidos.");
+    error_log("Erro: Estrutura simpleCodes não encontrada. Keys disponíveis: " . implode(", ", array_keys($data['record'] ?? [])));
+    die("❌ Dados do servidor inválidos. Estrutura simpleCodes não encontrada.");
 }
 
 $simpleCodes = $data['record']['simpleCodes'];

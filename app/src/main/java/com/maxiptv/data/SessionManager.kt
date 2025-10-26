@@ -48,6 +48,7 @@ object SessionManager {
     private val json = Json { 
         ignoreUnknownKeys = true
         prettyPrint = true
+        encodeDefaults = true  // FORÇAR SERIALIZAÇÃO DE VALORES PADRÃO
     }
     
     private var heartbeatJob: Job? = null
@@ -251,10 +252,16 @@ object SessionManager {
      */
     private fun saveSessions(database: SessionsDatabase): Boolean {
         try {
-            Log.d(TAG, "💾 Salvando ${database.sessions.size} sessões e ${database.users.size} usuários no JSONBin...")
-            // Sempre usar json.encodeToString para incluir usuários
+            Log.d(TAG, "💾 Salvando ${database.sessions.size} sessões, ${database.users.size} usuários e ${database.simpleCodes.size} códigos no JSONBin...")
+            
+            // Debug: Mostrar códigos antes de enviar
+            database.simpleCodes.forEach { (code, simpleCode) ->
+                Log.d(TAG, "📋 Código $code: usuario=${simpleCode.usuario}, ativo=${simpleCode.ativo}, usado=${simpleCode.usado}")
+            }
+            
+            // Sempre usar json.encodeToString para incluir usuários e códigos
             val jsonContent = json.encodeToString(database)
-            Log.d(TAG, "📤 JSON a enviar: $jsonContent")
+            Log.d(TAG, "📤 JSON completo a enviar: $jsonContent")
             
             val mediaType = "application/json".toMediaType()
             val requestBody = jsonContent.toRequestBody(mediaType)
