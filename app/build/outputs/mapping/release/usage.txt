@@ -3708,7 +3708,6 @@ androidx.compose.foundation.layout.Arrangement:
     public final androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical getSpaceAround()
     public static synthetic void getSpaceAround$annotations()
     public static synthetic void getSpaceBetween$annotations()
-    public final androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical getSpaceEvenly()
     public static synthetic void getSpaceEvenly$annotations()
     public static synthetic void getStart$annotations()
     public static synthetic void getTop$annotations()
@@ -47000,11 +46999,11 @@ androidx.compose.foundation.layout.Arrangement$spacedBy$1:
 androidx.compose.foundation.layout.Arrangement:
     public static final androidx.compose.foundation.layout.Arrangement INSTANCE
     public static final androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical SpaceAround
-    public static final androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical SpaceEvenly
     public static androidx.compose.foundation.layout.Arrangement$Vertical getBottom()
     public static androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical getCenter()
     public static androidx.compose.foundation.layout.Arrangement$Horizontal getEnd()
     public static androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical getSpaceBetween()
+    public static androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical getSpaceEvenly()
     public static androidx.compose.foundation.layout.Arrangement$Horizontal getStart()
     public static androidx.compose.foundation.layout.Arrangement$Vertical getTop()
     public static androidx.compose.foundation.layout.Arrangement$SpacedAligned spacedBy-0680j_4(float)
@@ -68722,10 +68721,10 @@ com.google.common.collect.Iterables:
     public static final boolean access$HomeScreen$lambda$36(androidx.compose.runtime.MutableState)
     public static final void access$HomeScreen$lambda$37(androidx.compose.runtime.MutableState)
     public static final void access$HomeScreen$lambda$7(androidx.compose.runtime.MutableState,boolean)
-    public static final java.lang.String access$UserDialog$lambda$41(androidx.compose.runtime.MutableState)
-    public static final java.lang.String access$UserDialog$lambda$44(androidx.compose.runtime.MutableState)
-    public static final java.lang.String access$UserDialog$lambda$47(androidx.compose.runtime.MutableState)
-    public static final java.lang.String access$UserDialog$lambda$50(androidx.compose.runtime.MutableState)
+    public static final java.lang.String access$UserDialog$lambda$40(androidx.compose.runtime.MutableState)
+    public static final java.lang.String access$UserDialog$lambda$43(androidx.compose.runtime.MutableState)
+    public static final java.lang.String access$UserDialog$lambda$46(androidx.compose.runtime.MutableState)
+    public static final java.lang.String access$UserDialog$lambda$49(androidx.compose.runtime.MutableState)
     public static final com.maxiptv.data.VodInfoResponse access$VodDetailsScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List access$VodDetailsScreen$lambda$1(androidx.compose.runtime.MutableState)
     public static final boolean access$VodDetailsScreen$lambda$12(androidx.compose.runtime.MutableState)
@@ -68985,6 +68984,8 @@ com.maxiptv.ui.screens.AdminActivity:
     static void <clinit>()
 com.maxiptv.ui.screens.AdminActivityKt$ActiveUserCard$2
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$1$1:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)

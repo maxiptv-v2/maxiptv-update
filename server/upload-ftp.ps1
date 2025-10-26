@@ -3,7 +3,9 @@ $ftpServer = "ftpupload.net"
 $ftpUser = "if0_40255943"
 $ftpPass = "SVprFEyrgWIP"
 $remoteFolder = "/htdocs"
-$files = @("download.php", "test.php", "test-codes.php", "test-jsonbin-serialization.php")
+$files = @("download.php", "test.php", "test-codes.php", "test-jsonbin-serialization.php", "fix-codes.php", "test-generate-code.php")
+
+Set-Location -Path "C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\server"
 
 foreach ($file in $files) {
     Write-Host "Fazendo upload de $file..."

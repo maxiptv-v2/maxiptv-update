@@ -88,6 +88,36 @@ fun AdminPanelScreen(onClose: () -> Unit) {
     if (isAuthenticated) {
       android.util.Log.i("AdminActivity", "🔍 Carregando usuários...")
       
+      // Sincronizar usuários do JSONBin automaticamente ao abrir
+      scope.launch {
+        try {
+          android.util.Log.i("AdminActivity", "🔄 Sincronizando usuários do JSONBin...")
+          val jsonBinUsers = SessionManager.getAllUsers()
+          
+          if (jsonBinUsers.isNotEmpty()) {
+            jsonBinUsers.forEach { globalUser ->
+              val existingUser = UserManager.getUsers().find { it.username == globalUser.username }
+              
+              if (existingUser == null) {
+                android.util.Log.i("AdminActivity", "➕ Adicionando usuário: ${globalUser.username}")
+                val newUser = UserAccount(
+                  id = globalUser.id,
+                  username = globalUser.username,
+                  password = globalUser.password,
+                  apiUrl = globalUser.apiUrl,
+                  expiryDate = globalUser.expiryDate
+                )
+                UserManager.addUser(newUser)
+              }
+            }
+            
+            android.util.Log.i("AdminActivity", "✅ Sincronização concluída!")
+          }
+        } catch (e: Exception) {
+          android.util.Log.e("AdminActivity", "❌ Erro na sincronização: ${e.message}", e)
+        }
+      }
+      
       // Forçar recarregamento completo
       users = UserManager.getUsers()
       activeUsers = UserManager.getActiveUsers()
@@ -677,8 +707,25 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                 onGenerateCode = {
                   scope.launch {
                     try {
-                      android.util.Log.i("AdminActivity", "🔑 Gerando código simples para ${user.username}")
-                      val code = ClientCodeManager.createSimpleCode(user)
+                      android.util.Log.i("AdminActivity", "🔍 Buscando código existente para ${user.username}")
+                      
+                      // Verificar se já existe código para este usuário
+                      val allCodes = ClientCodeManager.getAllSimpleCodes()
+                      val userCodes = allCodes.filter { (_, code) -> code.usuario == user.username }
+                      
+                      val code = if (userCodes.isNotEmpty()) {
+                        // Usar código existente
+                        val existingCode = userCodes.keys.first()
+                        android.util.Log.i("AdminActivity", "✅ Código existente encontrado: $existingCode")
+                        existingCode
+                      } else {
+                        // Gerar novo código se não existir
+                        android.util.Log.i("AdminActivity", "🔑 Gerando novo código para ${user.username}")
+                        val newCode = ClientCodeManager.createSimpleCode(user)
+                        android.util.Log.i("AdminActivity", "✅ Novo código gerado: $newCode")
+                        newCode
+                      }
+                      
                       showCodeDialog(code, user.username)
                     } catch (e: Exception) {
                       android.util.Log.e("AdminActivity", "❌ Erro ao gerar código simples: ${e.message}", e)
@@ -1102,87 +1149,89 @@ fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit, onGene
     Column(
       modifier = Modifier.padding(16.dp)
     ) {
+      // Nome do usuário
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+          Icons.Default.Person,
+          contentDescription = null,
+          tint = Color(0xFF00D4FF),
+          modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+          text = user.username,
+          fontSize = 18.sp,
+          fontWeight = FontWeight.Bold,
+          color = Color.White
+        )
+      }
+      
+      Spacer(Modifier.height(8.dp))
+      
+      // Informações do usuário
+      Text(
+        text = "🔑 Senha: ${user.password}",
+        fontSize = 14.sp,
+        color = Color(0xFFBBBBBB)
+      )
+      Text(
+        text = "📅 Expira: ${user.expiryDate}",
+        fontSize = 14.sp,
+        color = Color(0xFFBBBBBB)
+      )
+      Text(
+        text = "🌐 API: ${user.apiUrl}",
+        fontSize = 12.sp,
+        color = Color(0xFF888888),
+        maxLines = 1,
+        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+      )
+      
+      Spacer(Modifier.height(12.dp))
+      
+      // Botões em Row horizontal
       Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
+        horizontalArrangement = Arrangement.SpaceEvenly
       ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-              Icons.Default.Person,
-              contentDescription = null,
-              tint = Color(0xFF00D4FF),
-              modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-              text = user.username,
-              fontSize = 18.sp,
-              fontWeight = FontWeight.Bold,
-              color = Color.White
-            )
-          }
-          
-          Spacer(Modifier.height(4.dp))
-          
-          Text(
-            text = "🔑 Senha: ${user.password}",
-            fontSize = 14.sp,
-            color = Color(0xFFBBBBBB)
-          )
-          Text(
-            text = "📅 Expira: ${user.expiryDate}",
-            fontSize = 14.sp,
-            color = Color(0xFFBBBBBB)
-          )
-          Text(
-            text = "🌐 API: ${user.apiUrl}",
-            fontSize = 12.sp,
-            color = Color(0xFF888888),
-            maxLines = 1
-          )
+        Button(
+          onClick = onGenerateCode,
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D4FF)),
+          modifier = Modifier.weight(1f).padding(end = 4.dp)
+        ) {
+          Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+          Spacer(Modifier.width(4.dp))
+          Text("Código", fontSize = 11.sp)
         }
         
-        Row {
-          Button(
-            onClick = onGenerateCode,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D4FF)),
-            modifier = Modifier.padding(end = 8.dp)
-          ) {
-            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Código", fontSize = 12.sp)
-          }
-          
-          Button(
-            onClick = onRevokeCode,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
-            modifier = Modifier.padding(end = 8.dp)
-          ) {
-            Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Revogar", fontSize = 12.sp)
-          }
-          
-          Button(
-            onClick = onEdit,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
-            modifier = Modifier.padding(end = 8.dp)
-          ) {
-            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Editar", fontSize = 12.sp)
-          }
-          
-          Button(
-            onClick = onDelete,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
-          ) {
-            Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Excluir", fontSize = 12.sp)
-          }
+        Button(
+          onClick = onRevokeCode,
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
+          modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+        ) {
+          Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+          Spacer(Modifier.width(4.dp))
+          Text("Revogar", fontSize = 11.sp)
+        }
+        
+        Button(
+          onClick = onEdit,
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
+          modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+        ) {
+          Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+          Spacer(Modifier.width(4.dp))
+          Text("Editar", fontSize = 11.sp)
+        }
+        
+        Button(
+          onClick = onDelete,
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+          modifier = Modifier.weight(1f).padding(start = 4.dp)
+        ) {
+          Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
+          Spacer(Modifier.width(4.dp))
+          Text("Excluir", fontSize = 11.sp)
         }
       }
     }
