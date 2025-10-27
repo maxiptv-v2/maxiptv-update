@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MaxiPTV Download</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <h2>MaxiPTV Download</h2>
+    <p>Digite seu código de 4 dígitos:</p>
+    
+    <script>
+        // Pegar código da URL
+        const code = window.location.search.substring(1).replace('code=', '');
+        
+        if (code && /^\d{4}$/.test(code)) {
+            // Redirecionar para a API PHP
+            window.location.href = 'api.php?code=' + code;
+        }
+    </script>
+</body>
+</html>
+

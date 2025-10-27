@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: maxiptv-downloader
+    env: php
+    buildCommand: echo "No build needed for PHP"
+    startCommand: php -S 0.0.0.0:10000 -t .
+    envVars:
+      - key: PHPRC
+        value: /etc/php7/php.ini
+

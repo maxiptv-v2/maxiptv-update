@@ -1,0 +1,13 @@
+# Forçar retorno de JSON sem JavaScript
+<FilesMatch "\.(php|json)$">
+    Header unset X-Powered-By
+    Header set Content-Type "application/json; charset=utf-8"
+</FilesMatch>
+
+# Desabilitar cache para APIs
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</IfModule>
+
