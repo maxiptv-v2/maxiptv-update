@@ -217,8 +217,19 @@ object SessionManager {
                     data class JsonBinResponse(val record: SessionsDatabase)
                     
                     val response = json.decodeFromString<JsonBinResponse>(body)
-                    Log.i(TAG, "✅ Sessões carregadas: ${response.record.sessions.size} ativas, ${response.record.users.size} usuários")
-                    return response.record
+                    var database = response.record
+                    
+                    // Garantir que simpleCodes existe (valor padrão se não vier do JSONBin)
+                    if (database.simpleCodes.isEmpty()) {
+                        database = SessionsDatabase(
+                            sessions = database.sessions,
+                            users = database.users,
+                            simpleCodes = mutableMapOf()
+                        )
+                    }
+                    
+                    Log.i(TAG, "✅ Sessões carregadas: ${database.sessions.size} ativas, ${database.users.size} usuários, ${database.simpleCodes.size} códigos")
+                    return database
                 } catch (e: Exception) {
                     Log.e(TAG, "❌ Erro ao decodificar JSON: ${e.message}")
                     Log.e(TAG, "   JSON problemático: ${body.take(1000)}")
@@ -229,8 +240,18 @@ object SessionManager {
                         val match = recordRegex.find(body)
                         if (match != null) {
                             val recordJson = match.groupValues[1]
-                            val database = json.decodeFromString<SessionsDatabase>(recordJson)
-                            Log.i(TAG, "✅ Sessões extraídas via fallback: ${database.sessions.size} ativas")
+                            var database = json.decodeFromString<SessionsDatabase>(recordJson)
+                            
+                            // Garantir que simpleCodes existe
+                            if (database.simpleCodes.isEmpty()) {
+                                database = SessionsDatabase(
+                                    sessions = database.sessions,
+                                    users = database.users,
+                                    simpleCodes = mutableMapOf()
+                                )
+                            }
+                            
+                            Log.i(TAG, "✅ Sessões extraídas via fallback: ${database.sessions.size} ativas, ${database.users.size} usuários, ${database.simpleCodes.size} códigos")
                             return database
                         }
                     } catch (fallbackError: Exception) {
