@@ -145,34 +145,6 @@ fun AdminPanelScreen(onClose: () -> Unit) {
     }
   }
   
-  // Sincronizar usuários do JSONBin automaticamente
-  LaunchedEffect(globalUsers) {
-    if (globalUsers.isNotEmpty()) {
-      val missingUsers = globalUsers.filter { globalUser ->
-        !users.any { localUser -> localUser.username == globalUser.username }
-      }
-      
-      if (missingUsers.isNotEmpty()) {
-        android.util.Log.i("AdminActivity", "🔄 Sincronizando ${missingUsers.size} usuários do JSONBin...")
-        
-        missingUsers.forEach { globalUser ->
-          val localUser = UserAccount(
-            id = globalUser.id,
-            username = globalUser.username,
-            password = globalUser.password,
-            apiUrl = globalUser.apiUrl,
-            expiryDate = globalUser.expiryDate
-          )
-          UserManager.addUser(localUser)
-          android.util.Log.i("AdminActivity", "✅ Sincronizado: ${globalUser.username}")
-        }
-        
-        // Atualizar lista local
-        users = UserManager.getUsers()
-        android.util.Log.i("AdminActivity", "✅ Sincronização concluída! Total: ${users.size} usuários")
-      }
-    }
-  }
   
   Box(Modifier.fillMaxSize()) {
     // Background com gradiente

@@ -46,7 +46,8 @@ object ClientCodeManager {
      */
     suspend fun createSimpleCode(user: UserAccount): String {
         val code = generateSimpleCode()
-        val apkUrl = "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk"
+        // URL do servidor PHP que valida e redireciona para o GitHub
+        val apkUrl = "http://maipt12.unaux.com/download-v2.php?code=$code"
         
         val simpleCode = SimpleClientCode(
             usuario = user.username,
