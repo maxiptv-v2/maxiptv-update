@@ -5,7 +5,7 @@
  */
 
 // Configurações
-$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
 $headers = ["X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"];
 
 // Obter código da URL
@@ -88,7 +88,7 @@ $clientData['usado_device'] = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 // Atualizar no JSONBin
 $data['record']['simpleCodes'][$code] = $clientData;
 
-$updateUrl = $jsonbin_url;
+$updateUrl = str_replace('/latest', '', $jsonbin_url);
 $updateHeaders = [
     'X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae',
     'Content-Type: application/json'
