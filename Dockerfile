@@ -9,8 +9,8 @@ COPY *.php ./
 RUN docker-php-ext-install pdo pdo_mysql curl
 
 # Expor porta
-EXPOSE 8080
+EXPOSE 10000
 
 # Comando para iniciar servidor PHP
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "."]
+CMD php -S 0.0.0.0:$PORT -t .
 
