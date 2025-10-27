@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 fun LoginScreen(onLoginSuccess: () -> Unit) {
   var username by remember { mutableStateOf("") }
   var password by remember { mutableStateOf("") }
+  var code by remember { mutableStateOf("") }
   var passwordVisible by remember { mutableStateOf(false) }
   var isLoading by remember { mutableStateOf(false) }
   var errorMessage by remember { mutableStateOf("") }
@@ -91,6 +92,26 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     
     Spacer(Modifier.height(48.dp))
     
+    // Campo Código (para login automático)
+    OutlinedTextField(
+      value = code,
+      onValueChange = { code = it; errorMessage = "" },
+      label = { Text("Código de 4 dígitos (opcional)") },
+      leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
+      placeholder = { Text("1234") },
+      modifier = Modifier.fillMaxWidth(),
+      singleLine = true,
+      enabled = !isLoading,
+      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    )
+    
+    Text(
+      text = "ou",
+      fontSize = 12.sp,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.padding(vertical = 8.dp)
+    )
+    
     // Campo Usuário
     OutlinedTextField(
       value = username,
@@ -142,46 +163,74 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     // Botão Entrar
     Button(
       onClick = {
-        if (username.isBlank() || password.isBlank()) {
-          errorMessage = "Preencha usuário e senha"
-          return@Button
-        }
-        
         isLoading = true
         errorMessage = ""
+        
         scope.launch {
-          // 1. Verificar credenciais no JSONBin (usuários globais)
-          val globalUser = SessionManager.validateUser(username, password)
-          if (globalUser == null) {
-            errorMessage = "Usuário ou senha incorretos"
+          try {
+            // Se tem código de 4 dígitos, buscar credenciais no PHP
+            if (code.length == 4 && code.all { it.isDigit() }) {
+              android.util.Log.i("LoginScreen", "🔑 Buscando credenciais do código: $code")
+              
+              val url = "https://maxiptv-update.onrender.com/download.php?code=$code"
+              val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+              connection.requestMethod = "GET"
+              connection.connect()
+              
+              if (connection.responseCode == 200) {
+                val response = connection.inputStream.bufferedReader().use { it.readText() }
+                val json = org.json.JSONObject(response)
+                
+                if (json.optBoolean("success", false)) {
+                  val user = json.getString("usuario")
+                  val pass = json.getString("senha")
+                  val api = json.getString("api")
+                  
+                  android.util.Log.i("LoginScreen", "✅ Credenciais recebidas: $user")
+                  
+                  // Usar credenciais recebidas para login
+                  username = user
+                  password = pass
+                  doLogin(user, pass, api, onLoginSuccess) { msg -> errorMessage = msg }
+                  isLoading = false
+                  return@launch
+                } else {
+                  errorMessage = "Código inválido"
+                  isLoading = false
+                  return@launch
+                }
+              } else {
+                val errorText = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "Erro ao conectar"
+                android.util.Log.e("LoginScreen", "❌ Erro HTTP ${connection.responseCode}: $errorText")
+                errorMessage = errorText
+                isLoading = false
+                return@launch
+              }
+            }
+            
+            // Login manual com usuário e senha
+            if (username.isBlank() || password.isBlank()) {
+              errorMessage = "Preencha usuário e senha ou digite o código"
+              isLoading = false
+              return@launch
+            }
+            
+            // Verificar credenciais no JSONBin
+            val globalUser = SessionManager.validateUser(username, password)
+            if (globalUser == null) {
+              errorMessage = "Usuário ou senha incorretos"
+              isLoading = false
+              return@launch
+            }
+            
+            doLogin(username, password, globalUser.apiUrl, onLoginSuccess) { msg -> errorMessage = msg }
             isLoading = false
-            return@launch
+            
+          } catch (e: Exception) {
+            android.util.Log.e("LoginScreen", "❌ Erro: ${e.message}", e)
+            errorMessage = "Erro ao conectar: ${e.message}"
+            isLoading = false
           }
-          
-          // 2. Criar/atualizar usuário local com dados do global
-          val localUser = UserAccount(
-            id = globalUser.id,
-            username = globalUser.username,
-            password = globalUser.password,
-            apiUrl = globalUser.apiUrl,
-            expiryDate = globalUser.expiryDate
-          )
-          UserManager.addUser(localUser)
-          UserManager.setCurrentUser(localUser)
-          
-          // 3. Verificar sessão global no SessionManager (bloqueio multi-dispositivo)
-          val deviceId = UserManager.getDeviceId()
-          val deviceName = UserManager.getDeviceName()
-          val (sessionSuccess, sessionMessage) = SessionManager.tryLogin(username, deviceId, deviceName)
-          
-          if (sessionSuccess) {
-            onLoginSuccess()
-          } else {
-            // Reverter login local se sessão global falhou
-            UserManager.logout()
-            errorMessage = sessionMessage
-          }
-          isLoading = false
         }
       },
       modifier = Modifier
@@ -208,6 +257,32 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
       fontSize = 12.sp,
       color = MaterialTheme.colorScheme.onSurfaceVariant
     )
+  }
+}
+
+// Função auxiliar para fazer login
+suspend fun doLogin(user: String, pass: String, api: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+  // 1. Criar/atualizar usuário local
+  val localUser = UserAccount(
+    id = java.util.UUID.randomUUID().toString(),
+    username = user,
+    password = pass,
+    apiUrl = api,
+    expiryDate = ""
+  )
+  UserManager.addUser(localUser)
+  UserManager.setCurrentUser(localUser)
+  
+  // 2. Verificar sessão global (bloqueio multi-dispositivo)
+  val deviceId = UserManager.getDeviceId()
+  val deviceName = UserManager.getDeviceName()
+  val (sessionSuccess, sessionMessage) = SessionManager.tryLogin(user, deviceId, deviceName)
+  
+  if (sessionSuccess) {
+    onSuccess()
+  } else {
+    UserManager.logout()
+    onError(sessionMessage)
   }
 }
 

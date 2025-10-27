@@ -80,14 +80,6 @@ if (isExpired($expiryDate)) {
     die("❌ Sua conta expirou em $expiryDate. Entre em contato com o administrador.");
 }
 
-// Obter URL do APK
-$apkUrl = $clientData['apk'];
-
-if (empty($apkUrl)) {
-    http_response_code(500);
-    die("❌ URL do APK não configurada. Entre em contato com o administrador.");
-}
-
 // Marcar código como usado
 $clientData['usado'] = true;
 $clientData['usado_em'] = time() * 1000;
@@ -119,8 +111,21 @@ curl_close($ch);
 $logMessage = date('Y-m-d H:i:s') . " - Código $code usado por " . $clientData['usuario'] . " - IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown') . " - Device: " . $clientData['usado_device'] . "\n";
 file_put_contents('downloads.log', $logMessage, FILE_APPEND | LOCK_EX);
 
-// Redirecionar para download
-header("Location: " . $apkUrl);
+// Retornar credenciais em JSON para login automático
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+$response = [
+    'success' => true,
+    'usuario' => $clientData['usuario'],
+    'senha' => $clientData['senha'],
+    'api' => $clientData['api'],
+    'expira_em' => $clientData['expira_em']
+];
+
+echo json_encode($response);
 exit();
 
 /**
