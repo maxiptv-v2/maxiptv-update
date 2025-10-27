@@ -97,7 +97,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
       value = code,
       onValueChange = { code = it; errorMessage = "" },
       label = { Text("Código de 4 dígitos (opcional)") },
-      leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
+      leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
       placeholder = { Text("1234") },
       modifier = Modifier.fillMaxWidth(),
       singleLine = true,
