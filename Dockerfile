@@ -1,12 +1,12 @@
-FROM php:8.3-cli
+FROM php:8.2-cli
 
 WORKDIR /app
 
-# Copiar arquivos PHP
-COPY *.php ./
+# Instalar curl (já vem instalado no php-cli)
+RUN apt-get update && apt-get install -y --no-install-recommends libcurl4-openssl-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar extensões necessárias
-RUN docker-php-ext-install pdo pdo_mysql curl
+# Copiar apenas arquivos PHP necessários
+COPY download.php index.php api.php ./
 
 # Expor porta
 EXPOSE 10000
