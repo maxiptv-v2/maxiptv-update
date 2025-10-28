@@ -700,10 +700,26 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                 onRevokeCode = {
                   scope.launch {
                     try {
-                      android.util.Log.i("AdminActivity", "🚫 Revogação de códigos - funcionalidade sera implementada")
-                      // TODO: Implementar revogação de códigos quando necessário
+                      android.util.Log.i("AdminActivity", "🚫 Revogando código para ${user.username}")
+                      
+                      // Buscar código existente para este usuário
+                      val existingCode = SessionManager.getClientCodeForUser(user.username)
+                      
+                      if (existingCode != null) {
+                        // Remover código
+                        val removed = SessionManager.removeClientCode(existingCode)
+                        if (removed) {
+                          android.util.Log.i("AdminActivity", "✅ Código $existingCode revogado para ${user.username}")
+                          // Depois que revogar, pode gerar novo código
+                          showCodeDialog("Código revogado. Clique em 'Gerar Código' para criar novo.", user.username)
+                        } else {
+                          android.util.Log.e("AdminActivity", "❌ Erro ao revogar código $existingCode")
+                        }
+                      } else {
+                        android.util.Log.w("AdminActivity", "⚠️ Nenhum código encontrado para ${user.username}")
+                      }
                     } catch (e: Exception) {
-                      android.util.Log.e("AdminActivity", "❌ Erro ao revogar códigos: ${e.message}", e)
+                      android.util.Log.e("AdminActivity", "❌ Erro ao revogar código: ${e.message}", e)
                     }
                   }
                 }

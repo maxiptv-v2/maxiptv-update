@@ -10,7 +10,7 @@ header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
 // URL fixa do APK no GitHub
-$link_apk = "https://github.com/macssuel/maxiptv/releases/latest/download/app.apk";
+$link_apk = "https://github.com/maxiptv-v2/maxiptv-update/releases/latest/download/maxiptv-release.apk";
 
 // Configurações JSONBin
 $jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
@@ -83,19 +83,9 @@ if (!isset($codigos[$code])) {
 
 $user = $codigos[$code];
 
-// Verificar se código está ativo
-if (!isset($user['ativo']) || !$user['ativo']) {
-    echo json_encode([
-        "status" => "erro",
-        "mensagem" => "Codigo expirado ou inativo"
-    ]);
-    exit;
-}
-
 // Verificar se expirou (formato DD/MM/YYYY)
-if (isset($user['expira_em'])) {
-    $hoje = date("d/m/Y");
-    $dataExpiracao = $user['expira_em'];
+if (isset($user['expiryDate'])) {
+    $dataExpiracao = $user['expiryDate'];
     
     if (isExpired($dataExpiracao)) {
         echo json_encode([
@@ -106,22 +96,17 @@ if (isset($user['expira_em'])) {
     }
 }
 
-// Verificar se código já foi usado (se tiver campo usado)
-if (isset($user['usado']) && $user['usado']) {
-    echo json_encode([
-        "status" => "erro",
-        "mensagem" => "Codigo ja foi utilizado"
-    ]);
-    exit;
-}
+// Usar apkUrl do código ou link fixo como fallback
+$apkUrl = $user['apkUrl'] ?? $link_apk;
 
 // Retornar dados para login automático
 echo json_encode([
     "status" => "ok",
-    "usuario" => $user['usuario'] ?? '',
-    "senha" => $user['senha'] ?? '',
-    "expira_em" => $user['expira_em'] ?? '',
-    "apk" => $link_apk
+    "usuario" => $user['username'] ?? '',
+    "senha" => $user['password'] ?? '',
+    "api" => $user['apiUrl'] ?? '',
+    "expira_em" => $user['expiryDate'] ?? '',
+    "apk" => $apkUrl
 ]);
 exit;
 

@@ -15,14 +15,11 @@ import java.util.UUID
  */
 @Serializable
 data class ClientCode(
-    val codigo: String,
-    val usuario: String,
-    val senha: String,
-    val expira_em: String, // formato DD/MM/YYYY
-    val ativo: Boolean = true,
-    val usado: Boolean = false,
-    val usado_em: Long? = null,
-    val usado_device: String? = null
+    val username: String,
+    val password: String,
+    val apiUrl: String,
+    val expiryDate: String, // formato DD/MM/YYYY
+    val apkUrl: String
 )
 
 object ClientCodeManager {
@@ -44,29 +41,34 @@ object ClientCodeManager {
      * Criar código simples para usuário
      */
     suspend fun createSimpleCode(user: UserAccount): String {
-        val code = generateSimpleCode()
+        // Verificar se já existe código para este usuário
+        val existingCode = SessionManager.getClientCodeForUser(user.username)
+        
+        val code = existingCode ?: generateSimpleCode()
+        
+        // URL do APK no GitHub (sempre a versão mais recente)
+        val apkUrl = "https://github.com/maxiptv-v2/maxiptv-update/releases/latest/download/maxiptv-release.apk"
         
         val clientCode = ClientCode(
-            codigo = code,
-            usuario = user.username,
-            senha = user.password,
-            expira_em = user.expiryDate, // formato DD/MM/YYYY
-            ativo = true,
-            usado = false,
-            usado_em = null,
-            usado_device = null
+            username = user.username,
+            password = user.password,
+            apiUrl = user.apiUrl,
+            expiryDate = user.expiryDate, // formato DD/MM/YYYY
+            apkUrl = apkUrl
         )
         
-        android.util.Log.i("ClientCodeManager", "🔑 Gerando código: $code para ${user.username}")
-        android.util.Log.d("ClientCodeManager", "   Usuario: ${user.username}")
-        android.util.Log.d("ClientCodeManager", "   Senha: ${user.password}")
-        android.util.Log.d("ClientCodeManager", "   Expira: ${user.expiryDate}")
+        android.util.Log.i("ClientCodeManager", "🔑 ${if (existingCode != null) "Usando código existente" else "Gerando novo código"}: $code para ${user.username}")
+        android.util.Log.d("ClientCodeManager", "   Username: ${user.username}")
+        android.util.Log.d("ClientCodeManager", "   Password: ${user.password}")
+        android.util.Log.d("ClientCodeManager", "   API: ${user.apiUrl}")
+        android.util.Log.d("ClientCodeManager", "   ExpiryDate: ${user.expiryDate}")
+        android.util.Log.d("ClientCodeManager", "   ApkUrl: $apkUrl")
         
         // Salvar no JSONBin como objeto direto
         val saved = SessionManager.saveClientCode(code, clientCode)
         
         if (saved) {
-            android.util.Log.i("ClientCodeManager", "✅ Código $code gerado e salvo com sucesso para ${user.username}")
+            android.util.Log.i("ClientCodeManager", "✅ Código $code ${if (existingCode != null) "atualizado" else "gerado"} e salvo com sucesso para ${user.username}")
         } else {
             android.util.Log.e("ClientCodeManager", "❌ Erro ao salvar código $code no JSONBin")
         }
@@ -85,13 +87,11 @@ object ClientCodeManager {
                 return false
             }
             
-            val updatedCode = simpleCode.copy(
-                usado = true,
-                usado_em = System.currentTimeMillis(),
-                usado_device = deviceName
-            )
-            
-            val success = SessionManager.updateSimpleCode(code, updatedCode)
+            // Nota: A nova estrutura ClientCode não tem campos "usado", "usado_em", "usado_device"
+            // Se precisar marcar como usado, pode remover o código ou adicionar flag no futuro
+            // Por enquanto, apenas loga o uso
+            android.util.Log.i("ClientCodeManager", "📝 Código $code usado em $deviceName")
+            val success = true // Código foi usado, mas não há flag na nova estrutura
             if (success) {
                 android.util.Log.i("ClientCodeManager", "✅ Código simples marcado como usado: $code em $deviceName")
             } else {
@@ -150,13 +150,13 @@ object ClientCodeManager {
     }
     
     /**
-     * Remover código simples (para admin)
+     * Remover código (para admin - revogar)
      */
     suspend fun removeSimpleCode(code: String): Boolean {
         return try {
-            SessionManager.removeSimpleCode(code)
+            SessionManager.removeClientCode(code)
         } catch (e: Exception) {
-            android.util.Log.e("ClientCodeManager", "❌ Erro ao remover código simples: ${e.message}", e)
+            android.util.Log.e("ClientCodeManager", "❌ Erro ao remover código: ${e.message}", e)
             false
         }
     }

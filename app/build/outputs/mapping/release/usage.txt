@@ -45736,9 +45736,19 @@ androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState:
     public static void skipToEnd$animation_core_release()
     public static void updateValues$animation_core_release()
 androidx.compose.animation.core.InfiniteTransition$run$1$1$1
+androidx.compose.animation.core.InfiniteTransition$run$1$1$2$$InternalSyntheticThrowCCEIfNotNull$12$050b2853fe56c7e1abd2f18a471c72c8c60c503dd86b215469bf15f123d0bfbb$0
 androidx.compose.animation.core.InfiniteTransition$run$1$1$2:
+    public final android.view.inputmethod.BaseInputConnection invoke()
+    public final android.view.inputmethod.InputMethodManager invoke()
+    public static androidx.compose.foundation.lazy.layout.LazySaveableStateHolder invoke()
+    public static androidx.compose.foundation.text.TextFieldScrollerPosition invoke()
+    public static androidx.compose.foundation.text.TextLayoutResultProxy invoke()
+    public final androidx.compose.foundation.text.selection.TextSelectionColors invoke()
+    public final androidx.compose.ui.graphics.GraphicsContext invoke()
     public final java.lang.Float invoke()
-    public final void invoke()
+    public final kotlinx.coroutines.CoroutineScope invoke()
+    public final java.lang.Long invoke$1()
+    public static androidx.collection.MutableScatterMap invoke-SAeQiB4()
 androidx.compose.animation.core.InfiniteTransition$run$1$1$3:
     public int label
     public final java.lang.Object invoke$6()
@@ -45827,18 +45837,7 @@ androidx.compose.animation.core.SeekableTransitionState$animateTo$2$1:
 androidx.compose.animation.core.SeekableTransitionState$animateTo$2:
     public final java.lang.Object invoke$5()
 androidx.compose.animation.core.SeekableTransitionState$firstFrameLambda$1
-androidx.compose.animation.core.SeekableTransitionState$recalculateTotalDurationNanos$1$$InternalSyntheticThrowCCEIfNotNull$12$91ae8468b41c31b9f02b6b0cf3b03d6ba87dde33aaea2bdaa74043c1157a29a3$0
-androidx.compose.animation.core.SeekableTransitionState$recalculateTotalDurationNanos$1:
-    public final android.view.inputmethod.BaseInputConnection invoke()
-    public final android.view.inputmethod.InputMethodManager invoke()
-    public static androidx.compose.foundation.lazy.layout.LazySaveableStateHolder invoke()
-    public static androidx.compose.foundation.text.TextFieldScrollerPosition invoke()
-    public static androidx.compose.foundation.text.TextLayoutResultProxy invoke()
-    public final androidx.compose.foundation.text.selection.TextSelectionColors invoke()
-    public final androidx.compose.ui.graphics.GraphicsContext invoke()
-    public final kotlinx.coroutines.CoroutineScope invoke()
-    public final java.lang.Long invoke$1()
-    public static androidx.collection.MutableScatterMap invoke-SAeQiB4()
+androidx.compose.animation.core.SeekableTransitionState$recalculateTotalDurationNanos$1
 androidx.compose.animation.core.SeekableTransitionState$seekTo$3$1$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 androidx.compose.animation.core.SeekableTransitionState$seekTo$3$1:
@@ -52975,7 +52974,13 @@ androidx.compose.ui.draw.PainterNode:
     public final void setPainter()
     public static void setSizeToIntrinsics()
 androidx.compose.ui.draw.RotateKt
-androidx.compose.ui.draw.ScopedGraphicsContext
+androidx.compose.ui.draw.ScopedGraphicsContext:
+    public androidx.collection.MutableObjectList allocatedGraphicsLayers
+    public androidx.compose.ui.graphics.GraphicsContext graphicsContext
+    public final androidx.compose.ui.graphics.layer.GraphicsLayer createGraphicsLayer()
+    public static androidx.compose.ui.graphics.GraphicsContext getGraphicsContext()
+    public final void releaseGraphicsLayer(androidx.compose.ui.graphics.layer.GraphicsLayer)
+    public static void setGraphicsContext()
 androidx.compose.ui.draw.ShadowGraphicsLayerElement$$InternalSyntheticBackport$1$6e44405adf4198d82e23aa21801725a416cc73d6dbe22a522215f15d6701ab40$0
 androidx.compose.ui.draw.ShadowGraphicsLayerElement$createBlock$1
 androidx.compose.ui.draw.ShadowGraphicsLayerElement:
@@ -55868,7 +55873,29 @@ androidx.compose.ui.node.LayoutNodeLayoutDelegate$LookaheadPassDelegate:
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$WhenMappings
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1$1
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1$2
-androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1
+androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1:
+    public final android.graphics.Shader invoke()
+    public final android.view.inputmethod.BaseInputConnection invoke()
+    public final android.view.inputmethod.InputMethodManager invoke()
+    public static androidx.appcompat.graphics.drawable.DrawableContainerCompat$BlockInvalidateCallback invoke()
+    public static androidx.lifecycle.SavedStateHandlesVM invoke()
+    public static androidx.navigation.NavInflater invoke()
+    public static coil.decode.DecodeResult invoke()
+    public static coil.request.ImageRequest invoke()
+    public final java.io.File invoke()
+    public final java.util.Iterator invoke()
+    public final java.util.List invoke()
+    public static kotlin.reflect.jvm.internal.KMutableProperty0Impl$Setter invoke()
+    public static kotlin.reflect.jvm.internal.KMutableProperty1Impl$Setter invoke()
+    public static kotlin.reflect.jvm.internal.KMutableProperty2Impl$Setter invoke()
+    public final kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltIns$Settings invoke()
+    public static kotlin.reflect.jvm.internal.impl.descriptors.runtime.components.RuntimeModuleData invoke()
+    public final kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope invoke()
+    public final java.lang.String[] invoke()
+    public final kotlin.reflect.jvm.internal.impl.types.SimpleType invoke$1()
+    public final java.util.Map invoke$2()
+    public final java.lang.Boolean invoke$3()
+    public final java.lang.Integer invoke$6()
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$placeOuterCoordinatorBlock$1
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$remeasure$2
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate:
@@ -55897,28 +55924,7 @@ androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate:
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$performLookaheadMeasure$1:
     public final android.graphics.Shader invoke()
     public final void invoke()
-androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1:
-    public final android.graphics.Shader invoke()
-    public final android.view.inputmethod.BaseInputConnection invoke()
-    public final android.view.inputmethod.InputMethodManager invoke()
-    public static androidx.appcompat.graphics.drawable.DrawableContainerCompat$BlockInvalidateCallback invoke()
-    public static androidx.lifecycle.SavedStateHandlesVM invoke()
-    public static androidx.navigation.NavInflater invoke()
-    public static coil.decode.DecodeResult invoke()
-    public static coil.request.ImageRequest invoke()
-    public final java.io.File invoke()
-    public final java.util.Iterator invoke()
-    public final java.util.List invoke()
-    public static kotlin.reflect.jvm.internal.KMutableProperty0Impl$Setter invoke()
-    public static kotlin.reflect.jvm.internal.KMutableProperty1Impl$Setter invoke()
-    public static kotlin.reflect.jvm.internal.KMutableProperty2Impl$Setter invoke()
-    public final kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltIns$Settings invoke()
-    public static kotlin.reflect.jvm.internal.impl.descriptors.runtime.components.RuntimeModuleData invoke()
-    public final kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope invoke()
-    public final java.lang.String[] invoke()
-    public final kotlin.reflect.jvm.internal.impl.types.SimpleType invoke$1()
-    public final java.lang.Boolean invoke$3()
-    public final java.lang.Integer invoke$6()
+androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1
 androidx.compose.ui.node.LayoutNodeLayoutDelegate:
     public static final int $stable
     static void <clinit>()
@@ -56180,7 +56186,7 @@ androidx.compose.ui.node.Owner:
     static void <clinit>()
     public abstract long calculateLocalPosition-MK-Hz9U()
     public abstract long calculatePositionInWindow-MK-Hz9U()
-    public abstract androidx.compose.ui.node.OwnedLayer createLayer(androidx.compose.animation.AnimatedContentKt$AnimatedContent$6$1$4$1,androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1,androidx.compose.ui.graphics.layer.GraphicsLayer)
+    public abstract androidx.compose.ui.node.OwnedLayer createLayer(androidx.compose.animation.AnimatedContentKt$AnimatedContent$6$1$4$1,androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1,androidx.compose.ui.graphics.layer.GraphicsLayer)
     public abstract void forceMeasureTheSubtree(androidx.compose.ui.node.LayoutNode,boolean)
     public abstract androidx.compose.ui.platform.AccessibilityManager getAccessibilityManager()
     public abstract androidx.compose.ui.autofill.Autofill getAutofill()
@@ -57246,7 +57252,7 @@ androidx.compose.ui.semantics.SemanticsPropertiesAndroid:
 androidx.compose.ui.semantics.SemanticsPropertiesKt$ActionPropertyKey$1
 androidx.compose.ui.semantics.SemanticsPropertiesKt$getScrollViewportLength$1
 androidx.compose.ui.semantics.SemanticsPropertiesKt:
-    public static void clearTextSubstitution$default(androidx.compose.ui.semantics.SemanticsConfiguration,androidx.compose.animation.core.SeekableTransitionState$recalculateTotalDurationNanos$1)
+    public static void clearTextSubstitution$default(androidx.compose.ui.semantics.SemanticsConfiguration,androidx.compose.animation.core.InfiniteTransition$run$1$1$2)
     public static final void disabled(androidx.compose.ui.semantics.SemanticsPropertyReceiver)
     public static final void onClick(androidx.compose.ui.semantics.SemanticsPropertyReceiver,java.lang.String,kotlin.jvm.functions.Function0)
     public static final void setContentDescription(androidx.compose.ui.semantics.SemanticsPropertyReceiver,java.lang.String)
@@ -68710,6 +68716,7 @@ com.google.common.collect.Iterables:
     public static final boolean VodDetailsScreen$lambda$12(androidx.compose.runtime.MutableState)
     public static final void access$AdminPanelScreen$lambda$11(androidx.compose.runtime.MutableState,boolean)
     public static final void access$AdminPanelScreen$lambda$17(androidx.compose.runtime.MutableState)
+    public static final void access$AdminPanelScreen$showCodeDialog(androidx.compose.runtime.MutableState,androidx.compose.runtime.MutableState,androidx.compose.runtime.MutableState,java.lang.String,java.lang.String)
     public static final void access$FavoritesScreen$lambda$14(androidx.compose.runtime.MutableState)
     public static final void access$HomeScreen$lambda$13(androidx.compose.runtime.MutableState,boolean)
     public static final void access$HomeScreen$lambda$16(androidx.compose.runtime.MutableState,boolean)
@@ -69009,9 +69016,7 @@ com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$2$1:
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$2
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$3$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$3
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$4$1:
-    public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$4
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$8$1
@@ -72257,7 +72262,17 @@ kotlin.reflect.jvm.internal.impl.load.java.components.JavaResolverCache:
     public abstract void recordField()
     public abstract void recordMethod(kotlin.reflect.jvm.internal.impl.descriptors.runtime.structure.ReflectJavaMember,kotlin.reflect.jvm.internal.impl.load.java.descriptors.JavaMethodDescriptor)
 kotlin.reflect.jvm.internal.impl.load.java.components.JavaRetentionAnnotationDescriptor$allValueArguments$2
-kotlin.reflect.jvm.internal.impl.load.java.components.JavaTargetAnnotationDescriptor$allValueArguments$2
+kotlin.reflect.jvm.internal.impl.load.java.components.JavaTargetAnnotationDescriptor$allValueArguments$2:
+    public static kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl invoke()
+    public static kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$Supertypes invoke()
+    public final kotlin.reflect.jvm.internal.impl.types.KotlinType invoke()
+    public static kotlin.reflect.jvm.internal.impl.types.TypeSubstitutor invoke()
+    public static kotlin.reflect.jvm.internal.impl.types.error.ErrorType invoke()
+    public final kotlinx.serialization.descriptors.SerialDescriptor invoke()
+    public static kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope[] invoke()
+    public final java.lang.String invoke$2()
+    public final java.util.Map invoke$2()
+    public final java.lang.Integer invoke$6()
 kotlin.reflect.jvm.internal.impl.load.java.components.SignaturePropagator$1
 kotlin.reflect.jvm.internal.impl.load.java.components.SignaturePropagator$PropagatedSignature
 kotlin.reflect.jvm.internal.impl.load.java.components.SignaturePropagator:
@@ -72371,16 +72386,7 @@ kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.ClassDeclaredMemberI
 kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.DeclaredMemberIndex$Empty:
     public static java.util.List findMethodsByName()
 kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.JavaDescriptorUtilKt
-kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.JvmPackageScope$kotlinScopes$2:
-    public static kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl invoke()
-    public static kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$Supertypes invoke()
-    public final kotlin.reflect.jvm.internal.impl.types.KotlinType invoke()
-    public static kotlin.reflect.jvm.internal.impl.types.TypeSubstitutor invoke()
-    public static kotlin.reflect.jvm.internal.impl.types.error.ErrorType invoke()
-    public final kotlinx.serialization.descriptors.SerialDescriptor invoke()
-    public static kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope[] invoke()
-    public final java.lang.String invoke$2()
-    public final java.lang.Integer invoke$6()
+kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.JvmPackageScope$kotlinScopes$2
 kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.JvmPackageScope:
     public static kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.LazyJavaPackageScope getJavaScope$descriptors_jvm()
 kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.LazyJavaAnnotationDescriptor$allValueArguments$2:
@@ -77632,7 +77638,6 @@ kotlinx.serialization.json.ClassDiscriminatorMode:
     public static final synthetic kotlin.enums.EnumEntries $ENTRIES
     public static final enum kotlinx.serialization.json.ClassDiscriminatorMode ALL_JSON_OBJECTS
 kotlinx.serialization.json.Json:
-    public abstract kotlinx.serialization.json.JsonElement encodeToJsonElement()
     public abstract kotlinx.serialization.json.JsonConfiguration getConfiguration()
     public abstract kotlinx.serialization.modules.SerialModuleImpl getSerializersModule()
     public abstract androidx.lifecycle.MethodCallsLogger get_schemaCache$kotlinx_serialization_json()
