@@ -14,12 +14,11 @@ import java.util.UUID
  * Gerencia códigos de 4 dígitos para cada cliente baixar o app
  */
 @Serializable
-data class SimpleClientCode(
+data class ClientCode(
+    val codigo: String,
     val usuario: String,
     val senha: String,
-    val api: String,
-    val apk: String,
-    val expira_em: String,
+    val expira_em: String, // formato DD/MM/YYYY
     val ativo: Boolean = true,
     val usado: Boolean = false,
     val usado_em: Long? = null,
@@ -46,15 +45,12 @@ object ClientCodeManager {
      */
     suspend fun createSimpleCode(user: UserAccount): String {
         val code = generateSimpleCode()
-        // URL do servidor Render.com que valida e redireciona
-        val apkUrl = "https://maxiptv-update.onrender.com/download.php?code=$code"
         
-        val simpleCode = SimpleClientCode(
+        val clientCode = ClientCode(
+            codigo = code,
             usuario = user.username,
             senha = user.password,
-            api = user.apiUrl,
-            apk = apkUrl,
-            expira_em = user.expiryDate,
+            expira_em = user.expiryDate, // formato DD/MM/YYYY
             ativo = true,
             usado = false,
             usado_em = null,
@@ -64,17 +60,15 @@ object ClientCodeManager {
         android.util.Log.i("ClientCodeManager", "🔑 Gerando código: $code para ${user.username}")
         android.util.Log.d("ClientCodeManager", "   Usuario: ${user.username}")
         android.util.Log.d("ClientCodeManager", "   Senha: ${user.password}")
-        android.util.Log.d("ClientCodeManager", "   API: ${user.apiUrl}")
         android.util.Log.d("ClientCodeManager", "   Expira: ${user.expiryDate}")
-        android.util.Log.d("ClientCodeManager", "   APK URL: $apkUrl")
         
-        // Salvar no JSONBin via SessionManager
-        val saved = SessionManager.saveSimpleCode(code, simpleCode)
+        // Salvar no JSONBin como objeto direto
+        val saved = SessionManager.saveClientCode(code, clientCode)
         
         if (saved) {
-            android.util.Log.i("ClientCodeManager", "✅ Código simples $code gerado e salvo com sucesso para ${user.username}")
+            android.util.Log.i("ClientCodeManager", "✅ Código $code gerado e salvo com sucesso para ${user.username}")
         } else {
-            android.util.Log.e("ClientCodeManager", "❌ Erro ao salvar código simples $code no JSONBin")
+            android.util.Log.e("ClientCodeManager", "❌ Erro ao salvar código $code no JSONBin")
         }
         
         return code

@@ -6,6 +6,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.parseToJsonElement
+import kotlinx.serialization.json.jsonObject
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -570,6 +574,81 @@ object SessionManager {
             return@withContext false
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao remover código simples: ${e.message}", e)
+            return@withContext false
+        }
+    }
+    
+    /**
+     * Salvar código de cliente como objeto direto no JSONBin
+     * Os códigos ficam diretamente no record como { "1234": {...}, "5678": {...} }
+     */
+    suspend fun saveClientCode(code: String, clientCode: com.maxiptv.data.ClientCode): Boolean = withContext(Dispatchers.IO) {
+        try {
+            Log.i(TAG, "💾 Salvando código: $code para ${clientCode.usuario}")
+            
+            // Buscar record atual do JSONBin
+            val request = Request.Builder()
+                .url("$JSONBIN_BASE_URL/b/$JSONBIN_BIN_ID/latest")
+                .addHeader("X-Master-Key", JSONBIN_API_KEY)
+                .get()
+                .build()
+            
+            var recordJson = "{}"
+            
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (body != null) {
+                        try {
+                            // Extrair apenas o record do JSONBin
+                            val jsonResponse = json.decodeFromString<kotlinx.serialization.json.JsonObject>(
+                                json.parseToJsonElement(body).jsonObject["record"]!!.toString()
+                            )
+                            recordJson = json.encodeToString(jsonResponse)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "⚠️ Usando estrutura vazia: ${e.message}")
+                            recordJson = "{}"
+                        }
+                    }
+                }
+            }
+            
+            // Converter para mapa mutável
+            val recordMap = try {
+                json.decodeFromString<MutableMap<String, kotlinx.serialization.json.JsonElement>>(recordJson)
+            } catch (e: Exception) {
+                mutableMapOf()
+            }
+            
+            // Adicionar/atualizar código
+            recordMap[code] = json.parseToJsonElement(json.encodeToString(clientCode))
+            
+            // Salvar tudo de volta
+            val jsonContent = json.encodeToString(recordMap)
+            
+            val mediaType = "application/json".toMediaType()
+            val requestBody = jsonContent.toRequestBody(mediaType)
+            
+            val putRequest = Request.Builder()
+                .url("$JSONBIN_BASE_URL/b/$JSONBIN_BIN_ID")
+                .addHeader("X-Master-Key", JSONBIN_API_KEY)
+                .addHeader("Content-Type", "application/json")
+                .put(requestBody)
+                .build()
+            
+            client.newCall(putRequest).execute().use { putResponse ->
+                val success = putResponse.isSuccessful
+                if (success) {
+                    Log.i(TAG, "✅ Código $code salvo com sucesso!")
+                } else {
+                    val errorBody = putResponse.body?.string() ?: "sem detalhes"
+                    Log.e(TAG, "❌ Erro ao salvar código: HTTP ${putResponse.code} - $errorBody")
+                }
+                return@withContext success
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao salvar código: ${e.message}", e)
             return@withContext false
         }
     }
