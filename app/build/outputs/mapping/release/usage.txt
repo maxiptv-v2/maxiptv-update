@@ -33977,6 +33977,8 @@ com.maxiptv.ui.screens.AdminActivity:
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$10
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$6
+com.maxiptv.ui.screens.AdminActivityKt:
+    private static final void AdminPanelScreen$showRevokeDialog(androidx.compose.runtime.MutableState,androidx.compose.runtime.MutableState,androidx.compose.runtime.MutableState,int,java.lang.String)
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$1$1$1$1
@@ -42316,8 +42318,6 @@ kotlinx.serialization.descriptors.WrappedSerialDescriptor
 kotlinx.serialization.encoding.AbstractDecoder:
     public java.lang.Object decodeNullableSerializableValue(kotlinx.serialization.DeserializationStrategy)
     public static synthetic java.lang.Object decodeSerializableValue$default(kotlinx.serialization.encoding.AbstractDecoder,kotlinx.serialization.DeserializationStrategy,java.lang.Object,int,java.lang.Object)
-kotlinx.serialization.encoding.AbstractEncoder:
-    public void encodeNull()
 kotlinx.serialization.encoding.ChunkedDecoder
 kotlinx.serialization.encoding.CompositeDecoder$Companion
 kotlinx.serialization.encoding.CompositeDecoder$DefaultImpls:
@@ -42393,7 +42393,6 @@ kotlinx.serialization.internal.MapLikeDescriptor:
 kotlinx.serialization.internal.MapLikeSerializer:
     protected abstract void insertKeyValuePair(java.util.Map,int,java.lang.Object,java.lang.Object)
 kotlinx.serialization.internal.MutableSoftReference
-kotlinx.serialization.internal.NamedValueEncoder
 kotlinx.serialization.internal.ObjectSerializer:
     public void <init>(java.lang.String,java.lang.Object,java.lang.annotation.Annotation[])
 kotlinx.serialization.internal.PairSerializer$descriptor$1
@@ -42446,7 +42445,15 @@ kotlinx.serialization.internal.TaggedDecoder:
     public void endStructure(kotlinx.serialization.descriptors.SerialDescriptor)
     protected final java.lang.Object getCurrentTag()
     public kotlinx.serialization.modules.SerializersModule getSerializersModule()
-kotlinx.serialization.internal.TaggedEncoder
+kotlinx.serialization.internal.TaggedEncoder:
+    public kotlinx.serialization.encoding.CompositeEncoder beginStructure(kotlinx.serialization.descriptors.SerialDescriptor)
+    public void encodeNotNullMark()
+    public void encodeNull()
+    protected void encodeTaggedNonNullMark(java.lang.Object)
+    protected void encodeTaggedNull(java.lang.Object)
+    protected void encodeTaggedValue(java.lang.Object,java.lang.Object)
+    public kotlinx.serialization.modules.SerializersModule getSerializersModule()
+    public boolean shouldEncodeElementDefault(kotlinx.serialization.descriptors.SerialDescriptor,int)
 kotlinx.serialization.internal.TripleSerializer$descriptor$1
 kotlinx.serialization.internal.TripleSerializer
 kotlinx.serialization.internal.TuplesKt
@@ -42464,7 +42471,6 @@ kotlinx.serialization.json.DecodeSequenceMode
 kotlinx.serialization.json.Json:
     public final java.lang.Object decodeFromJsonElement(kotlinx.serialization.DeserializationStrategy,kotlinx.serialization.json.JsonElement)
     public final synthetic java.lang.Object decodeFromString(java.lang.String)
-    public final kotlinx.serialization.json.JsonElement encodeToJsonElement(kotlinx.serialization.SerializationStrategy,java.lang.Object)
     public static synthetic void get_schemaCache$kotlinx_serialization_json$annotations()
     public final kotlinx.serialization.json.JsonElement parseToJsonElement(java.lang.String)
 kotlinx.serialization.json.JsonArray:
@@ -42526,8 +42532,6 @@ kotlinx.serialization.json.JsonDslMarker
 kotlinx.serialization.json.JsonElementBuildersKt
 kotlinx.serialization.json.JsonElementKt:
     public static final kotlinx.serialization.json.JsonNull JsonPrimitive(java.lang.Void)
-    public static final kotlinx.serialization.json.JsonPrimitive JsonPrimitive(java.lang.Boolean)
-    public static final kotlinx.serialization.json.JsonPrimitive JsonPrimitive(java.lang.Number)
     public static final kotlinx.serialization.json.JsonPrimitive JsonPrimitive-7apg3OU(byte)
     public static final kotlinx.serialization.json.JsonPrimitive JsonPrimitive-VKZWuLQ(long)
     public static final kotlinx.serialization.json.JsonPrimitive JsonPrimitive-WZ4Q5Ns(int)
@@ -42571,7 +42575,6 @@ kotlinx.serialization.json.JsonObject:
     public kotlinx.serialization.json.JsonElement putIfAbsent(java.lang.String,kotlinx.serialization.json.JsonElement)
     public kotlinx.serialization.json.JsonElement replace(java.lang.String,kotlinx.serialization.json.JsonElement)
     public boolean replace(java.lang.String,kotlinx.serialization.json.JsonElement,kotlinx.serialization.json.JsonElement)
-kotlinx.serialization.json.JsonObjectBuilder
 kotlinx.serialization.json.JsonObjectSerializer$JsonObjectDescriptor:
     public static synthetic void getSerialName$annotations()
 kotlinx.serialization.json.JsonPrimitive:
@@ -42630,10 +42633,11 @@ kotlinx.serialization.json.internal.AbstractJsonTreeDecoder:
     public synthetic bridge java.lang.Void decodeTaggedNull(java.lang.Object)
     protected java.lang.Void decodeTaggedNull(java.lang.String)
     private final java.lang.Object primitive(kotlinx.serialization.json.JsonPrimitive,java.lang.String,kotlin.jvm.functions.Function1)
-kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$beginStructure$consumer$1
-kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnquotedLiteralEncoder$1
-kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnsignedNumberEncoder$1
-kotlinx.serialization.json.internal.AbstractJsonTreeEncoder
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder:
+    public void encodeJsonElement(kotlinx.serialization.json.JsonElement)
+    public synthetic bridge void encodeTaggedNull(java.lang.Object)
+    public synthetic bridge void encodeTaggedValue(java.lang.Object,java.lang.Object)
+    protected void encodeTaggedValue(java.lang.String,java.lang.Object)
 kotlinx.serialization.json.internal.ArrayAsSequence
 kotlinx.serialization.json.internal.ByteArrayPool8k
 kotlinx.serialization.json.internal.ByteArrayPool
@@ -42645,8 +42649,6 @@ kotlinx.serialization.json.internal.InternalJsonReader
 kotlinx.serialization.json.internal.InternalJsonWriter:
     public abstract void release()
 kotlinx.serialization.json.internal.JavaStreamSerialReader
-kotlinx.serialization.json.internal.JsonExceptionsKt:
-    public static final kotlinx.serialization.json.internal.JsonEncodingException InvalidFloatingPointEncoded(java.lang.Number,java.lang.String,java.lang.String)
 kotlinx.serialization.json.internal.JsonFriendModuleApi
 kotlinx.serialization.json.internal.JsonIteratorArrayWrapped
 kotlinx.serialization.json.internal.JsonIteratorKt$WhenMappings
@@ -42659,7 +42661,6 @@ kotlinx.serialization.json.internal.JsonNamesMapKt:
     public static synthetic boolean tryCoerceValue$default(kotlinx.serialization.json.Json,kotlinx.serialization.descriptors.SerialDescriptor,int,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,int,java.lang.Object)
 kotlinx.serialization.json.internal.JsonPath:
     private final java.lang.String prettyString(java.lang.Object)
-kotlinx.serialization.json.internal.JsonPrimitiveEncoder
 kotlinx.serialization.json.internal.JsonStreamsKt$decodeToSequenceByReader$$inlined$Sequence$1
 kotlinx.serialization.json.internal.JsonStreamsKt:
     public static final java.lang.Object decodeByReader(kotlinx.serialization.json.Json,kotlinx.serialization.DeserializationStrategy,kotlinx.serialization.json.internal.InternalJsonReader)
@@ -42668,9 +42669,6 @@ kotlinx.serialization.json.internal.JsonStreamsKt:
     public static synthetic kotlin.sequences.Sequence decodeToSequenceByReader$default(kotlinx.serialization.json.Json,kotlinx.serialization.json.internal.InternalJsonReader,kotlinx.serialization.DeserializationStrategy,kotlinx.serialization.json.DecodeSequenceMode,int,java.lang.Object)
     public static synthetic kotlin.sequences.Sequence decodeToSequenceByReader$default(kotlinx.serialization.json.Json,kotlinx.serialization.json.internal.InternalJsonReader,kotlinx.serialization.json.DecodeSequenceMode,int,java.lang.Object)
 kotlinx.serialization.json.internal.JsonToJavaStreamWriter
-kotlinx.serialization.json.internal.JsonTreeEncoder
-kotlinx.serialization.json.internal.JsonTreeListEncoder
-kotlinx.serialization.json.internal.JsonTreeMapEncoder
 kotlinx.serialization.json.internal.JsonTreeReader:
     private final kotlinx.serialization.json.JsonObject readObjectImpl(kotlin.jvm.functions.Function0)
 kotlinx.serialization.json.internal.PolymorphicKt:
@@ -42691,8 +42689,9 @@ kotlinx.serialization.json.internal.StringJsonLexer:
 kotlinx.serialization.json.internal.SuppressAnimalSniffer
 kotlinx.serialization.json.internal.TreeJsonDecoderKt:
     public static final java.lang.Object readJson(kotlinx.serialization.json.Json,kotlinx.serialization.json.JsonElement,kotlinx.serialization.DeserializationStrategy)
-kotlinx.serialization.json.internal.TreeJsonEncoderKt$writeJson$encoder$1
-kotlinx.serialization.json.internal.TreeJsonEncoderKt
+kotlinx.serialization.json.internal.TreeJsonEncoderKt:
+    public static final java.lang.String PRIMITIVE_TAG
+    public static final synthetic kotlinx.serialization.json.JsonElement cast(kotlinx.serialization.json.JsonElement,kotlinx.serialization.descriptors.SerialDescriptor)
 kotlinx.serialization.json.internal.WriteModeKt:
     public static final java.lang.Object selectMapMode(kotlinx.serialization.json.Json,kotlinx.serialization.descriptors.SerialDescriptor,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0)
 kotlinx.serialization.modules.ContextualProvider$Argless:
@@ -45737,19 +45736,9 @@ androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState:
     public static void skipToEnd$animation_core_release()
     public static void updateValues$animation_core_release()
 androidx.compose.animation.core.InfiniteTransition$run$1$1$1
-androidx.compose.animation.core.InfiniteTransition$run$1$1$2$$InternalSyntheticThrowCCEIfNotNull$12$050b2853fe56c7e1abd2f18a471c72c8c60c503dd86b215469bf15f123d0bfbb$0
 androidx.compose.animation.core.InfiniteTransition$run$1$1$2:
-    public final android.view.inputmethod.BaseInputConnection invoke()
-    public final android.view.inputmethod.InputMethodManager invoke()
-    public static androidx.compose.foundation.lazy.layout.LazySaveableStateHolder invoke()
-    public static androidx.compose.foundation.text.TextFieldScrollerPosition invoke()
-    public static androidx.compose.foundation.text.TextLayoutResultProxy invoke()
-    public final androidx.compose.foundation.text.selection.TextSelectionColors invoke()
-    public final androidx.compose.ui.graphics.GraphicsContext invoke()
     public final java.lang.Float invoke()
-    public final kotlinx.coroutines.CoroutineScope invoke()
-    public final java.lang.Long invoke$1()
-    public static androidx.collection.MutableScatterMap invoke-SAeQiB4()
+    public final void invoke()
 androidx.compose.animation.core.InfiniteTransition$run$1$1$3:
     public int label
     public final java.lang.Object invoke$6()
@@ -45838,7 +45827,18 @@ androidx.compose.animation.core.SeekableTransitionState$animateTo$2$1:
 androidx.compose.animation.core.SeekableTransitionState$animateTo$2:
     public final java.lang.Object invoke$5()
 androidx.compose.animation.core.SeekableTransitionState$firstFrameLambda$1
-androidx.compose.animation.core.SeekableTransitionState$recalculateTotalDurationNanos$1
+androidx.compose.animation.core.SeekableTransitionState$recalculateTotalDurationNanos$1$$InternalSyntheticThrowCCEIfNotNull$12$91ae8468b41c31b9f02b6b0cf3b03d6ba87dde33aaea2bdaa74043c1157a29a3$0
+androidx.compose.animation.core.SeekableTransitionState$recalculateTotalDurationNanos$1:
+    public final android.view.inputmethod.BaseInputConnection invoke()
+    public final android.view.inputmethod.InputMethodManager invoke()
+    public static androidx.compose.foundation.lazy.layout.LazySaveableStateHolder invoke()
+    public static androidx.compose.foundation.text.TextFieldScrollerPosition invoke()
+    public static androidx.compose.foundation.text.TextLayoutResultProxy invoke()
+    public final androidx.compose.foundation.text.selection.TextSelectionColors invoke()
+    public final androidx.compose.ui.graphics.GraphicsContext invoke()
+    public final kotlinx.coroutines.CoroutineScope invoke()
+    public final java.lang.Long invoke$1()
+    public static androidx.collection.MutableScatterMap invoke-SAeQiB4()
 androidx.compose.animation.core.SeekableTransitionState$seekTo$3$1$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 androidx.compose.animation.core.SeekableTransitionState$seekTo$3$1:
@@ -47990,6 +47990,7 @@ androidx.compose.foundation.lazy.layout.PrefetchHandleProvider$HandleAndRequestI
 androidx.compose.foundation.lazy.layout.PrefetchHandleProvider$HandleAndRequestImpl$resolveNestedPrefetchStates$1:
     public final androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction invoke$1()
     public final androidx.compose.ui.node.TraversableNode$Companion$TraverseDescendantsAction invoke$2()
+    public final void invoke$26()
 androidx.compose.foundation.lazy.layout.PrefetchHandleProvider$HandleAndRequestImpl:
     public final boolean isComposed()
     public final boolean shouldExecute(androidx.compose.foundation.lazy.layout.AndroidPrefetchScheduler$PrefetchRequestScopeImpl,long)
@@ -48109,7 +48110,7 @@ androidx.compose.foundation.text.AndroidCursorHandle_androidKt$drawCursorHandle$
     public static final androidx.compose.foundation.text.AndroidCursorHandle_androidKt$drawCursorHandle$1 INSTANCE$4
     public final androidx.compose.ui.Modifier invoke(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer)
 androidx.compose.foundation.text.BasicTextFieldKt$BasicTextField$6:
-    public final void invoke$26()
+    public final void invoke$27()
 androidx.compose.foundation.text.BasicTextFieldKt$BasicTextField$7$1
 androidx.compose.foundation.text.BasicTextFieldKt$BasicTextField$8$1
 androidx.compose.foundation.text.BasicTextFieldKt$DefaultTextFieldDecorator$1
@@ -48149,7 +48150,7 @@ androidx.compose.foundation.text.ContextMenu_androidKt$ContextMenuArea$2
 androidx.compose.foundation.text.ContextMenu_androidKt$TextItem$1
 androidx.compose.foundation.text.ContextMenu_androidKt
 androidx.compose.foundation.text.CoreTextFieldKt$CoreTextField$1:
-    public final void invoke$26()
+    public final void invoke$27()
 androidx.compose.foundation.text.CoreTextFieldKt$CoreTextField$2$1$1
 androidx.compose.foundation.text.CoreTextFieldKt$CoreTextField$2$1$2
 androidx.compose.foundation.text.CoreTextFieldKt$CoreTextField$2$1:
@@ -48413,8 +48414,8 @@ androidx.compose.foundation.text.TextFieldCursorKt$cursor$1$2$1:
     public final androidx.compose.runtime.DisposableEffectResult invoke(androidx.compose.runtime.DisposableEffectScope)
     public final void invoke(androidx.compose.ui.graphics.drawscope.ContentDrawScope)
     public final void invoke$13()
-    public static void invoke$27()
     public static void invoke$28()
+    public static void invoke$29()
 androidx.compose.foundation.text.TextFieldCursorKt$cursor$1
 androidx.compose.foundation.text.TextFieldCursorKt$cursorAnimationSpec$1
 androidx.compose.foundation.text.TextFieldCursorKt:
@@ -49195,7 +49196,7 @@ androidx.compose.foundation.text.selection.SelectionManagerKt:
 androidx.compose.foundation.text.selection.SelectionRegistrar
 androidx.compose.foundation.text.selection.SelectionRegistrarKt$LocalSelectionRegistrar$1:
     public final androidx.compose.foundation.text.selection.TextSelectionColors invoke()
-    public static void invoke$29()
+    public static void invoke$30()
     private static synthetic bridge java.lang.Object invoke$androidx$compose$foundation$text$selection$SelectionRegistrarKt$LocalSelectionRegistrar$1()
 androidx.compose.foundation.text.selection.SelectionRegistrarKt:
     public static final boolean hasSelection(long)
@@ -50168,7 +50169,7 @@ androidx.compose.material3.internal.TextFieldImplKt$CommonDecorationBox$3$decora
     public final void invoke(androidx.compose.runtime.Composer,int)
 androidx.compose.material3.internal.TextFieldImplKt$CommonDecorationBox$3$decoratedPlaceholder$1$1$1
 androidx.compose.material3.internal.TextFieldImplKt$CommonDecorationBox$3$decoratedPlaceholder$1:
-    public static void invoke$30()
+    public static void invoke$31()
 androidx.compose.material3.internal.TextFieldImplKt$CommonDecorationBox$3$decoratedPrefix$1$1$1
 androidx.compose.material3.internal.TextFieldImplKt$CommonDecorationBox$3$decoratedSuffix$1$1$1
 androidx.compose.material3.internal.TextFieldImplKt$CommonDecorationBox$3$decoratedSuffix$1
@@ -52613,7 +52614,7 @@ androidx.compose.runtime.snapshots.SnapshotIdSet:
     public static int lowest()
 androidx.compose.runtime.snapshots.SnapshotIdSetKt
 androidx.compose.runtime.snapshots.SnapshotKt$advanceGlobalSnapshot$3:
-    public static void invoke$31()
+    public static void invoke$32()
 androidx.compose.runtime.snapshots.SnapshotKt$emptyLambda$1
 androidx.compose.runtime.snapshots.SnapshotKt$mergedReadObserver$1
 androidx.compose.runtime.snapshots.SnapshotKt$mergedWriteObserver$1
@@ -52974,13 +52975,7 @@ androidx.compose.ui.draw.PainterNode:
     public final void setPainter()
     public static void setSizeToIntrinsics()
 androidx.compose.ui.draw.RotateKt
-androidx.compose.ui.draw.ScopedGraphicsContext:
-    public androidx.collection.MutableObjectList allocatedGraphicsLayers
-    public androidx.compose.ui.graphics.GraphicsContext graphicsContext
-    public final androidx.compose.ui.graphics.layer.GraphicsLayer createGraphicsLayer()
-    public static androidx.compose.ui.graphics.GraphicsContext getGraphicsContext()
-    public final void releaseGraphicsLayer(androidx.compose.ui.graphics.layer.GraphicsLayer)
-    public static void setGraphicsContext()
+androidx.compose.ui.draw.ScopedGraphicsContext
 androidx.compose.ui.draw.ShadowGraphicsLayerElement$$InternalSyntheticBackport$1$6e44405adf4198d82e23aa21801725a416cc73d6dbe22a522215f15d6701ab40$0
 androidx.compose.ui.draw.ShadowGraphicsLayerElement$createBlock$1
 androidx.compose.ui.draw.ShadowGraphicsLayerElement:
@@ -53085,7 +53080,7 @@ androidx.compose.ui.focus.FocusOwnerImpl$modifier$1:
     public static final androidx.compose.ui.focus.FocusOwnerImpl$modifier$1 INSTANCE$1
     public static final androidx.compose.ui.focus.FocusOwnerImpl$modifier$1 INSTANCE$2
     public final java.lang.Boolean invoke(androidx.compose.ui.focus.FocusTargetNode)
-    public static void invoke$32()
+    public static void invoke$33()
 androidx.compose.ui.focus.FocusOwnerImpl$modifier$2:
     public final androidx.compose.ui.focus.FocusTargetNode create()
     public final void update$42()
@@ -53768,11 +53763,11 @@ androidx.compose.ui.graphics.SimpleGraphicsLayerModifier$layerBlock$1:
     public static java.lang.Object invoke$19()
     public final java.lang.CharSequence invoke$2()
     public static java.lang.Object invoke$20()
-    public final void invoke$33()
-    public static void invoke$34()
+    public final void invoke$34()
     public static void invoke$35()
     public static void invoke$36()
     public static void invoke$37()
+    public static void invoke$38()
 androidx.compose.ui.graphics.SimpleGraphicsLayerModifier$measure$1
 androidx.compose.ui.graphics.SimpleGraphicsLayerModifier:
     public androidx.compose.ui.graphics.RenderEffect renderEffect
@@ -54373,7 +54368,7 @@ androidx.compose.ui.graphics.vector.VNode:
     static void <clinit>()
 androidx.compose.ui.graphics.vector.VectorComponent$1:
     public final void invoke(androidx.compose.ui.graphics.drawscope.DrawScope)
-    public final void invoke$33()
+    public final void invoke$34()
 androidx.compose.ui.graphics.vector.VectorComponent$drawVectorBlock$1
 androidx.compose.ui.graphics.vector.VectorComponent$invalidateCallback$1
 androidx.compose.ui.graphics.vector.VectorComponent:
@@ -55026,7 +55021,7 @@ androidx.compose.ui.input.pointer.PointerInteropFilter:
     public static void setRequestDisallowInterceptTouchEvent()
 androidx.compose.ui.input.pointer.PointerInteropFilter_androidKt$pointerInteropFilter$3:
     public static java.lang.Boolean invoke$15()
-    public final void invoke$38()
+    public final void invoke$39()
 androidx.compose.ui.input.pointer.PointerInteropFilter_androidKt
 androidx.compose.ui.input.pointer.PointerInteropUtils_androidKt
 androidx.compose.ui.input.pointer.PointerKeyboardModifiers:
@@ -55447,9 +55442,9 @@ androidx.compose.ui.layout.SubcomposeLayoutKt:
     public static final synthetic androidx.compose.ui.layout.ScaleFactor$Companion access$getReusedSlotId$p()
 androidx.compose.ui.layout.SubcomposeLayoutState$PrecomposedSlotHandle$-CC
 androidx.compose.ui.layout.SubcomposeLayoutState$setCompositionContext$1:
-    public static void invoke$39()
     public static void invoke$40()
     public static void invoke$41()
+    public static void invoke$42()
 androidx.compose.ui.layout.SubcomposeLayoutState$setMeasurePolicy$1
 androidx.compose.ui.layout.SubcomposeLayoutState$setRoot$1
 androidx.compose.ui.layout.SubcomposeLayoutState:
@@ -55543,8 +55538,8 @@ androidx.compose.ui.node.BackwardsCompatNodeKt$onDrawCacheReadsChanged$1:
     public static final androidx.compose.ui.node.BackwardsCompatNodeKt$onDrawCacheReadsChanged$1 INSTANCE
     public final java.lang.Boolean invoke(java.lang.Object)
     public final void invoke(androidx.compose.ui.node.BackwardsCompatNode)
-    public static void invoke$42()
     public static void invoke$43()
+    public static void invoke$44()
 androidx.compose.ui.node.BackwardsCompatNodeKt$updateModifierLocalConsumer$1
 androidx.compose.ui.node.BackwardsCompatNodeKt:
     public static final androidx.compose.ui.node.BackwardsCompatNodeKt$DetachedModifierLocalReadScope$1 DetachedModifierLocalReadScope
@@ -55572,13 +55567,13 @@ androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1:
     public static final androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 INSTANCE$1
     public static final androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 INSTANCE$2
     public static final androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 INSTANCE$6
-    public static void invoke$44()
     public static void invoke$45()
     public static void invoke$46()
     public static void invoke$47()
     public static void invoke$48()
     public static void invoke$49()
     public static void invoke$50()
+    public static void invoke$51()
 androidx.compose.ui.node.ComposeUiNode$Companion$SetDensity$1
 androidx.compose.ui.node.ComposeUiNode$Companion$SetLayoutDirection$1
 androidx.compose.ui.node.ComposeUiNode$Companion$SetMeasurePolicy$1
@@ -55873,29 +55868,7 @@ androidx.compose.ui.node.LayoutNodeLayoutDelegate$LookaheadPassDelegate:
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$WhenMappings
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1$1
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1$2
-androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1:
-    public final android.graphics.Shader invoke()
-    public final android.view.inputmethod.BaseInputConnection invoke()
-    public final android.view.inputmethod.InputMethodManager invoke()
-    public static androidx.appcompat.graphics.drawable.DrawableContainerCompat$BlockInvalidateCallback invoke()
-    public static androidx.lifecycle.SavedStateHandlesVM invoke()
-    public static androidx.navigation.NavInflater invoke()
-    public static coil.decode.DecodeResult invoke()
-    public static coil.request.ImageRequest invoke()
-    public final java.io.File invoke()
-    public final java.util.Iterator invoke()
-    public final java.util.List invoke()
-    public static kotlin.reflect.jvm.internal.KMutableProperty0Impl$Setter invoke()
-    public static kotlin.reflect.jvm.internal.KMutableProperty1Impl$Setter invoke()
-    public static kotlin.reflect.jvm.internal.KMutableProperty2Impl$Setter invoke()
-    public final kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltIns$Settings invoke()
-    public static kotlin.reflect.jvm.internal.impl.descriptors.runtime.components.RuntimeModuleData invoke()
-    public final kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope invoke()
-    public final java.lang.String[] invoke()
-    public final kotlin.reflect.jvm.internal.impl.types.SimpleType invoke$1()
-    public final java.util.Map invoke$2()
-    public final java.lang.Boolean invoke$3()
-    public final java.lang.Integer invoke$6()
+androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$placeOuterCoordinatorBlock$1
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$remeasure$2
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate:
@@ -55924,7 +55897,28 @@ androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate:
 androidx.compose.ui.node.LayoutNodeLayoutDelegate$performLookaheadMeasure$1:
     public final android.graphics.Shader invoke()
     public final void invoke()
-androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1
+androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1:
+    public final android.graphics.Shader invoke()
+    public final android.view.inputmethod.BaseInputConnection invoke()
+    public final android.view.inputmethod.InputMethodManager invoke()
+    public static androidx.appcompat.graphics.drawable.DrawableContainerCompat$BlockInvalidateCallback invoke()
+    public static androidx.lifecycle.SavedStateHandlesVM invoke()
+    public static androidx.navigation.NavInflater invoke()
+    public static coil.decode.DecodeResult invoke()
+    public static coil.request.ImageRequest invoke()
+    public final java.io.File invoke()
+    public final java.util.Iterator invoke()
+    public final java.util.List invoke()
+    public static kotlin.reflect.jvm.internal.KMutableProperty0Impl$Setter invoke()
+    public static kotlin.reflect.jvm.internal.KMutableProperty1Impl$Setter invoke()
+    public static kotlin.reflect.jvm.internal.KMutableProperty2Impl$Setter invoke()
+    public final kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltIns$Settings invoke()
+    public static kotlin.reflect.jvm.internal.impl.descriptors.runtime.components.RuntimeModuleData invoke()
+    public final kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope invoke()
+    public final java.lang.String[] invoke()
+    public final kotlin.reflect.jvm.internal.impl.types.SimpleType invoke$1()
+    public final java.lang.Boolean invoke$3()
+    public final java.lang.Integer invoke$6()
 androidx.compose.ui.node.LayoutNodeLayoutDelegate:
     public static final int $stable
     static void <clinit>()
@@ -56186,7 +56180,7 @@ androidx.compose.ui.node.Owner:
     static void <clinit>()
     public abstract long calculateLocalPosition-MK-Hz9U()
     public abstract long calculatePositionInWindow-MK-Hz9U()
-    public abstract androidx.compose.ui.node.OwnedLayer createLayer(androidx.compose.animation.AnimatedContentKt$AnimatedContent$6$1$4$1,androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate$layoutChildrenBlock$1,androidx.compose.ui.graphics.layer.GraphicsLayer)
+    public abstract androidx.compose.ui.node.OwnedLayer createLayer(androidx.compose.animation.AnimatedContentKt$AnimatedContent$6$1$4$1,androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1,androidx.compose.ui.graphics.layer.GraphicsLayer)
     public abstract void forceMeasureTheSubtree(androidx.compose.ui.node.LayoutNode,boolean)
     public abstract androidx.compose.ui.platform.AccessibilityManager getAccessibilityManager()
     public abstract androidx.compose.ui.autofill.Autofill getAutofill()
@@ -56348,7 +56342,7 @@ androidx.compose.ui.platform.AndroidComposeView$addAndroidView$1$onInitializeAcc
     public final java.lang.Boolean invoke(java.lang.Object)
     public static java.lang.Boolean invoke$16()
     public final void invoke$5()
-    public final void invoke$51()
+    public final void invoke$52()
 androidx.compose.ui.platform.AndroidComposeView$configurationChangeObserver$1
 androidx.compose.ui.platform.AndroidComposeView$contentCaptureManager$1
 androidx.compose.ui.platform.AndroidComposeView$dispatchKeyEvent$1
@@ -56478,7 +56472,7 @@ androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat$geome
     private static synthetic bridge java.lang.Object invoke$androidx$compose$ui$platform$CompositionLocalsKt$LocalTextInputService$1()
 androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat$onSendAccessibilityEvent$1:
     public static java.lang.Boolean invoke$18()
-    public static void invoke$52()
+    public static void invoke$53()
 androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat$scheduleScrollEventIfNeeded$1
 androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat$scheduleScrollEventIfNeededLambda$1
 androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat$semanticComparator$$inlined$thenBy$1:
@@ -56489,8 +56483,8 @@ androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat$sortB
 androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat$sortByGeometryGroupings$2$2
 androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat$sortByGeometryGroupings$2:
     public final void invoke(androidx.compose.runtime.Composer,int)
-    public static void invoke$53()
     public static void invoke$54()
+    public static void invoke$55()
     public static java.lang.Integer invoke$8()
 androidx.compose.ui.platform.AndroidComposeViewAccessibilityDelegateCompat:
     public static final int $stable
@@ -56547,7 +56541,7 @@ androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$LocalResourceIdC
 androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$LocalSavedStateRegistryOwner$1
 androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$LocalView$1
 androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$ProvideAndroidCompositionLocals$1$1:
-    public final void invoke$51()
+    public final void invoke$52()
 androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$ProvideAndroidCompositionLocals$2$1$invoke$$inlined$onDispose$1
 androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$ProvideAndroidCompositionLocals$2$1
 androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$ProvideAndroidCompositionLocals$3
@@ -56752,7 +56746,7 @@ androidx.compose.ui.platform.InspectableValueKt:
     public static final boolean isDebugInspectorInfoEnabled()
 androidx.compose.ui.platform.InspectionModeKt$LocalInspectionMode$1:
     public final java.lang.Boolean invoke$3()
-    public static void invoke$55()
+    public static void invoke$56()
     private static synthetic bridge java.lang.Object invoke$androidx$compose$ui$platform$PlatformTextInputModifierNodeKt$LocalChainedPlatformTextInputInterceptor$1()
 androidx.compose.ui.platform.InspectorInfo
 androidx.compose.ui.platform.InspectorValueInfo:
@@ -56943,9 +56937,9 @@ androidx.compose.ui.platform.WrappedComposition$setContent$1:
     public final void invoke(java.lang.Throwable)
     public static java.lang.CharSequence invoke$3()
     public final void invoke$3()
-    public static void invoke$56()
     public static void invoke$57()
     public static void invoke$58()
+    public static void invoke$59()
 androidx.compose.ui.platform.WrappedComposition:
     public static androidx.compose.runtime.Composition getOriginal()
     public static androidx.compose.ui.platform.AndroidComposeView getOwner()
@@ -57029,7 +57023,7 @@ androidx.compose.ui.scrollcapture.RelativeScroller:
     public final java.lang.Object scrollTo(float,kotlin.coroutines.Continuation)
 androidx.compose.ui.scrollcapture.ScrollCapture$$InternalSyntheticApiModelOutline$2$60272bafd9041852d4bebd4e8444a0e336e9280dd961c4c25cc3c7fc104c651f$0
 androidx.compose.ui.scrollcapture.ScrollCapture$onScrollCaptureSearch$1:
-    public static void invoke$59()
+    public static void invoke$60()
 androidx.compose.ui.scrollcapture.ScrollCapture$onScrollCaptureSearch$2
 androidx.compose.ui.scrollcapture.ScrollCapture$onScrollCaptureSearch$3
 androidx.compose.ui.scrollcapture.ScrollCapture:
@@ -57191,7 +57185,7 @@ androidx.compose.ui.semantics.SemanticsProperties$ContentDataType$1:
     public final void invoke$1(java.lang.String)
     public static java.lang.Boolean invoke$19()
     public static java.lang.Float invoke$2()
-    public static void invoke$60()
+    public static void invoke$61()
     public static androidx.compose.ui.semantics.Role invoke-qtA-w6s()
     public static void invoke-x33U9Dw()
 androidx.compose.ui.semantics.SemanticsProperties$ContentDescription$1
@@ -57252,7 +57246,7 @@ androidx.compose.ui.semantics.SemanticsPropertiesAndroid:
 androidx.compose.ui.semantics.SemanticsPropertiesKt$ActionPropertyKey$1
 androidx.compose.ui.semantics.SemanticsPropertiesKt$getScrollViewportLength$1
 androidx.compose.ui.semantics.SemanticsPropertiesKt:
-    public static void clearTextSubstitution$default(androidx.compose.ui.semantics.SemanticsConfiguration,androidx.compose.animation.core.InfiniteTransition$run$1$1$2)
+    public static void clearTextSubstitution$default(androidx.compose.ui.semantics.SemanticsConfiguration,androidx.compose.animation.core.SeekableTransitionState$recalculateTotalDurationNanos$1)
     public static final void disabled(androidx.compose.ui.semantics.SemanticsPropertyReceiver)
     public static final void onClick(androidx.compose.ui.semantics.SemanticsPropertyReceiver,java.lang.String,kotlin.jvm.functions.Function0)
     public static final void setContentDescription(androidx.compose.ui.semantics.SemanticsPropertyReceiver,java.lang.String)
@@ -58995,14 +58989,14 @@ androidx.compose.ui.viewinterop.AndroidViewHolder$Companion$OnCommitAffectingUpd
 androidx.compose.ui.viewinterop.AndroidViewHolder$Companion$OnCommitAffectingUpdate$1:
     public final void invoke(androidx.compose.ui.layout.Placeable$PlacementScope)
     public final void invoke(androidx.compose.ui.semantics.SemanticsPropertyReceiver)
-    public static void invoke$61()
     public static void invoke$62()
+    public static void invoke$63()
 androidx.compose.ui.viewinterop.AndroidViewHolder$Companion
 androidx.compose.ui.viewinterop.AndroidViewHolder$layoutNode$1$1
 androidx.compose.ui.viewinterop.AndroidViewHolder$layoutNode$1$2
 androidx.compose.ui.viewinterop.AndroidViewHolder$layoutNode$1$3:
     public final void invoke(androidx.compose.ui.layout.Placeable$PlacementScope)
-    public final void invoke$38()
+    public final void invoke$39()
     public final void invoke$4()
 androidx.compose.ui.viewinterop.AndroidViewHolder$layoutNode$1$4
 androidx.compose.ui.viewinterop.AndroidViewHolder$layoutNode$1$5$measure$1
@@ -59044,11 +59038,11 @@ androidx.compose.ui.viewinterop.AndroidViewHolder_androidKt:
     public static final int access$toNestedScrollSource(int)
 androidx.compose.ui.viewinterop.AndroidView_androidKt$AndroidView$1
 androidx.compose.ui.viewinterop.AndroidView_androidKt$AndroidView$2$1:
-    public static void invoke$63()
     public static void invoke$64()
     public static void invoke$65()
     public static void invoke$66()
     public static void invoke$67()
+    public static void invoke$68()
 androidx.compose.ui.viewinterop.AndroidView_androidKt$AndroidView$2$2
 androidx.compose.ui.viewinterop.AndroidView_androidKt$AndroidView$2$3
 androidx.compose.ui.viewinterop.AndroidView_androidKt$AndroidView$3$1
@@ -59094,14 +59088,14 @@ androidx.compose.ui.viewinterop.ViewFactoryHolder:
 androidx.compose.ui.window.AndroidDialog_androidKt$Dialog$1$1$invoke$$inlined$onDispose$1
 androidx.compose.ui.window.AndroidDialog_androidKt$Dialog$1$1:
     public final androidx.compose.runtime.DisposableEffectResult invoke(androidx.compose.runtime.DisposableEffectScope)
-    public static void invoke$68()
+    public static void invoke$69()
 androidx.compose.ui.window.AndroidDialog_androidKt$Dialog$2$1
 androidx.compose.ui.window.AndroidDialog_androidKt$Dialog$3
 androidx.compose.ui.window.AndroidDialog_androidKt$Dialog$dialog$1$1$1$1:
     public final void invoke(long)
     public final void invoke(androidx.compose.ui.layout.Placeable$PlacementScope)
     public final void invoke(androidx.compose.ui.semantics.SemanticsPropertyReceiver)
-    public static void invoke$69()
+    public static void invoke$70()
 androidx.compose.ui.window.AndroidDialog_androidKt$Dialog$dialog$1$1$1
 androidx.compose.ui.window.AndroidDialog_androidKt$Dialog$dialogId$1:
     public final java.util.UUID invoke()
@@ -59979,7 +59973,7 @@ androidx.datastore.core.SingleProcessDataStore$Message$Update:
     public static kotlin.jvm.functions.Function2 getTransform()
 androidx.datastore.core.SingleProcessDataStore$actor$1
 androidx.datastore.core.SingleProcessDataStore$actor$2:
-    public static void invoke$70()
+    public static void invoke$71()
 androidx.datastore.core.SingleProcessDataStore$actor$3:
     public static java.lang.Object invoke$42()
 androidx.datastore.core.SingleProcessDataStore$data$1$1:
@@ -60993,8 +60987,10 @@ androidx.lifecycle.LiveData
 androidx.lifecycle.MethodCallsLogger:
     public static coil.request.Parameters build()
     public static java.util.Map build()
+    public static kotlinx.serialization.json.JsonObject build()
     public final java.lang.Object get(kotlinx.serialization.descriptors.SerialDescriptor,kotlin.reflect.jvm.internal.impl.serialization.deserialization.builtins.BuiltInsPackageFragmentImpl$Companion)
     public final java.lang.Object getOrPut(kotlinx.serialization.descriptors.SerialDescriptor,kotlin.reflect.jvm.internal.impl.serialization.deserialization.builtins.BuiltInsPackageFragmentImpl$Companion,kotlin.reflect.jvm.internal.impl.builtins.jvm.JvmBuiltInsCustomizer$getAdditionalFunctions$fakeJavaClassDescriptor$1)
+    public static kotlinx.serialization.json.JsonElement put()
     public static void set()
 androidx.lifecycle.MutableLiveData
 androidx.lifecycle.ProcessLifecycleInitializer:
@@ -66141,7 +66137,7 @@ androidx.navigation.ActivityNavigator$hostActivity$1:
     public final java.lang.String invoke()
     public final void invoke(androidx.navigation.NavOptionsBuilder)
     public final void invoke(androidx.navigation.PopUpToBuilder)
-    public static void invoke$71()
+    public static void invoke$72()
     public static java.lang.Integer invoke$9()
 androidx.navigation.ActivityNavigator:
     public static final androidx.lifecycle.ProcessLifecycleOwner$Companion Companion
@@ -66486,7 +66482,7 @@ androidx.navigation.compose.ComposableSingletons$ComposeNavigatorKt:
     public static final androidx.navigation.compose.ComposableSingletons$ComposeNavigatorKt INSTANCE
     public static kotlin.jvm.functions.Function4 getLambda-1$navigation_compose_release()
 androidx.navigation.compose.ComposableSingletons$DialogNavigatorKt$lambda-1$1:
-    public static void invoke$72()
+    public static void invoke$73()
 androidx.navigation.compose.ComposableSingletons$DialogNavigatorKt:
     public static final androidx.navigation.compose.ComposableSingletons$DialogNavigatorKt INSTANCE
     public static kotlin.jvm.functions.Function3 getLambda-1$navigation_compose_release()
@@ -69013,7 +69009,9 @@ com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$2$1:
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$2
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$3$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$3
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$4$1:
+    public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$4
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$8$1
@@ -69269,7 +69267,7 @@ com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$1$1:
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$1$1
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$1$2$1
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$3$1$2:
-    public static void invoke$73()
+    public static void invoke$74()
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$3$1$3$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$3$1$3:
@@ -69328,13 +69326,13 @@ com.maxiptv.ui.screens.HomeScreenKt$CategoryButton$3
 com.maxiptv.ui.screens.HomeScreenKt$DigitalClock$2
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$1
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$2:
-    public final void invoke$74()
+    public final void invoke$75()
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$3$1
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$3$2
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$3
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$4:
     public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,int,androidx.compose.runtime.Composer,int)
-    public final void invoke$74()
+    public final void invoke$75()
 com.maxiptv.ui.screens.HomeScreenKt$EmbeddedPlayer$1:
     public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
@@ -69395,7 +69393,7 @@ com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1$1:
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$2$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7:
-    public final void invoke$75()
+    public final void invoke$76()
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$2$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8
@@ -70715,13 +70713,13 @@ kotlin.reflect.jvm.internal.KMutableProperty0Impl:
     public final void set(java.lang.Object)
 kotlin.reflect.jvm.internal.KMutableProperty1Impl$Setter:
     public static kotlin.reflect.jvm.internal.KMutableProperty1Impl getProperty()
-    public final void invoke$76()
+    public final void invoke$77()
 kotlin.reflect.jvm.internal.KMutableProperty1Impl$_setter$1
 kotlin.reflect.jvm.internal.KMutableProperty1Impl:
     public final kotlin.reflect.jvm.internal.KMutableProperty1Impl$Setter getSetter()
 kotlin.reflect.jvm.internal.KMutableProperty2Impl$Setter:
     public static kotlin.reflect.jvm.internal.KMutableProperty2Impl getProperty()
-    public final void invoke$77()
+    public final void invoke$78()
 kotlin.reflect.jvm.internal.KMutableProperty2Impl$_setter$1
 kotlin.reflect.jvm.internal.KMutableProperty2Impl:
     public final kotlin.reflect.jvm.internal.KMutableProperty2Impl$Setter getSetter()
@@ -72259,17 +72257,7 @@ kotlin.reflect.jvm.internal.impl.load.java.components.JavaResolverCache:
     public abstract void recordField()
     public abstract void recordMethod(kotlin.reflect.jvm.internal.impl.descriptors.runtime.structure.ReflectJavaMember,kotlin.reflect.jvm.internal.impl.load.java.descriptors.JavaMethodDescriptor)
 kotlin.reflect.jvm.internal.impl.load.java.components.JavaRetentionAnnotationDescriptor$allValueArguments$2
-kotlin.reflect.jvm.internal.impl.load.java.components.JavaTargetAnnotationDescriptor$allValueArguments$2:
-    public static kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl invoke()
-    public static kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$Supertypes invoke()
-    public final kotlin.reflect.jvm.internal.impl.types.KotlinType invoke()
-    public static kotlin.reflect.jvm.internal.impl.types.TypeSubstitutor invoke()
-    public static kotlin.reflect.jvm.internal.impl.types.error.ErrorType invoke()
-    public final kotlinx.serialization.descriptors.SerialDescriptor invoke()
-    public static kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope[] invoke()
-    public final java.lang.String invoke$2()
-    public final java.util.Map invoke$2()
-    public final java.lang.Integer invoke$6()
+kotlin.reflect.jvm.internal.impl.load.java.components.JavaTargetAnnotationDescriptor$allValueArguments$2
 kotlin.reflect.jvm.internal.impl.load.java.components.SignaturePropagator$1
 kotlin.reflect.jvm.internal.impl.load.java.components.SignaturePropagator$PropagatedSignature
 kotlin.reflect.jvm.internal.impl.load.java.components.SignaturePropagator:
@@ -72375,14 +72363,24 @@ kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.ClassDeclaredMemberI
     public static java.lang.Integer invoke$12()
     public final kotlin.reflect.jvm.internal.impl.types.KotlinType invoke$2()
     public static java.lang.Boolean invoke$26()
+    public final void invoke$26()
     public static kotlin.reflect.jvm.internal.impl.descriptors.ClassDescriptor invoke$3()
     public static kotlin.reflect.jvm.internal.impl.types.KotlinType invoke$3()
     public static java.lang.String invoke$7()
-    public static void invoke$78()
+    public static void invoke$79()
 kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.DeclaredMemberIndex$Empty:
     public static java.util.List findMethodsByName()
 kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.JavaDescriptorUtilKt
-kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.JvmPackageScope$kotlinScopes$2
+kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.JvmPackageScope$kotlinScopes$2:
+    public static kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl invoke()
+    public static kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$Supertypes invoke()
+    public final kotlin.reflect.jvm.internal.impl.types.KotlinType invoke()
+    public static kotlin.reflect.jvm.internal.impl.types.TypeSubstitutor invoke()
+    public static kotlin.reflect.jvm.internal.impl.types.error.ErrorType invoke()
+    public final kotlinx.serialization.descriptors.SerialDescriptor invoke()
+    public static kotlin.reflect.jvm.internal.impl.resolve.scopes.MemberScope[] invoke()
+    public final java.lang.String invoke$2()
+    public final java.lang.Integer invoke$6()
 kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.JvmPackageScope:
     public static kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.LazyJavaPackageScope getJavaScope$descriptors_jvm()
 kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.LazyJavaAnnotationDescriptor$allValueArguments$2:
@@ -75323,7 +75321,7 @@ kotlin.reflect.jvm.internal.impl.types.AbstractTypeChecker$WhenMappings
 kotlin.reflect.jvm.internal.impl.types.AbstractTypeChecker$isSubtypeOfForSingleClassifierType$1$4$1:
     public final java.lang.Boolean invoke$3()
 kotlin.reflect.jvm.internal.impl.types.AbstractTypeChecker$isSubtypeOfForSingleClassifierType$1$4:
-    public static void invoke$80()
+    public static void invoke$81()
 kotlin.reflect.jvm.internal.impl.types.AbstractTypeChecker:
     public static boolean RUN_SLOW_ASSERTIONS
     public static java.lang.Boolean checkSubtypeForIntegerLiteralType()
@@ -75363,7 +75361,7 @@ kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$supertypes$2:
 kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$supertypes$3$2:
     public final java.lang.Iterable invoke(kotlin.reflect.jvm.internal.impl.types.TypeConstructor)
     public final void invoke(kotlin.reflect.jvm.internal.impl.types.KotlinType)
-    public static void invoke$81()
+    public static void invoke$82()
 kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$supertypes$3$3
 kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$supertypes$3$resultWithoutCycles$1
 kotlin.reflect.jvm.internal.impl.types.AbstractTypeConstructor$supertypes$3$resultWithoutCycles$2
@@ -76107,7 +76105,7 @@ kotlin.reflect.jvm.internal.impl.utils.FunctionsKt$ALWAYS_TRUE$1:
 kotlin.reflect.jvm.internal.impl.utils.FunctionsKt$DO_NOTHING$1
 kotlin.reflect.jvm.internal.impl.utils.FunctionsKt$DO_NOTHING_2$1
 kotlin.reflect.jvm.internal.impl.utils.FunctionsKt$DO_NOTHING_3$1:
-    public final void invoke$77()
+    public final void invoke$78()
 kotlin.reflect.jvm.internal.impl.utils.FunctionsKt$IDENTITY$1
 kotlin.reflect.jvm.internal.impl.utils.FunctionsKt:
     public static final kotlin.jvm.functions.Function1 ALWAYS_NULL
@@ -77058,7 +77056,7 @@ kotlinx.coroutines.internal.ThreadContextKt$countAll$1$$InternalSyntheticThrowCC
 kotlinx.coroutines.internal.ThreadContextKt$countAll$1:
     public static kotlinx.coroutines.internal.ThreadState invoke()
     public static java.lang.Object invoke$56()
-    public static void invoke$82()
+    public static void invoke$83()
 kotlinx.coroutines.internal.ThreadContextKt$findOne$1
 kotlinx.coroutines.internal.ThreadContextKt$updateState$1
 kotlinx.coroutines.internal.ThreadContextKt:
@@ -77252,29 +77250,11 @@ kotlinx.serialization.encoding.AbstractDecoder:
     public final void decodeCollectionSize(kotlinx.serialization.descriptors.SerialDescriptor)
     public abstract java.lang.Object decodeSerializableValue(kotlinx.serialization.DeserializationStrategy)
 kotlinx.serialization.encoding.AbstractEncoder:
-    public abstract void encodeByteElement()
-    public abstract void encodeCharElement()
-    public abstract void encodeDoubleElement()
-    public abstract void encodeFloatElement()
-    public final void encodeLongElement(kotlinx.serialization.descriptors.SerialDescriptor,int,long)
     public abstract void encodeNullableSerializableValue()
-    public abstract void encodeShortElement()
 kotlinx.serialization.encoding.CompositeDecoder$DefaultImpls
 kotlinx.serialization.encoding.CompositeDecoder:
     public abstract void decodeCollectionSize(kotlinx.serialization.descriptors.SerialDescriptor)
 kotlinx.serialization.encoding.CompositeEncoder$DefaultImpls
-kotlinx.serialization.encoding.CompositeEncoder:
-    public abstract void encodeBooleanElement(kotlinx.serialization.descriptors.SerialDescriptor,int,boolean)
-    public abstract void encodeByteElement()
-    public abstract void encodeCharElement()
-    public abstract void encodeDoubleElement()
-    public abstract void encodeFloatElement()
-    public abstract kotlinx.serialization.encoding.Encoder encodeInlineElement(kotlinx.serialization.internal.PrimitiveArrayDescriptor,int)
-    public abstract void encodeIntElement(int,int,kotlinx.serialization.descriptors.SerialDescriptor)
-    public abstract void encodeLongElement(kotlinx.serialization.descriptors.SerialDescriptor,int,long)
-    public abstract void encodeSerializableElement(kotlinx.serialization.descriptors.SerialDescriptor,int,kotlinx.serialization.KSerializer,java.lang.Object)
-    public abstract void encodeShortElement()
-    public abstract void encodeStringElement(kotlinx.serialization.descriptors.SerialDescriptor,int,java.lang.String)
 kotlinx.serialization.encoding.Decoder$DefaultImpls
 kotlinx.serialization.encoding.Encoder$DefaultImpls
 kotlinx.serialization.internal.AbstractCollectionSerializer:
@@ -77489,6 +77469,57 @@ kotlinx.serialization.internal.NamedValueDecoder:
     public abstract void pushTag$kotlinx$serialization$internal$TaggedDecoder()
     public final java.lang.Object tagBlock(java.lang.String,kotlinx.serialization.internal.TaggedDecoder$decodeNullableSerializableElement$1)
     public abstract java.lang.Object tagBlock$kotlinx$serialization$internal$TaggedDecoder()
+kotlinx.serialization.internal.NamedValueEncoder:
+    public abstract kotlinx.serialization.encoding.CompositeEncoder beginCollection$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract java.lang.String composeName()
+    public abstract java.lang.String elementName()
+    public abstract void encodeBoolean$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeBooleanElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeByte$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeByteElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeChar$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeCharElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeDouble$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeDoubleElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract boolean encodeElement$1()
+    public abstract boolean encodeElement$1$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeEnum$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeFloat$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeFloatElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract kotlinx.serialization.encoding.Encoder encodeInline(kotlinx.serialization.descriptors.SerialDescriptor)
+    public abstract kotlinx.serialization.encoding.Encoder encodeInline$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract kotlinx.serialization.encoding.Encoder encodeInlineElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeInt$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeIntElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeLong$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeLongElement$kotlinx$serialization$internal$TaggedEncoder()
+    public void encodeNullableSerializableElement(kotlinx.serialization.descriptors.SerialDescriptor,int,kotlinx.serialization.KSerializer,java.lang.Object)
+    public abstract void encodeNullableSerializableElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeNullableSerializableValue()
+    public abstract void encodeNullableSerializableValue$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeSerializableElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeShort$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeShortElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeString$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeStringElement$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeTaggedByte(byte,java.lang.Object)
+    public abstract void encodeTaggedChar(java.lang.Object,char)
+    public abstract void encodeTaggedEnum()
+    public abstract kotlinx.serialization.encoding.Encoder encodeTaggedInline$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void encodeTaggedInt(int,java.lang.Object)
+    public abstract void encodeTaggedLong(long,java.lang.Object)
+    public abstract void encodeTaggedShort(java.lang.Object,short)
+    public abstract void encodeTaggedString(java.lang.Object,java.lang.String)
+    public abstract void endEncode()
+    public abstract void endStructure$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract java.lang.Object getCurrentTag()
+    public abstract java.lang.Object getCurrentTag$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract java.lang.Object getCurrentTagOrNull()
+    public abstract java.lang.Object getCurrentTagOrNull$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract java.lang.String getTag()
+    public abstract java.lang.String nested()
+    public abstract java.lang.Object popTag$kotlinx$serialization$internal$TaggedEncoder()
+    public abstract void pushTag$kotlinx$serialization$internal$TaggedEncoder()
 kotlinx.serialization.internal.NoOpEncoder
 kotlinx.serialization.internal.NothingSerialDescriptor:
     public static final kotlinx.serialization.descriptors.StructureKind$OBJECT kind
@@ -77545,6 +77576,7 @@ kotlinx.serialization.internal.StringSerializer:
     public static void serialize$10()
 kotlinx.serialization.internal.TaggedDecoder$decodeSerializableElement$1
 kotlinx.serialization.internal.TaggedDecoder
+kotlinx.serialization.internal.TaggedEncoder
 kotlinx.serialization.internal.UByteArrayBuilder:
     public static void append-7apg3OU$kotlinx_serialization_core()
     public static byte[] build-TcUX1vc$kotlinx_serialization_core()
@@ -77600,6 +77632,7 @@ kotlinx.serialization.json.ClassDiscriminatorMode:
     public static final synthetic kotlin.enums.EnumEntries $ENTRIES
     public static final enum kotlinx.serialization.json.ClassDiscriminatorMode ALL_JSON_OBJECTS
 kotlinx.serialization.json.Json:
+    public abstract kotlinx.serialization.json.JsonElement encodeToJsonElement()
     public abstract kotlinx.serialization.json.JsonConfiguration getConfiguration()
     public abstract kotlinx.serialization.modules.SerialModuleImpl getSerializersModule()
     public abstract androidx.lifecycle.MethodCallsLogger get_schemaCache$kotlinx_serialization_json()
@@ -77651,12 +77684,12 @@ kotlinx.serialization.json.JsonElementSerializer:
     public static kotlinx.serialization.json.JsonElement deserialize()
     public static void serialize$13()
 kotlinx.serialization.json.JsonElementSerializersKt
-kotlinx.serialization.json.JsonEncoder
 kotlinx.serialization.json.JsonImpl:
     public static void validateConfiguration()
 kotlinx.serialization.json.JsonKt
 kotlinx.serialization.json.JsonLiteral$$InternalSyntheticBackport$1$bcfa1a6e7cace4bee33b448087944463df0fe1122a374414638cf2ea648ba560$0
 kotlinx.serialization.json.JsonLiteral:
+    public synthetic void <init>(java.lang.Object,boolean)
     public static kotlinx.serialization.descriptors.SerialDescriptor getCoerceToInlineType$kotlinx_serialization_json()
     public static boolean isString()
 kotlinx.serialization.json.JsonLiteralSerializer:
@@ -77681,6 +77714,7 @@ kotlinx.serialization.json.JsonObject:
     public final int getSize()
     public final java.util.Collection getValues()
     public static kotlinx.serialization.json.JsonElement remove()
+kotlinx.serialization.json.JsonObjectBuilder
 kotlinx.serialization.json.JsonObjectSerializer:
     public static kotlinx.serialization.json.JsonObject deserialize()
     public static void serialize$16()
@@ -77707,6 +77741,39 @@ kotlinx.serialization.json.internal.AbstractJsonTreeDecoder:
     public abstract long decodeTaggedLong()
     public abstract short decodeTaggedShort()
     public abstract java.lang.String decodeTaggedString()
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$beginStructure$consumer$1
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnsignedNumberEncoder$1$$InternalSyntheticBackport$1$2d163030bdf706ef589aa10ad05032f245517322104fa9f922f4c8bb811f6c14$0
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnsignedNumberEncoder$1$$InternalSyntheticBackport$1$8eb3ce6dab993032a7c8426b41e304e2e5852815881da3646a47bf4c0b7ffded$0
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnsignedNumberEncoder$1$$InternalSyntheticBackport$2$c65ec81c9e38c9d411d0590178373088cfbef0e0f96c4d9e7fe26d9c1d34b9fb$0
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnsignedNumberEncoder$1$$InternalSyntheticBackport$2$f7cf5f3d2531fd8799327291ef2afe36f79c611b158429e46cc9a5745032d85e$0
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnsignedNumberEncoder$1$$InternalSyntheticBackport$3$e6faa9d225f792df32fe950cf4eb4753e5a0ac2817d1f9edeace69ae66b5dc51$0
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnsignedNumberEncoder$1
+kotlinx.serialization.json.internal.AbstractJsonTreeEncoder:
+    public abstract java.lang.String composeName()
+    public abstract java.lang.String elementName()
+    public abstract void encodeTaggedBoolean()
+    public abstract void encodeTaggedByte()
+    public final void encodeTaggedByte(byte,java.lang.Object)
+    public abstract void encodeTaggedChar()
+    public final void encodeTaggedChar(java.lang.Object,char)
+    public abstract void encodeTaggedDouble()
+    public abstract void encodeTaggedEnum()
+    public abstract void encodeTaggedEnum$1()
+    public abstract void encodeTaggedFloat()
+    public abstract kotlinx.serialization.encoding.Encoder encodeTaggedInline()
+    public abstract void encodeTaggedInt()
+    public final void encodeTaggedInt(int,java.lang.Object)
+    public abstract void encodeTaggedLong()
+    public final void encodeTaggedLong(long,java.lang.Object)
+    public abstract void encodeTaggedNull()
+    public abstract void encodeTaggedShort()
+    public final void encodeTaggedShort(java.lang.Object,short)
+    public abstract void encodeTaggedString()
+    public final void encodeTaggedString(java.lang.Object,java.lang.String)
+    public abstract void endEncode()
+    public abstract kotlin.jvm.functions.Function1 getNodeConsumer()
+    public abstract kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnquotedLiteralEncoder$1 inlineUnquotedLiteralEncoder()
+    public abstract kotlinx.serialization.json.internal.AbstractJsonTreeEncoder$inlineUnquotedLiteralEncoder$1 inlineUnsignedNumberEncoder()
 kotlinx.serialization.json.internal.CharArrayPool:
     public static void release()
     public static char[] take()
@@ -77749,7 +77816,12 @@ kotlinx.serialization.json.internal.JsonElementMarker:
     public static boolean readIfAbsent()
 kotlinx.serialization.json.internal.JsonException
 kotlinx.serialization.json.internal.JsonExceptionsKt:
+    public static final kotlinx.serialization.json.internal.JsonDecodingException InvalidFloatingPointDecoded(java.lang.Number,java.lang.String,java.lang.String)
+    public static final kotlinx.serialization.json.internal.JsonEncodingException InvalidFloatingPointEncoded(java.lang.Number,java.lang.String,java.lang.String)
+    public static final byte[] asUtf8ToByteArray(java.lang.String)
     public static synthetic java.lang.CharSequence minify$default(java.lang.CharSequence)
+    public static final okio.AsyncTimeout$sink$1 sink(java.io.File,boolean)
+    public static final java.lang.String toUtf8String(byte[])
 kotlinx.serialization.json.internal.JsonNamesMapKt$deserializationNamesMap$1
 kotlinx.serialization.json.internal.JsonNamesMapKt$serializationNamesIndices$1
 kotlinx.serialization.json.internal.JsonNamesMapKt:
@@ -77757,8 +77829,12 @@ kotlinx.serialization.json.internal.JsonNamesMapKt:
     public static final boolean decodeCaseInsensitive(kotlinx.serialization.descriptors.SerialDescriptor,kotlinx.serialization.json.Json)
     public static final java.util.Map deserializationNamesMap(kotlinx.serialization.descriptors.SerialDescriptor,kotlinx.serialization.json.Json)
     public static final kotlin.reflect.jvm.internal.impl.serialization.deserialization.builtins.BuiltInsPackageFragmentImpl$Companion getJsonDeserializationNamesKey()
+    public static final java.lang.String getJsonElementName(kotlinx.serialization.descriptors.SerialDescriptor,kotlinx.serialization.json.Json,int)
     public static final int getJsonNameIndexSlowPath(kotlinx.serialization.descriptors.SerialDescriptor,kotlinx.serialization.json.Json,java.lang.String)
 kotlinx.serialization.json.internal.JsonPath
+kotlinx.serialization.json.internal.JsonPrimitiveEncoder:
+    public final java.lang.String elementName()
+    public static java.util.Map getContent()
 kotlinx.serialization.json.internal.JsonStreamsKt
 kotlinx.serialization.json.internal.JsonToStringWriter:
     public static void appendStringSlowPath()
@@ -77770,8 +77846,10 @@ kotlinx.serialization.json.internal.JsonTreeDecoder:
     public synthetic void <init>(kotlinx.serialization.json.Json,kotlinx.serialization.json.JsonObject)
     public static boolean absenceIsNull()
     public static boolean coerceInputValue()
+kotlinx.serialization.json.internal.JsonTreeEncoder
 kotlinx.serialization.json.internal.JsonTreeListDecoder:
     public static kotlinx.serialization.json.JsonArray getValue()
+kotlinx.serialization.json.internal.JsonTreeListEncoder
 kotlinx.serialization.json.internal.JsonTreeReader$readDeepRecursive$1:
     public static java.lang.Object invoke$57()
 kotlinx.serialization.json.internal.JsonTreeReader:
@@ -77779,10 +77857,6 @@ kotlinx.serialization.json.internal.JsonTreeReader:
     public static java.lang.Object readObject()
     public static kotlinx.serialization.json.JsonElement readObject()
 kotlinx.serialization.json.internal.PolymorphicKt$WhenMappings
-kotlinx.serialization.json.internal.PolymorphicKt:
-    public static final byte[] asUtf8ToByteArray(java.lang.String)
-    public static final okio.AsyncTimeout$sink$1 sink(java.io.File,boolean)
-    public static final java.lang.String toUtf8String(byte[])
 kotlinx.serialization.json.internal.PolymorphismValidator:
     public static void checkDiscriminatorCollisions()
     public static void checkKind()
@@ -77806,7 +77880,8 @@ kotlinx.serialization.json.internal.StreamingJsonDecoder:
 kotlinx.serialization.json.internal.StreamingJsonEncoder$WhenMappings
 kotlinx.serialization.json.internal.StreamingJsonEncoder:
     public static void encodeTypeInfo()
-    public static kotlinx.serialization.json.Json getJson()
+kotlinx.serialization.json.internal.StreamingJsonEncoderKt:
+    public static final boolean isUnquotedLiteral(kotlinx.serialization.descriptors.SerialDescriptor)
 kotlinx.serialization.json.internal.StringJsonLexer:
     public static int appendEsc()
     public static int appendEsc$kotlinx$serialization$json$internal$AbstractJsonLexer()
@@ -77857,6 +77932,8 @@ kotlinx.serialization.json.internal.StringJsonLexer:
     public static boolean wasUnquotedString()
     public static boolean wasUnquotedString$kotlinx$serialization$json$internal$AbstractJsonLexer()
 kotlinx.serialization.json.internal.TreeJsonDecoderKt
+kotlinx.serialization.json.internal.TreeJsonEncoderKt$writeJson$encoder$1
+kotlinx.serialization.json.internal.WriteModeKt
 kotlinx.serialization.modules.ContextualProvider$Argless
 kotlinx.serialization.modules.ContextualProvider$WithTypeArguments
 kotlinx.serialization.modules.ContextualProvider
@@ -78354,9 +78431,9 @@ okhttp3.Protocol$Companion
 okhttp3.Protocol:
     public static final okhttp3.HttpUrl$Builder$Companion Companion
 okhttp3.Request$Builder:
-    public static okhttp3.Request$Builder get()
+    public final void get()
     public final void headers(okhttp3.Headers)
-    public static okhttp3.Request$Builder put()
+    public final void put(okhttp3.RequestBody$Companion$toRequestBody$2)
     public final void removeHeader(java.lang.String)
     public final void url(okhttp3.HttpUrl)
 okhttp3.Request:
@@ -79191,7 +79268,7 @@ okio.internal.ZipEntry:
     public static boolean isDirectory()
 okio.internal.ZipFilesKt$buildIndex$$inlined$sortedBy$1
 okio.internal.ZipFilesKt$readEntry$1:
-    public final void invoke$75()
+    public final void invoke$76()
 okio.internal.ZipFilesKt$readOrSkipLocalHeader$1
 okio.internal.ZipFilesKt
 retrofit2.BuiltInConverters$BufferingResponseBodyConverter:
@@ -79284,8 +79361,8 @@ retrofit2.RequestFactory$Builder:
     public static retrofit2.RequestFactory build()
     public static okhttp3.Headers parseHeaders()
     public static void parseMethodAnnotation()
-    public static com.google.common.collect.ImmutableCollection$Builder parseParameter()
-    public static com.google.common.collect.ImmutableCollection$Builder parseParameterAnnotation()
+    public static androidx.arch.core.executor.TaskExecutor parseParameter()
+    public static androidx.arch.core.executor.TaskExecutor parseParameterAnnotation()
     public static void validatePathName()
 retrofit2.RequestFactory:
     public static okhttp3.Request create()

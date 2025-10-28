@@ -8,8 +8,9 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.parseToJsonElement
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.encodeToJsonElement
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -36,8 +37,8 @@ data class GlobalUser(
 @Serializable
 data class SessionsDatabase(
     val sessions: MutableMap<String, ActiveSession> = mutableMapOf(),
-    val users: MutableList<GlobalUser> = mutableListOf(),
-    val simpleCodes: MutableMap<String, SimpleClientCode> = mutableMapOf()
+    val users: MutableList<GlobalUser> = mutableListOf()
+    // simpleCodes removido - agora códigos são objeto direto no JSONBin
 )
 
 object SessionManager {
@@ -221,18 +222,9 @@ object SessionManager {
                     data class JsonBinResponse(val record: SessionsDatabase)
                     
                     val response = json.decodeFromString<JsonBinResponse>(body)
-                    var database = response.record
+                    val database = response.record
                     
-                    // Garantir que simpleCodes existe (valor padrão se não vier do JSONBin)
-                    if (database.simpleCodes.isEmpty()) {
-                        database = SessionsDatabase(
-                            sessions = database.sessions,
-                            users = database.users,
-                            simpleCodes = mutableMapOf()
-                        )
-                    }
-                    
-                    Log.i(TAG, "✅ Sessões carregadas: ${database.sessions.size} ativas, ${database.users.size} usuários, ${database.simpleCodes.size} códigos")
+                    Log.i(TAG, "✅ Sessões carregadas: ${database.sessions.size} ativas, ${database.users.size} usuários")
                     return database
                 } catch (e: Exception) {
                     Log.e(TAG, "❌ Erro ao decodificar JSON: ${e.message}")
@@ -244,18 +236,9 @@ object SessionManager {
                         val match = recordRegex.find(body)
                         if (match != null) {
                             val recordJson = match.groupValues[1]
-                            var database = json.decodeFromString<SessionsDatabase>(recordJson)
+                            val database = json.decodeFromString<SessionsDatabase>(recordJson)
                             
-                            // Garantir que simpleCodes existe
-                            if (database.simpleCodes.isEmpty()) {
-                                database = SessionsDatabase(
-                                    sessions = database.sessions,
-                                    users = database.users,
-                                    simpleCodes = mutableMapOf()
-                                )
-                            }
-                            
-                            Log.i(TAG, "✅ Sessões extraídas via fallback: ${database.sessions.size} ativas, ${database.users.size} usuários, ${database.simpleCodes.size} códigos")
+                            Log.i(TAG, "✅ Sessões extraídas via fallback: ${database.sessions.size} ativas, ${database.users.size} usuários")
                             return database
                         }
                     } catch (fallbackError: Exception) {
@@ -277,14 +260,9 @@ object SessionManager {
      */
     private fun saveSessions(database: SessionsDatabase): Boolean {
         try {
-            Log.d(TAG, "💾 Salvando ${database.sessions.size} sessões, ${database.users.size} usuários e ${database.simpleCodes.size} códigos no JSONBin...")
+            Log.d(TAG, "💾 Salvando ${database.sessions.size} sessões e ${database.users.size} usuários no JSONBin...")
             
-            // Debug: Mostrar códigos antes de enviar
-            database.simpleCodes.forEach { (code, simpleCode) ->
-                Log.d(TAG, "📋 Código $code: usuario=${simpleCode.usuario}, ativo=${simpleCode.ativo}, usado=${simpleCode.usado}")
-            }
-            
-            // Sempre usar json.encodeToString para incluir usuários e códigos
+            // Sempre usar json.encodeToString para incluir usuários
             val jsonContent = json.encodeToString(database)
             Log.d(TAG, "📤 JSON completo a enviar: $jsonContent")
             
@@ -468,10 +446,15 @@ object SessionManager {
     // ==================== GERENCIAMENTO DE CÓDIGOS SIMPLES ====================
     
     /**
-     * Salvar código simples no JSONBin
+     * Salvar código simples no JSONBin (FUNÇÃO ANTIGA - não usar mais)
+     * @deprecated Use saveClientCode em vez disso
      */
-    suspend fun saveSimpleCode(code: String, simpleCode: SimpleClientCode): Boolean = withContext(Dispatchers.IO) {
+    @Deprecated("Use saveClientCode")
+    suspend fun saveSimpleCode(code: String, simpleCode: com.maxiptv.data.ClientCode): Boolean = withContext(Dispatchers.IO) {
         try {
+            // Função antiga - não usar mais
+            return@withContext false
+            /* 
             Log.i(TAG, "💾 Salvando código simples: $code para ${simpleCode.usuario}")
             val database = fetchSessions() ?: SessionsDatabase()
             
@@ -485,6 +468,7 @@ object SessionManager {
             }
             
             return@withContext saved
+            */
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao salvar código simples: ${e.message}", e)
             return@withContext false
@@ -492,10 +476,14 @@ object SessionManager {
     }
     
     /**
-     * Atualizar código simples
+     * Atualizar código simples (FUNÇÃO ANTIGA)
      */
-    suspend fun updateSimpleCode(code: String, simpleCode: SimpleClientCode): Boolean = withContext(Dispatchers.IO) {
+    @Deprecated("Use saveClientCode para atualizar")
+    suspend fun updateSimpleCode(code: String, simpleCode: com.maxiptv.data.ClientCode): Boolean = withContext(Dispatchers.IO) {
         try {
+            // Função antiga - não usar mais
+            return@withContext false
+            /*
             Log.i(TAG, "🔄 Atualizando código simples: $code")
             val database = fetchSessions() ?: return@withContext false
             
@@ -509,6 +497,7 @@ object SessionManager {
             }
             
             return@withContext saved
+            */
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao atualizar código simples: ${e.message}", e)
             return@withContext false
@@ -516,10 +505,14 @@ object SessionManager {
     }
     
     /**
-     * Obter código simples
+     * Obter código simples (FUNÇÃO ANTIGA)
      */
-    suspend fun getSimpleCode(code: String): SimpleClientCode? = withContext(Dispatchers.IO) {
+    @Deprecated("Códigos agora são objeto direto no JSONBin")
+    suspend fun getSimpleCode(code: String): com.maxiptv.data.ClientCode? = withContext(Dispatchers.IO) {
         try {
+            // Função antiga - não usar mais
+            return@withContext null
+            /*
             Log.d(TAG, "🔍 Buscando código simples: $code")
             val database = fetchSessions() ?: return@withContext null
             
@@ -531,6 +524,7 @@ object SessionManager {
             }
             
             return@withContext simpleCode
+            */
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao buscar código simples: ${e.message}", e)
             return@withContext null
@@ -538,15 +532,20 @@ object SessionManager {
     }
     
     /**
-     * Obter todos os códigos simples
+     * Obter todos os códigos simples (FUNÇÃO ANTIGA)
      */
-    suspend fun getAllSimpleCodes(): Map<String, SimpleClientCode> = withContext(Dispatchers.IO) {
+    @Deprecated("Códigos agora são objeto direto no JSONBin")
+    suspend fun getAllSimpleCodes(): Map<String, com.maxiptv.data.ClientCode> = withContext(Dispatchers.IO) {
         try {
+            // Função antiga - não usar mais
+            return@withContext emptyMap()
+            /*
             Log.i(TAG, "📋 Buscando todos os códigos simples...")
             val database = fetchSessions() ?: return@withContext emptyMap()
             
             Log.i(TAG, "✅ ${database.simpleCodes.size} códigos simples encontrados")
             return@withContext database.simpleCodes
+            */
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao buscar códigos simples: ${e.message}", e)
             return@withContext emptyMap()
@@ -554,28 +553,12 @@ object SessionManager {
     }
     
     /**
-     * Remover código simples
+     * Remover código simples (FUNÇÃO ANTIGA - não implementada)
      */
+    @Deprecated("Implementar remoção de objeto direto quando necessário")
     suspend fun removeSimpleCode(code: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            Log.i(TAG, "🗑️ Removendo código simples: $code")
-            val database = fetchSessions() ?: return@withContext false
-            
-            val removed = database.simpleCodes.remove(code)
-            if (removed != null) {
-                val saved = saveSessions(database)
-                if (saved) {
-                    Log.i(TAG, "✅ Código simples $code removido com sucesso!")
-                }
-                return@withContext saved
-            }
-            
-            Log.w(TAG, "⚠️ Código simples $code não encontrado para remover")
-            return@withContext false
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ Erro ao remover código simples: ${e.message}", e)
-            return@withContext false
-        }
+        // TODO: Implementar remoção de código do objeto direto no JSONBin
+        return@withContext false
     }
     
     /**
@@ -593,38 +576,51 @@ object SessionManager {
                 .get()
                 .build()
             
-            var recordJson = "{}"
+            val record = mutableMapOf<String, Any>()
             
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     val body = response.body?.string()
                     if (body != null) {
                         try {
-                            // Extrair apenas o record do JSONBin
-                            val jsonResponse = json.decodeFromString<kotlinx.serialization.json.JsonObject>(
-                                json.parseToJsonElement(body).jsonObject["record"]!!.toString()
-                            )
-                            recordJson = json.encodeToString(jsonResponse)
+                            @kotlinx.serialization.Serializable
+                            data class JsonBinResponse(val record: Map<String, kotlinx.serialization.json.JsonElement>)
+                            
+                            val jsonResponse = json.decodeFromString<JsonBinResponse>(body)
+                            // Copiar todos os campos do record (exceto o código atual se existir)
+                            jsonResponse.record.forEach { (key, _) ->
+                                if (key != code) {
+                                    record[key] = jsonResponse.record[key]!!
+                                }
+                            }
                         } catch (e: Exception) {
-                            Log.w(TAG, "⚠️ Usando estrutura vazia: ${e.message}")
-                            recordJson = "{}"
+                            Log.w(TAG, "⚠️ Erro ao ler record existente: ${e.message}")
                         }
                     }
                 }
             }
             
-            // Converter para mapa mutável
-            val recordMap = try {
-                json.decodeFromString<MutableMap<String, kotlinx.serialization.json.JsonElement>>(recordJson)
-            } catch (e: Exception) {
-                mutableMapOf()
+            // Adicionar novo código como objeto direto
+            record[code] = clientCode
+            
+            // Salvar tudo de volta usando JsonObject
+            val jsonObject = buildJsonObject {
+                record.forEach { (key, value) ->
+                    when (value) {
+                        is com.maxiptv.data.ClientCode -> {
+                            put(key, json.encodeToJsonElement(value))
+                        }
+                        is kotlinx.serialization.json.JsonElement -> {
+                            put(key, value)
+                        }
+                        else -> {
+                            // Ignorar outros tipos
+                        }
+                    }
+                }
             }
             
-            // Adicionar/atualizar código
-            recordMap[code] = json.parseToJsonElement(json.encodeToString(clientCode))
-            
-            // Salvar tudo de volta
-            val jsonContent = json.encodeToString(recordMap)
+            val jsonContent = jsonObject.toString()
             
             val mediaType = "application/json".toMediaType()
             val requestBody = jsonContent.toRequestBody(mediaType)

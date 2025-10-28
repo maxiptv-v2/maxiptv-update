@@ -107,42 +107,12 @@ object ClientCodeManager {
     }
     
     /**
-     * Validar código simples (para servidor PHP)
+     * Validar código (para servidor PHP)
      */
-    suspend fun validateSimpleCode(code: String): SimpleClientCode? {
-        return try {
-            val simpleCode = SessionManager.getSimpleCode(code)
-            
-            if (simpleCode == null) {
-                android.util.Log.w("ClientCodeManager", "❌ Código simples não encontrado: $code")
-                return null
-            }
-            
-            // Verificar se código está ativo
-            if (!simpleCode.ativo) {
-                android.util.Log.w("ClientCodeManager", "❌ Código simples inativo: $code")
-                return null
-            }
-            
-            // Verificar se já foi usado
-            if (simpleCode.usado) {
-                android.util.Log.w("ClientCodeManager", "❌ Código simples já usado: $code")
-                return null
-            }
-            
-            // Verificar se conta do usuário não expirou
-            if (isUserExpired(simpleCode.expira_em)) {
-                android.util.Log.w("ClientCodeManager", "❌ Conta do usuário expirada: ${simpleCode.usuario}")
-                return null
-            }
-            
-            android.util.Log.i("ClientCodeManager", "✅ Código simples válido: $code")
-            return simpleCode
-            
-        } catch (e: Exception) {
-            android.util.Log.e("ClientCodeManager", "❌ Erro ao validar código simples: ${e.message}", e)
-            return null
-        }
+    suspend fun validateSimpleCode(code: String): ClientCode? {
+        // Validação agora é feita pelo PHP
+        // Esta função pode ser usada localmente se necessário
+        return null
     }
     
     /**
@@ -171,15 +141,12 @@ object ClientCodeManager {
     }
     
     /**
-     * Obter todos os códigos simples (para admin)
+     * Obter todos os códigos (para admin)
+     * Retorna vazio por enquanto - códigos agora são gerenciados diretamente no JSONBin
      */
-    suspend fun getAllSimpleCodes(): Map<String, SimpleClientCode> {
-        return try {
-            SessionManager.getAllSimpleCodes()
-        } catch (e: Exception) {
-            android.util.Log.e("ClientCodeManager", "❌ Erro ao obter códigos simples: ${e.message}", e)
-            emptyMap()
-        }
+    suspend fun getAllSimpleCodes(): Map<String, ClientCode> {
+        // TODO: Implementar busca de códigos do JSONBin se necessário para o admin
+        return emptyMap()
     }
     
     /**

@@ -688,49 +688,20 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                 onGenerateCode = {
                   scope.launch {
                     try {
-                      android.util.Log.i("AdminActivity", "🔍 Buscando código existente para ${user.username}")
-                      
-                      // Verificar se já existe código para este usuário
-                      val allCodes = ClientCodeManager.getAllSimpleCodes()
-                      val userCodes = allCodes.filter { (_, code) -> code.usuario == user.username }
-                      
-                      val code = if (userCodes.isNotEmpty()) {
-                        // Usar código existente
-                        val existingCode = userCodes.keys.first()
-                        android.util.Log.i("AdminActivity", "✅ Código existente encontrado: $existingCode")
-                        existingCode
-                      } else {
-                        // Gerar novo código se não existir
-                        android.util.Log.i("AdminActivity", "🔑 Gerando novo código para ${user.username}")
-                        val newCode = ClientCodeManager.createSimpleCode(user)
-                        android.util.Log.i("AdminActivity", "✅ Novo código gerado: $newCode")
-                        newCode
-                      }
-                      
+                      android.util.Log.i("AdminActivity", "🔑 Gerando novo código para ${user.username}")
+                      val code = ClientCodeManager.createSimpleCode(user)
+                      android.util.Log.i("AdminActivity", "✅ Código gerado: $code")
                       showCodeDialog(code, user.username)
                     } catch (e: Exception) {
-                      android.util.Log.e("AdminActivity", "❌ Erro ao gerar código simples: ${e.message}", e)
+                      android.util.Log.e("AdminActivity", "❌ Erro ao gerar código: ${e.message}", e)
                     }
                   }
                 },
                 onRevokeCode = {
                   scope.launch {
                     try {
-                      android.util.Log.i("AdminActivity", "🚫 Revogando códigos para ${user.username}")
-                      // Buscar todos os códigos do usuário e revogar
-                      val allCodes = ClientCodeManager.getAllSimpleCodes()
-                      val userCodes = allCodes.filter { (_, code) -> code.usuario == user.username }
-                      
-                      userCodes.forEach { (code, _) ->
-                        ClientCodeManager.removeSimpleCode(code)
-                        android.util.Log.i("AdminActivity", "✅ Código $code revogado para ${user.username}")
-                      }
-                      
-                      if (userCodes.isNotEmpty()) {
-                        showRevokeDialog(userCodes.size, user.username)
-                      } else {
-                        android.util.Log.w("AdminActivity", "⚠️ Nenhum código encontrado para ${user.username}")
-                      }
+                      android.util.Log.i("AdminActivity", "🚫 Revogação de códigos - funcionalidade sera implementada")
+                      // TODO: Implementar revogação de códigos quando necessário
                     } catch (e: Exception) {
                       android.util.Log.e("AdminActivity", "❌ Erro ao revogar códigos: ${e.message}", e)
                     }
