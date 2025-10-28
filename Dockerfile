@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libcurl4-openssl-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copiar apenas arquivos PHP da raiz
-COPY download.php index.php api.php ./
+COPY valida.php index.php api.php ./
 
 # Expor porta
 EXPOSE 10000
