@@ -14,8 +14,8 @@ if (!$code || !preg_match('/^\d{4}$/', $code)) {
     die("❌ Código inválido! Digite um código de 4 dígitos.");
 }
 
-// Redirecionar para download.php
-header("Location: download.php?code=$code");
+// Redirecionar para valida.php
+header("Location: valida.php?code=$code");
 exit();
 
 ?>
