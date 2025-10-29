@@ -42469,7 +42469,6 @@ kotlinx.serialization.json.ClassDiscriminatorMode:
     public static kotlin.enums.EnumEntries getEntries()
 kotlinx.serialization.json.DecodeSequenceMode
 kotlinx.serialization.json.Json:
-    public final java.lang.Object decodeFromJsonElement(kotlinx.serialization.DeserializationStrategy,kotlinx.serialization.json.JsonElement)
     public final synthetic java.lang.Object decodeFromString(java.lang.String)
     public static synthetic void get_schemaCache$kotlinx_serialization_json$annotations()
     public final kotlinx.serialization.json.JsonElement parseToJsonElement(java.lang.String)
@@ -42687,8 +42686,6 @@ kotlinx.serialization.json.internal.StreamingJsonEncoder:
 kotlinx.serialization.json.internal.StringJsonLexer:
     public void consumeStringChunked(boolean,kotlin.jvm.functions.Function1)
 kotlinx.serialization.json.internal.SuppressAnimalSniffer
-kotlinx.serialization.json.internal.TreeJsonDecoderKt:
-    public static final java.lang.Object readJson(kotlinx.serialization.json.Json,kotlinx.serialization.json.JsonElement,kotlinx.serialization.DeserializationStrategy)
 kotlinx.serialization.json.internal.TreeJsonEncoderKt:
     public static final java.lang.String PRIMITIVE_TAG
     public static final synthetic kotlinx.serialization.json.JsonElement cast(kotlinx.serialization.json.JsonElement,kotlinx.serialization.descriptors.SerialDescriptor)
@@ -77678,8 +77675,6 @@ kotlinx.serialization.json.JsonConfiguration:
     public static boolean getUseAlternativeNames()
     public static boolean getUseArrayPolymorphism()
     public static boolean isLenient()
-kotlinx.serialization.json.JsonElementKt:
-    public static final java.lang.String getContentOrNull(kotlinx.serialization.json.JsonPrimitive)
 kotlinx.serialization.json.JsonElementSerializer$descriptor$1$2
 kotlinx.serialization.json.JsonElementSerializer$descriptor$1$3
 kotlinx.serialization.json.JsonElementSerializer$descriptor$1$4
@@ -78438,7 +78433,6 @@ okhttp3.Protocol$Companion
 okhttp3.Protocol:
     public static final okhttp3.HttpUrl$Builder$Companion Companion
 okhttp3.Request$Builder:
-    public final void get()
     public final void headers(okhttp3.Headers)
     public final void put(okhttp3.RequestBody$Companion$toRequestBody$2)
     public final void removeHeader(java.lang.String)
