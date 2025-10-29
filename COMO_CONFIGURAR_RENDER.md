@@ -1,10 +1,19 @@
 # 🚀 Como Configurar o Render.com - Passo a Passo
 
+## 0️⃣ Se você já tem um serviço antigo
+
+**RECOMENDADO:** Deletar o serviço antigo e criar um novo para evitar problemas de configuração!
+
+1. Vá no serviço antigo no Render
+2. Clique em **Settings** → role até o final
+3. Clique em **"Delete Service"**
+4. Confirme a deleção
+5. Continue para criar um novo serviço abaixo
+
 ## 1️⃣ Criar Novo Serviço
 
-1. Clique em **"Create new project"** (ou clique no projeto "My project")
-2. Selecione **"Web Service"**
-3. Conecte seu repositório GitHub:
+1. Clique em **"New +"** → **"Web Service"**
+2. Conecte seu repositório GitHub:
    - Procure por: `maxiptv-v2/maxiptv-update`
    - Clique em **"Connect"**
 
@@ -24,25 +33,28 @@ Docker
 
 ### Root Directory:
 ```
-. (deixe vazio ou ponha um ponto)
+server
 ```
+**IMPORTANTE:** 
+- Deve ser exatamente `server` (sem barra no final)
+- Isso indica que os arquivos estão na pasta `server/` do repositório
 
 ### Docker Build Context Directory:
 ```
-. (deixe vazio ou ponha um ponto)
+server
 ```
 **IMPORTANTE:** 
-- **NÃO use** `server/`
-- Se estiver configurado como `server/`, **MUDE para** `.` (ponto) ou deixe vazio
+- Deve ser exatamente `server` (sem barra no final)
+- Isso faz o Docker construir a partir da pasta `server/`
 
 ### Dockerfile Path:
 ```
-Dockerfile
+(deixe VAZIO - em branco)
 ```
 **IMPORTANTE:** 
-- Certifique-se de que está escrito exatamente como `Dockerfile` (com D maiúsculo, sem ponto antes)
-- **NÃO use** `server/.dockerfile` ou qualquer caminho com `server/`
-- Se estiver configurado como `server/.dockerfile`, **MUDE para** `Dockerfile`
+- **DEIXE VAZIO!** Não preencha nada aqui
+- O Render vai procurar automaticamente por `Dockerfile` na pasta `server/`
+- Se você colocar algo aqui, pode dar erro
 
 ### Build Command:
 ```
