@@ -4,6 +4,11 @@
  * Busca código no JSONBin e retorna JSON com dados para login automático
  */
 
+// Habilitar exibição de erros (apenas para debug)
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
@@ -56,7 +61,8 @@ try {
         error_log("JSONBin Error: HTTP $httpCode - $curlError");
         echo json_encode([
             "status" => "erro",
-            "mensagem" => "Erro ao conectar com o servidor. HTTP: $httpCode"
+            "mensagem" => "Erro ao conectar com o servidor. HTTP: $httpCode",
+            "curl_error" => $curlError
         ]);
         exit;
     }
