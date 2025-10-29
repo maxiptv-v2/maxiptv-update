@@ -670,9 +670,30 @@ object SessionManager {
                             data class JsonBinResponse(val record: Map<String, kotlinx.serialization.json.JsonElement>)
                             
                             val jsonResponse = json.decodeFromString<JsonBinResponse>(body)
-                            // Copiar todos os campos do record (exceto o código atual se existir)
+                            // Copiar todos os campos do record
+                            // IMPORTANTE: Remover qualquer código existente para este username ANTES de adicionar o novo
                             jsonResponse.record.forEach { (key, value) ->
-                                if (key != code) {
+                                // Se for um código de 4 dígitos
+                                if (key.matches(Regex("^\\d{4}$"))) {
+                                    try {
+                                        // Verificar se este código pertence ao mesmo usuário
+                                        val codeObject = value.jsonObject
+                                        val codeUsername = codeObject["username"]?.jsonPrimitive?.contentOrNull
+                                        
+                                        // Se for o mesmo usuário mas código diferente, REMOVER (evitar duplicados)
+                                        if (codeUsername == clientCode.username && key != code) {
+                                            Log.d(TAG, "🗑️ Removendo código antigo $key do usuário ${clientCode.username}")
+                                            // Não adicionar ao record (remove o código antigo)
+                                        } else {
+                                            // Manter códigos de outros usuários e outras chaves
+                                            record[key] = value
+                                        }
+                                    } catch (e: Exception) {
+                                        // Se não conseguir decodificar, manter por segurança
+                                        record[key] = value
+                                    }
+                                } else {
+                                    // Manter outras chaves (sessions, users, etc.)
                                     record[key] = value
                                 }
                             }
