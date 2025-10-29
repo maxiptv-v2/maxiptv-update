@@ -460,11 +460,15 @@ object SessionManager {
             Log.i(TAG, "💾 Salvando usuário global: ${user.username}")
             val database = fetchSessions() ?: SessionsDatabase()
             
-            // Remover usuário existente com mesmo ID
-            database.users.removeAll { it.id == user.id }
+            // Remover usuário existente com mesmo ID OU mesmo username (evitar duplicados)
+            val removed = database.users.removeAll { it.id == user.id || it.username == user.username }
+            if (removed) {
+                Log.d(TAG, "🔄 Removendo usuário duplicado: ${user.username}")
+            }
             
             // Adicionar novo usuário
             database.users.add(user)
+            Log.d(TAG, "➕ Adicionando usuário: ${user.username} (ID: ${user.id})")
             
             val saved = saveSessions(database)
             if (saved) {
