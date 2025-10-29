@@ -99,8 +99,23 @@ if (isset($user['expiryDate'])) {
 // SEMPRE usar link fixo (códigos antigos podem ter URL errada)
 $apkUrl = $link_apk;
 
+// Verificar se downloader pede JSON (alguns downloaders não seguem redirects)
+$acceptJson = isset($_GET['json']) || 
+              (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+if ($acceptJson) {
+    // Retornar JSON com URL do APK (para downloaders que não seguem redirects)
+    header('Content-Type: application/json');
+    echo json_encode([
+        "status" => "ok",
+        "download" => $apkUrl,
+        "file" => "maxiptv-release.apk"
+    ]);
+    exit;
+}
+
 // REDIRECT para o APK (302 Found - redirect temporário)
-// O downloader Android precisa de redirect HTTP para baixar
+// Para downloaders que seguem redirects HTTP
 header("HTTP/1.1 302 Found");
 header("Location: $apkUrl");
 header("Content-Type: text/plain");
