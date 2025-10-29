@@ -14,5 +14,6 @@ EXPOSE 10000
 # Comando para iniciar servidor PHP
 # Render passa PORT como variável de ambiente, usar 10000 como fallback
 # Usar -t . para servir da raiz do WORKDIR
-CMD php -S 0.0.0.0:${PORT:-10000} -t .
+# Usar sh -c para garantir que a variável PORT seja expandida corretamente
+CMD sh -c "php -S 0.0.0.0:\${PORT:-10000} -t ."
 
