@@ -72,11 +72,22 @@ if (!isset($data['record'])) {
 // Buscar código no objeto direto (não array, não simpleCodes)
 $codigos = $data['record'];
 
+// Log para debug (verificar chaves disponíveis)
+$availableKeys = array_keys($codigos);
+error_log("Valida.php - Codigo buscado: $code");
+error_log("Valida.php - Chaves disponiveis: " . implode(", ", $availableKeys));
+
+// Filtrar apenas códigos de 4 dígitos
+$codeKeys = array_filter($availableKeys, function($key) {
+    return preg_match('/^\d{4}$/', $key);
+});
+error_log("Valida.php - Codigos de 4 digitos encontrados: " . implode(", ", $codeKeys));
+
 // Verificar se código existe
 if (!isset($codigos[$code])) {
     echo json_encode([
         "status" => "erro",
-        "mensagem" => "Codigo invalido"
+        "mensagem" => "Codigo invalido. Codigos disponiveis: " . implode(", ", $codeKeys)
     ]);
     exit;
 }
