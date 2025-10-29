@@ -12,7 +12,7 @@ header('Access-Control-Allow-Origin: *');
 header('X-Content-Type-Options: nosniff');
 
 // Configurações
-$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
 $jsonbin_key = "\$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae";
 
 // Obter código
@@ -41,28 +41,42 @@ if ($httpCode !== 200 || !$response) {
 }
 
 $data = json_decode($response, true);
-$simpleCodes = $data['record']['simpleCodes'] ?? [];
+
+if (!isset($data['record'])) {
+    http_response_code(500);
+    die(json_encode(['erro' => 'Erro ao ler dados']));
+}
+
+// Buscar código diretamente no record (não em simpleCodes)
+$codigos = $data['record'];
 
 // Validar código
-if (!isset($simpleCodes[$code])) {
+if (!isset($codigos[$code])) {
     http_response_code(404);
     die(json_encode(['erro' => 'Código não encontrado']));
 }
 
-$client = $simpleCodes[$code];
+$client = $codigos[$code];
 
-if (!$client['ativo'] || $client['usado']) {
-    http_response_code(403);
-    die(json_encode(['erro' => 'Código inativo ou usado']));
+// Verificar se expirou (formato DD/MM/YYYY)
+if (isset($client['expiryDate'])) {
+    $parts = explode('/', $client['expiryDate']);
+    if (count($parts) === 3) {
+        $expiryTime = mktime(23, 59, 59, (int)$parts[1], (int)$parts[0], (int)$parts[2]);
+        if (time() > $expiryTime) {
+            http_response_code(403);
+            die(json_encode(['erro' => 'Código expirado']));
+        }
+    }
 }
 
-// Retornar dados
+// Retornar dados (usar campos corretos: username, password, apiUrl, apkUrl)
 echo json_encode([
     'ok' => true,
-    'apk' => $client['apk'] ?? 'https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk',
-    'user' => $client['usuario'],
-    'pass' => $client['senha'],
-    'api' => $client['api']
+    'apk' => $client['apkUrl'] ?? 'https://github.com/maxiptv-v2/maxiptv-update/releases/latest/download/maxiptv-release.apk',
+    'user' => $client['username'] ?? '',
+    'pass' => $client['password'] ?? '',
+    'api' => $client['apiUrl'] ?? ''
 ]);
 
 ?>
