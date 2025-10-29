@@ -1,16 +1,129 @@
 <?php
 /**
- * Redirecionamento para valida.php (compatibilidade com chamadas antigas)
- * Este arquivo redireciona para valida.php mantendo os parâmetros
+ * MaxiPTV - download.php
+ * Recebe código via GET, valida no JSONBin e REDIRECT para link do APK
+ * Uso: ?code=2011
+ * O downloader Android usa isso para baixar o APK automaticamente
  */
 
-// Redirecionar para valida.php mantendo query string
-$queryString = $_SERVER['QUERY_STRING'] ?? '';
-if ($queryString) {
-    header("Location: /valida.php?$queryString", true, 301);
-} else {
-    header("Location: /valida.php", true, 301);
-}
-exit;
-?>
+// Configurações JSONBin
+$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
+$apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
 
+// URL fixa do APK no GitHub
+$link_apk = "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk";
+
+// Obter código da URL
+$code = $_GET['code'] ?? $_GET['codigo'] ?? '';
+
+if (!$code) {
+    http_response_code(400);
+    die("Codigo nao fornecido");
+}
+
+// Validar formato do código (4 dígitos)
+if (!preg_match('/^\d{4}$/', $code)) {
+    http_response_code(400);
+    die("Codigo invalido. Digite um codigo de 4 digitos.");
+}
+
+// Buscar dados do JSONBin
+try {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $jsonbin_url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 200 || !$response) {
+        http_response_code(500);
+        die("Erro ao conectar com o servidor.");
+    }
+
+    $data = json_decode($response, true);
+    
+    if (!isset($data['record'])) {
+        http_response_code(500);
+        die("Erro ao ler dados do servidor.");
+    }
+
+    $codigos = $data['record'];
+} catch (Exception $e) {
+    http_response_code(500);
+    die("Erro interno: " . $e->getMessage());
+}
+
+// Verificar se código existe
+if (!isset($codigos[$code])) {
+    http_response_code(404);
+    die("Codigo invalido. Codigo nao encontrado.");
+}
+
+if (!is_array($codigos[$code])) {
+    http_response_code(400);
+    die("Codigo invalido - dados corrompidos.");
+}
+
+$user = $codigos[$code];
+
+// Verificar se código expirou (6 horas após criação)
+if (isset($user['createdAt'])) {
+    $createdAt = (int)$user['createdAt'];
+    $sixHoursInMs = 6 * 60 * 60 * 1000; // 6 horas em milissegundos
+    $validUntil = $createdAt + $sixHoursInMs;
+    $currentTime = round(microtime(true) * 1000); // timestamp em milissegundos
+    
+    if ($currentTime > $validUntil) {
+        http_response_code(403);
+        die("Codigo expirado. O codigo e valido por 6 horas apos a geracao.");
+    }
+}
+
+// Verificar se usuário expirou (formato DD/MM/YYYY)
+if (isset($user['expiryDate'])) {
+    $dataExpiracao = $user['expiryDate'];
+    
+    if (isExpired($dataExpiracao)) {
+        http_response_code(403);
+        die("Usuario expirado ou inativo");
+    }
+}
+
+// Usar apkUrl do código ou link fixo como fallback
+$apkUrl = $user['apkUrl'] ?? $link_apk;
+
+// REDIRECT para o APK (o downloader vai baixar automaticamente)
+header("Location: $apkUrl", true, 302);
+exit;
+
+/**
+ * Verificar se data expirou (formato DD/MM/YYYY)
+ */
+function isExpired($expiryDate) {
+    try {
+        if (empty($expiryDate)) return false;
+        
+        // Converter data do formato DD/MM/YYYY para timestamp
+        $parts = explode('/', $expiryDate);
+        if (count($parts) !== 3) return true;
+        
+        $day = (int)$parts[0];
+        $month = (int)$parts[1];
+        $year = (int)$parts[2];
+        
+        $expiryTime = mktime(23, 59, 59, $month, $day, $year);
+        $currentTime = time();
+        
+        return $currentTime > $expiryTime;
+    } catch (Exception $e) {
+        return true;
+    }
+}
+?>
