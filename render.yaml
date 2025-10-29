@@ -2,6 +2,7 @@ services:
   - type: web
     name: maxiptv-update
     env: docker
+    dockerfilePath: Dockerfile
     plan: free
     envVars:
       - key: PORT
