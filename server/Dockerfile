@@ -12,5 +12,6 @@ COPY valida.php index.php api.php download.php ./
 EXPOSE 10000
 
 # Comando para iniciar servidor PHP
-CMD php -S 0.0.0.0:${PORT:-10000} -t .
+# Render passa PORT como variável de ambiente, usar 10000 como fallback
+CMD sh -c "php -S 0.0.0.0:\${PORT:-10000} -t ."
 
