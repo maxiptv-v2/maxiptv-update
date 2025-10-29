@@ -159,7 +159,24 @@ if (isset($user['expiryDate'])) {
 // SEMPRE usar link fixo (códigos antigos podem ter URL errada)
 $apkUrl = $link_apk;
 
-// Retornar dados para login automático
+// TUDO VALIDADO! Agora verificar se é downloader ou app
+
+// Verificar se é um downloader Android (precisa de redirect direto para APK após validação)
+$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+$isDownloader = (
+    strpos($userAgent, 'DownloadManager') !== false ||
+    strpos($userAgent, 'Download') !== false ||
+    isset($_GET['download']) ||
+    isset($_GET['redirect'])
+);
+
+if ($isDownloader) {
+    // Downloader: código já foi validado acima, fazer redirect direto para o APK
+    header("Location: $apkUrl", true, 302);
+    exit;
+}
+
+// App MaxiPTV: retornar JSON com credenciais para login automático
 echo json_encode([
     "status" => "ok",
     "usuario" => $user['username'] ?? '',
