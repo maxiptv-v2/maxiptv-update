@@ -100,7 +100,7 @@ try {
 }
 
 // Verificar se código existe
-if (!isset($codigos[$code]) || !is_array($codigos[$code])) {
+if (!isset($codigos[$code])) {
     // Log para debug (verificar chaves disponíveis)
     $availableKeys = array_keys($codigos);
     $codeKeys = array_values(array_filter($availableKeys, function($key) {
@@ -110,6 +110,14 @@ if (!isset($codigos[$code]) || !is_array($codigos[$code])) {
     echo json_encode([
         "status" => "erro",
         "mensagem" => "Codigo invalido. Codigos disponiveis: " . implode(", ", array_slice($codeKeys, 0, 10))
+    ]);
+    exit;
+}
+
+if (!is_array($codigos[$code])) {
+    echo json_encode([
+        "status" => "erro",
+        "mensagem" => "Codigo invalido - dados corrompidos."
     ]);
     exit;
 }
