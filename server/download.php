@@ -96,11 +96,14 @@ if (isset($user['expiryDate'])) {
     }
 }
 
-// Usar apkUrl do código ou link fixo como fallback
-$apkUrl = $user['apkUrl'] ?? $link_apk;
+// SEMPRE usar link fixo (códigos antigos podem ter URL errada)
+$apkUrl = $link_apk;
 
-// REDIRECT para o APK (o downloader vai baixar automaticamente)
-header("Location: $apkUrl", true, 302);
+// REDIRECT para o APK (302 Found - redirect temporário)
+// O downloader Android precisa de redirect HTTP para baixar
+header("HTTP/1.1 302 Found");
+header("Location: $apkUrl");
+header("Content-Type: text/plain");
 exit;
 
 /**
