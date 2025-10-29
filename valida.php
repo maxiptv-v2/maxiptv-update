@@ -78,9 +78,9 @@ error_log("Valida.php - Codigo buscado: $code");
 error_log("Valida.php - Chaves disponiveis: " . implode(", ", $availableKeys));
 
 // Filtrar apenas códigos de 4 dígitos
-$codeKeys = array_filter($availableKeys, function($key) {
+$codeKeys = array_values(array_filter($availableKeys, function($key) {
     return preg_match('/^\d{4}$/', $key);
-});
+}));
 error_log("Valida.php - Codigos de 4 digitos encontrados: " . implode(", ", $codeKeys));
 
 // Verificar se código existe
