@@ -14,7 +14,7 @@ Na página de configuração do serviço, preencha:
 
 ### Name:
 ```
-maxiptv-downloader
+maxiptv-update
 ```
 
 ### Environment:
@@ -26,6 +26,23 @@ Docker
 ```
 . (deixe vazio ou ponha um ponto)
 ```
+
+### Docker Build Context Directory:
+```
+. (deixe vazio ou ponha um ponto)
+```
+**IMPORTANTE:** 
+- **NÃO use** `server/`
+- Se estiver configurado como `server/`, **MUDE para** `.` (ponto) ou deixe vazio
+
+### Dockerfile Path:
+```
+Dockerfile
+```
+**IMPORTANTE:** 
+- Certifique-se de que está escrito exatamente como `Dockerfile` (com D maiúsculo, sem ponto antes)
+- **NÃO use** `server/.dockerfile` ou qualquer caminho com `server/`
+- Se estiver configurado como `server/.dockerfile`, **MUDE para** `Dockerfile`
 
 ### Build Command:
 ```
