@@ -12,5 +12,5 @@ COPY valida.php index.php api.php download.php ./
 EXPOSE 10000
 
 # Comando para iniciar servidor PHP
-CMD php -S 0.0.0.0:$PORT -t .
+CMD php -S 0.0.0.0:${PORT:-10000} -t .
 
