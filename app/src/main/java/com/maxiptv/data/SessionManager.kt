@@ -12,6 +12,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.encodeToJsonElement
 import okhttp3.*
@@ -770,16 +772,16 @@ object SessionManager {
                             jsonResponse.record.forEach { (key, value) ->
                                 if (key.matches(Regex("^\\d{4}$"))) {
                                     try {
-                                        // Converter JsonElement para string e depois decodificar
-                                        val jsonString = value.toString()
-                                        val code = json.decodeFromString<com.maxiptv.data.ClientCode>(jsonString)
-                                        if (code.username == username) {
+                                        // Converter JsonElement para ClientCode corretamente
+                                        val codeObject = value.jsonObject
+                                        val codeUsername = codeObject["username"]?.jsonPrimitive?.contentOrNull
+                                        
+                                        if (codeUsername == username) {
                                             Log.d(TAG, "✅ Código existente encontrado: $key para $username")
                                             return@withContext key
                                         }
                                     } catch (e: Exception) {
-                                        // Ignorar se não conseguir decodificar
-                                        Log.d(TAG, "⚠️ Erro ao decodificar código $key: ${e.message}")
+                                        Log.w(TAG, "⚠️ Erro ao decodificar código $key: ${e.message}")
                                     }
                                 }
                             }
