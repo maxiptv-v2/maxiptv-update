@@ -77,7 +77,7 @@ object ClientCodeManager {
         
         // Buscar código existente para manter createdAt se ainda válido
         val existingClientCode = SessionManager.getClientCode(code)
-        val isNewCode = existingClientCode == null || existingClientCode.username != user.username
+        val isNewCode = existingClientCode == null || existingClientCode.username != user.username || existingCode == null
         
         val clientCode = ClientCode(
             username = user.username,
@@ -85,10 +85,8 @@ object ClientCodeManager {
             apiUrl = user.apiUrl,
             expiryDate = user.expiryDate, // formato DD/MM/YYYY
             apkUrl = apkUrl,
-            createdAt = if (isNewCode) System.currentTimeMillis() else existingClientCode.createdAt // Novo código = novo timestamp, código existente = manter timestamp
+            createdAt = if (isNewCode) System.currentTimeMillis() else (existingClientCode?.createdAt ?: System.currentTimeMillis()) // Novo código = novo timestamp, código existente = manter timestamp
         )
-        
-        val isNewCode = existingCode == null || (existingCode != null && code != existingCode)
         android.util.Log.i("ClientCodeManager", "🔑 ${if (isNewCode) "Gerando novo código" else "Mantendo código existente"}: $code para ${user.username}")
         if (!isNewCode && existingClientCode != null) {
             val sixHoursInMs = 6 * 60 * 60 * 1000L
