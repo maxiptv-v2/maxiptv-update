@@ -81,7 +81,7 @@ object ClientCodeManager {
      */
     suspend fun markSimpleCodeAsUsed(code: String, deviceName: String): Boolean {
         return try {
-            val simpleCode = SessionManager.getSimpleCode(code)
+            val simpleCode = SessionManager.getClientCode(code)
             if (simpleCode == null) {
                 android.util.Log.e("ClientCodeManager", "❌ Código simples não encontrado: $code")
                 return false

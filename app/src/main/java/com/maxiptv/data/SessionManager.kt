@@ -16,6 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.decodeFromJsonElement
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -593,28 +594,59 @@ object SessionManager {
      * Obter código simples (FUNÇÃO ANTIGA)
      */
     @Deprecated("Códigos agora são objeto direto no JSONBin")
-    suspend fun getSimpleCode(code: String): com.maxiptv.data.ClientCode? = withContext(Dispatchers.IO) {
+    /**
+     * Buscar código do JSONBin (usando nova estrutura - códigos como objeto direto)
+     */
+    suspend fun getClientCode(code: String): com.maxiptv.data.ClientCode? = withContext(Dispatchers.IO) {
         try {
-            // Função antiga - não usar mais
-            return@withContext null
-            /*
-            Log.d(TAG, "🔍 Buscando código simples: $code")
-            val database = fetchSessions() ?: return@withContext null
+            Log.d(TAG, "🔍 Buscando código: $code")
             
-            val simpleCode = database.simpleCodes[code]
-            if (simpleCode != null) {
-                Log.d(TAG, "✅ Código simples encontrado: $code")
-            } else {
-                Log.w(TAG, "❌ Código simples não encontrado: $code")
+            val request = Request.Builder()
+                .url("$JSONBIN_BASE_URL/b/$JSONBIN_BIN_ID/latest")
+                .addHeader("X-Master-Key", JSONBIN_API_KEY)
+                .get()
+                .build()
+            
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (body != null) {
+                        try {
+                            @kotlinx.serialization.Serializable
+                            data class JsonBinResponse(val record: Map<String, kotlinx.serialization.json.JsonElement>)
+                            
+                            val jsonResponse = json.decodeFromString<JsonBinResponse>(body)
+                            val codeValue = jsonResponse.record[code]
+                            
+                            if (codeValue != null) {
+                                // Decodificar o código
+                                val clientCode = json.decodeFromJsonElement<com.maxiptv.data.ClientCode>(codeValue)
+                                Log.d(TAG, "✅ Código encontrado: $code para ${clientCode.username}")
+                                return@withContext clientCode
+                            } else {
+                                Log.w(TAG, "❌ Código não encontrado: $code")
+                                return@withContext null
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "❌ Erro ao decodificar código: ${e.message}", e)
+                            return@withContext null
+                        }
+                    }
+                }
             }
-            
-            return@withContext simpleCode
-            */
+            return@withContext null
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Erro ao buscar código simples: ${e.message}", e)
+            Log.e(TAG, "❌ Erro ao buscar código: ${e.message}", e)
             return@withContext null
         }
     }
+    
+    /**
+     * Função antiga - mantida para compatibilidade
+     * @deprecated Use getClientCode em vez disso
+     */
+    @Deprecated("Use getClientCode")
+    suspend fun getSimpleCode(code: String): com.maxiptv.data.ClientCode? = getClientCode(code)
     
     /**
      * Obter todos os códigos simples (FUNÇÃO ANTIGA)
