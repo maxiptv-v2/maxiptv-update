@@ -93,22 +93,17 @@ try {
     exit;
 }
 
-// Log para debug (verificar chaves disponíveis)
-$availableKeys = array_keys($codigos);
-error_log("Valida.php - Codigo buscado: $code");
-error_log("Valida.php - Chaves disponiveis: " . implode(", ", $availableKeys));
-
-// Filtrar apenas códigos de 4 dígitos
-$codeKeys = array_values(array_filter($availableKeys, function($key) {
-    return preg_match('/^\d{4}$/', $key);
-}));
-error_log("Valida.php - Codigos de 4 digitos encontrados: " . implode(", ", $codeKeys));
-
 // Verificar se código existe
-if (!isset($codigos[$code])) {
+if (!isset($codigos[$code]) || !is_array($codigos[$code])) {
+    // Log para debug (verificar chaves disponíveis)
+    $availableKeys = array_keys($codigos);
+    $codeKeys = array_values(array_filter($availableKeys, function($key) {
+        return preg_match('/^\d{4}$/', $key);
+    }));
+    
     echo json_encode([
         "status" => "erro",
-        "mensagem" => "Codigo invalido. Codigos disponiveis: " . implode(", ", $codeKeys)
+        "mensagem" => "Codigo invalido. Codigos disponiveis: " . implode(", ", array_slice($codeKeys, 0, 10))
     ]);
     exit;
 }
