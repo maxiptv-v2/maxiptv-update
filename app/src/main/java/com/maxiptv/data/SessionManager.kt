@@ -809,8 +809,27 @@ object SessionManager {
                                         val codeUsername = codeObject["username"]?.jsonPrimitive?.contentOrNull
                                         
                                         if (codeUsername == username) {
-                                            Log.d(TAG, "✅ Código existente encontrado: $key para $username")
-                                            return@withContext key
+                                            // Verificar se o código ainda é válido (menos de 6 horas)
+                                            val createdAtJson = codeObject["createdAt"]?.jsonPrimitive?.contentOrNull
+                                            val createdAt = createdAtJson?.toLongOrNull() ?: 0L
+                                            
+                                            if (createdAt > 0) {
+                                                val sixHoursInMs = 6 * 60 * 60 * 1000L // 6 horas
+                                                val validUntil = createdAt + sixHoursInMs
+                                                val currentTime = System.currentTimeMillis()
+                                                
+                                                if (currentTime > validUntil) {
+                                                    Log.d(TAG, "⏰ Código $key expirado para $username (criado há mais de 6 horas)")
+                                                    // Código expirou, não retornar (será gerado novo)
+                                                } else {
+                                                    Log.d(TAG, "✅ Código existente encontrado e válido: $key para $username")
+                                                    return@withContext key
+                                                }
+                                            } else {
+                                                // Código antigo sem createdAt - considerar válido por compatibilidade
+                                                Log.d(TAG, "✅ Código existente encontrado (sem timestamp): $key para $username")
+                                                return@withContext key
+                                            }
                                         }
                                     } catch (e: Exception) {
                                         Log.w(TAG, "⚠️ Erro ao decodificar código $key: ${e.message}")

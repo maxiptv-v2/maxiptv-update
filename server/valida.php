@@ -124,14 +124,33 @@ if (!is_array($codigos[$code])) {
 
 $user = $codigos[$code];
 
-// Verificar se expirou (formato DD/MM/YYYY)
+// Verificar se código expirou (6 horas após criação)
+if (isset($user['createdAt'])) {
+    $createdAt = (int)$user['createdAt'];
+    $sixHoursInMs = 6 * 60 * 60 * 1000; // 6 horas em milissegundos
+    $validUntil = $createdAt + $sixHoursInMs;
+    $currentTime = round(microtime(true) * 1000); // timestamp em milissegundos
+    
+    if ($currentTime > $validUntil) {
+        echo json_encode([
+            "status" => "erro",
+            "mensagem" => "Codigo expirado. O codigo e valido por 6 horas apos a geracao."
+        ]);
+        exit;
+    }
+} else {
+    // Se não tem createdAt, assume código antigo - validar apenas pela data de expiração do usuário
+    // (compatibilidade com códigos antigos)
+}
+
+// Verificar se usuário expirou (formato DD/MM/YYYY)
 if (isset($user['expiryDate'])) {
     $dataExpiracao = $user['expiryDate'];
     
     if (isExpired($dataExpiracao)) {
         echo json_encode([
             "status" => "erro",
-            "mensagem" => "Codigo expirado ou inativo"
+            "mensagem" => "Usuario expirado ou inativo"
         ]);
         exit;
     }

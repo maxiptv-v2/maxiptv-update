@@ -19,7 +19,8 @@ data class ClientCode(
     val password: String,
     val apiUrl: String,
     val expiryDate: String, // formato DD/MM/YYYY
-    val apkUrl: String
+    val apkUrl: String,
+    val createdAt: Long = System.currentTimeMillis() // timestamp da criação (para validar 6 horas)
 )
 
 object ClientCodeManager {
@@ -41,23 +42,60 @@ object ClientCodeManager {
      * Criar código simples para usuário
      */
     suspend fun createSimpleCode(user: UserAccount): String {
-        // Verificar se já existe código para este usuário
+        // Verificar se já existe código válido para este usuário (menos de 6 horas)
         val existingCode = SessionManager.getClientCodeForUser(user.username)
         
-        val code = existingCode ?: generateSimpleCode()
+        // Se já existe código válido, manter o mesmo
+        val code = if (existingCode != null) {
+            // Verificar se o código ainda está válido
+            val existingClientCode = SessionManager.getClientCode(existingCode)
+            if (existingClientCode != null) {
+                val sixHoursInMs = 6 * 60 * 60 * 1000L // 6 horas
+                val validUntil = existingClientCode.createdAt + sixHoursInMs
+                val currentTime = System.currentTimeMillis()
+                
+                if (currentTime <= validUntil) {
+                    // Código ainda válido, manter o mesmo
+                    android.util.Log.i("ClientCodeManager", "✅ Mantendo código existente $existingCode (válido por mais ${(validUntil - currentTime) / 1000 / 60} minutos)")
+                    existingCode
+                } else {
+                    // Código expirou, gerar novo
+                    android.util.Log.i("ClientCodeManager", "⏰ Código $existingCode expirado, gerando novo código")
+                    generateSimpleCode()
+                }
+            } else {
+                // Não conseguiu buscar código, gerar novo
+                generateSimpleCode()
+            }
+        } else {
+            // Não existe código, gerar novo
+            generateSimpleCode()
+        }
         
         // URL do APK no GitHub (sempre a versão mais recente)
         val apkUrl = "https://github.com/maxiptv-v2/maxiptv-update/releases/latest/download/maxiptv-release.apk"
+        
+        // Buscar código existente para manter createdAt se ainda válido
+        val existingClientCode = SessionManager.getClientCode(code)
+        val isNewCode = existingClientCode == null || existingClientCode.username != user.username
         
         val clientCode = ClientCode(
             username = user.username,
             password = user.password,
             apiUrl = user.apiUrl,
             expiryDate = user.expiryDate, // formato DD/MM/YYYY
-            apkUrl = apkUrl
+            apkUrl = apkUrl,
+            createdAt = if (isNewCode) System.currentTimeMillis() else existingClientCode.createdAt // Novo código = novo timestamp, código existente = manter timestamp
         )
         
-        android.util.Log.i("ClientCodeManager", "🔑 ${if (existingCode != null) "Usando código existente" else "Gerando novo código"}: $code para ${user.username}")
+        val isNewCode = existingCode == null || (existingCode != null && code != existingCode)
+        android.util.Log.i("ClientCodeManager", "🔑 ${if (isNewCode) "Gerando novo código" else "Mantendo código existente"}: $code para ${user.username}")
+        if (!isNewCode && existingClientCode != null) {
+            val sixHoursInMs = 6 * 60 * 60 * 1000L
+            val validUntil = existingClientCode.createdAt + sixHoursInMs
+            val minutesLeft = (validUntil - System.currentTimeMillis()) / 1000 / 60
+            android.util.Log.d("ClientCodeManager", "   Código válido por mais ${minutesLeft} minutos")
+        }
         android.util.Log.d("ClientCodeManager", "   Username: ${user.username}")
         android.util.Log.d("ClientCodeManager", "   Password: ${user.password}")
         android.util.Log.d("ClientCodeManager", "   API: ${user.apiUrl}")
