@@ -72,8 +72,8 @@ object ClientCodeManager {
             generateSimpleCode()
         }
         
-        // URL do APK no GitHub (sempre a versão mais recente)
-        val apkUrl = "https://github.com/maxiptv-v2/maxiptv-update/releases/latest/download/maxiptv-release.apk"
+        // URL do APK no GitHub (raw.githubusercontent para download direto)
+        val apkUrl = "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk"
         
         // Buscar código existente para manter createdAt se ainda válido
         val existingClientCode = SessionManager.getClientCode(code)
