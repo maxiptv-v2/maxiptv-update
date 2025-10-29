@@ -12,8 +12,9 @@
 
 ## 1️⃣ Criar Novo Serviço
 
-1. Clique em **"New +"** → **"Web Service"**
-2. Conecte seu repositório GitHub:
+1. Clique em **"New +"** (botão no canto superior direito)
+2. Selecione **"Web Service"** (primeira opção)
+3. Conecte seu repositório GitHub:
    - Procure por: `maxiptv-v2/maxiptv-update`
    - Clique em **"Connect"**
 

@@ -172,7 +172,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             if (code.length == 4 && code.all { it.isDigit() }) {
               android.util.Log.i("LoginScreen", "🔑 Buscando credenciais do código: $code")
               
-              val url = "https://maxiptv-update.onrender.com/download.php?code=$code"
+              val url = "https://maxiptv-update-1.onrender.com/?code=$code"
               val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
               connection.requestMethod = "GET"
               connection.connect()
@@ -181,7 +181,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 val response = connection.inputStream.bufferedReader().use { it.readText() }
                 val json = org.json.JSONObject(response)
                 
-                if (json.optBoolean("success", false)) {
+                if (json.getString("status") == "ok") {
                   val user = json.getString("usuario")
                   val pass = json.getString("senha")
                   val api = json.getString("api")
@@ -195,7 +195,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                   isLoading = false
                   return@launch
                 } else {
-                  errorMessage = "Código inválido"
+                  val mensagem = json.optString("mensagem", "Código inválido")
+                  errorMessage = mensagem
+                  android.util.Log.e("LoginScreen", "❌ Erro no código: $mensagem")
                   isLoading = false
                   return@launch
                 }
