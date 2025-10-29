@@ -37,40 +37,61 @@ if (!preg_match('/^\d{4}$/', $code)) {
 }
 
 // Buscar dados do JSONBin
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $jsonbin_url);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
-]);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+try {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $jsonbin_url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
 
-if ($httpCode !== 200 || !$response) {
+    if ($httpCode !== 200 || !$response) {
+        error_log("JSONBin Error: HTTP $httpCode - $curlError");
+        echo json_encode([
+            "status" => "erro",
+            "mensagem" => "Erro ao conectar com o servidor. HTTP: $httpCode"
+        ]);
+        exit;
+    }
+
+    // Decodificar resposta
+    $data = json_decode($response, true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        error_log("JSON Decode Error: " . json_last_error_msg());
+        echo json_encode([
+            "status" => "erro",
+            "mensagem" => "Erro ao decodificar resposta do servidor."
+        ]);
+        exit;
+    }
+
+    if (!isset($data['record'])) {
+        error_log("JSONBin Response missing 'record': " . print_r($data, true));
+        echo json_encode([
+            "status" => "erro",
+            "mensagem" => "Erro ao ler dados do servidor - record nao encontrado."
+        ]);
+        exit;
+    }
+
+    // Buscar código no objeto direto (não array, não simpleCodes)
+    $codigos = $data['record'];
+} catch (Exception $e) {
+    error_log("Exception em valida.php: " . $e->getMessage());
     echo json_encode([
         "status" => "erro",
-        "mensagem" => "Erro ao conectar com o servidor. Tente novamente."
+        "mensagem" => "Erro interno: " . $e->getMessage()
     ]);
     exit;
 }
-
-// Decodificar resposta
-$data = json_decode($response, true);
-
-if (!isset($data['record'])) {
-    echo json_encode([
-        "status" => "erro",
-        "mensagem" => "Erro ao ler dados do servidor."
-    ]);
-    exit;
-}
-
-// Buscar código no objeto direto (não array, não simpleCodes)
-$codigos = $data['record'];
 
 // Log para debug (verificar chaves disponíveis)
 $availableKeys = array_keys($codigos);

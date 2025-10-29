@@ -42478,7 +42478,9 @@ kotlinx.serialization.json.JsonArray:
     public boolean add(kotlinx.serialization.json.JsonElement)
     public kotlinx.serialization.json.JsonElement remove(int)
     public kotlinx.serialization.json.JsonElement set(int,kotlinx.serialization.json.JsonElement)
-kotlinx.serialization.json.JsonArrayBuilder
+kotlinx.serialization.json.JsonArrayBuilder:
+    public final boolean add(kotlinx.serialization.json.JsonElement)
+    public final boolean addAll(java.util.Collection)
 kotlinx.serialization.json.JsonArraySerializer$JsonArrayDescriptor:
     public static synthetic void getSerialName$annotations()
 kotlinx.serialization.json.JsonBuilder:
@@ -42541,9 +42543,7 @@ kotlinx.serialization.json.JsonElementKt:
     public static final java.lang.Double getDoubleOrNull(kotlinx.serialization.json.JsonPrimitive)
     public static final java.lang.Float getFloatOrNull(kotlinx.serialization.json.JsonPrimitive)
     public static final java.lang.Integer getIntOrNull(kotlinx.serialization.json.JsonPrimitive)
-    public static final kotlinx.serialization.json.JsonArray getJsonArray(kotlinx.serialization.json.JsonElement)
     public static final kotlinx.serialization.json.JsonNull getJsonNull(kotlinx.serialization.json.JsonElement)
-    public static final kotlinx.serialization.json.JsonObject getJsonObject(kotlinx.serialization.json.JsonElement)
     public static final java.lang.Long getLongOrNull(kotlinx.serialization.json.JsonPrimitive)
     private static final java.lang.Object mapExceptions(kotlin.jvm.functions.Function0)
     private static final java.lang.Object mapExceptionsToNull(kotlin.jvm.functions.Function0)
@@ -75867,6 +75867,7 @@ kotlin.reflect.jvm.internal.impl.types.error.ErrorUtils:
     public static boolean isErrorClass()
     public static java.lang.String unresolvedTypeAsItIs()
 kotlin.reflect.jvm.internal.impl.types.extensions.TypeAttributeTranslators:
+    public static kotlinx.serialization.json.JsonArray build()
     public static okhttp3.CertificatePinner build()
     public static java.util.List getTranslators()
 kotlin.reflect.jvm.internal.impl.types.model.ArgumentList:
@@ -77647,6 +77648,7 @@ kotlinx.serialization.json.JsonArray:
     public final int getSize()
     public static int indexOf$6()
     public static int lastIndexOf$6()
+kotlinx.serialization.json.JsonArrayBuilder
 kotlinx.serialization.json.JsonArraySerializer:
     public static kotlinx.serialization.json.JsonArray deserialize()
     public static void serialize$12()

@@ -9,6 +9,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.encodeToJsonElement
 import okhttp3.*
@@ -215,16 +218,44 @@ object SessionManager {
                 Log.d(TAG, "📥 Resposta JSONBin recebida (${body.length} chars)")
                 Log.d(TAG, "📄 Primeiros 500 chars: ${body.take(500)}")
                 
-                // ✅ PARSING ROBUSTO usando Kotlin Serialization
+                // ✅ PARSING ROBUSTO - extrair apenas sessions e users (ignorar códigos)
                 try {
                     // JSONBin retorna: { "record": {...}, "metadata": {...} }
                     @kotlinx.serialization.Serializable
-                    data class JsonBinResponse(val record: SessionsDatabase)
+                    data class JsonBinResponse(val record: Map<String, kotlinx.serialization.json.JsonElement>)
                     
-                    val response = json.decodeFromString<JsonBinResponse>(body)
-                    val database = response.record
+                    val jsonResponse = json.decodeFromString<JsonBinResponse>(body)
+                    val recordMap = jsonResponse.record
+                    
+                    // Extrair apenas sessions e users (ignorar códigos de 4 dígitos)
+                    val sessionsJson = recordMap["sessions"]?.jsonObject ?: buildJsonObject { }
+                    val usersJson = recordMap["users"]?.jsonArray ?: kotlinx.serialization.json.buildJsonArray { }
+                    
+                    // Decodificar sessions
+                    val sessions = mutableMapOf<String, ActiveSession>()
+                    sessionsJson.forEach { (key, value) ->
+                        try {
+                            sessions[key] = json.decodeFromString(value.toString())
+                        } catch (e: Exception) {
+                            Log.w(TAG, "⚠️ Erro ao decodificar sessão $key: ${e.message}")
+                        }
+                        // Ignorar códigos (chaves de 4 dígitos) - eles não são sessions
+                    }
+                    
+                    // Decodificar users
+                    val users = mutableListOf<GlobalUser>()
+                    usersJson.forEach { userElement ->
+                        try {
+                            users.add(json.decodeFromString(userElement.toString()))
+                        } catch (e: Exception) {
+                            Log.w(TAG, "⚠️ Erro ao decodificar usuário: ${e.message}")
+                        }
+                    }
+                    
+                    val database = SessionsDatabase(sessions, users)
                     
                     Log.i(TAG, "✅ Sessões carregadas: ${database.sessions.size} ativas, ${database.users.size} usuários")
+                    Log.d(TAG, "🔑 Códigos preservados no record (não processados aqui)")
                     return database
                 } catch (e: Exception) {
                     Log.e(TAG, "❌ Erro ao decodificar JSON: ${e.message}")
