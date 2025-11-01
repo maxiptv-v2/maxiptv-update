@@ -3,8 +3,19 @@
  * MaxiPTV - index.php
  * Recebe código via GET, busca no JSONBin e retorna JSON com dados
  * Uso: ?code=2011
+ * Se não tiver código, retorna página de boas-vindas ou valida.php
  */
 
+// Se não tiver código, incluir valida.php (teste simples)
+$code = $_GET['code'] ?? $_GET['codigo'] ?? '';
+
+if (!$code) {
+    // Sem código: incluir valida.php que retorna {"status":"ok"}
+    require_once __DIR__ . '/valida.php';
+    exit;
+}
+
+// Com código: processar normalmente
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
@@ -16,17 +27,6 @@ $link_apk = "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/ma
 // Configurações JSONBin
 $jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
 $apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
-
-// Obter código da URL
-$code = $_GET['code'] ?? $_GET['codigo'] ?? '';
-
-if (!$code) {
-    echo json_encode([
-        "status" => "erro",
-        "mensagem" => "Codigo nao fornecido"
-    ]);
-    exit;
-}
 
 // Validar formato do código (4 dígitos)
 if (!preg_match('/^\d{4}$/', $code)) {
