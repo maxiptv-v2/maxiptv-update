@@ -28,9 +28,15 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit) {
-  var username by remember { mutableStateOf("") }
-  var password by remember { mutableStateOf("") }
+fun LoginScreen(
+  onLoginSuccess: () -> Unit,
+  initialUsuario: String = "",
+  initialSenha: String = "",
+  initialApi: String = "",
+  hasInitialCredentials: Boolean = false
+) {
+  var username by remember { mutableStateOf(initialUsuario) }
+  var password by remember { mutableStateOf(initialSenha) }
   var code by remember { mutableStateOf("") }
   var passwordVisible by remember { mutableStateOf(false) }
   var isLoading by remember { mutableStateOf(false) }
@@ -42,9 +48,25 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
   // 🛡️ PROTEÇÃO MÁXIMA: Não criar NENHUM usuário automaticamente
   // Todos os usuários devem ser adicionados APENAS pelo painel admin (5 toques no logo)
   // Isso garante que o JSONBin NUNCA será sobrescrito e os usuários cadastrados são preservados
-  LaunchedEffect(Unit) {
+  
+  // 🔄 LOGIN AUTOMÁTICO se vier do downloader com credenciais
+  LaunchedEffect(hasInitialCredentials) {
     android.util.Log.i("LoginScreen", "🔐 LoginScreen carregada")
-    android.util.Log.i("LoginScreen", "👥 Usuários devem ser gerenciados pelo painel admin")
+    
+    if (hasInitialCredentials && initialUsuario.isNotBlank() && initialSenha.isNotBlank()) {
+      android.util.Log.i("LoginScreen", "🔑 Credenciais recebidas do downloader!")
+      android.util.Log.i("LoginScreen", "   Usuario: $initialUsuario")
+      android.util.Log.i("LoginScreen", "   API: $initialApi")
+      
+      // Fazer login automático
+      isLoading = true
+      doLogin(initialUsuario, initialSenha, initialApi, onLoginSuccess) { msg ->
+        errorMessage = msg
+        isLoading = false
+      }
+    } else {
+      android.util.Log.i("LoginScreen", "👥 Usuários devem ser gerenciados pelo painel admin")
+    }
   }
   
   Column(

@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
         }
         
         Surface(modifier = Modifier.fillMaxSize()) {
-          HomeNav(nav)
+          HomeNav(nav, this@MainActivity)
         }
       }
     }

@@ -13,9 +13,15 @@ import com.maxiptv.data.UserManager
 import com.maxiptv.data.SessionManager
 
 @Composable
-fun HomeNav(nav: NavHostController) {
+fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivity? = null) {
   // 🔐 VERIFICAR SE JÁ EXISTE USUÁRIO LOGADO ao iniciar
   var initialRoute by remember { mutableStateOf<String?>(null) }
+  
+  // Ler credenciais do Intent (se vier do downloader)
+  val intentUsuario = activity?.intent?.getStringExtra("usuario") ?: ""
+  val intentSenha = activity?.intent?.getStringExtra("senha") ?: ""
+  val intentApi = activity?.intent?.getStringExtra("api") ?: ""
+  val hasIntentCredentials = intentUsuario.isNotBlank() && intentSenha.isNotBlank()
   
   LaunchedEffect(Unit) {
     android.util.Log.i("HomeNav", "🔍 Verificando sessão existente...")
@@ -65,11 +71,17 @@ fun HomeNav(nav: NavHostController) {
     startDestination = initialRoute!!
   ) {
     composable("login") { 
-      LoginScreen(onLoginSuccess = { 
-        nav.navigate("home") {
-          popUpTo("login") { inclusive = true }
-        }
-      }) 
+      LoginScreen(
+        onLoginSuccess = { 
+          nav.navigate("home") {
+            popUpTo("login") { inclusive = true }
+          }
+        },
+        initialUsuario = intentUsuario,
+        initialSenha = intentSenha,
+        initialApi = intentApi,
+        hasInitialCredentials = hasIntentCredentials
+      ) 
     }
     composable("home") { HomeScreen(nav) }
     composable("live") { LiveScreen(nav) }
