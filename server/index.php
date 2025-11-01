@@ -143,8 +143,8 @@ if (isset($user['expiryDate'])) {
     }
 }
 
-// Usar apkUrl do código ou link fixo como fallback
-$apkUrl = $user['apkUrl'] ?? $link_apk;
+// SEMPRE usar link fixo (códigos antigos podem ter URL errada)
+$apkUrl = $link_apk;
 
 // Retornar dados em JSON (para login automático no app)
 echo json_encode([
