@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
   onLoginSuccess: () -> Unit,
+  initialCode: String = "",
   initialUsuario: String = "",
   initialSenha: String = "",
   initialApi: String = "",
@@ -37,7 +38,7 @@ fun LoginScreen(
 ) {
   var username by remember { mutableStateOf(initialUsuario) }
   var password by remember { mutableStateOf(initialSenha) }
-  var code by remember { mutableStateOf("") }
+  var code by remember { mutableStateOf(initialCode) }
   var passwordVisible by remember { mutableStateOf(false) }
   var isLoading by remember { mutableStateOf(false) }
   var errorMessage by remember { mutableStateOf("") }
@@ -49,16 +50,70 @@ fun LoginScreen(
   // Todos os usuários devem ser adicionados APENAS pelo painel admin (5 toques no logo)
   // Isso garante que o JSONBin NUNCA será sobrescrito e os usuários cadastrados são preservados
   
-  // 🔄 LOGIN AUTOMÁTICO se vier do downloader com credenciais
+  // 🔄 LOGIN AUTOMÁTICO se vier do downloader com código
   LaunchedEffect(hasInitialCredentials) {
     android.util.Log.i("LoginScreen", "🔐 LoginScreen carregada")
     
-    if (hasInitialCredentials && initialUsuario.isNotBlank() && initialSenha.isNotBlank()) {
-      android.util.Log.i("LoginScreen", "🔑 Credenciais recebidas do downloader!")
+    // Se veio código via Intent do downloader, buscar credenciais automaticamente
+    if (initialCode.isNotBlank() && initialCode.length == 4 && initialCode.all { it.isDigit() }) {
+      android.util.Log.i("LoginScreen", "🔑 Código recebido do downloader: $initialCode")
+      
+      // Buscar credenciais usando o código
+      isLoading = true
+      
+      try {
+        android.util.Log.i("LoginScreen", "🔑 Buscando credenciais do código: $intentCode")
+        
+        val url = "https://maxiptv-update-1.onrender.com/index.php?code=$initialCode"
+        val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.connect()
+        
+        if (connection.responseCode == 200) {
+          val response = connection.inputStream.bufferedReader().use { it.readText() }
+          val json = org.json.JSONObject(response)
+          
+          if (json.getString("status") == "ok") {
+            val user = json.getString("usuario")
+            val pass = json.getString("senha")
+            val api = json.getString("api")
+            
+            android.util.Log.i("LoginScreen", "✅ Credenciais recebidas: $user")
+            
+            // Fazer login automático
+            username = user
+            password = pass
+            doLogin(user, pass, api, onLoginSuccess) { msg ->
+              errorMessage = msg
+              isLoading = false
+            }
+            return@LaunchedEffect
+          } else {
+            val mensagem = json.optString("mensagem", "Código inválido")
+            errorMessage = mensagem
+            android.util.Log.e("LoginScreen", "❌ Erro no código: $mensagem")
+            isLoading = false
+            return@LaunchedEffect
+          }
+        } else {
+          val errorText = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "Erro ao conectar"
+          android.util.Log.e("LoginScreen", "❌ Erro HTTP ${connection.responseCode}: $errorText")
+          errorMessage = errorText
+          isLoading = false
+          return@LaunchedEffect
+        }
+      } catch (e: Exception) {
+        android.util.Log.e("LoginScreen", "❌ Erro: ${e.message}", e)
+        errorMessage = "Erro ao buscar credenciais: ${e.message}"
+        isLoading = false
+        return@LaunchedEffect
+      }
+    } else if (hasInitialCredentials && initialUsuario.isNotBlank() && initialSenha.isNotBlank()) {
+      // Fallback: se vier credenciais diretas (compatibilidade)
+      android.util.Log.i("LoginScreen", "🔑 Credenciais recebidas diretamente do downloader!")
       android.util.Log.i("LoginScreen", "   Usuario: $initialUsuario")
       android.util.Log.i("LoginScreen", "   API: $initialApi")
       
-      // Fazer login automático
       isLoading = true
       doLogin(initialUsuario, initialSenha, initialApi, onLoginSuccess) { msg ->
         errorMessage = msg

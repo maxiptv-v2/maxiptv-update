@@ -17,10 +17,12 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
   // 🔐 VERIFICAR SE JÁ EXISTE USUÁRIO LOGADO ao iniciar
   var initialRoute by remember { mutableStateOf<String?>(null) }
   
-  // Ler credenciais do Intent (se vier do downloader)
+  // Ler código ou credenciais do Intent (se vier do downloader)
+  val intentCode = activity?.intent?.getStringExtra("code") ?: ""
   val intentUsuario = activity?.intent?.getStringExtra("usuario") ?: ""
   val intentSenha = activity?.intent?.getStringExtra("senha") ?: ""
   val intentApi = activity?.intent?.getStringExtra("api") ?: ""
+  val hasIntentCode = intentCode.isNotBlank() && intentCode.length == 4
   val hasIntentCredentials = intentUsuario.isNotBlank() && intentSenha.isNotBlank()
   
   LaunchedEffect(Unit) {
@@ -77,10 +79,11 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
             popUpTo("login") { inclusive = true }
           }
         },
+        initialCode = intentCode,
         initialUsuario = intentUsuario,
         initialSenha = intentSenha,
         initialApi = intentApi,
-        hasInitialCredentials = hasIntentCredentials
+        hasInitialCredentials = hasIntentCode || hasIntentCredentials
       ) 
     }
     composable("home") { HomeScreen(nav) }

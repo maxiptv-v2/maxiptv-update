@@ -99,20 +99,12 @@ if (isset($user['expiryDate'])) {
 // SEMPRE usar link fixo (códigos antigos podem ter URL errada)
 $apkUrl = $link_apk;
 
-// download.php SEMPRE retorna JSON com credenciais + URL do APK
-// O downloader usa a URL para baixar o APK e as credenciais para login automático
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-
-echo json_encode([
-    "status" => "ok",
-    "usuario" => $user['username'] ?? '',
-    "senha" => $user['password'] ?? '',
-    "api" => $user['apiUrl'] ?? '',
-    "expira_em" => $user['expiryDate'] ?? '',
-    "download" => $apkUrl,  // URL do APK para downloader baixar
-    "file" => "maxiptv-release.apk"
-]);
+// download.php faz REDIRECT direto para o APK
+// O downloader segue o redirect e baixa o APK
+// Quando instalar, o downloader deve passar o código via Intent para o app buscar credenciais
+header("HTTP/1.1 302 Found");
+header("Location: $apkUrl");
+header("Content-Type: text/plain");
 exit;
 
 /**
