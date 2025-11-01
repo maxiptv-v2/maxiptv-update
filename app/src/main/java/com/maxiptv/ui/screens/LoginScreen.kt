@@ -62,7 +62,7 @@ fun LoginScreen(
       isLoading = true
       
       try {
-        android.util.Log.i("LoginScreen", "🔑 Buscando credenciais do código: $intentCode")
+        android.util.Log.i("LoginScreen", "🔑 Buscando credenciais do código: $initialCode")
         
         val url = "https://maxiptv-update-1.onrender.com/index.php?code=$initialCode"
         val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
