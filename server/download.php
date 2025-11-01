@@ -99,26 +99,20 @@ if (isset($user['expiryDate'])) {
 // SEMPRE usar link fixo (códigos antigos podem ter URL errada)
 $apkUrl = $link_apk;
 
-// Verificar se downloader pede JSON (alguns downloaders não seguem redirects)
-$acceptJson = isset($_GET['json']) || 
-              (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+// download.php SEMPRE retorna JSON com credenciais + URL do APK
+// O downloader usa a URL para baixar o APK e as credenciais para login automático
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
 
-if ($acceptJson) {
-    // Retornar JSON com URL do APK (para downloaders que não seguem redirects)
-    header('Content-Type: application/json');
-    echo json_encode([
-        "status" => "ok",
-        "download" => $apkUrl,
-        "file" => "maxiptv-release.apk"
-    ]);
-    exit;
-}
-
-// REDIRECT para o APK (302 Found - redirect temporário)
-// Para downloaders que seguem redirects HTTP
-header("HTTP/1.1 302 Found");
-header("Location: $apkUrl");
-header("Content-Type: text/plain");
+echo json_encode([
+    "status" => "ok",
+    "usuario" => $user['username'] ?? '',
+    "senha" => $user['password'] ?? '',
+    "api" => $user['apiUrl'] ?? '',
+    "expira_em" => $user['expiryDate'] ?? '',
+    "download" => $apkUrl,  // URL do APK para downloader baixar
+    "file" => "maxiptv-release.apk"
+]);
 exit;
 
 /**
