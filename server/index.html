@@ -1,23 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>MaxiPTV Download</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaxiPTV - Download</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: scale(1.02);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .info {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h2>MaxiPTV Download</h2>
-    <p>Digite seu código de 4 dígitos:</p>
+    <div class="container">
+        <div class="logo">M</div>
+        <h1>MaxiPTV Download</h1>
+        <p class="subtitle">Digite o código fornecido para baixar o aplicativo</p>
+        
+        <form id="downloadForm" onsubmit="handleDownload(event)">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="codeInput" 
+                    name="code" 
+                    placeholder="Ex: 6789 ou A1234"
+                    autocomplete="off"
+                    maxlength="10"
+                    required
+                    autofocus
+                >
+            </div>
+            <button type="submit">Baixar APK</button>
+        </form>
+        
+        <div id="errorMsg" class="error"></div>
+        
+        <div class="info">
+            <strong>Como usar:</strong><br>
+            Digite o código de 4 dígitos (ou código alfanumérico) fornecido pelo administrador.
+            O download começará automaticamente.
+        </div>
+    </div>
     
     <script>
-        // Pegar código da URL
-        const code = window.location.search.substring(1).replace('code=', '');
+        function handleDownload(event) {
+            event.preventDefault();
+            
+            const code = document.getElementById('codeInput').value.trim().toUpperCase();
+            const errorMsg = document.getElementById('errorMsg');
+            
+            // Validar código (3-10 caracteres alfanuméricos)
+            if (!/^[A-Z0-9]{3,10}$/.test(code)) {
+                errorMsg.textContent = 'Código inválido. Digite um código válido (3-10 caracteres).';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
+            // Redirecionar para download
+            window.location.href = '/' + code;
+        }
         
-        if (code && /^\d{4}$/.test(code)) {
-            // Redirecionar para a API PHP
-            window.location.href = 'api.php?code=' + code;
+        // Auto-submit se código vier na URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeParam = urlParams.get('code');
+        if (codeParam) {
+            window.location.href = '/' + codeParam.toUpperCase();
         }
     </script>
 </body>
 </html>
-

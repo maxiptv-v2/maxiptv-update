@@ -21,10 +21,11 @@ if (!$code) {
     die("Codigo nao fornecido");
 }
 
-// Validar formato do código (4 dígitos)
-if (!preg_match('/^\d{4}$/', $code)) {
+// Validar formato do código (alfanumérico, 3-10 caracteres)
+// Aceita: 6789, A1234, B9876, C123, etc.
+if (!preg_match('/^[A-Za-z0-9]{3,10}$/', $code)) {
     http_response_code(400);
-    die("Codigo invalido. Digite um codigo de 4 digitos.");
+    die("Codigo invalido. Digite um codigo valido (3-10 caracteres alfanumericos).");
 }
 
 // Buscar dados do JSONBin

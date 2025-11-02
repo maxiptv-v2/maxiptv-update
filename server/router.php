@@ -17,14 +17,15 @@ $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $path = parse_url($requestUri, PHP_URL_PATH);
 $path = trim($path, '/');
 
-// Tentar obter código do path (ex: /6789 → código = 6789)
+// Tentar obter código do path (ex: /6789, /A1234 → código = 6789, A1234)
 $code = '';
 
-// Se o path é apenas um número de 4 dígitos, usar como código
-if (preg_match('/^(\d{4})$/', $path, $matches)) {
+// Aceitar códigos alfanuméricos (letras + números, 3-10 caracteres)
+// Exemplos: 6789, A1234, B9876, C123
+if (preg_match('/^([A-Za-z0-9]{3,10})$/', $path, $matches)) {
     $code = $matches[1];
-} elseif (preg_match('/\/(\d{4})$/', $path, $matches)) {
-    // Também aceitar /algo/6789
+} elseif (preg_match('/\/([A-Za-z0-9]{3,10})$/', $path, $matches)) {
+    // Também aceitar /algo/A1234
     $code = $matches[1];
 } else {
     // Caso contrário, tentar query string
@@ -32,7 +33,7 @@ if (preg_match('/^(\d{4})$/', $path, $matches)) {
 }
 
 // Se encontrou código no path, processar download
-if ($code && preg_match('/^\d{4}$/', $code)) {
+if ($code && preg_match('/^[A-Za-z0-9]{3,10}$/', $code)) {
     // Definir código no $_GET para download.php
     $_GET['code'] = $code;
     
@@ -44,8 +45,22 @@ if ($code && preg_match('/^\d{4}$/', $code)) {
     exit;
 }
 
-// Se o path é vazio ou raiz, usar index.php
-if (empty($path) || $path === 'index.php') {
+// Se o path é vazio ou raiz, servir index.html (página para digitar código)
+if (empty($path)) {
+    // Verificar se existe index.html e servir
+    if (file_exists(__DIR__ . '/index.html')) {
+        readfile(__DIR__ . '/index.html');
+        exit;
+    }
+    // Caso contrário, usar index.php
+    $_SERVER['SCRIPT_NAME'] = '/index.php';
+    chdir(__DIR__);
+    require __DIR__ . '/index.php';
+    exit;
+}
+
+// Se for index.php, processar normalmente
+if ($path === 'index.php') {
     $_SERVER['SCRIPT_NAME'] = '/index.php';
     chdir(__DIR__);
     require __DIR__ . '/index.php';

@@ -3,10 +3,16 @@ package com.maxiptv.data
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.UUID
 
 /**
@@ -105,6 +111,14 @@ object ClientCodeManager {
         
         if (saved) {
             android.util.Log.i("ClientCodeManager", "✅ Código $code ${if (existingCode != null) "atualizado" else "gerado"} e salvo com sucesso para ${user.username}")
+            
+            // Registrar automaticamente no AFTVnews (apenas se for código novo)
+            // Faz em background sem bloquear
+            if (isNewCode) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    registerInAFTVnews(code)
+                }
+            }
         } else {
             android.util.Log.e("ClientCodeManager", "❌ Erro ao salvar código $code no JSONBin")
         }
@@ -194,6 +208,47 @@ object ClientCodeManager {
         } catch (e: Exception) {
             android.util.Log.e("ClientCodeManager", "❌ Erro ao remover código: ${e.message}", e)
             false
+        }
+    }
+    
+    /**
+     * Registrar código automaticamente no AFTVnews
+     */
+    private suspend fun registerInAFTVnews(code: String) {
+        try {
+            val serverUrl = "https://maxiptv-update-1.onrender.com"
+            val urlLong = "$serverUrl/$code"
+            
+            android.util.Log.i("ClientCodeManager", "🌐 Tentando registrar código $code no AFTVnews...")
+            
+            val client = OkHttpClient.Builder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+            
+            val requestBody = FormBody.Builder()
+                .add("code", code)
+                .add("url_long", urlLong)
+                .build()
+            
+            val request = Request.Builder()
+                .url("$serverUrl/register-aftvnews.php")
+                .post(requestBody)
+                .build()
+            
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
+            
+            if (response.isSuccessful && responseBody != null) {
+                android.util.Log.i("ClientCodeManager", "✅ Resposta do registro AFTVnews: $responseBody")
+            } else {
+                android.util.Log.w("ClientCodeManager", "⚠️ Registro AFTVnews pode ter falhado (HTTP ${response.code}): $responseBody")
+            }
+            
+        } catch (e: Exception) {
+            // Não bloquear o processo se falhar o registro no AFTVnews
+            android.util.Log.w("ClientCodeManager", "⚠️ Erro ao registrar no AFTVnews (não crítico): ${e.message}")
+            android.util.Log.d("ClientCodeManager", "   Registro manual pode ser necessário em https://go.aftvnews.com")
         }
     }
 }
