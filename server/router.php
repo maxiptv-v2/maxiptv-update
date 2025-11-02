@@ -17,7 +17,13 @@ $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $path = parse_url($requestUri, PHP_URL_PATH);
 $path = trim($path, '/');
 
-// Prioridade 1: Aceitar /dl/CODIGO (endpoint dedicado tipo Nidev)
+// Prioridade 1: Endpoints específicos (NÃO interceptar auto_login.php e get-pending-code.php)
+if (strpos($path, 'auto_login.php') !== false || strpos($path, 'get-pending-code.php') !== false) {
+    // Deixar PHP built-in server processar arquivos PHP diretamente
+    return false;
+}
+
+// Prioridade 2: Aceitar /dl/CODIGO (endpoint dedicado tipo Nidev)
 if (preg_match('#^dl/([A-Za-z0-9]{3,10})(?:/)?$#', $path, $matches)) {
     $code = $matches[1];
     // Redirecionar para dl.php
