@@ -942,7 +942,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                   horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                   Text(
-                    text = "Código PHP:",
+                    text = "Código (salvo no JSONBin):",
                     fontSize = 14.sp,
                     color = Color(0xFF888888),
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -950,9 +950,31 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                   
                   Text(
                     text = generatedCode,
-                    fontSize = 18.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF00D4FF),
+                    modifier = Modifier
+                      .background(
+                        Color(0xFF1A1A1A),
+                        RoundedCornerShape(8.dp)
+                      )
+                      .padding(16.dp)
+                  )
+                  
+                  Spacer(Modifier.height(16.dp))
+                  
+                  Text(
+                    text = "URL completa:",
+                    fontSize = 14.sp,
+                    color = Color(0xFF888888),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                  )
+                  
+                  val fullUrl = "https://maxiptv-update-1.onrender.com/dl/$generatedCode"
+                  Text(
+                    text = fullUrl,
+                    fontSize = 12.sp,
+                    color = Color(0xFF00FF88),
                     modifier = Modifier
                       .background(
                         Color(0xFF1A1A1A),
@@ -972,7 +994,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
               
               // Instruções
               Text(
-                text = "📋 Instruções:",
+                text = "📋 Instruções para o Cliente:",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -980,10 +1002,18 @@ fun AdminPanelScreen(onClose: () -> Unit) {
               )
               
               Text(
-                text = "1. Cliente acessa o downloader\n2. Digita este código\n3. Baixa o app automaticamente\n4. Login automático",
+                text = "1. Abra o Downloader na TV Box\n2. Digite o código: $generatedCode\n   OU digite a URL completa\n3. O Downloader baixa o APK automaticamente\n4. Após instalar, o app abre e o cliente digita o código\n5. Login automático usando dados do usuário '$codeUsername'",
                 fontSize = 14.sp,
                 color = Color(0xFFBBBBBB),
                 lineHeight = 20.sp,
+                modifier = Modifier.padding(bottom = 16.dp)
+              )
+              
+              Text(
+                text = "ℹ️ IMPORTANTE: Este código está salvo no JSONBin com os dados do usuário '$codeUsername'. Quando o cliente digitar o código no app, o sistema identifica automaticamente qual usuário é através dos dados do painel.",
+                fontSize = 12.sp,
+                color = Color(0xFF00D4FF),
+                lineHeight = 16.sp,
                 modifier = Modifier.padding(bottom = 24.dp)
               )
               
@@ -1005,7 +1035,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                 
                 Button(
                   onClick = {
-                    // Copiar código para clipboard
+                    // Copiar código para clipboard (mais simples)
                     showCodeDialog = false
                   },
                   modifier = Modifier.weight(1f),
@@ -1014,7 +1044,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
                     contentColor = Color.White
                   )
                 ) {
-                  Text("Copiar", fontWeight = FontWeight.Bold)
+                  Text("Copiar URL", fontWeight = FontWeight.Bold)
                 }
               }
             }
@@ -1157,49 +1187,58 @@ fun UserCard(user: UserAccount, onEdit: () -> Unit, onDelete: () -> Unit, onGene
       
       Spacer(Modifier.height(12.dp))
       
-      // Botões em Row horizontal
+      // Botões de código em Row separado (destaque)
       Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
       ) {
         Button(
           onClick = onGenerateCode,
           colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D4FF)),
-          modifier = Modifier.weight(1f).padding(end = 4.dp)
+          modifier = Modifier.weight(1f)
         ) {
-          Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
-          Spacer(Modifier.width(4.dp))
-          Text("Código", fontSize = 11.sp)
+          Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+          Spacer(Modifier.width(6.dp))
+          Text("Gerar Código", fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
         
         Button(
           onClick = onRevokeCode,
-          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
-          modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722)),
+          modifier = Modifier.weight(1f)
         ) {
-          Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
-          Spacer(Modifier.width(4.dp))
-          Text("Revogar", fontSize = 11.sp)
+          Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+          Spacer(Modifier.width(6.dp))
+          Text("Revogar Código", fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
+      }
+      
+      Spacer(Modifier.height(8.dp))
+      
+      // Botões de edição/exclusão em Row separado
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
         
         Button(
           onClick = onEdit,
           colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
-          modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+          modifier = Modifier.weight(1f)
         ) {
           Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
           Spacer(Modifier.width(4.dp))
-          Text("Editar", fontSize = 11.sp)
+          Text("Editar", fontSize = 12.sp)
         }
         
         Button(
           onClick = onDelete,
           colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
-          modifier = Modifier.weight(1f).padding(start = 4.dp)
+          modifier = Modifier.weight(1f)
         ) {
           Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
           Spacer(Modifier.width(4.dp))
-          Text("Excluir", fontSize = 11.sp)
+          Text("Excluir", fontSize = 12.sp)
         }
       }
     }

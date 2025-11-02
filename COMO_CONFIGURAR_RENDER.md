@@ -71,7 +71,7 @@ server
 Clique em **"Add Environment Variable"** e adicione:
 - **Key:** `PORT`
 - **Value:** `10000`
-
+https://maxiptv-update-1.onrender.com/download.php?code=6789&json=1https://maxiptv-update-1.onrender.com/download.php?code=6789&json=1
 ## 3️⃣ Deploy
 
 1. Clique em **"Create Web Service"**

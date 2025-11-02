@@ -33,6 +33,26 @@
         <category android:name="android.intent.category.LAUNCHER" />
         <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
       </intent-filter>
+      
+      <!-- Deep Link para receber código após download -->
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data
+          android:scheme="maxiptv"
+          android:host="login" />
+      </intent-filter>
+      
+      <!-- Intent Filter para receber código do downloader -->
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="https" />
+        <data android:host="maxiptv-update-1.onrender.com" />
+        <data android:pathPrefix="/open" />
+      </intent-filter>
     </activity>
     
     <!-- FileProvider para instalação de APK -->

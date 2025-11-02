@@ -64,7 +64,7 @@ fun LoginScreen(
       try {
         android.util.Log.i("LoginScreen", "🔑 Buscando credenciais do código: $initialCode")
         
-        val url = "https://maxiptv-update-1.onrender.com/index.php?code=$initialCode"
+        val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$initialCode"
         val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
         connection.requestMethod = "GET"
         connection.connect()
@@ -74,9 +74,10 @@ fun LoginScreen(
           val json = org.json.JSONObject(response)
           
           if (json.getString("status") == "ok") {
-            val user = json.getString("usuario")
-            val pass = json.getString("senha")
-            val api = json.getString("api")
+            // auto_login.php retorna: user, password, apiUrl, valid_until
+            val user = json.optString("user", json.optString("usuario", ""))
+            val pass = json.optString("password", json.optString("senha", ""))
+            val api = json.optString("apiUrl", json.optString("api", ""))
             
             android.util.Log.i("LoginScreen", "✅ Credenciais recebidas: $user")
             
@@ -120,6 +121,56 @@ fun LoginScreen(
         isLoading = false
       }
     } else {
+      // Tentar buscar código pendente baseado no IP (quando app abre após download)
+      android.util.Log.i("LoginScreen", "🔍 Tentando buscar código pendente do download...")
+      
+      try {
+        val pendingUrl = "https://maxiptv-update-1.onrender.com/get-pending-code.php"
+        val pendingConnection = java.net.URL(pendingUrl).openConnection() as java.net.HttpURLConnection
+        pendingConnection.requestMethod = "GET"
+        pendingConnection.connect()
+        
+        if (pendingConnection.responseCode == 200) {
+          val pendingResponse = pendingConnection.inputStream.bufferedReader().use { it.readText() }
+          val pendingJson = org.json.JSONObject(pendingResponse)
+          
+          if (pendingJson.getString("status") == "ok") {
+            val pendingCode = pendingJson.getString("code")
+            android.util.Log.i("LoginScreen", "✅ Código pendente encontrado: $pendingCode")
+            
+            // Buscar credenciais usando o código (endpoint auto_login.php)
+            val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$pendingCode"
+            val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connect()
+            
+            if (connection.responseCode == 200) {
+              val response = connection.inputStream.bufferedReader().use { it.readText() }
+              val json = org.json.JSONObject(response)
+              
+              if (json.getString("status") == "ok") {
+                // auto_login.php retorna: user, password, apiUrl, valid_until
+                val user = json.optString("user", json.optString("usuario", ""))
+                val pass = json.optString("password", json.optString("senha", ""))
+                val api = json.optString("apiUrl", json.optString("api", ""))
+                
+                android.util.Log.i("LoginScreen", "✅ Login automático via código pendente: $user")
+                
+                // Fazer login automático
+                isLoading = true
+                doLogin(user, pass, api, onLoginSuccess) { msg ->
+                  errorMessage = msg
+                  isLoading = false
+                }
+                return@LaunchedEffect
+              }
+            }
+          }
+        }
+      } catch (e: Exception) {
+        android.util.Log.d("LoginScreen", "ℹ️ Nenhum código pendente ou erro: ${e.message}")
+      }
+      
       android.util.Log.i("LoginScreen", "👥 Usuários devem ser gerenciados pelo painel admin")
     }
   }

@@ -1,49 +1,49 @@
 1<?xml version="1.0" encoding="utf-8"?>
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
 3    package="com.maxiptv"
-4    android:versionCode="121"
-5    android:versionName="1.0.121" >
+4    android:versionCode="124"
+5    android:versionName="1.0.124" >
 6
 7    <uses-sdk
 8        android:minSdkVersion="21"
 9        android:targetSdkVersion="34" />
 10
 11    <uses-permission android:name="android.permission.INTERNET" />
-11-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:50:3-65
-11-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:50:20-62
+11-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:70:3-65
+11-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:70:20-62
 12    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-12-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:51:3-77
-12-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:51:20-74
+12-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:71:3-77
+12-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:71:20-74
 13    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-13-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:52:3-81
-13-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:52:20-78
+13-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:72:3-81
+13-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:72:20-78
 14
 15    <uses-feature
-15-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:53:3-85
+15-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:73:3-85
 16        android:name="android.software.leanback"
-16-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:53:17-57
+16-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:73:17-57
 17        android:required="false" />
-17-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:53:58-82
+17-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:73:58-82
 18    <uses-feature
-18-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:54:3-88
+18-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:74:3-88
 19        android:name="android.hardware.touchscreen"
-19-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:54:17-60
+19-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:74:17-60
 20        android:required="false" />
-20-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:54:61-85
+20-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:74:61-85
 21
 22    <!-- 🎮 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK D-PAD -->
 23    <uses-feature
-23-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:57:3-84
+23-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:77:3-84
 24        android:name="android.hardware.gamepad"
-24-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:57:17-56
+24-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:77:17-56
 25        android:required="false" />
-25-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:57:57-81
+25-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:77:57-81
 26    <uses-feature
-26-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:58:3-90
+26-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:78:3-90
 27        android:name="android.software.input_methods"
-27-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:58:17-62
+27-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:78:17-62
 28        android:required="false" />
-28-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:58:63-87
+28-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:78:63-87
 29
 30    <permission
 30-->[androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
@@ -57,7 +57,7 @@
 34-->[androidx.core:core:1.13.1] C:\Users\maxca\.gradle\caches\8.9\transforms\7e2c13b73c1d74d506409408651ef573\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
 35
 36    <application
-36-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:3:3-48:17
+36-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:3:3-68:17
 37        android:name="com.maxiptv.MaxiApp"
 37-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:4:5-28
 38        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
@@ -100,7 +100,7 @@
 57            android:windowSoftInputMode="adjustResize" />
 57-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:22:13-55
 58        <activity
-58-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:23:5-36:16
+58-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:23:5-56:16
 59            android:name="com.maxiptv.MainActivity"
 59-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:24:7-35
 60            android:alwaysRetainTaskState="true"
@@ -128,90 +128,137 @@
 70-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:34:9-78
 70-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:34:19-75
 71            </intent-filter>
-72        </activity>
-73
-74        <!-- FileProvider para instalação de APK -->
-75        <provider
-76            android:name="androidx.core.content.FileProvider"
-76-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:40:7-56
-77            android:authorities="com.maxiptv.fileprovider"
-77-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:41:7-58
-78            android:exported="false"
-78-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:42:7-31
-79            android:grantUriPermissions="true" >
-79-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:43:7-41
-80            <meta-data
-80-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:44:7-46:46
-81                android:name="android.support.FILE_PROVIDER_PATHS"
-81-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:45:9-59
-82                android:resource="@xml/file_paths" />
-82-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:46:9-43
-83        </provider>
-84        <provider
-84-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
-85            android:name="androidx.startup.InitializationProvider"
-85-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
-86            android:authorities="com.maxiptv.androidx-startup"
-86-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
-87            android:exported="false" >
-87-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
-88            <meta-data
-88-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
-89                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-89-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
-90                android:value="androidx.startup" />
-90-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
-91            <meta-data
-91-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\maxca\.gradle\caches\8.9\transforms\4a31a5b99f9095faa81eb85eea878d76\transformed\lifecycle-process-2.8.3\AndroidManifest.xml:29:13-31:52
-92                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-92-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\maxca\.gradle\caches\8.9\transforms\4a31a5b99f9095faa81eb85eea878d76\transformed\lifecycle-process-2.8.3\AndroidManifest.xml:30:17-78
-93                android:value="androidx.startup" />
-93-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\maxca\.gradle\caches\8.9\transforms\4a31a5b99f9095faa81eb85eea878d76\transformed\lifecycle-process-2.8.3\AndroidManifest.xml:31:17-49
-94            <meta-data
-94-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
-95                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-95-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
-96                android:value="androidx.startup" />
-96-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
-97        </provider>
-98
-99        <receiver
-99-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
-100            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-100-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
-101            android:directBootAware="false"
-101-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
-102            android:enabled="true"
-102-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
-103            android:exported="true"
-103-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
-104            android:permission="android.permission.DUMP" >
-104-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
-105            <intent-filter>
-105-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
-106                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-106-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
-106-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
-107            </intent-filter>
-108            <intent-filter>
-108-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
-109                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-109-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
-109-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
-110            </intent-filter>
-111            <intent-filter>
-111-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
-112                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-112-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
-112-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
-113            </intent-filter>
-114            <intent-filter>
-114-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
-115                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-115-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
-115-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
-116            </intent-filter>
-117        </receiver>
-118    </application>
-119
-120</manifest>
+72
+73            <!-- Deep Link para receber código após download -->
+74            <intent-filter>
+74-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:38:7-45:23
+75                <action android:name="android.intent.action.VIEW" />
+75-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:39:9-61
+75-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:39:17-58
+76
+77                <category android:name="android.intent.category.DEFAULT" />
+77-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:40:9-68
+77-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:40:19-65
+78                <category android:name="android.intent.category.BROWSABLE" />
+78-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:41:9-70
+78-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:41:19-67
+79
+80                <data
+80-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:42:9-44:34
+81                    android:host="login"
+81-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:44:11-31
+82                    android:scheme="maxiptv" />
+82-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:43:11-35
+83            </intent-filter>
+84
+85            <!-- Intent Filter para receber código do downloader -->
+86            <intent-filter>
+86-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:48:7-55:23
+87                <action android:name="android.intent.action.VIEW" />
+87-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:39:9-61
+87-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:39:17-58
+88
+89                <category android:name="android.intent.category.DEFAULT" />
+89-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:40:9-68
+89-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:40:19-65
+90                <category android:name="android.intent.category.BROWSABLE" />
+90-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:41:9-70
+90-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:41:19-67
+91
+92                <data android:scheme="https" />
+92-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:42:9-44:34
+92-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:43:11-35
+93                <data android:host="maxiptv-update-1.onrender.com" />
+93-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:42:9-44:34
+93-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:44:11-31
+94                <data android:pathPrefix="/open" />
+94-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:42:9-44:34
+94-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:54:15-41
+95            </intent-filter>
+96        </activity>
+97
+98        <!-- FileProvider para instalação de APK -->
+99        <provider
+100            android:name="androidx.core.content.FileProvider"
+100-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:60:7-56
+101            android:authorities="com.maxiptv.fileprovider"
+101-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:61:7-58
+102            android:exported="false"
+102-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:62:7-31
+103            android:grantUriPermissions="true" >
+103-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:63:7-41
+104            <meta-data
+104-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:64:7-66:46
+105                android:name="android.support.FILE_PROVIDER_PATHS"
+105-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:65:9-59
+106                android:resource="@xml/file_paths" />
+106-->C:\Users\maxca\OneDrive\Desktop\MaxiPTV_v2\app\src\main\AndroidManifest.xml:66:9-43
+107        </provider>
+108        <provider
+108-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+109            android:name="androidx.startup.InitializationProvider"
+109-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+110            android:authorities="com.maxiptv.androidx-startup"
+110-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+111            android:exported="false" >
+111-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+112            <meta-data
+112-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+113                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+113-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+114                android:value="androidx.startup" />
+114-->[androidx.emoji2:emoji2:1.3.0] C:\Users\maxca\.gradle\caches\8.9\transforms\f1b30657090a11fc303b197689a314ec\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+115            <meta-data
+115-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\maxca\.gradle\caches\8.9\transforms\4a31a5b99f9095faa81eb85eea878d76\transformed\lifecycle-process-2.8.3\AndroidManifest.xml:29:13-31:52
+116                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+116-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\maxca\.gradle\caches\8.9\transforms\4a31a5b99f9095faa81eb85eea878d76\transformed\lifecycle-process-2.8.3\AndroidManifest.xml:30:17-78
+117                android:value="androidx.startup" />
+117-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\maxca\.gradle\caches\8.9\transforms\4a31a5b99f9095faa81eb85eea878d76\transformed\lifecycle-process-2.8.3\AndroidManifest.xml:31:17-49
+118            <meta-data
+118-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+119                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+119-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+120                android:value="androidx.startup" />
+120-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+121        </provider>
+122
+123        <receiver
+123-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+124            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+124-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+125            android:directBootAware="false"
+125-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+126            android:enabled="true"
+126-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+127            android:exported="true"
+127-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+128            android:permission="android.permission.DUMP" >
+128-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+129            <intent-filter>
+129-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+130                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+130-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+130-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+131            </intent-filter>
+132            <intent-filter>
+132-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+133                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+133-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+133-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+134            </intent-filter>
+135            <intent-filter>
+135-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+136                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+136-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+136-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+137            </intent-filter>
+138            <intent-filter>
+138-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+139                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+139-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+139-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\maxca\.gradle\caches\8.9\transforms\1ced9f2a243075b141018abe0ae10699\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+140            </intent-filter>
+141        </receiver>
+142    </application>
+143
+144</manifest>
