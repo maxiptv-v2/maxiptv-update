@@ -17,11 +17,21 @@ $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $path = parse_url($requestUri, PHP_URL_PATH);
 $path = trim($path, '/');
 
+// Prioridade 1: Aceitar /dl/CODIGO (endpoint dedicado tipo Nidev)
+if (preg_match('#^dl/([A-Za-z0-9]{3,10})(?:/)?$#', $path, $matches)) {
+    $code = $matches[1];
+    // Redirecionar para dl.php
+    $_GET['code'] = $code;
+    $_SERVER['SCRIPT_NAME'] = '/dl.php';
+    chdir(__DIR__);
+    require __DIR__ . '/dl.php';
+    exit;
+}
+
 // Tentar obter código do path (ex: /6789, /A1234 → código = 6789, A1234)
 $code = '';
 
-// Aceitar códigos alfanuméricos (letras + números, 3-10 caracteres)
-// Exemplos: 6789, A1234, B9876, C123
+// Prioridade 2: Aceitar códigos alfanuméricos direto (ex: /6789, /A1234)
 if (preg_match('/^([A-Za-z0-9]{3,10})$/', $path, $matches)) {
     $code = $matches[1];
 } elseif (preg_match('/\/([A-Za-z0-9]{3,10})$/', $path, $matches)) {
