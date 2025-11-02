@@ -22,6 +22,7 @@ if (preg_match('#^dl/([A-Za-z0-9]{3,10})(?:/)?$#', $path, $matches)) {
     $code = $matches[1];
     // Redirecionar para dl.php
     $_GET['code'] = $code;
+    $_SERVER['REQUEST_URI'] = '/dl.php?code=' . $code;
     $_SERVER['SCRIPT_NAME'] = '/dl.php';
     chdir(__DIR__);
     require __DIR__ . '/dl.php';

@@ -47,62 +47,71 @@ try {
         exit;
     }
     
-    // Procurar código pendente para este IP
-    // No dl.php, salvamos com a chave sendo o próprio IP: $record2['_pending_logins'][$ip]
+    // Procurar código pendente - buscar o mais recente válido
+    // Pode ser do mesmo IP ou qualquer código válido recente (últimos 15 minutos)
     $foundCode = null;
+    $foundUsername = null;
+    $foundKey = null;
     $currentTime = time();
+    $mostRecent = null;
+    $mostRecentTime = 0;
     
-    // Verificar se existe código pendente para este IP
-    if (isset($record['_pending_logins'][$ip])) {
-        $pending = $record['_pending_logins'][$ip];
-        
+    // Buscar o código pendente mais recente ainda válido
+    foreach ($record['_pending_logins'] as $key => $pending) {
         // Verificar se expirou
         if (isset($pending['expiresAt']) && $currentTime > $pending['expiresAt']) {
-            // Remover código expirado
-            unset($record['_pending_logins'][$ip]);
-            
-            // Salvar de volta
-            curl_setopt($ch = curl_init(), CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                "Content-Type: application/json",
-                "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
-            ]);
-            curl_exec($ch);
-            curl_close($ch);
-        } else {
-            // Código válido - retornar
-            $foundCode = $pending['code'] ?? null;
-            $username = $pending['username'] ?? '';
-            
-            // Remover código usado (one-time use)
-            unset($record['_pending_logins'][$ip]);
-            
-            // Salvar de volta no JSONBin
-            curl_setopt($ch = curl_init(), CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                "Content-Type: application/json",
-                "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
-            ]);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_exec($ch);
-            curl_close($ch);
+            continue; // Pular códigos expirados
         }
+        
+        // Verificar timestamp para pegar o mais recente
+        $timestamp = $pending['timestamp'] ?? 0;
+        if ($timestamp > $mostRecentTime) {
+            $mostRecent = $key;
+            $mostRecentTime = $timestamp;
+        }
+    }
+    
+    // Se encontrou código válido
+    if ($mostRecent !== null && isset($record['_pending_logins'][$mostRecent])) {
+        $pending = $record['_pending_logins'][$mostRecent];
+        $foundCode = $pending['code'] ?? null;
+        $foundUsername = $pending['username'] ?? '';
+        $foundKey = $mostRecent;
+        
+        // Remover código usado (one-time use)
+        unset($record['_pending_logins'][$foundKey]);
+        
+        // Salvar de volta no JSONBin
+        curl_setopt($ch = curl_init(), CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+            "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_exec($ch);
+        curl_close($ch);
     }
     
     if ($foundCode) {
         echo json_encode([
             'status' => 'ok',
             'code' => $foundCode,
-            'username' => $username ?? '',
+            'username' => $foundUsername ?? '',
             'mensagem' => 'Codigo encontrado - dados do usuario do painel'
         ]);
     } else {
-        echo json_encode(['status' => 'nao_encontrado', 'mensagem' => 'Nenhum codigo pendente para este dispositivo']);
+        echo json_encode([
+            'status' => 'nao_encontrado', 
+            'mensagem' => 'Nenhum codigo pendente encontrado',
+            'debug' => [
+                'ip' => $ip,
+                'total_pending' => count($record['_pending_logins'] ?? []),
+                'has_pending' => isset($record['_pending_logins'])
+            ]
+        ]);
     }
     
 } catch (Exception $e) {

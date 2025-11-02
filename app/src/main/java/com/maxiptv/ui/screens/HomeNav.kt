@@ -11,6 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.maxiptv.data.UserManager
 import com.maxiptv.data.SessionManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivity? = null) {
@@ -56,8 +58,120 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
       android.util.Log.i("HomeNav", "🏠 Navegando direto para HOME")
       initialRoute = "home"
     } else {
-      android.util.Log.i("HomeNav", "❌ Nenhum usuário logado")
-      android.util.Log.i("HomeNav", "🔑 Navegando para LOGIN")
+      // 🚀 LOGIN AUTOMÁTICO: Tentar buscar código pendente ANTES de mostrar login
+      android.util.Log.i("HomeNav", "❌ Nenhum usuário logado - Tentando login automático...")
+      
+      try {
+        // Buscar código pendente do download
+        val pendingUrl = "https://maxiptv-update-1.onrender.com/get-pending-code.php"
+        android.util.Log.d("HomeNav", "🔍 Buscando código pendente: $pendingUrl")
+        val pendingConnection = java.net.URL(pendingUrl).openConnection() as java.net.HttpURLConnection
+        pendingConnection.requestMethod = "GET"
+        pendingConnection.connectTimeout = 10000
+        pendingConnection.readTimeout = 10000
+        
+        android.util.Log.d("HomeNav", "📡 Resposta HTTP: ${pendingConnection.responseCode}")
+        if (pendingConnection.responseCode == 200) {
+          val pendingResponse = pendingConnection.inputStream.bufferedReader().use { it.readText() }
+          android.util.Log.d("HomeNav", "📥 Resposta: $pendingResponse")
+          val pendingJson = org.json.JSONObject(pendingResponse)
+          
+          if (pendingJson.getString("status") == "ok") {
+            val pendingCode = pendingJson.getString("code")
+            android.util.Log.i("HomeNav", "✅ Código pendente encontrado: $pendingCode")
+            
+            // Buscar credenciais usando o código (endpoint auto_login.php)
+            val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$pendingCode"
+            val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            connection.connect()
+            
+            if (connection.responseCode == 200) {
+              val response = connection.inputStream.bufferedReader().use { it.readText() }
+              val json = org.json.JSONObject(response)
+              
+              if (json.getString("status") == "ok") {
+                // auto_login.php retorna: user, password, apiUrl, valid_until
+                val user = json.optString("user", json.optString("usuario", ""))
+                val pass = json.optString("password", json.optString("senha", ""))
+                val api = json.optString("apiUrl", json.optString("api", ""))
+                val expiryDate = json.optString("valid_until", json.optString("expiryDate", json.optString("expira_em", "")))
+                
+                android.util.Log.i("HomeNav", "✅ Login automático iniciado para: $user")
+                
+                // Buscar usuário ou criar se não existir (funções suspend)
+                var userAccount = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                  UserManager.getUsers().firstOrNull { it.username == user }
+                }
+                
+                if (userAccount == null) {
+                  // Criar novo usuário se não existir
+                  android.util.Log.i("HomeNav", "📝 Criando novo usuário: $user")
+                  userAccount = com.maxiptv.data.UserAccount(
+                    id = java.util.UUID.randomUUID().toString(),
+                    username = user,
+                    password = pass,
+                    apiUrl = api,
+                    expiryDate = expiryDate,
+                    activeDeviceId = null,
+                    activeDeviceName = null,
+                    lastLoginTime = null
+                  )
+                  kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    UserManager.addUser(userAccount)
+                  }
+                }
+                
+                // Fazer login usando UserManager (suspend)
+                val (loggedUser, error) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                  UserManager.login(user, pass)
+                }
+                
+                if (loggedUser != null && error == null) {
+                  android.util.Log.i("HomeNav", "✅ Login automático bem-sucedido: ${loggedUser.username}")
+                  
+                  // Salvar credenciais no SettingsRepo (suspend)
+                  kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.maxiptv.data.SettingsRepo.save(
+                      b = api,
+                      u = user,
+                      p = pass,
+                      e = expiryDate
+                    )
+                  }
+                  
+                  // Criar sessão no JSONBin (suspend)
+                  kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val deviceId = UserManager.getDeviceId()
+                    val deviceName = UserManager.getDeviceName()
+                    SessionManager.tryLogin(
+                      username = user,
+                      deviceId = deviceId,
+                      deviceName = deviceName
+                    )
+                  }
+                  
+                  android.util.Log.i("HomeNav", "🏠 Login automático completo! Navegando para HOME")
+                  initialRoute = "home"
+                  return@LaunchedEffect
+                } else {
+                  android.util.Log.e("HomeNav", "❌ Erro no login automático: $error")
+                  initialRoute = "login"
+                  return@LaunchedEffect
+                }
+              }
+            }
+          }
+        }
+      } catch (e: Exception) {
+        android.util.Log.e("HomeNav", "❌ Erro ao buscar código pendente: ${e.message}", e)
+        android.util.Log.d("HomeNav", "ℹ️ Continuando sem código pendente - mostrará tela de login")
+      }
+      
+      // Se não encontrou código pendente, mostrar tela de login
+      android.util.Log.i("HomeNav", "🔑 Nenhum código pendente - Navegando para LOGIN")
       initialRoute = "login"
     }
   }
