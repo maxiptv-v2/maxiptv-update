@@ -43,6 +43,11 @@ if (preg_match('#/dl/([A-Za-z0-9]+)#', $path, $matches)) {
     }
 }
 
+// Detectar se é um Downloader Android (User-Agent típico)
+$isDownloader = isset($_SERVER['HTTP_USER_AGENT']) && 
+                (stripos($_SERVER['HTTP_USER_AGENT'], 'downloader') !== false ||
+                 stripos($_SERVER['HTTP_USER_AGENT'], 'android') !== false);
+
 // Validar código
 if (!$code || !preg_match('/^[A-Za-z0-9]{3,10}$/', $code)) {
     http_response_code(400);
@@ -117,7 +122,83 @@ if (isset($user['expiryDate'])) {
     }
 }
 
-// 4️⃣ Redireciona pro APK (igual o AFTVNews faz)
+// 4️⃣ IDENTIFICAR USUÁRIO usando dados do painel (JSONBin)
+// O código JÁ está associado ao username no JSONBin quando gerado no painel admin
+// Exemplo JSONBin: { "6789": { "username": "casa1", "password": "1234", "apiUrl": "...", "expiryDate": "..." } }
+
+// Obter dados do usuário do código (já validado acima - vem do painel)
+$username = $user['username'] ?? '';
+
+// Salvar código temporariamente para login automático após instalação
+// Quando o app abrir, ele vai buscar esse código e fazer login automático
+try {
+    // Buscar JSONBin para salvar código pendente
+    $ch2 = curl_init();
+    curl_setopt($ch2, CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest");
+    curl_setopt($ch2, CURLOPT_HTTPHEADER, [
+        "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+    ]);
+    curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch2, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch2, CURLOPT_TIMEOUT, 5);
+    
+    $response2 = curl_exec($ch2);
+    $httpCode2 = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+    
+    if ($httpCode2 === 200 && $response2) {
+        $data2 = json_decode($response2, true);
+        $record2 = $data2['record'] ?? [];
+        
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+        $timestamp = time();
+        
+        // Salvar código pendente (válido por 15 minutos)
+        if (!isset($record2['_pending_logins'])) {
+            $record2['_pending_logins'] = [];
+        }
+        
+        // Limpar códigos antigos (mais de 15 minutos)
+        foreach ($record2['_pending_logins'] as $key => $pending) {
+            if (isset($pending['expiresAt']) && time() > $pending['expiresAt']) {
+                unset($record2['_pending_logins'][$key]);
+            }
+        }
+        
+        // Salvar código + dados do usuário do painel
+        $record2['_pending_logins'][$ip] = [
+            'code' => $code,
+            'username' => $username, // Dados do usuário do painel
+            'timestamp' => $timestamp,
+            'expiresAt' => $timestamp + 900 // 15 minutos
+        ];
+        
+        // Salvar de volta no JSONBin
+        curl_setopt($ch2, CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
+        curl_setopt($ch2, CURLOPT_CUSTOMREQUEST, 'PUT');
+        curl_setopt($ch2, CURLOPT_POSTFIELDS, json_encode($record2));
+        curl_setopt($ch2, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+            "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+        ]);
+        curl_exec($ch2); // Não esperar resposta
+    }
+    curl_close($ch2);
+} catch (Exception $e) {
+    // Ignorar erro - não é crítico para o download
+}
+
+// Registrar download (opcional - para logs)
+try {
+    // Você pode adicionar logging aqui se necessário
+    error_log("Download registrado - Codigo: $code, Usuario: $username, IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+} catch (Exception $e) {
+    // Ignorar erro
+}
+
+// Redirect direto para APK
+// O código está salvo temporariamente no JSONBin associado ao IP
+// Quando o app abrir, ele chama auto_login.php?code=CODIGO para fazer login automático
 header("Location: $apkUrl");
 exit;
 

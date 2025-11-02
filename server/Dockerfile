@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libcurl4-openssl-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copiar apenas arquivos PHP da raiz
-COPY valida.php index.php api.php download.php router.php index.html register-aftvnews.php dl.php ./
+COPY valida.php index.php api.php download.php router.php index.html register-aftvnews.php dl.php open.php get-pending-code.php get-token.php auto_login.php ./
 
 # Expor porta
 EXPOSE 10000
