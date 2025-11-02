@@ -7,7 +7,14 @@
  * 
  * - Sem Captcha
  * - 100% automático
- * - Valida código e redireciona para APK
+ * - Valida código no JSONBin (verifica existência, expiração de 6h, validade do usuário)
+ * - Redireciona para APK automaticamente
+ * 
+ * LOGIN AUTOMÁTICO:
+ * - Quando o APK é instalado, o downloader passa o código via Intent
+ * - O app busca credenciais do index.php?code=CODIGO usando os dados do JSONBin
+ * - Login automático acontece baseado nos dados do usuário (username, password, apiUrl, expiryDate)
+ * - Validações incluem: código existe, não expirou (6h), usuário ativo
  */
 
 // Configurações JSONBin
@@ -17,23 +24,23 @@ $apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
 // URL fixa do APK no GitHub
 $apkUrl = "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk";
 
-// Obter código da URL
-// Aceita: /dl/6789 ou /dl.php?code=6789
-$code = '';
-
-// Tentar obter do path (/dl/6789)
+// 1️⃣ Pega o código da URL (igual exemplo)
+// Aceita: /dl/17531, /17531, ou ?code=17531
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $path = parse_url($requestUri, PHP_URL_PATH);
 
-// Extrair código do path
-if (preg_match('#/dl/([A-Za-z0-9]{3,10})(?:/)?$#', $path, $matches)) {
+// Tentar extrair código do path
+if (preg_match('#/dl/([A-Za-z0-9]+)#', $path, $matches)) {
     $code = $matches[1];
-} elseif (preg_match('#^/([A-Za-z0-9]{3,10})(?:/)?$#', $path, $matches)) {
-    // Aceitar também /6789 direto
+} elseif (preg_match('#^/([A-Za-z0-9]+)(?:/|$)#', $path, $matches)) {
+    // Aceitar /17531 direto também
     $code = $matches[1];
 } else {
-    // Tentar query string
-    $code = $_GET['code'] ?? $_GET['codigo'] ?? '';
+    // Fallback: usar basename ou query string
+    $code = basename($path);
+    if ($code === 'dl.php' || empty($code) || strlen($code) < 3) {
+        $code = $_GET['code'] ?? $_GET['codigo'] ?? '';
+    }
 }
 
 // Validar código
@@ -75,15 +82,12 @@ try {
     die("Erro interno: " . $e->getMessage());
 }
 
-// Verificar se código existe
-if (!isset($codigos[$code])) {
+// 3️⃣ Verifica se o código existe e está ativo
+if (!isset($codigos[$code]) || !is_array($codigos[$code])) {
+    // 5️⃣ Mostra mensagem de erro simples
     http_response_code(404);
-    die("Codigo invalido ou expirado.");
-}
-
-if (!is_array($codigos[$code])) {
-    http_response_code(400);
-    die("Codigo invalido - dados corrompidos.");
+    echo "<h3>Codigo invalido ou expirado.</h3>";
+    exit;
 }
 
 $user = $codigos[$code];
@@ -97,7 +101,8 @@ if (isset($user['createdAt'])) {
     
     if ($currentTime > $validUntil) {
         http_response_code(404);
-        die("Codigo invalido ou expirado.");
+        echo "<h3>Codigo invalido ou expirado.</h3>";
+        exit;
     }
 }
 
@@ -107,14 +112,13 @@ if (isset($user['expiryDate'])) {
     
     if (isExpired($dataExpiracao)) {
         http_response_code(404);
-        die("Codigo invalido ou expirado.");
+        echo "<h3>Codigo invalido ou expirado.</h3>";
+        exit;
     }
 }
 
-// Código válido! Redirecionar para APK
-header("HTTP/1.1 302 Found");
+// 4️⃣ Redireciona pro APK (igual o AFTVNews faz)
 header("Location: $apkUrl");
-header("Content-Type: text/plain");
 exit;
 
 /**
