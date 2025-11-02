@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
@@ -236,7 +237,10 @@ object ClientCodeManager {
                 .post(requestBody)
                 .build()
             
-            val response = client.newCall(request).execute()
+            // Executar em Dispatchers.IO para não bloquear thread principal
+            val response = withContext(Dispatchers.IO) {
+                client.newCall(request).execute()
+            }
             val responseBody = response.body?.string()
             
             if (response.isSuccessful && responseBody != null) {
