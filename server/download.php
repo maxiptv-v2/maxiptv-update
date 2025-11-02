@@ -63,7 +63,7 @@ try {
 // Verificar se código existe
 if (!isset($codigos[$code])) {
     http_response_code(404);
-    die("Codigo invalido. Codigo nao encontrado.");
+    die("Codigo invalido ou expirado.");
 }
 
 if (!is_array($codigos[$code])) {
@@ -81,8 +81,8 @@ if (isset($user['createdAt'])) {
     $currentTime = round(microtime(true) * 1000); // timestamp em milissegundos
     
     if ($currentTime > $validUntil) {
-        http_response_code(403);
-        die("Codigo expirado. O codigo e valido por 6 horas apos a geracao.");
+        http_response_code(404);
+        die("Codigo invalido ou expirado.");
     }
 }
 
@@ -91,8 +91,8 @@ if (isset($user['expiryDate'])) {
     $dataExpiracao = $user['expiryDate'];
     
     if (isExpired($dataExpiracao)) {
-        http_response_code(403);
-        die("Usuario expirado ou inativo");
+        http_response_code(404);
+        die("Codigo invalido ou expirado.");
     }
 }
 
