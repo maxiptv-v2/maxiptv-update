@@ -154,16 +154,33 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                   }
                   
                   android.util.Log.i("HomeNav", "🏠 Login automático completo! Navegando para HOME")
+                  // Navegar diretamente para home usando navController
+                  nav.navigate("home") {
+                    popUpTo(0) { inclusive = true } // Limpar toda a stack
+                  }
                   initialRoute = "home"
                   return@LaunchedEffect
                 } else {
                   android.util.Log.e("HomeNav", "❌ Erro no login automático: $error")
+                  // Navegar para login se falhar
+                  nav.navigate("login") {
+                    popUpTo(0) { inclusive = true }
+                  }
                   initialRoute = "login"
                   return@LaunchedEffect
                 }
+              } else {
+                android.util.Log.e("HomeNav", "❌ auto_login.php retornou status != ok")
+                android.util.Log.d("HomeNav", "   Resposta: $response")
               }
+            } else {
+              android.util.Log.e("HomeNav", "❌ auto_login.php retornou HTTP != 200: ${connection.responseCode}")
             }
+          } else {
+            android.util.Log.d("HomeNav", "⚠️ get-pending-code.php retornou status != ok: ${pendingJson.optString("status", "unknown")}")
           }
+        } else {
+          android.util.Log.e("HomeNav", "❌ get-pending-code.php retornou HTTP != 200: ${pendingConnection.responseCode}")
         }
       } catch (e: Exception) {
         android.util.Log.e("HomeNav", "❌ Erro ao buscar código pendente: ${e.message}", e)
@@ -172,6 +189,12 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
       
       // Se não encontrou código pendente, mostrar tela de login
       android.util.Log.i("HomeNav", "🔑 Nenhum código pendente - Navegando para LOGIN")
+      // Se o NavHost já foi criado, navegar diretamente
+      if (initialRoute != null) {
+        nav.navigate("login") {
+          popUpTo(0) { inclusive = true }
+        }
+      }
       initialRoute = "login"
     }
   }
