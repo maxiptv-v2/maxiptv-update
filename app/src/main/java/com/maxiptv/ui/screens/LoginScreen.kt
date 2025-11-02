@@ -24,6 +24,7 @@ import com.maxiptv.R
 import com.maxiptv.data.UserManager
 import com.maxiptv.data.UserAccount
 import com.maxiptv.data.SessionManager
+import com.maxiptv.MaxiApp
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,6 +46,9 @@ fun LoginScreen(
   var tapCount by remember { mutableStateOf(0) }
   val scope = rememberCoroutineScope()
   val context = LocalContext.current
+  
+  // 📱 Detectar se é smartphone para ajustar layout
+  val isPhone = MaxiApp.isPhone
   
   // 🛡️ PROTEÇÃO MÁXIMA: Não criar NENHUM usuário automaticamente
   // Todos os usuários devem ser adicionados APENAS pelo painel admin (5 toques no logo)
@@ -178,7 +182,10 @@ fun LoginScreen(
   Column(
     modifier = Modifier
       .fillMaxSize()
-      .padding(24.dp),
+      .padding(
+        horizontal = if (isPhone) 16.dp else 24.dp,
+        vertical = if (isPhone) 16.dp else 24.dp
+      ),
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.Center
   ) {
@@ -187,7 +194,7 @@ fun LoginScreen(
       imageVector = Icons.Default.PlayArrow,
       contentDescription = "MaxiPTV Logo",
       modifier = Modifier
-        .size(120.dp)
+        .size(if (isPhone) 80.dp else 120.dp)
         .clickable(
           indication = null,
           interactionSource = remember { MutableInteractionSource() }
@@ -203,22 +210,22 @@ fun LoginScreen(
       tint = MaterialTheme.colorScheme.primary
     )
     
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(if (isPhone) 12.dp else 16.dp))
     
     Text(
       text = "MaxiPTV",
-      fontSize = 32.sp,
+      fontSize = if (isPhone) 24.sp else 32.sp,
       fontWeight = FontWeight.Bold,
       color = MaterialTheme.colorScheme.primary
     )
     
     Text(
       text = "Sistema IPTV Premium",
-      fontSize = 14.sp,
+      fontSize = if (isPhone) 12.sp else 14.sp,
       color = MaterialTheme.colorScheme.onSurfaceVariant
     )
     
-    Spacer(Modifier.height(48.dp))
+    Spacer(Modifier.height(if (isPhone) 32.dp else 48.dp))
     
     // Campo Código (para login automático)
     OutlinedTextField(
@@ -251,7 +258,7 @@ fun LoginScreen(
       enabled = !isLoading
     )
     
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(if (isPhone) 12.dp else 16.dp))
     
     // Campo Senha
     OutlinedTextField(
@@ -274,19 +281,19 @@ fun LoginScreen(
       enabled = !isLoading
     )
     
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(if (isPhone) 8.dp else 8.dp))
     
     // Mensagem de erro
     if (errorMessage.isNotEmpty()) {
       Text(
         text = errorMessage,
         color = MaterialTheme.colorScheme.error,
-        fontSize = 14.sp,
-        modifier = Modifier.padding(vertical = 8.dp)
+        fontSize = if (isPhone) 12.sp else 14.sp,
+        modifier = Modifier.padding(vertical = if (isPhone) 4.dp else 8.dp)
       )
     }
     
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(if (isPhone) 16.dp else 24.dp))
     
     // Botão Entrar
     Button(
@@ -365,26 +372,26 @@ fun LoginScreen(
       },
       modifier = Modifier
         .fillMaxWidth()
-        .height(56.dp),
+        .height(if (isPhone) 50.dp else 56.dp),
       enabled = !isLoading
     ) {
       if (isLoading) {
         CircularProgressIndicator(
-          modifier = Modifier.size(24.dp),
+          modifier = Modifier.size(if (isPhone) 20.dp else 24.dp),
           color = Color.White
         )
       } else {
-        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(8.dp))
-        Text("ENTRAR", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(if (isPhone) 18.dp else 20.dp))
+        Spacer(Modifier.width(if (isPhone) 6.dp else 8.dp))
+        Text("ENTRAR", fontSize = if (isPhone) 14.sp else 16.sp, fontWeight = FontWeight.Bold)
       }
     }
     
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(if (isPhone) 16.dp else 24.dp))
     
     Text(
       text = "Acesso restrito a usuários autorizados",
-      fontSize = 12.sp,
+      fontSize = if (isPhone) 10.sp else 12.sp,
       color = MaterialTheme.colorScheme.onSurfaceVariant
     )
   }

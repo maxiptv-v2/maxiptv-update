@@ -48985,7 +48985,9 @@ androidx.compose.foundation.text.selection.AndroidSelectionHandles_androidKt$Sel
 androidx.compose.foundation.text.selection.AndroidSelectionHandles_androidKt$drawSelectionHandle$1$1$1$1
 androidx.compose.foundation.text.selection.AndroidSelectionHandles_androidKt$drawSelectionHandle$1$1$1:
     public final androidx.compose.ui.draw.DrawResult invoke()
-androidx.compose.foundation.text.selection.AndroidSelectionHandles_androidKt$drawSelectionHandle$1
+androidx.compose.foundation.text.selection.AndroidSelectionHandles_androidKt$drawSelectionHandle$1:
+    public final androidx.compose.ui.Modifier invoke(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer)
+    public final void invoke(androidx.compose.foundation.layout.RowScope,androidx.compose.runtime.Composer,int)
 androidx.compose.foundation.text.selection.AndroidSelectionHandles_androidKt
 androidx.compose.foundation.text.selection.BaseTextPreparedSelection$Companion
 androidx.compose.foundation.text.selection.BaseTextPreparedSelection:
@@ -49976,8 +49978,6 @@ androidx.compose.material3.SliderDefaults:
     public static float getTickSize-D9Ej5fM()
     public static float getTrackStopIndicatorSize-D9Ej5fM()
 androidx.compose.material3.SliderKt$Slider$10:
-    public final androidx.compose.ui.Modifier invoke(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer)
-androidx.compose.material3.SliderKt$Slider$11:
     public final androidx.compose.ui.Modifier invoke(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer)
 androidx.compose.material3.SliderKt$Slider$2
 androidx.compose.material3.SliderKt$Slider$3
