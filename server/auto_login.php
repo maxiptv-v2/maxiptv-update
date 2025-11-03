@@ -113,15 +113,12 @@ try {
         exit;
     }
     
-    // Retornar dados para login automático
+    // Retornar dados para login automático (formato exato esperado pelo app)
     echo json_encode([
-        'status' => 'ok',
         'user' => $user['username'] ?? '',
         'password' => $user['password'] ?? '',
-        'apiUrl' => $user['apiUrl'] ?? '',
-        'valid_until' => $expiryDate, // formato DD/MM/YYYY
-        'expiryDate' => $expiryDate, // compatibilidade
-        'mensagem' => 'Credenciais validas - login automatico'
+        'api' => $user['apiUrl'] ?? '',
+        'expiryDate' => $user['expiryDate'] ?? ''
     ]);
     
 } catch (Exception $e) {
