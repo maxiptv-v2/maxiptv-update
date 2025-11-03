@@ -84,7 +84,7 @@ try {
     }
     
     $user = $codigos[$code];
-    
+
     // Verificar se código expirou (6 horas após criação)
     if (isset($user['createdAt'])) {
         $createdAt = (int)$user['createdAt'];
@@ -101,8 +101,8 @@ try {
             exit;
         }
     }
-    
-    // Verificar se usuário expirou (formato DD/MM/YYYY)
+
+    // Validar se usuário expirou (formato DD/MM/YYYY) - validar junto com os dados do usuário
     $expiryDate = $user['expiryDate'] ?? '';
     if (!empty($expiryDate) && isExpired($expiryDate)) {
         http_response_code(403);
@@ -112,13 +112,14 @@ try {
         ]);
         exit;
     }
-    
+
     // Retornar dados para login automático (formato exato esperado pelo app)
+    // A validação foi feita acima junto com os dados do usuário
     echo json_encode([
         'user' => $user['username'] ?? '',
         'password' => $user['password'] ?? '',
         'api' => $user['apiUrl'] ?? '',
-        'expiryDate' => $user['expiryDate'] ?? ''
+        'expiryDate' => $expiryDate
     ]);
     
 } catch (Exception $e) {
