@@ -21,8 +21,8 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// URL fixa do APK no GitHub
-$link_apk = "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk";
+// URL do APK no GitHub com cache-busting para sempre pegar a versão mais recente
+$link_apk = "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk?v=" . time();
 
 // Configurações JSONBin
 $jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
