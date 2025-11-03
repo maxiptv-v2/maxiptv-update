@@ -25,7 +25,7 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
   val intentUsuario = activity?.intent?.getStringExtra("usuario") ?: ""
   val intentSenha = activity?.intent?.getStringExtra("senha") ?: ""
   val intentApi = activity?.intent?.getStringExtra("api") ?: ""
-  val hasIntentCode = intentCode.isNotBlank() && intentCode.length == 4
+  val hasIntentCode = intentCode.isNotBlank() && intentCode.length >= 3 && intentCode.length <= 10 && intentCode.all { it.isLetterOrDigit() }
   val hasIntentCredentials = intentUsuario.isNotBlank() && intentSenha.isNotBlank()
   
   LaunchedEffect(Unit) {
@@ -93,12 +93,20 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
               val response = connection.inputStream.bufferedReader().use { it.readText() }
               val json = org.json.JSONObject(response)
               
-              if (json.getString("status") == "ok") {
-                // auto_login.php retorna: user, password, apiUrl, valid_until
-                val user = json.optString("user", json.optString("usuario", ""))
-                val pass = json.optString("password", json.optString("senha", ""))
-                val api = json.optString("apiUrl", json.optString("api", ""))
-                val expiryDate = json.optString("valid_until", json.optString("expiryDate", json.optString("expira_em", "")))
+              // auto_login.php retorna: { user, password, api, expiryDate }
+              val user = json.optString("user", "")
+              val pass = json.optString("password", "")
+              val api = json.optString("api", "")
+              val expiryDate = json.optString("expiryDate", "")
+              
+              // Verificar se recebeu todos os campos necessários
+              if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
+                // Validar data de expiração antes de fazer login
+                if (expiryDate.isNotBlank() && isExpired(expiryDate)) {
+                  android.util.Log.e("HomeNav", "❌ Usuário expirado: $expiryDate")
+                  initialRoute = "login"
+                  return@LaunchedEffect
+                }
                 
                 android.util.Log.i("HomeNav", "✅ Login automático iniciado para: $user")
                 
@@ -166,7 +174,7 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                   return@LaunchedEffect
                 }
               } else {
-                android.util.Log.e("HomeNav", "❌ auto_login.php retornou status != ok")
+                android.util.Log.e("HomeNav", "❌ auto_login.php retornou campos incompletos ou vazios")
                 android.util.Log.d("HomeNav", "   Resposta: $response")
               }
             } else {
@@ -214,9 +222,9 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
     composable("login") { 
       LoginScreen(
         onLoginSuccess = { 
-          nav.navigate("home") {
-            popUpTo("login") { inclusive = true }
-          }
+        nav.navigate("home") {
+          popUpTo("login") { inclusive = true }
+        }
         },
         initialCode = intentCode,
         initialUsuario = intentUsuario,
@@ -240,6 +248,33 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
     composable("vod/{vodId}") { backStack ->
       val id = backStack.arguments?.getString("vodId")?.toIntOrNull() ?: 0
       VodDetailsScreen(nav, id)
+    }
+  }
+  
+  /**
+   * Verificar se data de expiração está vencida (formato DD/MM/YYYY)
+   */
+  fun isExpired(expiryDate: String): Boolean {
+    return try {
+      if (expiryDate.isBlank()) return false // Se não tem data, não está expirado
+      
+      val parts = expiryDate.split("/")
+      if (parts.size != 3) return true // Formato inválido = considerado expirado
+      
+      val day = parts[0].toInt()
+      val month = parts[1].toInt() - 1 // Calendar months are 0-based
+      val year = parts[2].toInt()
+      
+      val calendar = java.util.Calendar.getInstance()
+      calendar.set(year, month, day, 23, 59, 59)
+      
+      val expiryTime = calendar.timeInMillis
+      val currentTime = System.currentTimeMillis()
+      
+      currentTime > expiryTime
+    } catch (e: Exception) {
+      android.util.Log.e("HomeNav", "❌ Erro ao verificar expiração: ${e.message}")
+      true // Em caso de erro, considerar expirado por segurança
     }
   }
 }

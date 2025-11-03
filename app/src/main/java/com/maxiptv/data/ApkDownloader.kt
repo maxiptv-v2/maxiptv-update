@@ -55,7 +55,9 @@ object ApkDownloader {
             return
         }
         
-        val fileName = "maxiptv-$version.apk"
+        // Remover caracteres inválidos da versão para o nome do arquivo
+        val safeVersion = version.replace("v", "").replace(".", "_").replace(":", "_")
+        val fileName = "maxiptv-$safeVersion.apk"
         val request = DownloadManager.Request(Uri.parse(downloadUrl))
             .setTitle("MaxiPTV Atualização")
             .setDescription("Baixando versão $version...")
@@ -93,24 +95,65 @@ object ApkDownloader {
      */
     private fun installApk(context: Context, fileName: String) {
         try {
-            val file = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                fileName
-            )
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val file = File(downloadsDir, fileName)
             
             if (!file.exists()) {
                 Log.e(TAG, "❌ APK não encontrado: ${file.absolutePath}")
+                
+                // Tentar encontrar qualquer APK do MaxiPTV na pasta Downloads
+                val downloads = downloadsDir.listFiles { _, name ->
+                    name.startsWith("maxiptv", ignoreCase = true) && name.endsWith(".apk", ignoreCase = true)
+                }
+                
+                if (downloads != null && downloads.isNotEmpty()) {
+                    // Usar o mais recente
+                    val latest = downloads.maxByOrNull { it.lastModified() }
+                    if (latest != null) {
+                        Log.i(TAG, "📦 Usando APK alternativo: ${latest.name}")
+                        installApkFile(context, latest)
+                        return
+                    }
+                }
                 return
             }
             
-            Log.i(TAG, "📦 APK encontrado: ${file.absolutePath}")
+            Log.i(TAG, "📦 APK encontrado: ${file.absolutePath} (${file.length()} bytes)")
             
+            // Verificar se o arquivo não está vazio
+            if (file.length() == 0L) {
+                Log.e(TAG, "❌ APK está vazio ou corrompido!")
+                return
+            }
+            
+            installApkFile(context, file)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao instalar APK: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * Instala um arquivo APK específico
+     */
+    private fun installApkFile(context: Context, file: File) {
+        try {
             val uri: Uri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    file
-                )
+                try {
+                    FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        file
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "❌ Erro ao criar Uri com FileProvider: ${e.message}")
+                    // Fallback: tentar sem FileProvider (pode funcionar em versões antigas)
+                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N) {
+                        Uri.fromFile(file)
+                    } else {
+                        throw e
+                    }
+                }
             } else {
                 Uri.fromFile(file)
             }
@@ -118,10 +161,20 @@ object ApkDownloader {
             val installIntent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, "application/vnd.android.package-archive")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                
+                // Para Android 7.0+ (API 24+), adicionar permissão de escrita
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                }
             }
             
-            context.startActivity(installIntent)
-            Log.i(TAG, "✅ Instalação iniciada")
+            // Verificar se há um app para lidar com a instalação
+            if (installIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(installIntent)
+                Log.i(TAG, "✅ Instalação iniciada")
+            } else {
+                Log.e(TAG, "❌ Nenhum app encontrado para instalar APK")
+            }
             
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao instalar APK: ${e.message}", e)

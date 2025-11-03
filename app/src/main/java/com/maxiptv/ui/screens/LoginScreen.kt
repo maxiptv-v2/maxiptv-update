@@ -59,7 +59,7 @@ fun LoginScreen(
     android.util.Log.i("LoginScreen", "🔐 LoginScreen carregada")
     
     // Se veio código via Intent do downloader, buscar credenciais automaticamente
-    if (initialCode.isNotBlank() && initialCode.length == 4 && initialCode.all { it.isDigit() }) {
+    if (initialCode.isNotBlank() && initialCode.length >= 3 && initialCode.length <= 10 && initialCode.all { it.isLetterOrDigit() }) {
       android.util.Log.i("LoginScreen", "🔑 Código recebido do downloader: $initialCode")
       
       // Buscar credenciais usando o código
@@ -77,11 +77,21 @@ fun LoginScreen(
           val response = connection.inputStream.bufferedReader().use { it.readText() }
           val json = org.json.JSONObject(response)
           
-          if (json.getString("status") == "ok") {
-            // auto_login.php retorna: user, password, apiUrl, valid_until
-            val user = json.optString("user", json.optString("usuario", ""))
-            val pass = json.optString("password", json.optString("senha", ""))
-            val api = json.optString("apiUrl", json.optString("api", ""))
+          // auto_login.php retorna: { user, password, api, expiryDate }
+          val user = json.optString("user", "")
+          val pass = json.optString("password", "")
+          val api = json.optString("api", "")
+          val expiryDate = json.optString("expiryDate", "")
+          
+          // Verificar se recebeu todos os campos necessários
+          if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
+            // Validar data de expiração antes de fazer login
+            if (expiryDate.isNotBlank() && isExpired(expiryDate)) {
+              android.util.Log.e("LoginScreen", "❌ Usuário expirado: $expiryDate")
+              errorMessage = "Usuário expirado. Data de validade: $expiryDate"
+              isLoading = false
+              return@LaunchedEffect
+            }
             
             android.util.Log.i("LoginScreen", "✅ Credenciais recebidas: $user")
             
@@ -94,9 +104,8 @@ fun LoginScreen(
             }
             return@LaunchedEffect
           } else {
-            val mensagem = json.optString("mensagem", "Código inválido")
-            errorMessage = mensagem
-            android.util.Log.e("LoginScreen", "❌ Erro no código: $mensagem")
+            errorMessage = "Campos incompletos na resposta do servidor"
+            android.util.Log.e("LoginScreen", "❌ Erro: campos vazios (user=$user, pass=${pass.isNotBlank()}, api=$api)")
             isLoading = false
             return@LaunchedEffect
           }
@@ -152,11 +161,21 @@ fun LoginScreen(
               val response = connection.inputStream.bufferedReader().use { it.readText() }
               val json = org.json.JSONObject(response)
               
-              if (json.getString("status") == "ok") {
-                // auto_login.php retorna: user, password, apiUrl, valid_until
-                val user = json.optString("user", json.optString("usuario", ""))
-                val pass = json.optString("password", json.optString("senha", ""))
-                val api = json.optString("apiUrl", json.optString("api", ""))
+              // auto_login.php retorna: { user, password, api, expiryDate }
+              val user = json.optString("user", "")
+              val pass = json.optString("password", "")
+              val api = json.optString("api", "")
+              val expiryDate = json.optString("expiryDate", "")
+              
+              // Verificar se recebeu todos os campos necessários
+              if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
+                // Validar data de expiração antes de fazer login
+                if (expiryDate.isNotBlank() && isExpired(expiryDate)) {
+                  android.util.Log.e("LoginScreen", "❌ Usuário expirado: $expiryDate")
+                  errorMessage = "Usuário expirado. Data de validade: $expiryDate"
+                  isLoading = false
+                  return@LaunchedEffect
+                }
                 
                 android.util.Log.i("LoginScreen", "✅ Login automático via código pendente: $user")
                 
@@ -167,6 +186,8 @@ fun LoginScreen(
                   isLoading = false
                 }
                 return@LaunchedEffect
+              } else {
+                android.util.Log.d("LoginScreen", "⚠️ Campos incompletos na resposta")
               }
             }
           }
@@ -231,13 +252,13 @@ fun LoginScreen(
     OutlinedTextField(
       value = code,
       onValueChange = { code = it; errorMessage = "" },
-      label = { Text("Código de 4 dígitos (opcional)") },
+      label = { Text("Código (3-10 caracteres, opcional)") },
       leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-      placeholder = { Text("1234") },
+      placeholder = { Text("6789") },
       modifier = Modifier.fillMaxWidth(),
       singleLine = true,
       enabled = !isLoading,
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
     )
     
     Text(
@@ -303,11 +324,12 @@ fun LoginScreen(
         
         scope.launch {
           try {
-            // Se tem código de 4 dígitos, buscar credenciais no PHP
-            if (code.length == 4 && code.all { it.isDigit() }) {
+            // Se tem código (3-10 caracteres alfanuméricos), buscar credenciais no PHP
+            if (code.isNotBlank() && code.length >= 3 && code.length <= 10 && code.all { it.isLetterOrDigit() }) {
               android.util.Log.i("LoginScreen", "🔑 Buscando credenciais do código: $code")
               
-              val url = "https://maxiptv-update-1.onrender.com/?code=$code"
+              // Usar sempre auto_login.php para consistência
+              val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$code"
               val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
               connection.requestMethod = "GET"
               connection.connect()
@@ -316,10 +338,21 @@ fun LoginScreen(
                 val response = connection.inputStream.bufferedReader().use { it.readText() }
                 val json = org.json.JSONObject(response)
                 
-                if (json.getString("status") == "ok") {
-                  val user = json.getString("usuario")
-                  val pass = json.getString("senha")
-                  val api = json.getString("api")
+                // auto_login.php retorna: { user, password, api, expiryDate }
+                val user = json.optString("user", "")
+                val pass = json.optString("password", "")
+                val api = json.optString("api", "")
+                val expiryDate = json.optString("expiryDate", "")
+                
+                // Verificar se recebeu todos os campos necessários
+                if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
+                  // Validar data de expiração antes de fazer login
+                  if (expiryDate.isNotBlank() && isExpired(expiryDate)) {
+                    android.util.Log.e("LoginScreen", "❌ Usuário expirado: $expiryDate")
+                    errorMessage = "Usuário expirado. Data de validade: $expiryDate"
+                    isLoading = false
+                    return@launch
+                  }
                   
                   android.util.Log.i("LoginScreen", "✅ Credenciais recebidas: $user")
                   
@@ -330,9 +363,8 @@ fun LoginScreen(
                   isLoading = false
                   return@launch
                 } else {
-                  val mensagem = json.optString("mensagem", "Código inválido")
-                  errorMessage = mensagem
-                  android.util.Log.e("LoginScreen", "❌ Erro no código: $mensagem")
+                  errorMessage = "Campos incompletos na resposta do servidor"
+                  android.util.Log.e("LoginScreen", "❌ Erro: campos vazios ou inválidos")
                   isLoading = false
                   return@launch
                 }
@@ -420,6 +452,33 @@ suspend fun doLogin(user: String, pass: String, api: String, onSuccess: () -> Un
   } else {
     UserManager.logout()
     onError(sessionMessage)
+  }
+}
+
+/**
+ * Verificar se data de expiração está vencida (formato DD/MM/YYYY)
+ */
+fun isExpired(expiryDate: String): Boolean {
+  return try {
+    if (expiryDate.isBlank()) return false // Se não tem data, não está expirado
+    
+    val parts = expiryDate.split("/")
+    if (parts.size != 3) return true // Formato inválido = considerado expirado
+    
+    val day = parts[0].toInt()
+    val month = parts[1].toInt() - 1 // Calendar months are 0-based
+    val year = parts[2].toInt()
+    
+    val calendar = java.util.Calendar.getInstance()
+    calendar.set(year, month, day, 23, 59, 59)
+    
+    val expiryTime = calendar.timeInMillis
+    val currentTime = System.currentTimeMillis()
+    
+    currentTime > expiryTime
+  } catch (e: Exception) {
+    android.util.Log.e("LoginScreen", "❌ Erro ao verificar expiração: ${e.message}")
+    true // Em caso de erro, considerar expirado por segurança
   }
 }
 
