@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivity? = null) {
   // 🔐 VERIFICAR SE JÁ EXISTE USUÁRIO LOGADO ao iniciar
   var initialRoute by remember { mutableStateOf<String?>(null) }
+  var shouldNavigateToHome by remember { mutableStateOf(false) }
   
   // Ler código ou credenciais do Intent (se vier do downloader)
   val intentCode = activity?.intent?.getStringExtra("code") ?: ""
@@ -154,18 +155,13 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                   }
                   
                   android.util.Log.i("HomeNav", "🏠 Login automático completo! Navegando para HOME")
-                  // Navegar diretamente para home usando navController
-                  nav.navigate("home") {
-                    popUpTo(0) { inclusive = true } // Limpar toda a stack
-                  }
+                  // Marcar para navegar (navegação será feita quando NavHost estiver pronto)
                   initialRoute = "home"
+                  shouldNavigateToHome = true
                   return@LaunchedEffect
                 } else {
                   android.util.Log.e("HomeNav", "❌ Erro no login automático: $error")
-                  // Navegar para login se falhar
-                  nav.navigate("login") {
-                    popUpTo(0) { inclusive = true }
-                  }
+                  // Se falhar, apenas definir initialRoute para login (NavHost lidará com isso)
                   initialRoute = "login"
                   return@LaunchedEffect
                 }
@@ -189,12 +185,6 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
       
       // Se não encontrou código pendente, mostrar tela de login
       android.util.Log.i("HomeNav", "🔑 Nenhum código pendente - Navegando para LOGIN")
-      // Se o NavHost já foi criado, navegar diretamente
-      if (initialRoute != null) {
-        nav.navigate("login") {
-          popUpTo(0) { inclusive = true }
-        }
-      }
       initialRoute = "login"
     }
   }
@@ -203,6 +193,18 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
   if (initialRoute == null) {
     // Mostrar splash/loading enquanto verifica
     return
+  }
+  
+  // Navegar para home se login automático foi bem-sucedido
+  LaunchedEffect(shouldNavigateToHome) {
+    if (shouldNavigateToHome) {
+      android.util.Log.i("HomeNav", "🚀 Executando navegação para home após login automático")
+      kotlinx.coroutines.delay(100) // Pequeno delay para garantir que NavHost está pronto
+      nav.navigate("home") {
+        popUpTo(0) { inclusive = true } // Limpar toda a stack
+      }
+      shouldNavigateToHome = false
+    }
   }
   
   NavHost(
