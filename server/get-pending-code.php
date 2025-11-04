@@ -11,14 +11,79 @@ header('Access-Control-Allow-Origin: *');
 $ip = $_SERVER['REMOTE_ADDR'] ?? '';
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
+// Função para adicionar log
+function addLog($type, $message, $data = []) {
+    global $jsonbin_url, $jsonbin_update, $apiKey;
+    
+    try {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $jsonbin_url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        
+        $response = curl_exec($ch);
+        curl_close($ch);
+        
+        $data_record = json_decode($response, true);
+        $record = $data_record['record'] ?? [];
+        
+        if (!isset($record['_login_logs']) || !is_array($record['_login_logs'])) {
+            $record['_login_logs'] = [];
+        }
+        
+        $record['_login_logs'][] = [
+            'timestamp' => time(),
+            'datetime' => date('Y-m-d H:i:s'),
+            'type' => $type,
+            'message' => $message,
+            'data' => $data,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ];
+        
+        if (count($record['_login_logs']) > 100) {
+            $record['_login_logs'] = array_slice($record['_login_logs'], -100);
+        }
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $jsonbin_update);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+            "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_exec($ch);
+        curl_close($ch);
+    } catch (Exception $e) {
+        // Silenciar erros de log
+    }
+}
+
+$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
+$jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
+
 if (empty($ip)) {
+    addLog('error', 'IP nao identificado', ['endpoint' => 'get-pending-code.php']);
     echo json_encode(['status' => 'erro', 'mensagem' => 'IP nao identificado']);
     exit;
 }
 
-// Buscar dados do JSONBin
-$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
-$apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
+// Log de chamada inicial
+addLog('info', 'App chamou get-pending-code.php', [
+    'endpoint' => 'get-pending-code.php',
+    'ip' => $ip,
+    'user_agent' => substr($userAgent, 0, 100)
+]);
+
+// Buscar dados do JSONBin (já definido acima)
 
 try {
     $ch = curl_init();
@@ -96,6 +161,12 @@ try {
     }
     
     if ($foundCode) {
+        addLog('success', 'Codigo pendente encontrado e retornado', [
+            'endpoint' => 'get-pending-code.php',
+            'code' => $foundCode,
+            'username' => $foundUsername ?? ''
+        ]);
+        
         echo json_encode([
             'status' => 'ok',
             'code' => $foundCode,
@@ -103,6 +174,13 @@ try {
             'mensagem' => 'Codigo encontrado - dados do usuario do painel'
         ]);
     } else {
+        addLog('warning', 'Nenhum codigo pendente encontrado', [
+            'endpoint' => 'get-pending-code.php',
+            'ip' => $ip,
+            'total_pending' => count($record['_pending_logins'] ?? []),
+            'has_pending' => isset($record['_pending_logins'])
+        ]);
+        
         echo json_encode([
             'status' => 'nao_encontrado', 
             'mensagem' => 'Nenhum codigo pendente encontrado',

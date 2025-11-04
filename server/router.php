@@ -17,8 +17,10 @@ $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $path = parse_url($requestUri, PHP_URL_PATH);
 $path = trim($path, '/');
 
-// Prioridade 1: Endpoints específicos (NÃO interceptar auto_login.php e get-pending-code.php)
-if (strpos($path, 'auto_login.php') !== false || strpos($path, 'get-pending-code.php') !== false) {
+// Prioridade 1: Endpoints específicos (NÃO interceptar auto_login.php, get-pending-code.php, debug-login.php)
+if (strpos($path, 'auto_login.php') !== false || 
+    strpos($path, 'get-pending-code.php') !== false || 
+    strpos($path, 'debug-login.php') !== false) {
     // Deixar PHP built-in server processar arquivos PHP diretamente
     return false;
 }

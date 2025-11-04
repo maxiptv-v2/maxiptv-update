@@ -11,7 +11,74 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
+// Função para adicionar log
+function addLog($type, $message, $data = []) {
+    global $jsonbin_url, $jsonbin_update, $apiKey;
+    
+    try {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $jsonbin_url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        
+        $response = curl_exec($ch);
+        curl_close($ch);
+        
+        $data_record = json_decode($response, true);
+        $record = $data_record['record'] ?? [];
+        
+        if (!isset($record['_login_logs']) || !is_array($record['_login_logs'])) {
+            $record['_login_logs'] = [];
+        }
+        
+        $record['_login_logs'][] = [
+            'timestamp' => time(),
+            'datetime' => date('Y-m-d H:i:s'),
+            'type' => $type,
+            'message' => $message,
+            'data' => $data,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ];
+        
+        if (count($record['_login_logs']) > 100) {
+            $record['_login_logs'] = array_slice($record['_login_logs'], -100);
+        }
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $jsonbin_update);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+            "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_exec($ch);
+        curl_close($ch);
+    } catch (Exception $e) {
+        // Silenciar erros de log
+    }
+}
+
+$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
+$jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
+
 $code = $_GET['code'] ?? '';
+
+// Log de chamada inicial
+addLog('info', 'App chamou auto_login.php', [
+    'endpoint' => 'auto_login.php',
+    'code' => $code,
+    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+    'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 100)
+]);
 
 if (empty($code)) {
     http_response_code(400);
@@ -22,12 +89,13 @@ if (empty($code)) {
     exit;
 }
 
-// Configurações JSONBin
-$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
-$apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
-
 // Validar formato do código (alfanumérico, 3-10 caracteres)
 if (!preg_match('/^[A-Za-z0-9]{3,10}$/', $code)) {
+    addLog('error', 'Codigo invalido (formato)', [
+        'endpoint' => 'auto_login.php',
+        'code' => $code
+    ]);
+    
     http_response_code(400);
     echo json_encode([
         'status' => 'erro',
@@ -75,6 +143,11 @@ try {
     
     // Verificar se código existe
     if (!isset($codigos[$code]) || !is_array($codigos[$code])) {
+        addLog('error', 'Codigo nao encontrado no JSONBin', [
+            'endpoint' => 'auto_login.php',
+            'code' => $code
+        ]);
+        
         http_response_code(404);
         echo json_encode([
             'status' => 'erro',
@@ -93,6 +166,14 @@ try {
         $currentTime = round(microtime(true) * 1000); // timestamp em milissegundos
         
         if ($currentTime > $validUntil) {
+            addLog('error', 'Codigo expirado (mais de 6 horas)', [
+                'endpoint' => 'auto_login.php',
+                'code' => $code,
+                'createdAt' => $createdAt,
+                'validUntil' => $validUntil,
+                'currentTime' => $currentTime
+            ]);
+            
             http_response_code(403);
             echo json_encode([
                 'status' => 'erro',
@@ -106,6 +187,13 @@ try {
     // Esta validação deve ser feita ANTES de retornar credenciais para login automático
     $expiryDate = $user['expiryDate'] ?? '';
     if (!empty($expiryDate) && isExpired($expiryDate)) {
+        addLog('error', 'Usuario expirado', [
+            'endpoint' => 'auto_login.php',
+            'code' => $code,
+            'username' => $user['username'] ?? '',
+            'expiryDate' => $expiryDate
+        ]);
+        
         http_response_code(403);
         echo json_encode([
             'status' => 'expired',
@@ -120,6 +208,14 @@ try {
     // expires_in = tempo de validade do código em segundos (6 horas = 21600 segundos)
     // expiryDate = data de expiração do usuário (formato DD/MM/YYYY)
     $expiresIn = 21600; // 6 horas em segundos
+    
+    addLog('success', 'Credenciais retornadas com sucesso', [
+        'endpoint' => 'auto_login.php',
+        'code' => $code,
+        'username' => $user['username'] ?? '',
+        'api_url' => $user['apiUrl'] ?? '',
+        'expiryDate' => $expiryDate
+    ]);
     
     echo json_encode([
         'status' => 'success',
