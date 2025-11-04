@@ -17,9 +17,65 @@
  * - Validações incluem: código existe, não expirou (6h), usuário ativo
  */
 
-// Configurações JSONBin
+// Configurações JSONBin (definir ANTES da função para usar global)
 $jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
+$jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
 $apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
+
+// Função para adicionar log
+function addLog($type, $message, $data = []) {
+    global $jsonbin_url, $jsonbin_update, $apiKey;
+    
+    try {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $jsonbin_url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        
+        $response = curl_exec($ch);
+        curl_close($ch);
+        
+        $data_record = json_decode($response, true);
+        $record = $data_record['record'] ?? [];
+        
+        if (!isset($record['_login_logs']) || !is_array($record['_login_logs'])) {
+            $record['_login_logs'] = [];
+        }
+        
+        $record['_login_logs'][] = [
+            'timestamp' => time(),
+            'datetime' => date('Y-m-d H:i:s'),
+            'type' => $type,
+            'message' => $message,
+            'data' => $data,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ];
+        
+        if (count($record['_login_logs']) > 100) {
+            $record['_login_logs'] = array_slice($record['_login_logs'], -100);
+        }
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $jsonbin_update);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+            "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_exec($ch);
+        curl_close($ch);
+    } catch (Exception $e) {
+        // Silenciar erros de log
+    }
+}
 
 // URL do APK no GitHub com cache-busting para sempre pegar a versão mais recente
 // Adicionar timestamp para forçar atualização (GitHub pode ter cache)
@@ -49,8 +105,21 @@ $isDownloader = isset($_SERVER['HTTP_USER_AGENT']) &&
                 (stripos($_SERVER['HTTP_USER_AGENT'], 'downloader') !== false ||
                  stripos($_SERVER['HTTP_USER_AGENT'], 'android') !== false);
 
+// Log de chamada inicial (depois de extrair código)
+addLog('info', 'Downloader chamou dl.php', [
+    'endpoint' => 'dl.php',
+    'code' => $code,
+    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+    'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 100)
+]);
+
 // Validar código
 if (!$code || !preg_match('/^[A-Za-z0-9]{3,10}$/', $code)) {
+    addLog('error', 'Codigo invalido (formato)', [
+        'endpoint' => 'dl.php',
+        'code' => $code
+    ]);
+    
     http_response_code(400);
     die("Codigo invalido. Digite um codigo valido (3-10 caracteres alfanumericos).");
 }
@@ -90,7 +159,11 @@ try {
 
 // 3️⃣ Verifica se o código existe e está ativo
 if (!isset($codigos[$code]) || !is_array($codigos[$code])) {
-    // 5️⃣ Mostra mensagem de erro simples
+    addLog('error', 'Codigo nao encontrado no JSONBin', [
+        'endpoint' => 'dl.php',
+        'code' => $code
+    ]);
+    
     http_response_code(404);
     echo "<h3>Codigo invalido ou expirado.</h3>";
     exit;
@@ -106,6 +179,14 @@ if (isset($user['createdAt'])) {
     $currentTime = round(microtime(true) * 1000); // timestamp em milissegundos
     
     if ($currentTime > $validUntil) {
+        addLog('error', 'Codigo expirado (mais de 6 horas)', [
+            'endpoint' => 'dl.php',
+            'code' => $code,
+            'createdAt' => $createdAt,
+            'validUntil' => $validUntil,
+            'currentTime' => $currentTime
+        ]);
+        
         http_response_code(404);
         echo "<h3>Codigo invalido ou expirado.</h3>";
         exit;
@@ -117,6 +198,13 @@ if (isset($user['createdAt'])) {
 // Se o usuário estiver expirado, não deve salvar código pendente nem permitir download
 $expiryDate = $user['expiryDate'] ?? '';
 if (!empty($expiryDate) && isExpired($expiryDate)) {
+    addLog('error', 'Usuario expirado', [
+        'endpoint' => 'dl.php',
+        'code' => $code,
+        'username' => $user['username'] ?? '',
+        'expiryDate' => $expiryDate
+    ]);
+    
     http_response_code(403);
     echo "<h3>Codigo invalido ou expirado.</h3>";
     echo "<p>Assinatura expirada. Data de validade: $expiryDate</p>";
@@ -187,19 +275,30 @@ try {
             "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
         ]);
         curl_exec($ch2); // Não esperar resposta
+        
+        addLog('info', 'Codigo pendente salvo para login automatico', [
+            'endpoint' => 'dl.php',
+            'code' => $code,
+            'username' => $username,
+            'ip' => $ip
+        ]);
     }
     curl_close($ch2);
 } catch (Exception $e) {
-    // Ignorar erro - não é crítico para o download
+    addLog('warning', 'Erro ao salvar codigo pendente', [
+        'endpoint' => 'dl.php',
+        'code' => $code,
+        'error' => $e->getMessage()
+    ]);
 }
 
-// Registrar download (opcional - para logs)
-try {
-    // Você pode adicionar logging aqui se necessário
-    error_log("Download registrado - Codigo: $code, Usuario: $username, IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
-} catch (Exception $e) {
-    // Ignorar erro
-}
+// Log de sucesso antes de redirecionar
+addLog('success', 'Download iniciado - redirecionando para APK', [
+    'endpoint' => 'dl.php',
+    'code' => $code,
+    'username' => $username ?? '',
+    'apk_url' => $apkUrl
+]);
 
 // Redirect direto para APK
 // O código está salvo temporariamente no JSONBin associado ao IP
