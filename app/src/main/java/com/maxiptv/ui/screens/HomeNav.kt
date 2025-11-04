@@ -38,18 +38,17 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
     var autoLoginSuccess = false
     
     try {
+      // Buscar código pendente do download
+      val pendingUrl = "https://maxiptv-update-1.onrender.com/get-pending-code.php"
+      android.util.Log.d("HomeNav", "🔍 Buscando código pendente: $pendingUrl")
+      val pendingConnection = java.net.URL(pendingUrl).openConnection() as java.net.HttpURLConnection
+      pendingConnection.requestMethod = "GET"
+      pendingConnection.connectTimeout = 10000
+      pendingConnection.readTimeout = 10000
+      pendingConnection.connect()
       
-      try {
-        // Buscar código pendente do download
-        val pendingUrl = "https://maxiptv-update-1.onrender.com/get-pending-code.php"
-        android.util.Log.d("HomeNav", "🔍 Buscando código pendente: $pendingUrl")
-        val pendingConnection = java.net.URL(pendingUrl).openConnection() as java.net.HttpURLConnection
-        pendingConnection.requestMethod = "GET"
-        pendingConnection.connectTimeout = 10000
-        pendingConnection.readTimeout = 10000
-        
-        android.util.Log.d("HomeNav", "📡 Resposta HTTP: ${pendingConnection.responseCode}")
-        if (pendingConnection.responseCode == 200) {
+      android.util.Log.d("HomeNav", "📡 Resposta HTTP: ${pendingConnection.responseCode}")
+      if (pendingConnection.responseCode == 200) {
           val pendingResponse = pendingConnection.inputStream.bufferedReader().use { it.readText() }
           android.util.Log.d("HomeNav", "📥 Resposta COMPLETA: $pendingResponse")
           val pendingJson = org.json.JSONObject(pendingResponse)
@@ -216,52 +215,57 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
             android.util.Log.w("HomeNav", "   Status recebido: '$pendingStatus'")
             android.util.Log.w("HomeNav", "   Resposta completa: $pendingResponse")
           }
-        } else {
-          android.util.Log.e("HomeNav", "❌ get-pending-code.php retornou HTTP != 200: ${pendingConnection.responseCode}")
+      } else {
+        android.util.Log.e("HomeNav", "❌ get-pending-code.php retornou HTTP != 200: ${pendingConnection.responseCode}")
+        try {
+          val errorBody = pendingConnection.errorStream?.bufferedReader()?.use { it.readText() } ?: "sem erro"
+          android.util.Log.e("HomeNav", "   Corpo do erro: $errorBody")
+        } catch (e: Exception) {
+          android.util.Log.e("HomeNav", "   Erro ao ler corpo do erro: ${e.message}")
         }
-      } catch (e: Exception) {
-        android.util.Log.e("HomeNav", "❌ Erro ao buscar código pendente: ${e.message}", e)
-        android.util.Log.e("HomeNav", "   Tipo de erro: ${e.javaClass.simpleName}")
-        android.util.Log.e("HomeNav", "   Stack trace: ${e.stackTraceToString()}")
-        android.util.Log.d("HomeNav", "ℹ️ Continuando sem código pendente")
       }
+    } catch (e: Exception) {
+      android.util.Log.e("HomeNav", "❌ Erro ao buscar código pendente: ${e.message}", e)
+      android.util.Log.e("HomeNav", "   Tipo de erro: ${e.javaClass.simpleName}")
+      android.util.Log.e("HomeNav", "   Stack trace: ${e.stackTraceToString()}")
+      android.util.Log.d("HomeNav", "ℹ️ Continuando sem código pendente")
+    }
+    
+    // Se login automático não funcionou, verificar se já tem usuário logado
+    if (!autoLoginSuccess) {
+      android.util.Log.i("HomeNav", "🔍 Login automático não funcionou - Verificando usuário existente...")
+      val currentUser = UserManager.getCurrentUser()
       
-      // Se login automático não funcionou, verificar se já tem usuário logado
-      if (!autoLoginSuccess) {
-        android.util.Log.i("HomeNav", "🔍 Login automático não funcionou - Verificando usuário existente...")
-        val currentUser = UserManager.getCurrentUser()
+      if (currentUser != null) {
+        android.util.Log.i("HomeNav", "✅ Usuário logado encontrado: ${currentUser.username}")
         
-        if (currentUser != null) {
-          android.util.Log.i("HomeNav", "✅ Usuário logado encontrado: ${currentUser.username}")
+        // 🔄 REATIVAR HEARTBEAT para controle de login simultâneo
+        try {
+          val deviceId = UserManager.getDeviceId()
+          val deviceName = UserManager.getDeviceName()
           
-          // 🔄 REATIVAR HEARTBEAT para controle de login simultâneo
-          try {
-            val deviceId = UserManager.getDeviceId()
-            val deviceName = UserManager.getDeviceName()
-            
-            android.util.Log.i("HomeNav", "💓 Reativando heartbeat para ${currentUser.username}...")
-            val (success, message) = SessionManager.tryLogin(
-              username = currentUser.username,
-              deviceId = deviceId,
-              deviceName = deviceName
-            )
-            
-            if (success) {
-              android.util.Log.i("HomeNav", "✅ Heartbeat reativado! Sessão global restaurada")
-            } else {
-              android.util.Log.w("HomeNav", "⚠️ Erro ao reativar heartbeat: $message")
-            }
-          } catch (e: Exception) {
-            android.util.Log.e("HomeNav", "❌ Erro ao reativar sessão: ${e.message}")
+          android.util.Log.i("HomeNav", "💓 Reativando heartbeat para ${currentUser.username}...")
+          val (success, message) = SessionManager.tryLogin(
+            username = currentUser.username,
+            deviceId = deviceId,
+            deviceName = deviceName
+          )
+          
+          if (success) {
+            android.util.Log.i("HomeNav", "✅ Heartbeat reativado! Sessão global restaurada")
+          } else {
+            android.util.Log.w("HomeNav", "⚠️ Erro ao reativar heartbeat: $message")
           }
-          
-          android.util.Log.i("HomeNav", "🏠 Navegando direto para HOME")
-          initialRoute = "home"
-        } else {
-          // Se não encontrou código pendente e não tem usuário logado, mostrar tela de login
-          android.util.Log.i("HomeNav", "🔑 Nenhum código pendente e nenhum usuário logado - Navegando para LOGIN")
-          initialRoute = "login"
+        } catch (e: Exception) {
+          android.util.Log.e("HomeNav", "❌ Erro ao reativar sessão: ${e.message}")
         }
+        
+        android.util.Log.i("HomeNav", "🏠 Navegando direto para HOME")
+        initialRoute = "home"
+      } else {
+        // Se não encontrou código pendente e não tem usuário logado, mostrar tela de login
+        android.util.Log.i("HomeNav", "🔑 Nenhum código pendente e nenhum usuário logado - Navegando para LOGIN")
+        initialRoute = "login"
       }
     }
   }
