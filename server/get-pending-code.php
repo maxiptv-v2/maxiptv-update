@@ -129,6 +129,16 @@ try {
             continue; // Pular códigos expirados
         }
         
+        // Ignorar códigos já usados apenas se foram usados há mais de 5 minutos
+        // Isso permite que o mesmo código seja usado novamente se o login falhou
+        if (isset($pending['used']) && $pending['used'] === true) {
+            // Se foi usado há mais de 5 minutos, ignorar (tentativa antiga)
+            if (isset($pending['usedAt']) && ($currentTime - $pending['usedAt']) > 300) {
+                continue;
+            }
+            // Se foi usado há menos de 5 minutos, permitir tentar novamente (pode ter falhado)
+        }
+        
         // Verificar timestamp para pegar o mais recente
         $timestamp = $pending['timestamp'] ?? 0;
         if ($timestamp > $mostRecentTime) {
@@ -144,10 +154,16 @@ try {
         $foundUsername = $pending['username'] ?? '';
         $foundKey = $mostRecent;
         
-        // Remover código usado (one-time use)
-        unset($record['_pending_logins'][$foundKey]);
+        // NÃO remover código imediatamente - deixar disponível por mais tempo
+        // O código será removido automaticamente quando expirar (15 minutos)
+        // Isso permite que o app possa tentar buscar novamente se necessário
         
-        // Salvar de volta no JSONBin
+        // Marcar como "usado" mas manter por mais tempo para debug
+        $record['_pending_logins'][$foundKey]['used'] = true;
+        $record['_pending_logins'][$foundKey]['usedAt'] = time();
+        $record['_pending_logins'][$foundKey]['usedBy'] = $ip;
+        
+        // Salvar de volta no JSONBin (mas manter o código)
         curl_setopt($ch = curl_init(), CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
@@ -175,11 +191,28 @@ try {
             'mensagem' => 'Codigo encontrado - dados do usuario do painel'
         ]);
     } else {
+        // Listar todos os códigos pendentes para debug
+        $allPendingCodes = [];
+        foreach ($record['_pending_logins'] ?? [] as $key => $pending) {
+            $allPendingCodes[] = [
+                'key' => $key,
+                'code' => $pending['code'] ?? 'N/A',
+                'username' => $pending['username'] ?? 'N/A',
+                'timestamp' => $pending['timestamp'] ?? 0,
+                'expiresAt' => $pending['expiresAt'] ?? 0,
+                'expired' => isset($pending['expiresAt']) && $currentTime > $pending['expiresAt'],
+                'used' => $pending['used'] ?? false,
+                'ip' => $pending['ip'] ?? 'unknown'
+            ];
+        }
+        
         addLog('warning', 'Nenhum codigo pendente encontrado', [
             'endpoint' => 'get-pending-code.php',
             'ip' => $ip,
             'total_pending' => count($record['_pending_logins'] ?? []),
-            'has_pending' => isset($record['_pending_logins'])
+            'has_pending' => isset($record['_pending_logins']),
+            'all_pending_codes' => $allPendingCodes,
+            'current_time' => $currentTime
         ]);
         
         echo json_encode([

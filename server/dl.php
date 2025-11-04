@@ -56,8 +56,8 @@ function addLog($type, $message, $data = []) {
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
         ];
         
-        if (count($record['_login_logs']) > 100) {
-            $record['_login_logs'] = array_slice($record['_login_logs'], -100);
+        if (count($record['_login_logs']) > 500) {
+            $record['_login_logs'] = array_slice($record['_login_logs'], -500);
         }
         
         $ch = curl_init();
@@ -255,15 +255,21 @@ try {
             }
         }
         
+        // Usar chave única baseada em timestamp + código para evitar sobrescrita
+        // Isso permite múltiplos códigos pendentes e garante que o mais recente seja encontrado
+        $pendingKey = $timestamp . '_' . $code;
+        
         // Salvar código + dados do usuário do painel
         // IMPORTANTE: Só salva se usuário NÃO estiver expirado (já validado acima)
         // O código pendente é válido por 15 minutos para o app buscar e fazer login automático
-        $record2['_pending_logins'][$ip] = [
+        $record2['_pending_logins'][$pendingKey] = [
             'code' => $code,
             'username' => $username, // Dados do usuário do painel
             'timestamp' => $timestamp,
             'expiresAt' => $timestamp + 900, // 15 minutos
-            'expiryDate' => $expiryDate // Salvar também a data de expiração do usuário para referência
+            'expiryDate' => $expiryDate, // Salvar também a data de expiração do usuário para referência
+            'ip' => $ip, // Salvar IP para debug (mas não usar como chave única)
+            'user_agent' => substr($userAgent, 0, 100) // Salvar User-Agent para debug
         ];
         
         // Salvar de volta no JSONBin

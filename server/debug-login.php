@@ -41,7 +41,7 @@ function addLog($type, $message, $data = []) {
             $record['_login_logs'] = [];
         }
         
-        // Adicionar novo log (limitar a 100 logs)
+        // Adicionar novo log (limitar a 500 logs para manter histórico maior)
         $record['_login_logs'][] = [
             'timestamp' => time(),
             'datetime' => date('Y-m-d H:i:s'),
@@ -52,9 +52,9 @@ function addLog($type, $message, $data = []) {
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
         ];
         
-        // Manter apenas os últimos 100 logs
-        if (count($record['_login_logs']) > 100) {
-            $record['_login_logs'] = array_slice($record['_login_logs'], -100);
+        // Manter apenas os últimos 500 logs (aumentado de 100 para 500)
+        if (count($record['_login_logs']) > 500) {
+            $record['_login_logs'] = array_slice($record['_login_logs'], -500);
         }
         
         // Salvar de volta no JSONBin
@@ -355,6 +355,7 @@ try {
             </div>
             <div>
                 <button onclick="window.location.reload()">🔄 Atualizar</button>
+                <button id="refreshToggle" onclick="toggleAutoRefresh()">⏸️ Pausar Auto-Refresh</button>
                 <button onclick="if(confirm('Limpar todos os logs?')) window.location.href='?clear=1'">🗑️ Limpar Logs</button>
             </div>
         </div>
@@ -434,10 +435,40 @@ try {
     </div>
     
     <script>
-        // Auto-refresh a cada 10 segundos
-        setTimeout(function() {
-            window.location.reload();
-        }, 10000);
+        let autoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false';
+        let refreshInterval = null;
+        
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            localStorage.setItem('autoRefresh', autoRefreshEnabled);
+            
+            if (autoRefreshEnabled) {
+                startAutoRefresh();
+                document.getElementById('refreshToggle').textContent = '⏸️ Pausar Auto-Refresh';
+            } else {
+                stopAutoRefresh();
+                document.getElementById('refreshToggle').textContent = '▶️ Iniciar Auto-Refresh';
+            }
+        }
+        
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(function() {
+                window.location.reload();
+            }, 5000); // Aumentado de 10s para 5s para atualizar mais rápido
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+        
+        // Verificar se auto-refresh está habilitado
+        if (autoRefreshEnabled) {
+            startAutoRefresh();
+        }
     </script>
 </body>
 </html>
