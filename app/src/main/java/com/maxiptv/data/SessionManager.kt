@@ -305,6 +305,8 @@ object SessionManager {
                     .build()
                 
                 val record = mutableMapOf<String, kotlinx.serialization.json.JsonElement>()
+                var logsPreserved = false
+                var pendingLoginsPreserved = false
                 
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
@@ -325,18 +327,32 @@ object SessionManager {
                                     // Preservar logs de debug
                                     else if (key == "_login_logs") {
                                         record[key] = value
-                                        Log.d(TAG, "📝 Preservando logs de debug")
+                                        logsPreserved = true
+                                        Log.d(TAG, "📝 Preservando logs de debug (${if (value is kotlinx.serialization.json.JsonArray) value.size else "?"} logs)")
                                     }
                                     // Preservar códigos pendentes
                                     else if (key == "_pending_logins") {
                                         record[key] = value
+                                        pendingLoginsPreserved = true
                                         Log.d(TAG, "⏳ Preservando códigos pendentes")
                                     }
                                 }
+                                
+                                if (!logsPreserved) {
+                                    Log.w(TAG, "⚠️ Logs não encontrados no record atual - isso é normal se for a primeira vez")
+                                }
+                                if (!pendingLoginsPreserved) {
+                                    Log.d(TAG, "ℹ️ Códigos pendentes não encontrados no record atual")
+                                }
                             } catch (e: Exception) {
                                 Log.w(TAG, "⚠️ Erro ao ler record para preservar códigos: ${e.message}")
+                                Log.w(TAG, "   Continuando sem preservar dados existentes...")
                             }
+                        } else {
+                            Log.w(TAG, "⚠️ Body vazio ao buscar record atual")
                         }
+                    } else {
+                        Log.w(TAG, "⚠️ Erro ao buscar record atual: HTTP ${response.code}")
                     }
                 }
                 
