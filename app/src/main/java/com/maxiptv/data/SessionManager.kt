@@ -315,11 +315,22 @@ object SessionManager {
                                 data class JsonBinResponse(val record: Map<String, kotlinx.serialization.json.JsonElement>)
                                 
                                 val jsonResponse = json.decodeFromString<JsonBinResponse>(body)
-                                // Preservar apenas códigos (chaves de 4 dígitos), não sessions/users
+                                // Preservar códigos (chaves alfanuméricas de 3-10 caracteres), logs e pending_logins
                                 jsonResponse.record.forEach { (key, value) ->
-                                    if (key.matches(Regex("^\\d{4}$"))) {
+                                    // Preservar códigos de cliente (3-10 caracteres alfanuméricos)
+                                    if (key.matches(Regex("^[A-Za-z0-9]{3,10}$"))) {
                                         record[key] = value
                                         Log.d(TAG, "🔑 Preservando código: $key")
+                                    }
+                                    // Preservar logs de debug
+                                    else if (key == "_login_logs") {
+                                        record[key] = value
+                                        Log.d(TAG, "📝 Preservando logs de debug")
+                                    }
+                                    // Preservar códigos pendentes
+                                    else if (key == "_pending_logins") {
+                                        record[key] = value
+                                        Log.d(TAG, "⏳ Preservando códigos pendentes")
                                     }
                                 }
                             } catch (e: Exception) {

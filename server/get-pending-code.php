@@ -50,8 +50,9 @@ function addLog($type, $message, $data = []) {
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
         ];
         
-        if (count($record['_login_logs']) > 100) {
-            $record['_login_logs'] = array_slice($record['_login_logs'], -100);
+        // Manter apenas os últimos 500 logs (aumentado de 100 para 500)
+        if (count($record['_login_logs']) > 500) {
+            $record['_login_logs'] = array_slice($record['_login_logs'], -500);
         }
         
         $ch = curl_init();
