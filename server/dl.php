@@ -22,11 +22,12 @@ $jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
 $jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
 $apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
 
-// Função para adicionar log
+// Função para adicionar log (preserva TODOS os dados existentes)
 function addLog($type, $message, $data = []) {
     global $jsonbin_url, $jsonbin_update, $apiKey;
     
     try {
+        // Buscar record COMPLETO para preservar tudo
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $jsonbin_url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -34,13 +35,33 @@ function addLog($type, $message, $data = []) {
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Aumentado para 10s
         
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+        
+        if ($httpCode !== 200 || !$response) {
+            // Se falhar, tentar novamente uma vez
+            sleep(1);
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $jsonbin_url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
+            ]);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            $response = curl_exec($ch);
+            curl_close($ch);
+        }
         
         $data_record = json_decode($response, true);
         $record = $data_record['record'] ?? [];
+        
+        // IMPORTANTE: Preservar TODOS os dados existentes
+        // Não sobrescrever sessions, users, códigos, pending_logins, etc.
+        // Apenas adicionar/modificar _login_logs
         
         if (!isset($record['_login_logs']) || !is_array($record['_login_logs'])) {
             $record['_login_logs'] = [];
@@ -56,10 +77,12 @@ function addLog($type, $message, $data = []) {
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
         ];
         
+        // Manter apenas os últimos 500 logs
         if (count($record['_login_logs']) > 500) {
             $record['_login_logs'] = array_slice($record['_login_logs'], -500);
         }
         
+        // Salvar record COMPLETO (preservando tudo)
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $jsonbin_update);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
@@ -70,10 +93,11 @@ function addLog($type, $message, $data = []) {
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_exec($ch);
         curl_close($ch);
     } catch (Exception $e) {
-        // Silenciar erros de log
+        // Silenciar erros de log para não quebrar o fluxo principal
     }
 }
 
