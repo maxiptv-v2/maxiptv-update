@@ -338,11 +338,50 @@ object SessionManager {
                                     }
                                 }
                                 
+                                // IMPORTANTE: Tentar buscar novamente se não encontrou logs
+                                // Isso resolve race conditions onde o PHP pode ter adicionado logs
+                                // entre a primeira busca e o salvamento
                                 if (!logsPreserved) {
-                                    Log.w(TAG, "⚠️ Logs não encontrados no record atual - isso é normal se for a primeira vez")
+                                    Log.w(TAG, "⚠️ Logs não encontrados na primeira busca - tentando novamente em 500ms...")
+                                    kotlinx.coroutines.delay(500) // Aguardar 500ms para o PHP salvar
+                                    
+                                    // Tentar buscar novamente
+                                    val retryRequest = Request.Builder()
+                                        .url("$JSONBIN_BASE_URL/b/$JSONBIN_BIN_ID/latest")
+                                        .addHeader("X-Master-Key", JSONBIN_API_KEY)
+                                        .get()
+                                        .build()
+                                    
+                                    client.newCall(retryRequest).execute().use { retryResponse ->
+                                        if (retryResponse.isSuccessful) {
+                                            val retryBody = retryResponse.body?.string()
+                                            if (retryBody != null) {
+                                                try {
+                                                    @kotlinx.serialization.Serializable
+                                                    data class JsonBinResponse(val record: Map<String, kotlinx.serialization.json.JsonElement>)
+                                                    
+                                                    val retryJsonResponse = json.decodeFromString<JsonBinResponse>(retryBody)
+                                                    retryJsonResponse.record.forEach { (key, value) ->
+                                                        if (key == "_login_logs") {
+                                                            record[key] = value
+                                                            logsPreserved = true
+                                                            Log.d(TAG, "📝 Logs encontrados na segunda tentativa (${if (value is kotlinx.serialization.json.JsonArray) value.size else "?"} logs)")
+                                                        } else if (key == "_pending_logins" && !pendingLoginsPreserved) {
+                                                            record[key] = value
+                                                            pendingLoginsPreserved = true
+                                                            Log.d(TAG, "⏳ Códigos pendentes encontrados na segunda tentativa")
+                                                        }
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Log.w(TAG, "⚠️ Erro na segunda tentativa: ${e.message}")
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
-                                if (!pendingLoginsPreserved) {
-                                    Log.d(TAG, "ℹ️ Códigos pendentes não encontrados no record atual")
+                                
+                                if (!logsPreserved) {
+                                    Log.w(TAG, "⚠️ Logs não encontrados após duas tentativas - continuando sem preservar")
                                 }
                             } catch (e: Exception) {
                                 Log.w(TAG, "⚠️ Erro ao ler record para preservar códigos: ${e.message}")
@@ -355,8 +394,6 @@ object SessionManager {
                         Log.w(TAG, "⚠️ Erro ao buscar record atual: HTTP ${response.code}")
                     }
                 }
-                
-                // Adicionar sessions e users (codificando o SessionsDatabase)
                 val sessionsUsersJson = json.encodeToJsonElement(database)
                 if (sessionsUsersJson is kotlinx.serialization.json.JsonObject) {
                     sessionsUsersJson.forEach { (key, value) ->
