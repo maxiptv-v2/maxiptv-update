@@ -11,6 +11,11 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
+// Configurações JSONBin (definir ANTES da função para usar global)
+$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
+$jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
+
 // Função para adicionar log
 function addLog($type, $message, $data = []) {
     global $jsonbin_url, $jsonbin_update, $apiKey;
@@ -65,10 +70,6 @@ function addLog($type, $message, $data = []) {
         // Silenciar erros de log
     }
 }
-
-$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
-$jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
-$apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
 
 $code = $_GET['code'] ?? '';
 
