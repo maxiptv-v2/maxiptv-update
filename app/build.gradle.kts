@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 129
-        versionName = "1.0.129"
+        versionCode = 130
+        versionName = "1.0.130"
     vectorDrawables.useSupportLibrary = true
     buildConfigField("String", "DEFAULT_PLAYER_API", "\"https://aztv.cx/\"")
     buildConfigField("String", "DEFAULT_USER", "\"max\"")
@@ -44,6 +44,17 @@ android {
     debug { 
       isMinifyEnabled = false
       applicationIdSuffix = ".debug"
+    }
+  }
+  
+  // Configurar nome do APK de saída para maxiptv-release.apk
+  applicationVariants.all {
+    val variant = this
+    variant.outputs.all {
+      val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+      if (variant.buildType.name == "release") {
+        output.outputFileName = "maxiptv-release.apk"
+      }
     }
   }
   buildFeatures { compose = true; buildConfig = true }

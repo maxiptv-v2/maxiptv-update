@@ -34258,7 +34258,6 @@ kotlin.ExceptionsKt__ExceptionsKt:
     private static final void printStackTrace(java.lang.Throwable)
     private static final void printStackTrace(java.lang.Throwable,java.io.PrintStream)
     private static final void printStackTrace(java.lang.Throwable,java.io.PrintWriter)
-    public static final java.lang.String stackTraceToString(java.lang.Throwable)
 kotlin.ExperimentalMultiplatform
 kotlin.ExperimentalStdlibApi
 kotlin.ExperimentalSubclassOptIn
@@ -69315,6 +69314,8 @@ com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$3$1$1
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$3$1
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$3$2$1
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$3$2
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$3:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$1$1$1$1
@@ -69463,7 +69464,6 @@ com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$5
 com.maxiptv.ui.screens.LiveScreenKt
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$1$1$2
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$1$1$3
-com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$1$1$4
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$1$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.LoginScreenKt$LoginScreen$2$2

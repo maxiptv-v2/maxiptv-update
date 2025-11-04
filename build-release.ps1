@@ -94,16 +94,23 @@ if ($BuildType -eq "debug") {
         exit 1
     }
     
-    # 6. Renomear APK
-    $releaseApk = "app/build/outputs/apk/release/app-release.apk"
+    # 6. Copiar APK (já vem com nome correto: maxiptv-release.apk)
+    $releaseApk = "app/build/outputs/apk/release/maxiptv-release.apk"
     $finalApk = "maxiptv-release.apk"
     
     if (Test-Path $releaseApk) {
         Copy-Item $releaseApk $finalApk -Force
-        Write-Host "APK renomeado para: $finalApk" -ForegroundColor Green
+        Write-Host "APK copiado: $finalApk" -ForegroundColor Green
     } else {
-        Write-Host "APK release nao encontrado!" -ForegroundColor Red
-        exit 1
+        # Fallback para nome antigo (caso ainda use app-release.apk)
+        $fallbackApk = "app/build/outputs/apk/release/app-release.apk"
+        if (Test-Path $fallbackApk) {
+            Copy-Item $fallbackApk $finalApk -Force
+            Write-Host "APK renomeado para: $finalApk" -ForegroundColor Green
+        } else {
+            Write-Host "APK release nao encontrado!" -ForegroundColor Red
+            exit 1
+        }
     }
     
     # 7. Configurar Git

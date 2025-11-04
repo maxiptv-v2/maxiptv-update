@@ -134,69 +134,10 @@ fun LoginScreen(
         isLoading = false
       }
     } else {
-      // Tentar buscar código pendente baseado no IP (quando app abre após download)
-      android.util.Log.i("LoginScreen", "🔍 Tentando buscar código pendente do download...")
-      
-      try {
-        val pendingUrl = "https://maxiptv-update-1.onrender.com/get-pending-code.php"
-        val pendingConnection = java.net.URL(pendingUrl).openConnection() as java.net.HttpURLConnection
-        pendingConnection.requestMethod = "GET"
-        pendingConnection.connect()
-        
-        if (pendingConnection.responseCode == 200) {
-          val pendingResponse = pendingConnection.inputStream.bufferedReader().use { it.readText() }
-          val pendingJson = org.json.JSONObject(pendingResponse)
-          
-          if (pendingJson.getString("status") == "ok") {
-            val pendingCode = pendingJson.getString("code")
-            android.util.Log.i("LoginScreen", "✅ Código pendente encontrado: $pendingCode")
-            
-            // Buscar credenciais usando o código (endpoint auto_login.php)
-            val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$pendingCode"
-            val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connect()
-            
-            if (connection.responseCode == 200) {
-              val response = connection.inputStream.bufferedReader().use { it.readText() }
-              val json = org.json.JSONObject(response)
-              
-              // auto_login.php retorna: { user, password, api, expiryDate }
-              val user = json.optString("user", "")
-              val pass = json.optString("password", "")
-              val api = json.optString("api", "")
-              val expiryDate = json.optString("expiryDate", "")
-              
-              // Verificar se recebeu todos os campos necessários
-              if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
-                // Validar data de expiração antes de fazer login
-                if (expiryDate.isNotBlank() && isExpired(expiryDate)) {
-                  android.util.Log.e("LoginScreen", "❌ Usuário expirado: $expiryDate")
-                  errorMessage = "Usuário expirado. Data de validade: $expiryDate"
-                  isLoading = false
-                  return@LaunchedEffect
-                }
-                
-                android.util.Log.i("LoginScreen", "✅ Login automático via código pendente: $user")
-                
-                // Fazer login automático
-                isLoading = true
-                doLogin(user, pass, api, onLoginSuccess) { msg ->
-                  errorMessage = msg
-                  isLoading = false
-                }
-                return@LaunchedEffect
-              } else {
-                android.util.Log.d("LoginScreen", "⚠️ Campos incompletos na resposta")
-              }
-            }
-          }
-        }
-      } catch (e: Exception) {
-        android.util.Log.d("LoginScreen", "ℹ️ Nenhum código pendente ou erro: ${e.message}")
-      }
-      
-      android.util.Log.i("LoginScreen", "👥 Usuários devem ser gerenciados pelo painel admin")
+      // LoginScreen NÃO tenta buscar código pendente
+      // Isso é feito apenas pelo HomeNav para evitar duplicação
+      // (get-pending-code.php remove o código após retornar - one-time use)
+      android.util.Log.i("LoginScreen", "ℹ️ Login manual - aguardando entrada do usuário")
     }
   }
   
