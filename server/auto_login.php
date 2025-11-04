@@ -102,24 +102,34 @@ try {
         }
     }
 
-    // Validar se usuário expirou (formato DD/MM/YYYY) - validar junto com os dados do usuário
+    // Validar se usuário expirou (formato DD/MM/YYYY) - VALIDAÇÃO CRÍTICA
+    // Esta validação deve ser feita ANTES de retornar credenciais para login automático
     $expiryDate = $user['expiryDate'] ?? '';
     if (!empty($expiryDate) && isExpired($expiryDate)) {
         http_response_code(403);
         echo json_encode([
-            'status' => 'erro',
-            'mensagem' => 'Usuario expirado ou inativo'
+            'status' => 'expired',
+            'message' => 'Assinatura expirada',
+            'expiryDate' => $expiryDate
         ]);
         exit;
     }
 
-    // Retornar dados para login automático (formato exato esperado pelo app)
-    // A validação foi feita acima junto com os dados do usuário
+    // Retornar dados para login automático (formato esperado pelo app)
+    // O app espera: { "status": "success", "autologin": { "username", "password", "api_url", "expires_in", "expiryDate" } }
+    // expires_in = tempo de validade do código em segundos (6 horas = 21600 segundos)
+    // expiryDate = data de expiração do usuário (formato DD/MM/YYYY)
+    $expiresIn = 21600; // 6 horas em segundos
+    
     echo json_encode([
-        'user' => $user['username'] ?? '',
-        'password' => $user['password'] ?? '',
-        'api' => $user['apiUrl'] ?? '',
-        'expiryDate' => $expiryDate
+        'status' => 'success',
+        'autologin' => [
+            'username' => $user['username'] ?? '',
+            'password' => $user['password'] ?? '',
+            'api_url' => $user['apiUrl'] ?? '',
+            'expires_in' => $expiresIn,
+            'expiryDate' => $expiryDate // Data de expiração do usuário
+        ]
     ]);
     
 } catch (Exception $e) {

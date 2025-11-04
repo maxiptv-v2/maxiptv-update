@@ -112,15 +112,16 @@ if (isset($user['createdAt'])) {
     }
 }
 
-// Verificar se usuário expirou (formato DD/MM/YYYY)
-if (isset($user['expiryDate'])) {
-    $dataExpiracao = $user['expiryDate'];
-    
-    if (isExpired($dataExpiracao)) {
-        http_response_code(404);
-        echo "<h3>Codigo invalido ou expirado.</h3>";
-        exit;
-    }
+// Verificar se usuário expirou (formato DD/MM/YYYY) - VALIDAÇÃO CRÍTICA
+// Esta validação deve ser feita ANTES de salvar código pendente para login automático
+// Se o usuário estiver expirado, não deve salvar código pendente nem permitir download
+$expiryDate = $user['expiryDate'] ?? '';
+if (!empty($expiryDate) && isExpired($expiryDate)) {
+    http_response_code(403);
+    echo "<h3>Codigo invalido ou expirado.</h3>";
+    echo "<p>Assinatura expirada. Data de validade: $expiryDate</p>";
+    echo "<p>Entre em contato para renovar sua assinatura.</p>";
+    exit;
 }
 
 // 4️⃣ IDENTIFICAR USUÁRIO usando dados do painel (JSONBin)
@@ -167,11 +168,14 @@ try {
         }
         
         // Salvar código + dados do usuário do painel
+        // IMPORTANTE: Só salva se usuário NÃO estiver expirado (já validado acima)
+        // O código pendente é válido por 15 minutos para o app buscar e fazer login automático
         $record2['_pending_logins'][$ip] = [
             'code' => $code,
             'username' => $username, // Dados do usuário do painel
             'timestamp' => $timestamp,
-            'expiresAt' => $timestamp + 900 // 15 minutos
+            'expiresAt' => $timestamp + 900, // 15 minutos
+            'expiryDate' => $expiryDate // Salvar também a data de expiração do usuário para referência
         ];
         
         // Salvar de volta no JSONBin
