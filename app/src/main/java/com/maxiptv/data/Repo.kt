@@ -58,6 +58,7 @@ object XRepo {
     }
     val userAgentInterceptor = okhttp3.Interceptor { chain ->
       val request = chain.request().newBuilder()
+        // User-Agent original que funcionava antes
         .header("User-Agent", "MaxiPTV/1.1.0 (Android)")
         .build()
       chain.proceed(request)
@@ -66,6 +67,10 @@ object XRepo {
       .addInterceptor(userAgentInterceptor)
       .addInterceptor(debugInterceptor)
       .addInterceptor(log)
+      .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+      .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+      .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+      .retryOnConnectionFailure(true)
       .build()
     val retrofit = Retrofit.Builder().baseUrl(base).addConverterFactory(MoshiConverterFactory.create(moshi)).client(http).build()
     api = retrofit.create(XtreamApi::class.java)

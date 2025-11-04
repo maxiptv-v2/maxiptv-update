@@ -74,12 +74,20 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
         android.util.Log.d("HomeNav", "📡 Resposta HTTP: ${pendingConnection.responseCode}")
         if (pendingConnection.responseCode == 200) {
           val pendingResponse = pendingConnection.inputStream.bufferedReader().use { it.readText() }
-          android.util.Log.d("HomeNav", "📥 Resposta: $pendingResponse")
+          android.util.Log.d("HomeNav", "📥 Resposta COMPLETA: $pendingResponse")
           val pendingJson = org.json.JSONObject(pendingResponse)
           
-          if (pendingJson.getString("status") == "ok") {
-            val pendingCode = pendingJson.getString("code")
+          val pendingStatus = pendingJson.optString("status", "")
+          android.util.Log.d("HomeNav", "📊 Status recebido: $pendingStatus")
+          
+          if (pendingStatus == "ok") {
+            val pendingCode = pendingJson.optString("code", "")
             android.util.Log.i("HomeNav", "✅ Código pendente encontrado: $pendingCode")
+            
+            if (pendingCode.isBlank()) {
+              android.util.Log.e("HomeNav", "❌ Código pendente está vazio!")
+              return@LaunchedEffect
+            }
             
             // Buscar credenciais usando o código (endpoint auto_login.php)
             val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$pendingCode"
@@ -91,23 +99,33 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
             
             if (connection.responseCode == 200) {
               val response = connection.inputStream.bufferedReader().use { it.readText() }
+              android.util.Log.d("HomeNav", "📥 Resposta auto_login.php COMPLETA: $response")
               val json = org.json.JSONObject(response)
               
               // auto_login.php retorna: { "status": "success", "autologin": { "username", "password", "api_url", "expires_in" } }
               val status = json.optString("status", "")
+              android.util.Log.d("HomeNav", "📊 Status auto_login.php: $status")
               
               if (status == "success") {
                 val autologin = json.optJSONObject("autologin")
+                android.util.Log.d("HomeNav", "📊 Objeto autologin: ${autologin != null}")
+                
                 if (autologin != null) {
                   val user = autologin.optString("username", "")
                   val pass = autologin.optString("password", "")
                   val api = autologin.optString("api_url", "")
-                  val expiresIn = autologin.optInt("expires_in", 0)
+                  android.util.Log.d("HomeNav", "📊 Credenciais extraidas:")
+                  android.util.Log.d("HomeNav", "   User: $user")
+                  android.util.Log.d("HomeNav", "   Pass: ${if (pass.isNotBlank()) "***" else "VAZIO"}")
+                  android.util.Log.d("HomeNav", "   API: $api")
+                  
+                  // expiresIn = 21600 segundos (6 horas) - já validado no PHP
                   
                   // Verificar se recebeu todos os campos necessários
                   if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
                     // Buscar expiryDate do objeto autologin
                     val expiryDate = autologin.optString("expiryDate", "")
+                    android.util.Log.d("HomeNav", "   ExpiryDate: $expiryDate")
                     
                     android.util.Log.i("HomeNav", "✅ Login automático iniciado para: $user")
                     
@@ -141,6 +159,11 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                     
                     if (loggedUser != null && error == null) {
                       android.util.Log.i("HomeNav", "✅ Login automático bem-sucedido: ${loggedUser.username}")
+                      
+                      // Configurar XRepo ANTES de salvar credenciais (importante para buscar canais)
+                      android.util.Log.d("HomeNav", "⚙️ Configurando XRepo com API: $api")
+                      com.maxiptv.data.XRepo.configure(api, user, pass)
+                      android.util.Log.d("HomeNav", "✅ XRepo configurado")
                       
                       // Salvar credenciais no SettingsRepo (suspend)
                       kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -186,28 +209,42 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                     }
                   } else {
                     android.util.Log.e("HomeNav", "❌ auto_login.php retornou campos incompletos ou vazios")
-                    android.util.Log.d("HomeNav", "   Resposta: $response")
+                    android.util.Log.e("HomeNav", "   User vazio: ${user.isBlank()}")
+                    android.util.Log.e("HomeNav", "   Pass vazio: ${pass.isBlank()}")
+                    android.util.Log.e("HomeNav", "   API vazio: ${api.isBlank()}")
+                    android.util.Log.d("HomeNav", "   Resposta completa: $response")
                   }
                 } else {
                   android.util.Log.e("HomeNav", "❌ auto_login.php não retornou objeto 'autologin'")
-                  android.util.Log.d("HomeNav", "   Resposta: $response")
+                  android.util.Log.d("HomeNav", "   Resposta completa: $response")
+                  android.util.Log.d("HomeNav", "   Chaves disponíveis: ${json.keys().asSequence().joinToString()}")
                 }
               } else {
                 android.util.Log.e("HomeNav", "❌ auto_login.php retornou status != 'success'")
-                android.util.Log.d("HomeNav", "   Status: $status")
-                android.util.Log.d("HomeNav", "   Resposta: $response")
+                android.util.Log.e("HomeNav", "   Status recebido: '$status'")
+                android.util.Log.d("HomeNav", "   Resposta completa: $response")
               }
             } else {
               android.util.Log.e("HomeNav", "❌ auto_login.php retornou HTTP != 200: ${connection.responseCode}")
+              try {
+                val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "sem erro"
+                android.util.Log.e("HomeNav", "   Corpo do erro: $errorBody")
+              } catch (e: Exception) {
+                android.util.Log.e("HomeNav", "   Erro ao ler corpo do erro: ${e.message}")
+              }
             }
           } else {
-            android.util.Log.d("HomeNav", "⚠️ get-pending-code.php retornou status != ok: ${pendingJson.optString("status", "unknown")}")
+            android.util.Log.w("HomeNav", "⚠️ get-pending-code.php retornou status != ok")
+            android.util.Log.w("HomeNav", "   Status recebido: '$pendingStatus'")
+            android.util.Log.w("HomeNav", "   Resposta completa: $pendingResponse")
           }
         } else {
           android.util.Log.e("HomeNav", "❌ get-pending-code.php retornou HTTP != 200: ${pendingConnection.responseCode}")
         }
       } catch (e: Exception) {
         android.util.Log.e("HomeNav", "❌ Erro ao buscar código pendente: ${e.message}", e)
+        android.util.Log.e("HomeNav", "   Tipo de erro: ${e.javaClass.simpleName}")
+        android.util.Log.e("HomeNav", "   Stack trace: ${e.stackTraceToString()}")
         android.util.Log.d("HomeNav", "ℹ️ Continuando sem código pendente - mostrará tela de login")
       }
       

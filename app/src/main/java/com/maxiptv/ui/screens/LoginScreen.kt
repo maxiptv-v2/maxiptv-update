@@ -383,7 +383,24 @@ suspend fun doLogin(user: String, pass: String, api: String, onSuccess: () -> Un
   UserManager.addUser(localUser)
   UserManager.setCurrentUser(localUser)
   
-  // 2. Verificar sessão global (bloqueio multi-dispositivo)
+  // 2. Configurar XRepo ANTES de verificar sessão (importante para buscar canais)
+  android.util.Log.d("LoginScreen", "⚙️ Configurando XRepo com API: $api")
+  com.maxiptv.data.XRepo.configure(api, user, pass)
+  android.util.Log.d("LoginScreen", "✅ XRepo configurado")
+  
+  // 3. Salvar credenciais no SettingsRepo
+  kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+    android.util.Log.d("LoginScreen", "💾 Salvando credenciais no SettingsRepo...")
+    com.maxiptv.data.SettingsRepo.save(
+      b = api,
+      u = user,
+      p = pass,
+      e = ""
+    )
+    android.util.Log.d("LoginScreen", "✅ Credenciais salvas")
+  }
+  
+  // 4. Verificar sessão global (bloqueio multi-dispositivo)
   val deviceId = UserManager.getDeviceId()
   val deviceName = UserManager.getDeviceName()
   val (sessionSuccess, sessionMessage) = SessionManager.tryLogin(user, deviceId, deviceName)
