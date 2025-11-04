@@ -319,69 +319,35 @@ object SessionManager {
                                 val jsonResponse = json.decodeFromString<JsonBinResponse>(body)
                                 // Preservar códigos (chaves alfanuméricas de 3-10 caracteres), logs e pending_logins
                                 jsonResponse.record.forEach { (key, value) ->
-                                    // Preservar códigos de cliente (3-10 caracteres alfanuméricos)
-                                    if (key.matches(Regex("^[A-Za-z0-9]{3,10}$"))) {
-                                        record[key] = value
-                                        Log.d(TAG, "🔑 Preservando código: $key")
-                                    }
-                                    // Preservar logs de debug
-                                    else if (key == "_login_logs") {
-                                        record[key] = value
-                                        logsPreserved = true
-                                        Log.d(TAG, "📝 Preservando logs de debug (${if (value is kotlinx.serialization.json.JsonArray) value.size else "?"} logs)")
-                                    }
-                                    // Preservar códigos pendentes
-                                    else if (key == "_pending_logins") {
-                                        record[key] = value
-                                        pendingLoginsPreserved = true
-                                        Log.d(TAG, "⏳ Preservando códigos pendentes")
-                                    }
-                                }
-                                
-                                // IMPORTANTE: Tentar buscar novamente se não encontrou logs
-                                // Isso resolve race conditions onde o PHP pode ter adicionado logs
-                                // entre a primeira busca e o salvamento
-                                if (!logsPreserved) {
-                                    Log.w(TAG, "⚠️ Logs não encontrados na primeira busca - tentando novamente em 500ms...")
-                                    kotlinx.coroutines.delay(500) // Aguardar 500ms para o PHP salvar
-                                    
-                                    // Tentar buscar novamente
-                                    val retryRequest = Request.Builder()
-                                        .url("$JSONBIN_BASE_URL/b/$JSONBIN_BIN_ID/latest")
-                                        .addHeader("X-Master-Key", JSONBIN_API_KEY)
-                                        .get()
-                                        .build()
-                                    
-                                    client.newCall(retryRequest).execute().use { retryResponse ->
-                                        if (retryResponse.isSuccessful) {
-                                            val retryBody = retryResponse.body?.string()
-                                            if (retryBody != null) {
-                                                try {
-                                                    @kotlinx.serialization.Serializable
-                                                    data class JsonBinResponse(val record: Map<String, kotlinx.serialization.json.JsonElement>)
-                                                    
-                                                    val retryJsonResponse = json.decodeFromString<JsonBinResponse>(retryBody)
-                                                    retryJsonResponse.record.forEach { (key, value) ->
-                                                        if (key == "_login_logs") {
-                                                            record[key] = value
-                                                            logsPreserved = true
-                                                            Log.d(TAG, "📝 Logs encontrados na segunda tentativa (${if (value is kotlinx.serialization.json.JsonArray) value.size else "?"} logs)")
-                                                        } else if (key == "_pending_logins" && !pendingLoginsPreserved) {
-                                                            record[key] = value
-                                                            pendingLoginsPreserved = true
-                                                            Log.d(TAG, "⏳ Códigos pendentes encontrados na segunda tentativa")
-                                                        }
-                                                    }
-                                                } catch (e: Exception) {
-                                                    Log.w(TAG, "⚠️ Erro na segunda tentativa: ${e.message}")
-                                                }
-                                            }
+                                    when {
+                                        // Preservar códigos de cliente (3-10 caracteres alfanuméricos)
+                                        key.matches(Regex("^[A-Za-z0-9]{3,10}$")) -> {
+                                            record[key] = value
+                                            Log.d(TAG, "🔑 Preservando código: $key")
+                                        }
+                                        // Preservar logs de debug
+                                        key == "_login_logs" -> {
+                                            record[key] = value
+                                            logsPreserved = true
+                                            Log.d(TAG, "📝 Preservando logs de debug (${if (value is kotlinx.serialization.json.JsonArray) value.size.toString() else "?"} logs)")
+                                        }
+                                        // Preservar códigos pendentes
+                                        key == "_pending_logins" -> {
+                                            record[key] = value
+                                            pendingLoginsPreserved = true
+                                            Log.d(TAG, "⏳ Preservando códigos pendentes")
                                         }
                                     }
                                 }
                                 
+                                // Verificar se preservou logs e códigos pendentes
                                 if (!logsPreserved) {
-                                    Log.w(TAG, "⚠️ Logs não encontrados após duas tentativas - continuando sem preservar")
+                                    Log.w(TAG, "⚠️ Logs não encontrados no record atual - isso é normal se for a primeira vez")
+                                }
+                                if (!pendingLoginsPreserved) {
+                                    Log.d(TAG, "ℹ️ Códigos pendentes não encontrados no record atual")
+                                } else {
+                                    // Nada a fazer se encontrou
                                 }
                             } catch (e: Exception) {
                                 Log.w(TAG, "⚠️ Erro ao ler record para preservar códigos: ${e.message}")
