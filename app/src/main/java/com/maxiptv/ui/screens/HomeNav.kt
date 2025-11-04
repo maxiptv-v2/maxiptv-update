@@ -30,37 +30,14 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
   
   LaunchedEffect(Unit) {
     android.util.Log.i("HomeNav", "🔍 Verificando sessão existente...")
-    val currentUser = UserManager.getCurrentUser()
     
-    if (currentUser != null) {
-      android.util.Log.i("HomeNav", "✅ Usuário logado encontrado: ${currentUser.username}")
-      
-      // 🔄 REATIVAR HEARTBEAT para controle de login simultâneo
-      try {
-        val deviceId = UserManager.getDeviceId()
-        val deviceName = UserManager.getDeviceName()
-        
-        android.util.Log.i("HomeNav", "💓 Reativando heartbeat para ${currentUser.username}...")
-        val (success, message) = SessionManager.tryLogin(
-          username = currentUser.username,
-          deviceId = deviceId,
-          deviceName = deviceName
-        )
-        
-        if (success) {
-          android.util.Log.i("HomeNav", "✅ Heartbeat reativado! Sessão global restaurada")
-        } else {
-          android.util.Log.w("HomeNav", "⚠️ Erro ao reativar heartbeat: $message")
-        }
-      } catch (e: Exception) {
-        android.util.Log.e("HomeNav", "❌ Erro ao reativar sessão: ${e.message}")
-      }
-      
-      android.util.Log.i("HomeNav", "🏠 Navegando direto para HOME")
-      initialRoute = "home"
-    } else {
-      // 🚀 LOGIN AUTOMÁTICO: Tentar buscar código pendente ANTES de mostrar login
-      android.util.Log.i("HomeNav", "❌ Nenhum usuário logado - Tentando login automático...")
+    // 🚀 SEMPRE tentar login automático primeiro (mesmo se já tiver usuário logado)
+    // Isso permite que após baixar o APK, o app faça login automático
+    android.util.Log.i("HomeNav", "🚀 Tentando login automático (verificando código pendente)...")
+    
+    var autoLoginSuccess = false
+    
+    try {
       
       try {
         // Buscar código pendente do download
@@ -196,6 +173,7 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                       
                       android.util.Log.i("HomeNav", "🏠 Login automático completo! Definindo navegação para HOME")
                       // Marcar para navegar (navegação será feita quando NavHost estiver pronto)
+                      autoLoginSuccess = true
                       initialRoute = "home"
                       shouldNavigateToHome = true
                       android.util.Log.d("HomeNav", "   initialRoute = home, shouldNavigateToHome = true")
@@ -204,8 +182,8 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                       android.util.Log.e("HomeNav", "❌ Erro no login automático")
                       android.util.Log.e("HomeNav", "   loggedUser: $loggedUser")
                       android.util.Log.e("HomeNav", "   error: $error")
-                      initialRoute = "login"
-                      return@LaunchedEffect
+                      autoLoginSuccess = false
+                      // Não retornar aqui - continuar para verificar usuário existente
                     }
                   } else {
                     android.util.Log.e("HomeNav", "❌ auto_login.php retornou campos incompletos ou vazios")
@@ -245,12 +223,46 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
         android.util.Log.e("HomeNav", "❌ Erro ao buscar código pendente: ${e.message}", e)
         android.util.Log.e("HomeNav", "   Tipo de erro: ${e.javaClass.simpleName}")
         android.util.Log.e("HomeNav", "   Stack trace: ${e.stackTraceToString()}")
-        android.util.Log.d("HomeNav", "ℹ️ Continuando sem código pendente - mostrará tela de login")
+        android.util.Log.d("HomeNav", "ℹ️ Continuando sem código pendente")
       }
       
-      // Se não encontrou código pendente, mostrar tela de login
-      android.util.Log.i("HomeNav", "🔑 Nenhum código pendente - Navegando para LOGIN")
-      initialRoute = "login"
+      // Se login automático não funcionou, verificar se já tem usuário logado
+      if (!autoLoginSuccess) {
+        android.util.Log.i("HomeNav", "🔍 Login automático não funcionou - Verificando usuário existente...")
+        val currentUser = UserManager.getCurrentUser()
+        
+        if (currentUser != null) {
+          android.util.Log.i("HomeNav", "✅ Usuário logado encontrado: ${currentUser.username}")
+          
+          // 🔄 REATIVAR HEARTBEAT para controle de login simultâneo
+          try {
+            val deviceId = UserManager.getDeviceId()
+            val deviceName = UserManager.getDeviceName()
+            
+            android.util.Log.i("HomeNav", "💓 Reativando heartbeat para ${currentUser.username}...")
+            val (success, message) = SessionManager.tryLogin(
+              username = currentUser.username,
+              deviceId = deviceId,
+              deviceName = deviceName
+            )
+            
+            if (success) {
+              android.util.Log.i("HomeNav", "✅ Heartbeat reativado! Sessão global restaurada")
+            } else {
+              android.util.Log.w("HomeNav", "⚠️ Erro ao reativar heartbeat: $message")
+            }
+          } catch (e: Exception) {
+            android.util.Log.e("HomeNav", "❌ Erro ao reativar sessão: ${e.message}")
+          }
+          
+          android.util.Log.i("HomeNav", "🏠 Navegando direto para HOME")
+          initialRoute = "home"
+        } else {
+          // Se não encontrou código pendente e não tem usuário logado, mostrar tela de login
+          android.util.Log.i("HomeNav", "🔑 Nenhum código pendente e nenhum usuário logado - Navegando para LOGIN")
+          initialRoute = "login"
+        }
+      }
     }
   }
   
