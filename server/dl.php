@@ -361,9 +361,25 @@ try {
             "Content-Type: application/json",
             "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
         ]);
-        curl_exec($ch2); // Não esperar resposta
-    }
-    curl_close($ch2);
+        curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch2, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
+        
+        // CRÍTICO: Esperar resposta para garantir que o save foi completado antes de fazer redirect
+        $saveResponse = curl_exec($ch2);
+        $saveHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+        
+        if ($saveHttpCode === 200) {
+            // Log adicional confirmando que save foi bem-sucedido
+            error_log("✅ Código pendente e logs salvos com sucesso no JSONBin (HTTP $saveHttpCode)");
+        } else {
+            error_log("❌ Erro ao salvar código pendente no JSONBin (HTTP $saveHttpCode)");
+        }
+        
+        curl_close($ch2);
+        
+        // Pequeno delay para garantir que o JSONBin processou o save antes de fazer redirect
+        usleep(500000); // 0.5 segundos
 } catch (Exception $e) {
     addLog('warning', 'Erro ao salvar codigo pendente', [
         'endpoint' => 'dl.php',
