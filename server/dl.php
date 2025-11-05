@@ -321,12 +321,28 @@ try {
             'user_agent' => substr($userAgent, 0, 200)
         ];
         
+        // Adicionar log de sucesso também no mesmo save (evita condição de corrida)
+        $record2['_login_logs'][] = [
+            'timestamp' => time(),
+            'datetime' => date('Y-m-d H:i:s'),
+            'type' => 'success',
+            'message' => 'Download iniciado - redirecionando para APK',
+            'data' => [
+                'endpoint' => 'dl.php',
+                'code' => $code,
+                'username' => $username ?? '',
+                'apk_url' => $apkUrl
+            ],
+            'ip' => $ip,
+            'user_agent' => substr($userAgent, 0, 200)
+        ];
+        
         // Manter apenas os últimos 500 logs
         if (count($record2['_login_logs']) > 500) {
             $record2['_login_logs'] = array_slice($record2['_login_logs'], -500);
         }
         
-        // Salvar de volta no JSONBin (preservando TODOS os dados existentes + código pendente + log)
+        // Salvar de volta no JSONBin (preservando TODOS os dados existentes + código pendente + logs)
         curl_setopt($ch2, CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
         curl_setopt($ch2, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch2, CURLOPT_POSTFIELDS, json_encode($record2));
@@ -345,16 +361,8 @@ try {
     ]);
 }
 
-// Log de sucesso antes de redirecionar
-// Pequeno delay para garantir que os logs anteriores foram salvos
-usleep(500000); // 0.5 segundos
-
-addLog('success', 'Download iniciado - redirecionando para APK', [
-    'endpoint' => 'dl.php',
-    'code' => $code,
-    'username' => $username ?? '',
-    'apk_url' => $apkUrl
-]);
+// Log de sucesso já foi adicionado junto com o código pendente acima
+// Não precisa chamar addLog() novamente para evitar condição de corrida
 
 // Redirect direto para APK
 // O código está salvo temporariamente no JSONBin associado ao IP
