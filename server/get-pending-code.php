@@ -101,11 +101,20 @@ if (empty($ip)) {
     exit;
 }
 
-// Log de chamada inicial
-addLog('info', 'App chamou get-pending-code.php', [
+$method = $_SERVER['REQUEST_METHOD'] ?? 'unknown';
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+
+// Log de chamada inicial COM DETALHES COMPLETOS
+addLog('info', '🔍 App chamou get-pending-code.php - VERIFICANDO SE APP ESTA CONECTANDO', [
     'endpoint' => 'get-pending-code.php',
     'ip' => $ip,
-    'user_agent' => substr($userAgent, 0, 100)
+    'user_agent' => substr($userAgent, 0, 200),
+    'method' => $method,
+    'request_uri' => $requestUri,
+    'get_params' => $_GET,
+    'post_params' => $_POST,
+    'timestamp' => time(),
+    'datetime' => date('Y-m-d H:i:s')
 ]);
 
 // Buscar dados do JSONBin (já definido acima)

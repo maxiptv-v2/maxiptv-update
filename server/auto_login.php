@@ -97,12 +97,23 @@ function addLog($type, $message, $data = []) {
 
 $code = $_GET['code'] ?? '';
 
-// Log de chamada inicial
-addLog('info', 'App chamou auto_login.php', [
+// Log de chamada inicial COM DETALHES COMPLETOS
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+$method = $_SERVER['REQUEST_METHOD'] ?? 'unknown';
+$requestUri = $_SERVER['REQUEST_URI'] ?? 'unknown';
+
+addLog('info', '🔍 App chamou auto_login.php - VERIFICANDO SE APP ESTA CONECTANDO', [
     'endpoint' => 'auto_login.php',
     'code' => $code,
-    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-    'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 100)
+    'ip' => $ip,
+    'user_agent' => substr($userAgent, 0, 200),
+    'method' => $method,
+    'request_uri' => $requestUri,
+    'get_params' => $_GET,
+    'post_params' => $_POST,
+    'timestamp' => time(),
+    'datetime' => date('Y-m-d H:i:s')
 ]);
 
 if (empty($code)) {
