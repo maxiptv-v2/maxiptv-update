@@ -263,6 +263,10 @@ try {
         $data2 = json_decode($response2, true);
         $record2 = $data2['record'] ?? [];
         
+        // CRÍTICO: Preservar TODOS os dados existentes
+        // Não sobrescrever sessions, users, códigos, _login_logs, etc.
+        // Apenas adicionar/modificar _pending_logins
+        
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
         $timestamp = time();
@@ -296,7 +300,33 @@ try {
             'user_agent' => substr($userAgent, 0, 100) // Salvar User-Agent para debug
         ];
         
-        // Salvar de volta no JSONBin
+        // CRÍTICO: Adicionar log diretamente no record ANTES de salvar
+        // Isso evita condição de corrida onde addLog() pode sobrescrever sem o código pendente
+        if (!isset($record2['_login_logs']) || !is_array($record2['_login_logs'])) {
+            $record2['_login_logs'] = [];
+        }
+        
+        $record2['_login_logs'][] = [
+            'timestamp' => time(),
+            'datetime' => date('Y-m-d H:i:s'),
+            'type' => 'info',
+            'message' => 'Codigo pendente salvo para login automatico',
+            'data' => [
+                'endpoint' => 'dl.php',
+                'code' => $code,
+                'username' => $username,
+                'ip' => $ip
+            ],
+            'ip' => $ip,
+            'user_agent' => substr($userAgent, 0, 200)
+        ];
+        
+        // Manter apenas os últimos 500 logs
+        if (count($record2['_login_logs']) > 500) {
+            $record2['_login_logs'] = array_slice($record2['_login_logs'], -500);
+        }
+        
+        // Salvar de volta no JSONBin (preservando TODOS os dados existentes + código pendente + log)
         curl_setopt($ch2, CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
         curl_setopt($ch2, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch2, CURLOPT_POSTFIELDS, json_encode($record2));
@@ -305,13 +335,6 @@ try {
             "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
         ]);
         curl_exec($ch2); // Não esperar resposta
-        
-        addLog('info', 'Codigo pendente salvo para login automatico', [
-            'endpoint' => 'dl.php',
-            'code' => $code,
-            'username' => $username,
-            'ip' => $ip
-        ]);
     }
     curl_close($ch2);
 } catch (Exception $e) {
@@ -323,6 +346,9 @@ try {
 }
 
 // Log de sucesso antes de redirecionar
+// Pequeno delay para garantir que os logs anteriores foram salvos
+usleep(500000); // 0.5 segundos
+
 addLog('success', 'Download iniciado - redirecionando para APK', [
     'endpoint' => 'dl.php',
     'code' => $code,
