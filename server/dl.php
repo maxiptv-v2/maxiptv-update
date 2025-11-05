@@ -129,13 +129,8 @@ $isDownloader = isset($_SERVER['HTTP_USER_AGENT']) &&
                 (stripos($_SERVER['HTTP_USER_AGENT'], 'downloader') !== false ||
                  stripos($_SERVER['HTTP_USER_AGENT'], 'android') !== false);
 
-// Log de chamada inicial (depois de extrair código)
-addLog('info', 'Downloader chamou dl.php', [
-    'endpoint' => 'dl.php',
-    'code' => $code,
-    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-    'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 100)
-]);
+// Log de chamada inicial será adicionado junto com código pendente para evitar condição de corrida
+// Não usar addLog() aqui para evitar que seja apagado quando salvamos o código pendente
 
 // Validar código
 if (!$code || !preg_match('/^[A-Za-z0-9]{3,10}$/', $code)) {
@@ -300,12 +295,28 @@ try {
             'user_agent' => substr($userAgent, 0, 100) // Salvar User-Agent para debug
         ];
         
-        // CRÍTICO: Adicionar log diretamente no record ANTES de salvar
+        // CRÍTICO: Adicionar TODOS os logs diretamente no record ANTES de salvar
         // Isso evita condição de corrida onde addLog() pode sobrescrever sem o código pendente
         if (!isset($record2['_login_logs']) || !is_array($record2['_login_logs'])) {
             $record2['_login_logs'] = [];
         }
         
+        // Adicionar log inicial "Downloader chamou dl.php" também aqui (evita condição de corrida)
+        $record2['_login_logs'][] = [
+            'timestamp' => time(),
+            'datetime' => date('Y-m-d H:i:s'),
+            'type' => 'info',
+            'message' => 'Downloader chamou dl.php',
+            'data' => [
+                'endpoint' => 'dl.php',
+                'code' => $code,
+                'ip' => $ip
+            ],
+            'ip' => $ip,
+            'user_agent' => substr($userAgent, 0, 200)
+        ];
+        
+        // Adicionar log "Codigo pendente salvo"
         $record2['_login_logs'][] = [
             'timestamp' => time(),
             'datetime' => date('Y-m-d H:i:s'),
