@@ -380,6 +380,7 @@ try {
         
         // Pequeno delay para garantir que o JSONBin processou o save antes de fazer redirect
         usleep(500000); // 0.5 segundos
+    }
 } catch (Exception $e) {
     addLog('warning', 'Erro ao salvar codigo pendente', [
         'endpoint' => 'dl.php',
