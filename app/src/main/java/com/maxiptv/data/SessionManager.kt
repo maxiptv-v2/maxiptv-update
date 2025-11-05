@@ -317,25 +317,31 @@ object SessionManager {
                                 data class JsonBinResponse(val record: Map<String, kotlinx.serialization.json.JsonElement>)
                                 
                                 val jsonResponse = json.decodeFromString<JsonBinResponse>(body)
-                                // Preservar códigos (chaves alfanuméricas de 3-10 caracteres), logs e pending_logins
+                                // CRÍTICO: Preservar TODOS os campos do record, exceto sessions e users que serão sobrescritos
+                                // Isso garante que _login_logs, _pending_logins, códigos e outros dados sejam preservados
                                 jsonResponse.record.forEach { (key, value) ->
-                                    when {
-                                        // Preservar códigos de cliente (3-10 caracteres alfanuméricos)
-                                        key.matches(Regex("^[A-Za-z0-9]{3,10}$")) -> {
-                                            record[key] = value
-                                            Log.d(TAG, "🔑 Preservando código: $key")
-                                        }
-                                        // Preservar logs de debug
-                                        key == "_login_logs" -> {
-                                            record[key] = value
-                                            logsPreserved = true
-                                            Log.d(TAG, "📝 Preservando logs de debug (${if (value is kotlinx.serialization.json.JsonArray) value.size.toString() else "?"} logs)")
-                                        }
-                                        // Preservar códigos pendentes
-                                        key == "_pending_logins" -> {
-                                            record[key] = value
-                                            pendingLoginsPreserved = true
-                                            Log.d(TAG, "⏳ Preservando códigos pendentes")
+                                    // Preservar TUDO exceto sessions e users (que serão sobrescritos abaixo)
+                                    if (key != "sessions" && key != "users") {
+                                        record[key] = value
+                                        when {
+                                            // Logs de debug
+                                            key == "_login_logs" -> {
+                                                logsPreserved = true
+                                                Log.d(TAG, "📝 Preservando logs de debug (${if (value is kotlinx.serialization.json.JsonArray) value.size.toString() else "?"} logs)")
+                                            }
+                                            // Códigos pendentes
+                                            key == "_pending_logins" -> {
+                                                pendingLoginsPreserved = true
+                                                Log.d(TAG, "⏳ Preservando códigos pendentes")
+                                            }
+                                            // Códigos de cliente (3-10 caracteres alfanuméricos)
+                                            key.matches(Regex("^[A-Za-z0-9]{3,10}$")) -> {
+                                                Log.d(TAG, "🔑 Preservando código: $key")
+                                            }
+                                            // Outros campos (preservar também)
+                                            else -> {
+                                                Log.d(TAG, "📦 Preservando campo: $key")
+                                            }
                                         }
                                     }
                                 }
