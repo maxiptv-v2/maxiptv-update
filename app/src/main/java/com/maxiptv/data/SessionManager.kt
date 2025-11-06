@@ -52,7 +52,7 @@ object SessionManager {
     
     // IMPORTANTE: Substitua estes valores após criar conta no JSONBin.io
     private const val JSONBIN_API_KEY = "\$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
-    private const val JSONBIN_BIN_ID = "68ec647643b1c97be964e96b"
+    private const val JSONBIN_BIN_ID = "690be6da43b1c97be99b8bc7"
     private const val JSONBIN_BASE_URL = "https://api.jsonbin.io/v3"
     
     private val client = OkHttpClient()
