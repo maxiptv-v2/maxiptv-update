@@ -154,11 +154,22 @@ try {
     $currentTime = time();
     $mostRecent = null;
     $mostRecentTime = 0;
-    
-    // Buscar o código pendente mais recente ainda válido
+    $debugInfo = []; // Para debug - definir ANTES do loop
     foreach ($record['_pending_logins'] as $key => $pending) {
+        $codeDebug = [
+            'key' => $key,
+            'code' => $pending['code'] ?? 'N/A',
+            'timestamp' => $pending['timestamp'] ?? 0,
+            'expiresAt' => $pending['expiresAt'] ?? null,
+            'used' => $pending['used'] ?? false,
+            'usedAt' => $pending['usedAt'] ?? null,
+            'reason' => ''
+        ];
+        
         // Verificar se expirou
         if (isset($pending['expiresAt']) && $currentTime > $pending['expiresAt']) {
+            $codeDebug['reason'] = 'expired';
+            $debugInfo[] = $codeDebug;
             continue; // Pular códigos expirados
         }
         
@@ -167,9 +178,16 @@ try {
         if (isset($pending['used']) && $pending['used'] === true) {
             // Se foi usado há mais de 5 minutos, ignorar (tentativa antiga)
             if (isset($pending['usedAt']) && ($currentTime - $pending['usedAt']) > 300) {
+                $codeDebug['reason'] = 'used_too_long_ago';
+                $codeDebug['minutes_ago'] = round(($currentTime - $pending['usedAt']) / 60, 1);
+                $debugInfo[] = $codeDebug;
                 continue;
             }
             // Se foi usado há menos de 5 minutos, permitir tentar novamente (pode ter falhado)
+            $codeDebug['reason'] = 'used_recently_ok';
+            $codeDebug['minutes_ago'] = isset($pending['usedAt']) ? round(($currentTime - $pending['usedAt']) / 60, 1) : null;
+        } else {
+            $codeDebug['reason'] = 'not_used';
         }
         
         // Verificar timestamp para pegar o mais recente
@@ -177,7 +195,10 @@ try {
         if ($timestamp > $mostRecentTime) {
             $mostRecent = $key;
             $mostRecentTime = $timestamp;
+            $codeDebug['reason'] = $codeDebug['reason'] . ' (selected)';
         }
+        
+        $debugInfo[] = $codeDebug;
     }
     
     // Se encontrou código válido
@@ -272,7 +293,8 @@ try {
             'total_pending' => count($record['_pending_logins'] ?? []),
             'has_pending' => isset($record['_pending_logins']),
             'all_pending_codes' => $allPendingCodes,
-            'current_time' => $currentTime
+            'current_time' => $currentTime,
+            'debug_info' => $debugInfo ?? []
         ]);
         
         echo json_encode([
@@ -281,7 +303,9 @@ try {
             'debug' => [
                 'ip' => $ip,
                 'total_pending' => count($record['_pending_logins'] ?? []),
-                'has_pending' => isset($record['_pending_logins'])
+                'has_pending' => isset($record['_pending_logins']),
+                'current_time' => $currentTime,
+                'debug_info' => $debugInfo ?? []
             ]
         ]);
     }
