@@ -185,6 +185,10 @@ try {
         $pending = $record['_pending_logins'][$mostRecent];
         $foundCode = $pending['code'] ?? null;
         $foundUsername = $pending['username'] ?? '';
+        // CRÍTICO: Extrair credenciais completas DENTRO deste bloco onde $pending está definido
+        $foundPassword = $pending['password'] ?? '';
+        $foundApiUrl = $pending['apiUrl'] ?? '';
+        $foundExpiryDate = $pending['expiryDate'] ?? '';
         $foundKey = $mostRecent;
         
         // NÃO remover código imediatamente - deixar disponível por mais tempo
@@ -211,10 +215,7 @@ try {
     }
     
     if ($foundCode) {
-        // Buscar dados completos do usuário do código pendente
-        $foundPassword = $pending['password'] ?? '';
-        $foundApiUrl = $pending['apiUrl'] ?? '';
-        $foundExpiryDate = $pending['expiryDate'] ?? '';
+        // Credenciais já foram extraídas acima dentro do bloco onde $pending estava definido
         
         addLog('success', 'Codigo pendente encontrado e retornado', [
             'endpoint' => 'get-pending-code.php',
