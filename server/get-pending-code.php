@@ -9,8 +9,8 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 // Configurações JSONBin (definir ANTES da função para usar global)
-$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
-$jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$jsonbin_url = "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7/latest";
+$jsonbin_update = "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7";
 $apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
 
 $ip = $_SERVER['REMOTE_ADDR'] ?? '';
@@ -197,7 +197,7 @@ try {
         $record['_pending_logins'][$foundKey]['usedBy'] = $ip;
         
         // Salvar de volta no JSONBin (mas manter o código)
-        curl_setopt($ch = curl_init(), CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
+        curl_setopt($ch = curl_init(), CURLOPT_URL, "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [

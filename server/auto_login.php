@@ -12,8 +12,8 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 // Configurações JSONBin (definir ANTES da função para usar global)
-$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
-$jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$jsonbin_url = "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7/latest";
+$jsonbin_update = "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7";
 $apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
 
 // Função para adicionar log (preserva TODOS os dados existentes)

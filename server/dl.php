@@ -18,8 +18,8 @@
  */
 
 // Configurações JSONBin (definir ANTES da função para usar global)
-$jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
-$jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$jsonbin_url = "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7/latest";
+$jsonbin_update = "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7";
 $apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
 
 // Função para adicionar log (preserva TODOS os dados existentes)
@@ -243,7 +243,7 @@ $username = $user['username'] ?? '';
 try {
     // Buscar JSONBin para salvar código pendente
     $ch2 = curl_init();
-    curl_setopt($ch2, CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest");
+    curl_setopt($ch2, CURLOPT_URL, "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7/latest");
     curl_setopt($ch2, CURLOPT_HTTPHEADER, [
         "X-Master-Key: \$2a\$10\$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae"
     ]);
@@ -354,7 +354,7 @@ try {
         }
         
         // Salvar de volta no JSONBin (preservando TODOS os dados existentes + código pendente + logs)
-        curl_setopt($ch2, CURLOPT_URL, "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b");
+        curl_setopt($ch2, CURLOPT_URL, "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7");
         curl_setopt($ch2, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch2, CURLOPT_POSTFIELDS, json_encode($record2));
         curl_setopt($ch2, CURLOPT_HTTPHEADER, [
