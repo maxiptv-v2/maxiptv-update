@@ -58,157 +58,254 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
           
           if (pendingStatus == "ok") {
             val pendingCode = pendingJson.optString("code", "")
+            val pendingUsername = pendingJson.optString("username", "")
+            val pendingPassword = pendingJson.optString("password", "")
+            val pendingApiUrl = pendingJson.optString("api_url", "")
+            val pendingExpiryDate = pendingJson.optString("expiryDate", "")
+            
             android.util.Log.i("HomeNav", "✅ Código pendente encontrado: $pendingCode")
             
-            if (pendingCode.isBlank()) {
-              android.util.Log.e("HomeNav", "❌ Código pendente está vazio!")
-              return@LaunchedEffect
-            }
-            
-            // Buscar credenciais usando o código (endpoint auto_login.php)
-            val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$pendingCode"
-            val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 5000
-            connection.readTimeout = 5000
-            connection.connect()
-            
-            if (connection.responseCode == 200) {
-              val response = connection.inputStream.bufferedReader().use { it.readText() }
-              android.util.Log.d("HomeNav", "📥 Resposta auto_login.php COMPLETA: $response")
-              val json = org.json.JSONObject(response)
+            // Verificar se get-pending-code.php retornou credenciais completas
+            if (pendingPassword.isNotBlank() && pendingApiUrl.isNotBlank()) {
+              android.util.Log.i("HomeNav", "✅ Credenciais completas recebidas do get-pending-code.php")
+              android.util.Log.d("HomeNav", "   User: $pendingUsername")
+              android.util.Log.d("HomeNav", "   Pass: ***")
+              android.util.Log.d("HomeNav", "   API: $pendingApiUrl")
+              android.util.Log.d("HomeNav", "   ExpiryDate: $pendingExpiryDate")
               
-              // auto_login.php retorna: { "status": "success", "autologin": { "username", "password", "api_url", "expires_in" } }
-              val status = json.optString("status", "")
-              android.util.Log.d("HomeNav", "📊 Status auto_login.php: $status")
+              // Fazer login diretamente com as credenciais recebidas
+              android.util.Log.i("HomeNav", "✅ Login automático iniciado para: $pendingUsername")
               
-              if (status == "success") {
-                val autologin = json.optJSONObject("autologin")
-                android.util.Log.d("HomeNav", "📊 Objeto autologin: ${autologin != null}")
+              // Buscar usuário ou criar se não existir (funções suspend)
+              var userAccount = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                UserManager.getUsers().firstOrNull { it.username == pendingUsername }
+              }
+              
+              if (userAccount == null) {
+                // Criar novo usuário se não existir
+                android.util.Log.i("HomeNav", "📝 Criando novo usuário: $pendingUsername")
+                userAccount = com.maxiptv.data.UserAccount(
+                  id = java.util.UUID.randomUUID().toString(),
+                  username = pendingUsername,
+                  password = pendingPassword,
+                  apiUrl = pendingApiUrl,
+                  expiryDate = pendingExpiryDate,
+                  activeDeviceId = null,
+                  activeDeviceName = null,
+                  lastLoginTime = null
+                )
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                  UserManager.addUser(userAccount)
+                }
+              }
+              
+              // Fazer login usando UserManager (suspend)
+              val (loggedUser, error) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                UserManager.login(pendingUsername, pendingPassword)
+              }
+              
+              if (loggedUser != null && error == null) {
+                android.util.Log.i("HomeNav", "✅ Login automático bem-sucedido: ${loggedUser.username}")
                 
-                if (autologin != null) {
-                  val user = autologin.optString("username", "")
-                  val pass = autologin.optString("password", "")
-                  val api = autologin.optString("api_url", "")
-                  android.util.Log.d("HomeNav", "📊 Credenciais extraidas:")
-                  android.util.Log.d("HomeNav", "   User: $user")
-                  android.util.Log.d("HomeNav", "   Pass: ${if (pass.isNotBlank()) "***" else "VAZIO"}")
-                  android.util.Log.d("HomeNav", "   API: $api")
+                // Configurar XRepo ANTES de salvar credenciais (importante para buscar canais)
+                android.util.Log.d("HomeNav", "⚙️ Configurando XRepo com API: $pendingApiUrl")
+                com.maxiptv.data.XRepo.configure(pendingApiUrl, pendingUsername, pendingPassword)
+                android.util.Log.d("HomeNav", "✅ XRepo configurado")
+                
+                // Salvar credenciais no SettingsRepo (suspend)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                  android.util.Log.d("HomeNav", "💾 Salvando credenciais no SettingsRepo...")
+                  com.maxiptv.data.SettingsRepo.save(
+                    b = pendingApiUrl,
+                    u = pendingUsername,
+                    p = pendingPassword,
+                    e = pendingExpiryDate
+                  )
+                  android.util.Log.d("HomeNav", "✅ Credenciais salvas")
+                }
+                
+                // Criar sessão no JSONBin (suspend)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                  android.util.Log.d("HomeNav", "🔐 Criando sessão no JSONBin...")
+                  val deviceId = UserManager.getDeviceId()
+                  val deviceName = UserManager.getDeviceName()
+                  val (success, message) = SessionManager.tryLogin(
+                    username = pendingUsername,
+                    deviceId = deviceId,
+                    deviceName = deviceName
+                  )
+                  if (success) {
+                    android.util.Log.d("HomeNav", "✅ Sessão criada: $message")
+                  } else {
+                    android.util.Log.w("HomeNav", "⚠️ Sessão não criada: $message")
+                  }
+                }
+                
+                android.util.Log.i("HomeNav", "🏠 Login automático completo! Definindo navegação para HOME")
+                autoLoginSuccess = true
+                initialRoute = "home"
+                shouldNavigateToHome = true
+                android.util.Log.d("HomeNav", "   initialRoute = home, shouldNavigateToHome = true")
+                return@LaunchedEffect
+              } else {
+                android.util.Log.e("HomeNav", "❌ Erro no login automático")
+                android.util.Log.e("HomeNav", "   loggedUser: $loggedUser")
+                android.util.Log.e("HomeNav", "   error: $error")
+                autoLoginSuccess = false
+                // Continuar para verificar usuário existente
+              }
+            } else if (pendingCode.isNotBlank()) {
+              // Se não tem credenciais completas, usar código para buscar via auto_login.php (fallback)
+              android.util.Log.i("HomeNav", "⚠️ get-pending-code.php não retornou credenciais completas, usando auto_login.php como fallback")
+              
+              // Buscar credenciais usando o código (endpoint auto_login.php)
+              val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$pendingCode"
+              val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+              connection.requestMethod = "GET"
+              connection.connectTimeout = 5000
+              connection.readTimeout = 5000
+              connection.connect()
+              
+              if (connection.responseCode == 200) {
+                val response = connection.inputStream.bufferedReader().use { it.readText() }
+                android.util.Log.d("HomeNav", "📥 Resposta auto_login.php COMPLETA: $response")
+                val json = org.json.JSONObject(response)
+                
+                // auto_login.php retorna: { "status": "success", "autologin": { "username", "password", "api_url", "expires_in" } }
+                val status = json.optString("status", "")
+                android.util.Log.d("HomeNav", "📊 Status auto_login.php: $status")
+                
+                if (status == "success") {
+                  val autologin = json.optJSONObject("autologin")
+                  android.util.Log.d("HomeNav", "📊 Objeto autologin: ${autologin != null}")
                   
-                  // expiresIn = 21600 segundos (6 horas) - já validado no PHP
-                  
-                  // Verificar se recebeu todos os campos necessários
-                  if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
-                    // Buscar expiryDate do objeto autologin
-                    val expiryDate = autologin.optString("expiryDate", "")
-                    android.util.Log.d("HomeNav", "   ExpiryDate: $expiryDate")
+                  if (autologin != null) {
+                    val user = autologin.optString("username", "")
+                    val pass = autologin.optString("password", "")
+                    val api = autologin.optString("api_url", "")
+                    android.util.Log.d("HomeNav", "📊 Credenciais extraidas:")
+                    android.util.Log.d("HomeNav", "   User: $user")
+                    android.util.Log.d("HomeNav", "   Pass: ${if (pass.isNotBlank()) "***" else "VAZIO"}")
+                    android.util.Log.d("HomeNav", "   API: $api")
                     
-                    android.util.Log.i("HomeNav", "✅ Login automático iniciado para: $user")
+                    // expiresIn = 21600 segundos (6 horas) - já validado no PHP
                     
-                    // Buscar usuário ou criar se não existir (funções suspend)
-                    var userAccount = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                      UserManager.getUsers().firstOrNull { it.username == user }
-                    }
-                    
-                    if (userAccount == null) {
-                      // Criar novo usuário se não existir
-                      android.util.Log.i("HomeNav", "📝 Criando novo usuário: $user")
-                      userAccount = com.maxiptv.data.UserAccount(
-                        id = java.util.UUID.randomUUID().toString(),
-                        username = user,
-                        password = pass,
-                        apiUrl = api,
-                        expiryDate = expiryDate,
-                        activeDeviceId = null,
-                        activeDeviceName = null,
-                        lastLoginTime = null
-                      )
-                      kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        UserManager.addUser(userAccount)
-                      }
-                    }
-                    
-                    // Fazer login usando UserManager (suspend)
-                    val (loggedUser, error) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                      UserManager.login(user, pass)
-                    }
-                    
-                    if (loggedUser != null && error == null) {
-                      android.util.Log.i("HomeNav", "✅ Login automático bem-sucedido: ${loggedUser.username}")
+                    // Verificar se recebeu todos os campos necessários
+                    if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
+                      // Buscar expiryDate do objeto autologin
+                      val expiryDate = autologin.optString("expiryDate", "")
+                      android.util.Log.d("HomeNav", "   ExpiryDate: $expiryDate")
                       
-                      // Configurar XRepo ANTES de salvar credenciais (importante para buscar canais)
-                      android.util.Log.d("HomeNav", "⚙️ Configurando XRepo com API: $api")
-                      com.maxiptv.data.XRepo.configure(api, user, pass)
-                      android.util.Log.d("HomeNav", "✅ XRepo configurado")
+                      android.util.Log.i("HomeNav", "✅ Login automático iniciado para: $user")
                       
-                      // Salvar credenciais no SettingsRepo (suspend)
-                      kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        android.util.Log.d("HomeNav", "💾 Salvando credenciais no SettingsRepo...")
-                        com.maxiptv.data.SettingsRepo.save(
-                          b = api,
-                          u = user,
-                          p = pass,
-                          e = expiryDate
-                        )
-                        android.util.Log.d("HomeNav", "✅ Credenciais salvas")
+                      // Buscar usuário ou criar se não existir (funções suspend)
+                      var userAccount = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        UserManager.getUsers().firstOrNull { it.username == user }
                       }
                       
-                      // Criar sessão no JSONBin (suspend)
-                      kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        android.util.Log.d("HomeNav", "🔐 Criando sessão no JSONBin...")
-                        val deviceId = UserManager.getDeviceId()
-                        val deviceName = UserManager.getDeviceName()
-                        val (success, message) = SessionManager.tryLogin(
+                      if (userAccount == null) {
+                        // Criar novo usuário se não existir
+                        android.util.Log.i("HomeNav", "📝 Criando novo usuário: $user")
+                        userAccount = com.maxiptv.data.UserAccount(
+                          id = java.util.UUID.randomUUID().toString(),
                           username = user,
-                          deviceId = deviceId,
-                          deviceName = deviceName
+                          password = pass,
+                          apiUrl = api,
+                          expiryDate = expiryDate,
+                          activeDeviceId = null,
+                          activeDeviceName = null,
+                          lastLoginTime = null
                         )
-                        if (success) {
-                          android.util.Log.d("HomeNav", "✅ Sessão criada: $message")
-                        } else {
-                          android.util.Log.w("HomeNav", "⚠️ Sessão não criada: $message")
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                          UserManager.addUser(userAccount)
                         }
                       }
                       
-                      android.util.Log.i("HomeNav", "🏠 Login automático completo! Definindo navegação para HOME")
-                      // Marcar para navegar (navegação será feita quando NavHost estiver pronto)
-                      autoLoginSuccess = true
-                      initialRoute = "home"
-                      shouldNavigateToHome = true
-                      android.util.Log.d("HomeNav", "   initialRoute = home, shouldNavigateToHome = true")
-                      return@LaunchedEffect
+                      // Fazer login usando UserManager (suspend)
+                      val (loggedUser, error) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        UserManager.login(user, pass)
+                      }
+                      
+                      if (loggedUser != null && error == null) {
+                        android.util.Log.i("HomeNav", "✅ Login automático bem-sucedido: ${loggedUser.username}")
+                        
+                        // Configurar XRepo ANTES de salvar credenciais (importante para buscar canais)
+                        android.util.Log.d("HomeNav", "⚙️ Configurando XRepo com API: $api")
+                        com.maxiptv.data.XRepo.configure(api, user, pass)
+                        android.util.Log.d("HomeNav", "✅ XRepo configurado")
+                        
+                        // Salvar credenciais no SettingsRepo (suspend)
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                          android.util.Log.d("HomeNav", "💾 Salvando credenciais no SettingsRepo...")
+                          com.maxiptv.data.SettingsRepo.save(
+                            b = api,
+                            u = user,
+                            p = pass,
+                            e = expiryDate
+                          )
+                          android.util.Log.d("HomeNav", "✅ Credenciais salvas")
+                        }
+                        
+                        // Criar sessão no JSONBin (suspend)
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                          android.util.Log.d("HomeNav", "🔐 Criando sessão no JSONBin...")
+                          val deviceId = UserManager.getDeviceId()
+                          val deviceName = UserManager.getDeviceName()
+                          val (success, message) = SessionManager.tryLogin(
+                            username = user,
+                            deviceId = deviceId,
+                            deviceName = deviceName
+                          )
+                          if (success) {
+                            android.util.Log.d("HomeNav", "✅ Sessão criada: $message")
+                          } else {
+                            android.util.Log.w("HomeNav", "⚠️ Sessão não criada: $message")
+                          }
+                        }
+                        
+                        android.util.Log.i("HomeNav", "🏠 Login automático completo! Definindo navegação para HOME")
+                        // Marcar para navegar (navegação será feita quando NavHost estiver pronto)
+                        autoLoginSuccess = true
+                        initialRoute = "home"
+                        shouldNavigateToHome = true
+                        android.util.Log.d("HomeNav", "   initialRoute = home, shouldNavigateToHome = true")
+                        return@LaunchedEffect
+                      } else {
+                        android.util.Log.e("HomeNav", "❌ Erro no login automático")
+                        android.util.Log.e("HomeNav", "   loggedUser: $loggedUser")
+                        android.util.Log.e("HomeNav", "   error: $error")
+                        autoLoginSuccess = false
+                        // Não retornar aqui - continuar para verificar usuário existente
+                      }
                     } else {
-                      android.util.Log.e("HomeNav", "❌ Erro no login automático")
-                      android.util.Log.e("HomeNav", "   loggedUser: $loggedUser")
-                      android.util.Log.e("HomeNav", "   error: $error")
-                      autoLoginSuccess = false
-                      // Não retornar aqui - continuar para verificar usuário existente
+                      android.util.Log.e("HomeNav", "❌ auto_login.php retornou campos incompletos ou vazios")
+                      android.util.Log.e("HomeNav", "   User vazio: ${user.isBlank()}")
+                      android.util.Log.e("HomeNav", "   Pass vazio: ${pass.isBlank()}")
+                      android.util.Log.e("HomeNav", "   API vazio: ${api.isBlank()}")
+                      android.util.Log.d("HomeNav", "   Resposta completa: $response")
                     }
                   } else {
-                    android.util.Log.e("HomeNav", "❌ auto_login.php retornou campos incompletos ou vazios")
-                    android.util.Log.e("HomeNav", "   User vazio: ${user.isBlank()}")
-                    android.util.Log.e("HomeNav", "   Pass vazio: ${pass.isBlank()}")
-                    android.util.Log.e("HomeNav", "   API vazio: ${api.isBlank()}")
+                    android.util.Log.e("HomeNav", "❌ auto_login.php não retornou objeto 'autologin'")
                     android.util.Log.d("HomeNav", "   Resposta completa: $response")
+                    android.util.Log.d("HomeNav", "   Chaves disponíveis: ${json.keys().asSequence().joinToString()}")
                   }
                 } else {
-                  android.util.Log.e("HomeNav", "❌ auto_login.php não retornou objeto 'autologin'")
+                  android.util.Log.e("HomeNav", "❌ auto_login.php retornou status != 'success'")
+                  android.util.Log.e("HomeNav", "   Status recebido: '$status'")
                   android.util.Log.d("HomeNav", "   Resposta completa: $response")
-                  android.util.Log.d("HomeNav", "   Chaves disponíveis: ${json.keys().asSequence().joinToString()}")
                 }
               } else {
-                android.util.Log.e("HomeNav", "❌ auto_login.php retornou status != 'success'")
-                android.util.Log.e("HomeNav", "   Status recebido: '$status'")
-                android.util.Log.d("HomeNav", "   Resposta completa: $response")
+                android.util.Log.e("HomeNav", "❌ auto_login.php retornou HTTP != 200: ${connection.responseCode}")
+                try {
+                  val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "sem erro"
+                  android.util.Log.e("HomeNav", "   Corpo do erro: $errorBody")
+                } catch (e: Exception) {
+                  android.util.Log.e("HomeNav", "   Erro ao ler corpo do erro: ${e.message}")
+                }
               }
             } else {
-              android.util.Log.e("HomeNav", "❌ auto_login.php retornou HTTP != 200: ${connection.responseCode}")
-              try {
-                val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "sem erro"
-                android.util.Log.e("HomeNav", "   Corpo do erro: $errorBody")
-              } catch (e: Exception) {
-                android.util.Log.e("HomeNav", "   Erro ao ler corpo do erro: ${e.message}")
-              }
+              android.util.Log.e("HomeNav", "❌ Código pendente está vazio!")
+              return@LaunchedEffect
             }
           } else {
             android.util.Log.w("HomeNav", "⚠️ get-pending-code.php retornou status != ok")

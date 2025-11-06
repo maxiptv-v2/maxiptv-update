@@ -282,12 +282,14 @@ try {
         // Isso permite múltiplos códigos pendentes e garante que o mais recente seja encontrado
         $pendingKey = $timestamp . '_' . $code;
         
-        // Salvar código + dados do usuário do painel
+        // Salvar código + dados do usuário do painel (COMPLETO para autologin direto)
         // IMPORTANTE: Só salva se usuário NÃO estiver expirado (já validado acima)
         // O código pendente é válido por 15 minutos para o app buscar e fazer login automático
         $record2['_pending_logins'][$pendingKey] = [
             'code' => $code,
             'username' => $username, // Dados do usuário do painel
+            'password' => $user['password'] ?? '', // Salvar senha para autologin direto
+            'apiUrl' => $user['apiUrl'] ?? '', // Salvar API URL para autologin direto
             'timestamp' => $timestamp,
             'expiresAt' => $timestamp + 900, // 15 minutos
             'expiryDate' => $expiryDate, // Salvar também a data de expiração do usuário para referência

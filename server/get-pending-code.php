@@ -211,17 +211,43 @@ try {
     }
     
     if ($foundCode) {
+        // Buscar dados completos do usuário do código pendente
+        $foundPassword = $pending['password'] ?? '';
+        $foundApiUrl = $pending['apiUrl'] ?? '';
+        $foundExpiryDate = $pending['expiryDate'] ?? '';
+        
         addLog('success', 'Codigo pendente encontrado e retornado', [
             'endpoint' => 'get-pending-code.php',
             'code' => $foundCode,
             'username' => $foundUsername ?? ''
         ]);
         
+        // Log explícito antes de retornar status "ok"
+        addLog('info', 'Retornando status OK para app com codigo pendente e credenciais completas', [
+            'endpoint' => 'get-pending-code.php',
+            'status' => 'ok',
+            'code' => $foundCode,
+            'username' => $foundUsername ?? '',
+            'has_password' => !empty($foundPassword),
+            'has_api_url' => !empty($foundApiUrl),
+            'response' => [
+                'status' => 'ok',
+                'code' => $foundCode,
+                'username' => $foundUsername ?? '',
+                'password' => '***',
+                'api_url' => $foundApiUrl,
+                'expiryDate' => $foundExpiryDate
+            ]
+        ]);
+        
         echo json_encode([
             'status' => 'ok',
             'code' => $foundCode,
             'username' => $foundUsername ?? '',
-            'mensagem' => 'Codigo encontrado - dados do usuario do painel'
+            'password' => $foundPassword, // Incluir senha para autologin direto
+            'api_url' => $foundApiUrl, // Incluir API URL para autologin direto
+            'expiryDate' => $foundExpiryDate, // Incluir data de expiração
+            'mensagem' => 'Codigo encontrado - credenciais completas retornadas'
         ]);
     } else {
         // Listar todos os códigos pendentes para debug
