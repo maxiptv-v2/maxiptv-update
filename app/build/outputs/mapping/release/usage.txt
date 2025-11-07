@@ -69311,6 +69311,16 @@ com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$3:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$4:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$5:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$6:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$7:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$8:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$existingUser$1:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$userAccount$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1:

@@ -77,14 +77,14 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
               android.util.Log.i("HomeNav", "✅ Login automático iniciado para: $pendingUsername")
               
               // Buscar usuário ou criar se não existir (funções suspend)
-              var userAccount = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+              val existingUser = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 UserManager.getUsers().firstOrNull { it.username == pendingUsername }
               }
               
-              if (userAccount == null) {
+              if (existingUser == null) {
                 // Criar novo usuário se não existir
                 android.util.Log.i("HomeNav", "📝 Criando novo usuário: $pendingUsername")
-                userAccount = com.maxiptv.data.UserAccount(
+                val newUser = com.maxiptv.data.UserAccount(
                   id = java.util.UUID.randomUUID().toString(),
                   username = pendingUsername,
                   password = pendingPassword,
@@ -95,7 +95,7 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                   lastLoginTime = null
                 )
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                  UserManager.addUser(userAccount)
+                  UserManager.addUser(newUser)
                 }
               }
               
