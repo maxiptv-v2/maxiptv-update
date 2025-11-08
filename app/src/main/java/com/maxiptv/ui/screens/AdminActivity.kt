@@ -92,64 +92,11 @@ fun AdminPanelScreen(onClose: () -> Unit) {
       scope.launch {
         try {
           android.util.Log.i("AdminActivity", "🔄 Sincronizando usuários do JSONBin...")
-          
-          // Carregar usuários locais primeiro
-          val localUsers = UserManager.getUsers()
-          android.util.Log.i("AdminActivity", "📊 Usuários locais: ${localUsers.size}")
-          
-          // Buscar usuários do JSONBin
-          val jsonBinUsers = SessionManager.getAllUsers()
-          android.util.Log.i("AdminActivity", "📊 Usuários JSONBin: ${jsonBinUsers.size}")
-          
-          if (jsonBinUsers.isNotEmpty()) {
-            var addedCount = 0
-            var updatedCount = 0
-            
-            jsonBinUsers.forEach { globalUser ->
-              val existingUser = localUsers.find { it.username == globalUser.username }
-              
-              if (existingUser == null) {
-                // Usuário não existe localmente - adicionar
-                android.util.Log.i("AdminActivity", "➕ Adicionando usuário: ${globalUser.username}")
-                val newUser = UserAccount(
-                  id = globalUser.id,
-                  username = globalUser.username,
-                  password = globalUser.password,
-                  apiUrl = globalUser.apiUrl,
-                  expiryDate = globalUser.expiryDate,
-                  activeDeviceId = null,
-                  activeDeviceName = null,
-                  lastLoginTime = null
-                )
-                UserManager.addUser(newUser)
-                addedCount++
-              } else {
-                // Usuário existe - atualizar dados se necessário (mantém ID local)
-                val needsUpdate = existingUser.password != globalUser.password ||
-                                 existingUser.apiUrl != globalUser.apiUrl ||
-                                 existingUser.expiryDate != globalUser.expiryDate
-                
-                if (needsUpdate) {
-                  android.util.Log.i("AdminActivity", "🔄 Atualizando usuário: ${globalUser.username}")
-                  val updatedUser = existingUser.copy(
-                    password = globalUser.password,
-                    apiUrl = globalUser.apiUrl,
-                    expiryDate = globalUser.expiryDate
-                  )
-                  UserManager.updateUser(updatedUser)
-                  updatedCount++
-                } else {
-                  android.util.Log.d("AdminActivity", "✓ Usuário já está atualizado: ${globalUser.username}")
-                }
-              }
-            }
-            
-            android.util.Log.i("AdminActivity", "✅ Sincronização concluída!")
-            android.util.Log.i("AdminActivity", "  - Adicionados: $addedCount")
-            android.util.Log.i("AdminActivity", "  - Atualizados: $updatedCount")
-          } else {
-            android.util.Log.w("AdminActivity", "⚠️ Nenhum usuário encontrado no JSONBin")
-          }
+          val syncResult = UserManager.syncUsersFromJsonBin()
+          android.util.Log.i("AdminActivity", "✅ Sincronização concluída!")
+          android.util.Log.i("AdminActivity", "  - Adicionados: ${syncResult.added}")
+          android.util.Log.i("AdminActivity", "  - Atualizados: ${syncResult.updated}")
+          android.util.Log.i("AdminActivity", "  - Total remoto: ${syncResult.totalRemote}")
           
           // Atualizar lista após sincronização
           users = UserManager.getUsers()
@@ -180,44 +127,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
       try {
         android.util.Log.i("AdminActivity", "🔄 Sincronização manual iniciada...")
         
-        val localUsers = UserManager.getUsers()
-        val jsonBinUsers = SessionManager.getAllUsers()
-        
-        var addedCount = 0
-        var updatedCount = 0
-        
-        jsonBinUsers.forEach { globalUser ->
-          val existingUser = localUsers.find { it.username == globalUser.username }
-          
-          if (existingUser == null) {
-            val newUser = UserAccount(
-              id = globalUser.id,
-              username = globalUser.username,
-              password = globalUser.password,
-              apiUrl = globalUser.apiUrl,
-              expiryDate = globalUser.expiryDate,
-              activeDeviceId = null,
-              activeDeviceName = null,
-              lastLoginTime = null
-            )
-            UserManager.addUser(newUser)
-            addedCount++
-          } else {
-            val needsUpdate = existingUser.password != globalUser.password ||
-                             existingUser.apiUrl != globalUser.apiUrl ||
-                             existingUser.expiryDate != globalUser.expiryDate
-            
-            if (needsUpdate) {
-              val updatedUser = existingUser.copy(
-                password = globalUser.password,
-                apiUrl = globalUser.apiUrl,
-                expiryDate = globalUser.expiryDate
-              )
-              UserManager.updateUser(updatedUser)
-              updatedCount++
-            }
-          }
-        }
+        val syncResult = UserManager.syncUsersFromJsonBin()
         
         // Atualizar lista
         users = UserManager.getUsers()
@@ -225,8 +135,9 @@ fun AdminPanelScreen(onClose: () -> Unit) {
         globalUsers = SessionManager.getAllUsers()
         
         android.util.Log.i("AdminActivity", "✅ Sincronização manual concluída!")
-        android.util.Log.i("AdminActivity", "  - Adicionados: $addedCount")
-        android.util.Log.i("AdminActivity", "  - Atualizados: $updatedCount")
+        android.util.Log.i("AdminActivity", "  - Adicionados: ${syncResult.added}")
+        android.util.Log.i("AdminActivity", "  - Atualizados: ${syncResult.updated}")
+        android.util.Log.i("AdminActivity", "  - Total remoto: ${syncResult.totalRemote}")
       } catch (e: Exception) {
         android.util.Log.e("AdminActivity", "❌ Erro na sincronização manual: ${e.message}", e)
       }

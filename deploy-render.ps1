@@ -103,10 +103,10 @@ Write-Host "📦 Deploy automático no Render:" -ForegroundColor Cyan
 Write-Host "   O Render detecta automaticamente o push e inicia o deploy" -ForegroundColor White
 Write-Host "   Aguarde alguns minutos para o deploy concluir" -ForegroundColor White
 Write-Host ""
-Write-Host "🔗 Verificar deploy:" -ForegroundColor Yellow
-Write-Host "   https://dashboard.render.com" -ForegroundColor White
+Write-Host "Verificar deploy:" -ForegroundColor Yellow
+Write-Host '   https://dashboard.render.com' -ForegroundColor White
 Write-Host ""
-Write-Host "🧪 Testar após deploy:" -ForegroundColor Yellow
-Write-Host "   https://maxiptv-update-1.onrender.com/valida.php" -ForegroundColor White
-Write-Host "   https://maxiptv-update-1.onrender.com/auto_login.php?code=6789" -ForegroundColor White
+Write-Host "Testar apos deploy:" -ForegroundColor Yellow
+Write-Host '   https://maxiptv-update-1.onrender.com/valida.php' -ForegroundColor White
+Write-Host '   https://maxiptv-update-1.onrender.com/auto_login.php?code=6789' -ForegroundColor White
 

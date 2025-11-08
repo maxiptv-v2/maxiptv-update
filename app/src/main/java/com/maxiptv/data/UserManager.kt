@@ -1,8 +1,10 @@
 package com.maxiptv.data
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
@@ -24,6 +26,13 @@ object UserManager {
   private val K_USERS = stringPreferencesKey("users_list")
   private val K_CURRENT = stringPreferencesKey("current_user")
   private val K_DEVICE_ID = stringPreferencesKey("device_id")
+  
+  @Serializable
+  data class UserSyncResult(
+    val added: Int,
+    val updated: Int,
+    val totalRemote: Int
+  )
   
   suspend fun getDeviceId(): String {
     val prefs = AppCtx.ctx.dataStore.data.first()
@@ -62,6 +71,70 @@ object UserManager {
   
   suspend fun updateUser(user: UserAccount) {
     addUser(user)
+  }
+  
+  suspend fun syncUsersFromJsonBin(): UserSyncResult = withContext(Dispatchers.IO) {
+    try {
+      android.util.Log.i("UserManager", "🔄 Sincronizando usuários com JSONBin (uso global)...")
+      
+      val remoteUsers = SessionManager.getAllUsers()
+      android.util.Log.i("UserManager", "🌐 Usuários remotos: ${remoteUsers.size}")
+      
+      val localUsersList = getUsers().toMutableList()
+      val localByUsername = localUsersList.mapIndexed { index, user -> user.username to index }.toMap()
+      
+      var added = 0
+      var updated = 0
+      
+      remoteUsers.forEach { remote ->
+        val existingIndex = localByUsername[remote.username]
+        
+        if (existingIndex == null) {
+          val newUser = UserAccount(
+            id = remote.id.ifBlank { java.util.UUID.randomUUID().toString() },
+            username = remote.username,
+            password = remote.password,
+            apiUrl = remote.apiUrl,
+            expiryDate = remote.expiryDate,
+            activeDeviceId = null,
+            activeDeviceName = null,
+            lastLoginTime = null
+          )
+          localUsersList.add(newUser)
+          added++
+          android.util.Log.i("UserManager", "➕ Usuário adicionado a partir do JSONBin: ${remote.username}")
+        } else {
+          val existingUser = localUsersList[existingIndex]
+          val needsUpdate = existingUser.password != remote.password ||
+                            existingUser.apiUrl != remote.apiUrl ||
+                            existingUser.expiryDate != remote.expiryDate
+          
+          if (needsUpdate) {
+            localUsersList[existingIndex] = existingUser.copy(
+              password = remote.password,
+              apiUrl = remote.apiUrl,
+              expiryDate = remote.expiryDate
+            )
+            updated++
+            android.util.Log.i("UserManager", "🔄 Usuário atualizado a partir do JSONBin: ${remote.username}")
+          } else {
+            android.util.Log.d("UserManager", "✓ Usuário já sincronizado: ${remote.username}")
+          }
+        }
+      }
+      
+      if (added > 0 || updated > 0) {
+        saveUsers(localUsersList)
+        android.util.Log.i("UserManager", "💾 Usuários sincronizados salvos no DataStore (adicionados=$added, atualizados=$updated)")
+      } else {
+        android.util.Log.i("UserManager", "ℹ️ Nenhuma alteração necessária na sincronização de usuários")
+      }
+      
+      UserSyncResult(added = added, updated = updated, totalRemote = remoteUsers.size)
+    } catch (e: Exception) {
+      android.util.Log.e("UserManager", "❌ Erro ao sincronizar usuários do JSONBin: ${e.message}", e)
+      UserSyncResult(added = 0, updated = 0, totalRemote = 0)
+    }
   }
   
   suspend fun getUsers(): List<UserAccount> {
