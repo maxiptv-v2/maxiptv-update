@@ -33949,6 +33949,7 @@ com.maxiptv.BuildConfig
 com.maxiptv.MainActivity:
     public static final int $stable
 com.maxiptv.MaxiApp$Companion:
+    public final boolean isTablet()
     public final void setFireStick(boolean)
     public final void setFireStickOverscanPadding(int)
     public final void setFireStickSafeAreaPadding(int)
@@ -33958,6 +33959,7 @@ com.maxiptv.MaxiApp$Companion:
     public final void setTv(boolean)
 com.maxiptv.MaxiApp:
     public static final int $stable
+    public static final synthetic boolean access$isTablet$cp()
     public static final synthetic void access$setFireStick$cp(boolean)
     public static final synthetic void access$setFireStickOverscanPadding$cp(int)
     public static final synthetic void access$setFireStickSafeAreaPadding$cp(int)
@@ -68922,14 +68924,12 @@ com.maxiptv.MainActivity$onCreate$1$1$2
 com.maxiptv.MainActivity$onCreate$1
 com.maxiptv.MainActivity:
     static void <clinit>()
-    public static void adjustScreenLayoutForLargeDisplays()
 com.maxiptv.MaxiApp$Companion:
     public static int getFireStickOverscanPadding()
     public static int getFireStickSafeAreaPadding()
     public static boolean isFireStick()
     public static boolean isPhilcoAndroidTv()
     public static boolean isPhone()
-    public static boolean isTablet()
     public static boolean isTv()
 com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76ef23425c78987b9f66f4863edf70dea637a2adb30518f$0
 com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76ef23425c78987b9f66f4863edf70dea637a2adb30518f$1

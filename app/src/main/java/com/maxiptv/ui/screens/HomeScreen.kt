@@ -154,11 +154,9 @@ fun HomeScreen(nav: NavHostController) {
   val isTv = MaxiApp.isTv
   val isPhone = MaxiApp.isPhone
   val isFireStick = MaxiApp.isFireStick
-  val isPhilcoAndroidTv = MaxiApp.isPhilcoAndroidTv
   
   // 🔥 PADDING ESPECÍFICO PARA FIRE STICK APENAS
   val horizontalPadding = when {
-    isPhilcoAndroidTv -> 0.dp  // TVs Philco precisam de layout fullscreen sem overscan
     isFireStick -> MaxiApp.fireStickOverscanPadding.dp  // APENAS Fire Stick
     isTv -> 32.dp  // TV Box Android/Genéricos mantêm original
     isPhone -> 16.dp  // Smartphones mantêm original
@@ -166,7 +164,6 @@ fun HomeScreen(nav: NavHostController) {
   }
   
   val verticalPadding = when {
-    isPhilcoAndroidTv -> 0.dp  // TVs Philco precisam de layout fullscreen sem overscan
     isFireStick -> MaxiApp.fireStickSafeAreaPadding.dp  // APENAS Fire Stick
     isTv -> 16.dp  // TV Box Android/Genéricos mantêm original
     isPhone -> 12.dp  // Smartphones mantêm original

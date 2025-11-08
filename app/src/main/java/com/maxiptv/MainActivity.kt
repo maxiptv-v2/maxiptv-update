@@ -1,8 +1,4 @@
 package com.maxiptv
-import android.app.UiModeManager
-import android.content.Context
-import android.content.res.Configuration
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,7 +14,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
 import com.maxiptv.ui.screens.*
 import com.maxiptv.ui.theme.MaxiTheme
-import kotlin.math.sqrt
 
 class MainActivity : ComponentActivity() {
   @OptIn(ExperimentalMaterial3Api::class)
@@ -42,8 +37,6 @@ class MainActivity : ComponentActivity() {
       // Manter barras de sistema visíveis para smartphones
       androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
     }
-    
-    adjustScreenLayoutForLargeDisplays()
     
     setContent {
       MaxiTheme {
@@ -69,96 +62,6 @@ class MainActivity : ComponentActivity() {
         }
       }
     }
-  }
-  
-  private fun adjustScreenLayoutForLargeDisplays() {
-    val prefs = getSharedPreferences("screen_prefs", Context.MODE_PRIVATE)
-    val savedScale = prefs.getFloat("scaleFactor", -1f)
-    val savedPadding = prefs.getInt("padding", -1)
-    val rootView = window.decorView.rootView ?: return
-    
-    if (savedScale in 0.5f..1.1f && savedPadding >= 0) {
-      android.util.Log.i("MainActivity", "🧠 Aplicando layout salvo para TV/projetor (scale=$savedScale padding=$savedPadding)")
-      rootView.setPadding(savedPadding, savedPadding, savedPadding, savedPadding)
-      rootView.scaleX = savedScale
-      rootView.scaleY = savedScale
-      return
-    }
-    
-    if (MaxiApp.isFireStick || MaxiApp.isPhone || MaxiApp.isTablet) {
-      android.util.Log.d("MainActivity", "ℹ️ Ignorando ajuste automático (Fire Stick / Phone / Tablet detectado)")
-      return
-    }
-    
-    val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager ?: return
-    val metrics = resources.displayMetrics
-    val manufacturer = Build.MANUFACTURER.lowercase()
-    val model = Build.MODEL.lowercase()
-    val brand = Build.BRAND.lowercase()
-    val product = Build.PRODUCT.lowercase()
-    
-    val isTvBox = model.contains("box") || product.contains("box") || brand.contains("box") || model.contains("stick")
-    if (isTvBox) {
-      android.util.Log.d("MainActivity", "ℹ️ Dispositivo identificado como TV Box/Stick - sem ajuste extra")
-      return
-    }
-    
-    val xdpi = if (metrics.xdpi > 0) metrics.xdpi else metrics.densityDpi.toFloat()
-    val ydpi = if (metrics.ydpi > 0) metrics.ydpi else metrics.densityDpi.toFloat()
-    val widthInches = metrics.widthPixels / xdpi
-    val heightInches = metrics.heightPixels / ydpi
-    val diagonalInches = sqrt(widthInches * widthInches + heightInches * heightInches)
-    
-    val isTvMode = uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
-    val isProjector = manufacturer.contains("projector") ||
-                      model.contains("projector") ||
-                      product.contains("projector") ||
-                      brand.contains("projector")
-    val isLargeDisplay = diagonalInches >= 40
-    val isLowDensity = metrics.densityDpi <= 240
-    
-    val shouldAdjust = isTvMode || isProjector || (isLargeDisplay && isLowDensity)
-    
-    if (!shouldAdjust) {
-      android.util.Log.d("MainActivity", "ℹ️ Nenhum ajuste necessário (diag=${"%.1f".format(diagonalInches)}\" dpi=${metrics.densityDpi})")
-      return
-    }
-    
-    val scaleFactor = when {
-      diagonalInches >= 80 -> 0.80f
-      diagonalInches >= 60 -> 0.85f
-      diagonalInches >= 50 -> 0.88f
-      diagonalInches >= 40 -> 0.92f
-      else -> 0.95f
-    }
-    
-    val paddingDp = when {
-      diagonalInches >= 80 -> 24
-      diagonalInches >= 60 -> 20
-      diagonalInches >= 50 -> 16
-      diagonalInches >= 40 -> 12
-      else -> 8
-    }
-    
-    val paddingPx = (paddingDp * metrics.density).toInt()
-    
-    rootView.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
-    rootView.animate()
-      .scaleX(scaleFactor)
-      .scaleY(scaleFactor)
-      .setDuration(500)
-      .start()
-    
-    prefs.edit()
-      .putFloat("scaleFactor", scaleFactor)
-      .putInt("padding", paddingPx)
-      .putFloat("diagonalInches", diagonalInches.toFloat())
-      .putInt("densityDpi", metrics.densityDpi)
-      .putString("manufacturer", manufacturer)
-      .putString("model", model)
-      .apply()
-    
-    android.util.Log.i("MainActivity", "✅ Ajuste automático aplicado: scale=$scaleFactor padding=${paddingPx}px diag=${"%.1f".format(diagonalInches)}\"")
   }
   
   // 🎯 INTERCEPTAR NOVOS INTENTS (quando PlayerActivity navega de volta)
