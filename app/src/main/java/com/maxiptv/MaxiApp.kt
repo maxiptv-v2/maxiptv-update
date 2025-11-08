@@ -13,6 +13,7 @@ class MaxiApp : Application() {
     var isFireStick: Boolean = false
     var isPhone: Boolean = false
     var isTablet: Boolean = false
+    var isPhilcoAndroidTv: Boolean = false
     
     // 🔥 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK (AJUSTÁVEIS POR TAMANHO DE TV)
     var fireStickOverscanPadding: Int = 48 // dp - será ajustado automaticamente
@@ -45,6 +46,14 @@ class MaxiApp : Application() {
              product.contains("atv") ||
              model.contains("android tv") ||
              product.contains("android tv")
+      
+      // TVs Android de fabricantes específicos que precisam de layout sem overscan
+      isPhilcoAndroidTv = isTv && (
+        manufacturer.contains("philco") ||
+        brand.contains("philco") ||
+        model.contains("philco") ||
+        product.contains("philco")
+      )
       
       // 📱 DETECÇÃO MELHORADA DE SMARTPHONE E TABLET
       val screenWidth = resources.configuration.screenWidthDp
@@ -91,6 +100,7 @@ class MaxiApp : Application() {
       android.util.Log.i("MaxiApp", "───────────────────────────────────────")
       android.util.Log.i("MaxiApp", "✅ Tipo detectado: ${when {
         isFireStick -> "Fire Stick"
+        isPhilcoAndroidTv -> "TV Android (Philco)"
         isTv -> "TV Box / Android TV / Chromecast"
         isTablet -> "Tablet"
         isPhone -> "Smartphone"
