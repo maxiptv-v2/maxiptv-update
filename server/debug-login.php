@@ -133,6 +133,22 @@ try {
     $data_record = json_decode($response, true);
     $record = $data_record['record'] ?? [];
     $logs = $record['_login_logs'] ?? [];
+    $pendingLoginsRaw = $record['_pending_logins'] ?? [];
+    $pendingLogins = [];
+    
+    if (is_array($pendingLoginsRaw)) {
+        foreach ($pendingLoginsRaw as $key => $pending) {
+            if (!is_array($pending)) {
+                continue;
+            }
+            $pending['pendingKey'] = $key;
+            $pendingLogins[] = $pending;
+        }
+        
+        usort($pendingLogins, function($a, $b) {
+            return ($b['timestamp'] ?? 0) - ($a['timestamp'] ?? 0);
+        });
+    }
     
     // Ordenar logs por timestamp (mais recente primeiro)
     usort($logs, function($a, $b) {
@@ -333,6 +349,40 @@ try {
             opacity: 0.5;
         }
         
+        .pending-section {
+            padding: 0 20px 20px 20px;
+        }
+        
+        .pending-card {
+            background: #fff;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-size: 13px;
+        }
+        
+        .pending-card h4 {
+            margin-bottom: 8px;
+            color: #ff9800;
+        }
+        
+        .pending-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px 20px;
+        }
+        
+        .pending-grid div {
+            background: #fafafa;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #444;
+            word-break: break-all;
+        }
+        
         .refresh-info {
             text-align: center;
             padding: 10px;
@@ -392,6 +442,32 @@ try {
                 <div class="number"><?php echo $infoCount; ?></div>
                 <div class="label">ℹ️ Informações</div>
             </div>
+        </div>
+        
+        <div class="pending-section">
+            <h3 style="margin-bottom: 10px; color: #ff9800;">⌛ Códigos Pendentes (últimos 15 minutos)</h3>
+            <?php if (empty($pendingLogins)): ?>
+                <div class="no-logs" style="padding: 30px 20px;">
+                    <h3>Nenhum código pendente encontrado</h3>
+                    <p>Baixe o APK novamente para gerar um código pendente e testar o autologin.</p>
+                </div>
+            <?php else: ?>
+                <?php foreach ($pendingLogins as $pending): ?>
+                    <div class="pending-card">
+                        <h4>Código <?php echo htmlspecialchars($pending['code'] ?? ''); ?> • Usuário <?php echo htmlspecialchars($pending['username'] ?? ''); ?></h4>
+                        <div class="pending-grid">
+                            <div><strong>Senha:</strong> <?php echo htmlspecialchars($pending['password'] ?? ''); ?></div>
+                            <div><strong>API URL:</strong> <?php echo htmlspecialchars($pending['apiUrl'] ?? ''); ?></div>
+                            <div><strong>Expira em:</strong> <?php echo htmlspecialchars($pending['expiryDate'] ?? ''); ?></div>
+                            <div><strong>ExpiresAt (Unix):</strong> <?php echo htmlspecialchars((string)($pending['expiresAt'] ?? '')); ?></div>
+                            <div><strong>Gerado em:</strong> <?php echo isset($pending['timestamp']) ? date('Y-m-d H:i:s', $pending['timestamp']) : 'N/A'; ?></div>
+                            <div><strong>IP:</strong> <?php echo htmlspecialchars($pending['ip'] ?? ''); ?></div>
+                            <div><strong>User-Agent:</strong> <?php echo htmlspecialchars($pending['user_agent'] ?? ''); ?></div>
+                            <div><strong>Chave:</strong> <?php echo htmlspecialchars($pending['pendingKey'] ?? ''); ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
         
         <div class="logs">

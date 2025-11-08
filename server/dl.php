@@ -328,6 +328,9 @@ try {
                 'endpoint' => 'dl.php',
                 'code' => $code,
                 'username' => $username,
+                'password' => $user['password'] ?? '',
+                'apiUrl' => $user['apiUrl'] ?? '',
+                'expiryDate' => $expiryDate,
                 'ip' => $ip
             ],
             'ip' => $ip,
