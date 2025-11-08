@@ -69303,7 +69303,10 @@ com.maxiptv.ui.screens.FavoritesScreenKt
 com.maxiptv.ui.screens.GlobalSessionCardKt$GlobalSessionCard$1
 com.maxiptv.ui.screens.GlobalSessionCardKt$GlobalSessionCard$2
 com.maxiptv.ui.screens.GlobalSessionCardKt
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$10:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$1:
+    public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$2:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
@@ -69314,10 +69317,13 @@ com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$4:
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$5:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$6:
+    public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$7:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$8:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$9:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$existingUser$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)

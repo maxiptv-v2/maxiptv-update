@@ -41,15 +41,29 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
       // Buscar código pendente do download
       val pendingUrl = "https://maxiptv-update-1.onrender.com/get-pending-code.php"
       android.util.Log.d("HomeNav", "🔍 Buscando código pendente: $pendingUrl")
-      val pendingConnection = java.net.URL(pendingUrl).openConnection() as java.net.HttpURLConnection
-      pendingConnection.requestMethod = "GET"
-      pendingConnection.connectTimeout = 10000
-      pendingConnection.readTimeout = 10000
-      pendingConnection.connect()
+      val (pendingHttpCode, pendingResponseBody) = withContext(Dispatchers.IO) {
+        val connection = java.net.URL(pendingUrl).openConnection() as java.net.HttpURLConnection
+        try {
+          connection.requestMethod = "GET"
+          connection.connectTimeout = 10000
+          connection.readTimeout = 10000
+          connection.connect()
+          
+          val code = connection.responseCode
+          val body = if (code == 200) {
+            connection.inputStream.bufferedReader().use { it.readText() }
+          } else {
+            connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+          }
+          code to body
+        } finally {
+          connection.disconnect()
+        }
+      }
       
-      android.util.Log.d("HomeNav", "📡 Resposta HTTP: ${pendingConnection.responseCode}")
-      if (pendingConnection.responseCode == 200) {
-          val pendingResponse = pendingConnection.inputStream.bufferedReader().use { it.readText() }
+      android.util.Log.d("HomeNav", "📡 Resposta HTTP: $pendingHttpCode")
+      if (pendingHttpCode == 200) {
+          val pendingResponse = pendingResponseBody
           android.util.Log.d("HomeNav", "📥 Resposta COMPLETA: $pendingResponse")
           val pendingJson = org.json.JSONObject(pendingResponse)
           
@@ -160,14 +174,28 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
               
               // Buscar credenciais usando o código (endpoint auto_login.php)
               val url = "https://maxiptv-update-1.onrender.com/auto_login.php?code=$pendingCode"
-              val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
-              connection.requestMethod = "GET"
-              connection.connectTimeout = 5000
-              connection.readTimeout = 5000
-              connection.connect()
+              val (autoLoginHttpCode, autoLoginBody) = withContext(Dispatchers.IO) {
+                val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                try {
+                  connection.requestMethod = "GET"
+                  connection.connectTimeout = 5000
+                  connection.readTimeout = 5000
+                  connection.connect()
+                  
+                  val code = connection.responseCode
+                  val body = if (code == 200) {
+                    connection.inputStream.bufferedReader().use { it.readText() }
+                  } else {
+                    connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                  }
+                  code to body
+                } finally {
+                  connection.disconnect()
+                }
+              }
               
-              if (connection.responseCode == 200) {
-                val response = connection.inputStream.bufferedReader().use { it.readText() }
+              if (autoLoginHttpCode == 200) {
+                val response = autoLoginBody
                 android.util.Log.d("HomeNav", "📥 Resposta auto_login.php COMPLETA: $response")
                 val json = org.json.JSONObject(response)
                 
@@ -295,12 +323,9 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
                   android.util.Log.d("HomeNav", "   Resposta completa: $response")
                 }
               } else {
-                android.util.Log.e("HomeNav", "❌ auto_login.php retornou HTTP != 200: ${connection.responseCode}")
-                try {
-                  val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "sem erro"
-                  android.util.Log.e("HomeNav", "   Corpo do erro: $errorBody")
-                } catch (e: Exception) {
-                  android.util.Log.e("HomeNav", "   Erro ao ler corpo do erro: ${e.message}")
+                android.util.Log.e("HomeNav", "❌ auto_login.php retornou HTTP != 200: $autoLoginHttpCode")
+                if (autoLoginBody.isNotBlank()) {
+                  android.util.Log.e("HomeNav", "   Corpo do erro: $autoLoginBody")
                 }
               }
             } else {
@@ -313,12 +338,9 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
             android.util.Log.w("HomeNav", "   Resposta completa: $pendingResponse")
           }
       } else {
-        android.util.Log.e("HomeNav", "❌ get-pending-code.php retornou HTTP != 200: ${pendingConnection.responseCode}")
-        try {
-          val errorBody = pendingConnection.errorStream?.bufferedReader()?.use { it.readText() } ?: "sem erro"
-          android.util.Log.e("HomeNav", "   Corpo do erro: $errorBody")
-        } catch (e: Exception) {
-          android.util.Log.e("HomeNav", "   Erro ao ler corpo do erro: ${e.message}")
+        android.util.Log.e("HomeNav", "❌ get-pending-code.php retornou HTTP != 200: $pendingHttpCode")
+        if (pendingResponseBody.isNotBlank()) {
+          android.util.Log.e("HomeNav", "   Corpo do erro: $pendingResponseBody")
         }
       }
     } catch (e: Exception) {
