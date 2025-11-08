@@ -190,6 +190,22 @@ if (!isset($codigos[$code]) || !is_array($codigos[$code])) {
 
 $user = $codigos[$code];
 
+// Novo requisito: códigos só podem ser usados uma vez
+if (isset($user['used']) && $user['used'] === true) {
+    addLog('error', 'Codigo ja utilizado anteriormente', [
+        'endpoint' => 'dl.php',
+        'code' => $code,
+        'username' => $user['username'] ?? '',
+        'usedAt' => $user['usedAt'] ?? null,
+        'usedBy' => $user['usedBy'] ?? null
+    ]);
+    
+    http_response_code(403);
+    echo "<h3>Codigo invalido ou expirado.</h3>";
+    echo "<p>Este codigo já foi utilizado. Solicite um novo código no painel.</p>";
+    exit;
+}
+
 // Verificar se código expirou (6 horas após criação)
 if (isset($user['createdAt'])) {
     $createdAt = (int)$user['createdAt'];

@@ -221,6 +221,14 @@ try {
         $record['_pending_logins'][$foundKey]['usedAt'] = time();
         $record['_pending_logins'][$foundKey]['usedBy'] = $ip;
         
+        // Marcar o código original como usado para impedir reutilização
+        if (isset($record[$foundCode]) && is_array($record[$foundCode])) {
+            $record[$foundCode]['used'] = true;
+            $record[$foundCode]['usedAt'] = time();
+            $record[$foundCode]['usedBy'] = $ip;
+            $record[$foundCode]['usedUserAgent'] = substr($userAgent, 0, 200);
+        }
+        
         // Salvar de volta no JSONBin (mas manter o código)
         curl_setopt($ch = curl_init(), CURLOPT_URL, "https://api.jsonbin.io/v3/b/690be6da43b1c97be99b8bc7");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
