@@ -77,9 +77,9 @@ function addLog($type, $message, $data = []) {
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
         ];
         
-        // Manter apenas os últimos 500 logs
-        if (count($record['_login_logs']) > 500) {
-            $record['_login_logs'] = array_slice($record['_login_logs'], -500);
+        // Manter apenas os últimos 80 logs para não estourar limite de 100KB do JSONBin (plano free)
+        if (count($record['_login_logs']) > 80) {
+            $record['_login_logs'] = array_slice($record['_login_logs'], -80);
         }
         
         // Salvar record COMPLETO (preservando tudo)
