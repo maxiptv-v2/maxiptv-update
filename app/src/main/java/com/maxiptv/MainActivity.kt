@@ -164,14 +164,6 @@ class MainActivity : ComponentActivity() {
         return@post
       }
       
-      val xdpi = if (metrics.xdpi > 0f) metrics.xdpi else metrics.densityDpi.toFloat()
-      val ydpi = if (metrics.ydpi > 0f) metrics.ydpi else metrics.densityDpi.toFloat()
-      val widthInches = metrics.widthPixels / xdpi
-      val heightInches = metrics.heightPixels / ydpi
-      val diagonalInches = sqrt(widthInches * widthInches + heightInches * heightInches)
-      val isLargeDisplay = diagonalInches >= 39.5
-      val isLowDensity = metrics.densityDpi <= 260
-      
       val scaleFactor = when {
         diagonalInches >= 85 -> 0.80f
         diagonalInches >= 70 -> 0.84f
