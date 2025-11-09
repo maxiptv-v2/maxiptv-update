@@ -20,7 +20,8 @@ $path = trim($path, '/');
 // Prioridade 1: Endpoints específicos (NÃO interceptar auto_login.php, get-pending-code.php, debug-login.php)
 if (strpos($path, 'auto_login.php') !== false || 
     strpos($path, 'get-pending-code.php') !== false || 
-    strpos($path, 'debug-login.php') !== false) {
+    strpos($path, 'debug-login.php') !== false ||
+    strpos($path, 'device-log.php') !== false) {
     // Deixar PHP built-in server processar arquivos PHP diretamente
     return false;
 }
