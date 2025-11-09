@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 166
-        versionName = "1.0.166"
+        versionCode = 167
+        versionName = "1.0.167"
     vectorDrawables.useSupportLibrary = true
     buildConfigField("String", "DEFAULT_PLAYER_API", "\"https://aztv.cx/\"")
     buildConfigField("String", "DEFAULT_USER", "\"max\"")

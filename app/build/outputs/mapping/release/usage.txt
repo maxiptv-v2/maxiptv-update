@@ -37317,7 +37317,6 @@ kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsKt:
 kotlin.coroutines.jvm.internal.Boxing:
     public static final java.lang.Byte boxByte(byte)
     public static final java.lang.Character boxChar(char)
-    public static final java.lang.Double boxDouble(double)
     public static final java.lang.Short boxShort(short)
 kotlin.coroutines.jvm.internal.DebugMetadata:
     public abstract int[] i()
@@ -69381,60 +69380,62 @@ com.maxiptv.ui.screens.HomeScreenKt$ExpiryWarningCard$1:
     public final void invoke(androidx.compose.foundation.layout.ColumnScope,androidx.compose.runtime.Composer,int)
 com.maxiptv.ui.screens.HomeScreenKt$ExpiryWarningCard$2:
     public final void invoke(androidx.compose.runtime.Composer,int)
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$10$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$10$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$11$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$11$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$13$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14$2
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14$3
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$12$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$12$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15$2
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15$3
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$16$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$16$2$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$16
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$1$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$1$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$10
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$11$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$12
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$2
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$3$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$4
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$5$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$6
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$7$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$8
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$4$9$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$2
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$1$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$1$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$10
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$11$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$12
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$2
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$3$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$4
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$5$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$6
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$7$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$8
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$9$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$2
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$19
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$2$1:
-    public int label
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$2:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$3$1:
+    public int label
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$4$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$5$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$5:
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$6$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$6$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1$1$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1$1$2
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1$1:
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$6:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7:
-    public final void invoke$76()
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1$2
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8:
+    public final void invoke$76()
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9
 com.maxiptv.ui.screens.HomeScreenKt$LogoutButton$1$1
 com.maxiptv.ui.screens.HomeScreenKt$LogoutButton$2:
     public final void invoke(androidx.compose.foundation.layout.RowScope,androidx.compose.runtime.Composer,int)
