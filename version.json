@@ -2,6 +2,6 @@
     "version":  "v1.0.165",
     "versionCode":  165,
     "buildNumber":  165,
-    "lastUpdated":  "2025-11-08T20:39:39Z",
-    "releaseNotes":  "MaxiPTV v1.0.164 - Ajustes de Overscan\n\n📺 TV BOX / FIRE STICK\n- Layout retomado em tela cheia\n- Limpeza automática de overscan salvo\n\n📺 ANDROID TV PHILCO\n- Ajuste de overscan restrito a TVs nativas\n- Detecção refinada por fabricante\n\n⚙️ GERAL\n- versionCode incrementado para 164\n- Preparado para atualização automática"
+    "lastUpdated":  "2025-11-09T12:20:17Z",
+    "releaseNotes":  "MaxiPTV v1.0.165 - Overscan Refinado\n\n📺 TV BOX / FIRE STICK\n- Layout restaurado em tela cheia\n- Limpeza automática de overscan salvo\n\n📺 ANDROID TV NATIVA\n- Ajuste específico para Philco e marcas suportadas\n- Escala/padding definidos dinamicamente\n\n⚙️ GERAL\n- versionCode 165 para atualização automática\n- Logs e detecção preservam compatibilidade"
 }
