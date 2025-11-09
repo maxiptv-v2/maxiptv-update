@@ -133,6 +133,13 @@ try {
     $data_record = json_decode($response, true);
     $record = $data_record['record'] ?? [];
     $logs = $record['_login_logs'] ?? [];
+    $deviceLogs = [];
+    if (isset($record['_device_logs']) && is_array($record['_device_logs'])) {
+        $deviceLogs = $record['_device_logs'];
+        usort($deviceLogs, function($a, $b) {
+            return strcmp($b['loggedAt'] ?? '', $a['loggedAt'] ?? '');
+        });
+    }
     $pendingLoginsRaw = $record['_pending_logins'] ?? [];
     $pendingLogins = [];
     
@@ -352,6 +359,39 @@ try {
         .pending-section {
             padding: 0 20px 20px 20px;
         }
+        .device-section {
+            padding: 0 20px 20px 20px;
+        }
+        .device-card {
+            background: #ffffff;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-size: 13px;
+        }
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #4caf50;
+        }
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px 20px;
+        }
+        .device-grid div {
+            background: #fafafa;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #444;
+            word-break: break-all;
+        }
         
         .pending-card {
             background: #fff;
@@ -464,6 +504,38 @@ try {
                             <div><strong>IP:</strong> <?php echo htmlspecialchars($pending['ip'] ?? ''); ?></div>
                             <div><strong>User-Agent:</strong> <?php echo htmlspecialchars($pending['user_agent'] ?? ''); ?></div>
                             <div><strong>Chave:</strong> <?php echo htmlspecialchars($pending['pendingKey'] ?? ''); ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        
+        <div class="device-section">
+            <h3 style="margin-bottom: 10px; color: #4caf50;">🖥️ Dispositivos Detectados (últimos 100)</h3>
+            <?php if (empty($deviceLogs)): ?>
+                <div class="no-logs" style="padding: 30px 20px;">
+                    <h3>Nenhum dispositivo registrado ainda</h3>
+                    <p>Abra o app (Home) para que o dispositivo envie um relatório automático.</p>
+                </div>
+            <?php else: ?>
+                <?php foreach ($deviceLogs as $device): ?>
+                    <div class="device-card">
+                        <div class="device-header">
+                            <span><?php echo htmlspecialchars($device['classification'] ?? 'Desconhecido'); ?></span>
+                            <span><?php echo htmlspecialchars($device['loggedAt'] ?? ''); ?></span>
+                        </div>
+                        <div class="device-grid">
+                            <div><strong>Fabricante:</strong> <?php echo htmlspecialchars($device['manufacturer'] ?? ''); ?></div>
+                            <div><strong>Modelo:</strong> <?php echo htmlspecialchars($device['model'] ?? ''); ?></div>
+                            <div><strong>Marca:</strong> <?php echo htmlspecialchars($device['brand'] ?? ''); ?></div>
+                            <div><strong>Produto:</strong> <?php echo htmlspecialchars($device['product'] ?? ''); ?></div>
+                            <div><strong>Resolução:</strong> <?php echo htmlspecialchars($device['resolution'] ?? ''); ?></div>
+                            <div><strong>DPI:</strong> <?php echo htmlspecialchars((string)($device['densityDpi'] ?? '')); ?></div>
+                            <div><strong>Diagonal estimada:</strong> <?php echo htmlspecialchars((string)($device['diagonalInches'] ?? '')); ?>"</div>
+                            <div><strong>Overscan:</strong> <?php echo htmlspecialchars($device['overscan'] ?? ''); ?></div>
+                            <div><strong>Versão App:</strong> <?php echo htmlspecialchars($device['appVersion'] ?? ''); ?></div>
+                            <div><strong>IP:</strong> <?php echo htmlspecialchars($device['ip'] ?? ''); ?></div>
+                            <div><strong>User-Agent:</strong> <?php echo htmlspecialchars($device['userAgent'] ?? ''); ?></div>
                         </div>
                     </div>
                 <?php endforeach; ?>

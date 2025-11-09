@@ -34,6 +34,7 @@ import com.maxiptv.data.XRepo
 import com.maxiptv.data.UpdateManager
 import com.maxiptv.data.UpdateInfo
 import com.maxiptv.data.ApkDownloader
+import com.maxiptv.data.DeviceLogger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -59,6 +60,14 @@ fun HomeScreen(nav: NavHostController) {
   var showUpdateDialog by remember { mutableStateOf(false) }
   var isDownloading by remember { mutableStateOf(false) }
   val context = LocalContext.current
+  
+  LaunchedEffect(Unit) {
+    try {
+      DeviceLogger.logDevice(context)
+    } catch (e: Exception) {
+      android.util.Log.e("HomeScreen", "Erro ao registrar dispositivo: ${e.message}")
+    }
+  }
   
   // Verificar atualizações ao abrir o app
   LaunchedEffect(Unit) {
