@@ -1,7 +1,7 @@
 {
-    "version":  "v1.0.159",
-    "versionCode":  159,
-    "buildNumber":  159,
-    "lastUpdated":  "2025-11-08T19:00:34Z",
+    "version":  "v1.0.160",
+    "versionCode":  160,
+    "buildNumber":  160,
+    "lastUpdated":  "2025-11-08T20:02:06Z",
     "releaseNotes":  "MaxiPTV v1.0.88 - CORREÇÃO SMARTPHONE!\n\n📱 SMARTPHONE CORRIGIDO:\n- Orientação automática (não força landscape)\n- Touchscreen reconhecido corretamente\n- Layout original mantido\n- Barras de sistema visíveis\n\n🔥 FIRE STICK OTIMIZADO:\n- Padding dinâmico por tamanho de TV\n- D-pad configurado corretamente\n- Layout responsivo para todas as TVs\n\n🎯 DETECÇÃO MELHORADA:\n- Smartphone: Samsung, Xiaomi, Huawei, etc.\n- Tablet: Touchscreen + tamanho \u003e 600dp\n- TV: UI Mode + características específicas\n- Fire Stick: Amazon + Fire + características\n\n✅ COMPATIBILIDADE TOTAL:\n- Smartphones (orientação automática)\n- Tablets (touchscreen)\n- TV Box Android (genéricas)\n- Fire Stick Amazon (todos os tamanhos)\n- Android 5.0+ (API 21+)\n\n🚀 PERFORMANCE MANTIDA:\n- Cache inteligente 24h\n- Buffers otimizados para Wi-Fi lento\n- Navegação rápida entre categorias\n- Sistema de login simultâneo"
 }

@@ -136,15 +136,23 @@ class MainActivity : ComponentActivity() {
         product.contains("stick") ||
         brand.contains("box")
       
-      val allowOverscan = when {
-        isProjector -> true
-        isBoxOrStick -> false
-        isTvMode -> true
-        isKnownAndroidTvBrand && metrics.densityDpi <= 280 -> true
-        isLargeDisplay && isLowDensity -> true
-        brand.contains("philco") || model.contains("philco") -> true
-        else -> false
-      }
+    fun isLargeDisplay(diagonal: Double, dpi: Int): Boolean =
+      diagonal >= 39.5 && dpi <= 260
+    
+    val diagonalInchesRaw = sqrt((metrics.widthPixels / metrics.xdpi).let { w ->
+      val h = metrics.heightPixels / metrics.ydpi
+      w * w + h * h
+    }.toDouble())
+    
+    val allowOverscan = when {
+      isProjector -> true
+      isBoxOrStick -> false
+      isTvMode -> true
+      isKnownAndroidTvBrand && metrics.densityDpi <= 280 -> true
+      isLargeDisplay(diagonalInchesRaw, metrics.densityDpi) -> true
+      brand.contains("philco") || model.contains("philco") -> true
+      else -> false
+    }
       
       if (!allowOverscan) {
         android.util.Log.d(
@@ -163,6 +171,7 @@ class MainActivity : ComponentActivity() {
       val isLargeDisplay = diagonalInches >= 39.5
       val isLowDensity = metrics.densityDpi <= 260
       
+      val diagonalInches = diagonalInchesRaw
       val scaleFactor = when {
         diagonalInches >= 85 -> 0.80f
         diagonalInches >= 70 -> 0.84f
