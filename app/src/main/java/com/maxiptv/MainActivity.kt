@@ -83,14 +83,7 @@ class MainActivity : ComponentActivity() {
       android.util.Log.i("MainActivity", "🧠 Layout overscan reutilizado (scale=$scale padding=$paddingPx)")
     }
     
-    val savedScale = prefs.getFloat("scaleFactor_v2", -1f)
-    val savedPadding = prefs.getInt("padding_v2", -1)
-    if (savedScale in 0.5f..1.1f && savedPadding >= 0) {
-      rootView.post { applyPersisted(savedScale, savedPadding) }
-      return
-    }
-    
-    fun resetIfNeeded() {
+    fun resetOverscan(reason: String) {
       prefs.edit()
         .remove("scaleFactor_v2")
         .remove("padding_v2")
@@ -100,11 +93,17 @@ class MainActivity : ComponentActivity() {
       rootView.setPadding(0, 0, 0, 0)
       rootView.scaleX = 1f
       rootView.scaleY = 1f
-      android.util.Log.i("MainActivity", "🔄 Overscan automático desativado (perfil limpo)")
+      android.util.Log.d("MainActivity", "🔄 Overscan limpo: $reason")
     }
     
+    val savedScale = prefs.getFloat("scaleFactor_v2", -1f)
+    val savedPadding = prefs.getInt("padding_v2", -1)
+    val hasSavedOverscan = savedScale in 0.5f..1.1f && savedPadding >= 0
+    
     if (MaxiApp.isFireStick || MaxiApp.isPhone || MaxiApp.isTablet) {
-      resetIfNeeded()
+      if (hasSavedOverscan) {
+        resetOverscan("perfil Fire Stick / Phone / Tablet")
+      }
       android.util.Log.d("MainActivity", "ℹ️ Overscan automático ignorado (Fire Stick / Phone / Tablet)")
       return
     }
@@ -119,16 +118,15 @@ class MainActivity : ComponentActivity() {
       
       val isTvMode = uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
       val isProjector = listOf(manufacturer, model, product, brand).any { it.contains("projector") }
-      
-    val tvBrandKeywords = listOf(
-      "philco", "philips", "sharp", "aoc", "tcl", "hisense", "skyworth",
-      "coocaa", "vizion", "aiwa", "sony", "panasonic", "samsung", "lg",
-      "xiaomi tv", "mi tv", "hkc", "seiki", "jvc", "pioneer", "toshiba",
-      "spectre", "insignia", "onida", "vu tv", "androidtv", "smart tv"
+      val tvBrandKeywords = listOf(
+        "philco", "aoc", "tcl", "hisense", "sony", "panasonic", "lg", "samsung",
+        "philips", "sharp", "sanyo", "skyworth", "coocaa", "xiaomi tv", "mi tv",
+        "android tv", "smart tv", "jvc", "pioneer", "toshiba", "vizion", "proscan"
       )
       val isKnownAndroidTvBrand = tvBrandKeywords.any { keyword ->
         manufacturer.contains(keyword) || brand.contains(keyword) || model.contains(keyword) || product.contains(keyword)
       }
+      val isPhilco = manufacturer.contains("philco") || brand.contains("philco") || model.contains("philco") || product.contains("philco")
       
       val isBoxOrStick = model.contains("box") ||
         product.contains("box") ||
@@ -136,31 +134,39 @@ class MainActivity : ComponentActivity() {
         product.contains("stick") ||
         brand.contains("box")
       
-    fun isLargeDisplay(diagonal: Double, dpi: Int): Boolean =
-      diagonal >= 39.5 && dpi <= 260
-    
-    val xDpi = if (metrics.xdpi > 0f) metrics.xdpi else metrics.densityDpi.toFloat()
-    val yDpi = if (metrics.ydpi > 0f) metrics.ydpi else metrics.densityDpi.toFloat()
-    val widthInches = metrics.widthPixels / xDpi
-    val heightInches = metrics.heightPixels / yDpi
-    val diagonalInches = sqrt((widthInches * widthInches + heightInches * heightInches).toDouble())
-    
-    val allowOverscan = when {
-      isProjector -> true
-      isBoxOrStick -> false
-      isTvMode -> true
-      isKnownAndroidTvBrand && metrics.densityDpi <= 280 -> true
-      isLargeDisplay(diagonalInches, metrics.densityDpi) -> true
-      brand.contains("philco") || model.contains("philco") -> true
-      else -> false
-    }
+      if (!isTvMode && !isProjector && !isKnownAndroidTvBrand) {
+        android.util.Log.d("MainActivity", "ℹ️ Overscan automático ignorado (não parece ser TV Android)")
+        if (hasSavedOverscan) resetOverscan("não é TV Android")
+        return@post
+      }
+      
+      if (isBoxOrStick) {
+        android.util.Log.d("MainActivity", "ℹ️ Overscan automático ignorado (TV Box/Stick detectado)")
+        if (hasSavedOverscan) resetOverscan("TV Box / Stick detectado")
+        return@post
+      }
+      
+      val xdpi = if (metrics.xdpi > 0f) metrics.xdpi else metrics.densityDpi.toFloat()
+      val ydpi = if (metrics.ydpi > 0f) metrics.ydpi else metrics.densityDpi.toFloat()
+      val widthInches = metrics.widthPixels / xdpi
+      val heightInches = metrics.heightPixels / ydpi
+      val diagonalInches = sqrt(widthInches * widthInches + heightInches * heightInches)
+      val isLargeDisplay = diagonalInches >= 39.5
+      val isLowDensity = metrics.densityDpi <= 260
+      
+      val allowOverscan = when {
+        isProjector -> true
+        isPhilco && isTvMode -> true
+        isTvMode && isKnownAndroidTvBrand && isLargeDisplay && isLowDensity -> true
+        else -> false
+      }
       
       if (!allowOverscan) {
         android.util.Log.d(
           "MainActivity",
-          "ℹ️ Overscan automático ignorado (brand=$brand model=$model diag=${"%.1f".format(diagonalInches)}\" dpi=${metrics.densityDpi})"
+          "ℹ️ Overscan automático ignorado (diag=${"%.1f".format(diagonalInches)}\" dpi=${metrics.densityDpi})"
         )
-        resetIfNeeded()
+        if (hasSavedOverscan) resetOverscan("overscan não necessário")
         return@post
       }
       
@@ -181,6 +187,11 @@ class MainActivity : ComponentActivity() {
         else -> 8
       }
       val paddingPx = (paddingDp * metrics.density).roundToInt()
+      
+      if (hasSavedOverscan && kotlin.math.abs(savedScale - scaleFactor) < 0.01f && savedPadding == paddingPx) {
+        applyPersisted(savedScale, savedPadding)
+        return@post
+      }
       
       rootView.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
       rootView.scaleX = 1f
