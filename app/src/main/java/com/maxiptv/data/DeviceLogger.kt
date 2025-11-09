@@ -36,13 +36,7 @@ object DeviceLogger {
       val scaleFactor = prefsOverscan.getFloat("scaleFactor_v2", 1f)
       val paddingPx = prefsOverscan.getInt("padding_v2", 0)
       val storedDiagonal = prefsOverscan.getFloat("diagonal_v2", -1f)
-      val classification = when {
-        MaxiApp.isFireStick -> "firestick"
-        MaxiApp.isTv -> "tv"
-        MaxiApp.isTablet -> "tablet"
-        MaxiApp.isPhone -> "phone"
-        else -> "unknown"
-      }
+      val classification = MaxiApp.deviceCategory
       
       val xdpi = if (metrics.xdpi > 0f) metrics.xdpi else metrics.densityDpi.toFloat()
       val ydpi = if (metrics.ydpi > 0f) metrics.ydpi else metrics.densityDpi.toFloat()
@@ -57,6 +51,7 @@ object DeviceLogger {
         put("product", Build.PRODUCT)
         put("androidVersion", Build.VERSION.RELEASE ?: "unknown")
         put("classification", classification)
+        put("deviceCategory", classification)
         put("isTvMode", MaxiApp.isTv)
         put("isFireStick", MaxiApp.isFireStick)
         put("isTablet", MaxiApp.isTablet)
@@ -69,6 +64,7 @@ object DeviceLogger {
         put("screenHeightDp", configuration.screenHeightDp)
         put("scaleFactor", scaleFactor)
         put("paddingPx", paddingPx)
+        put("overscan", if (scaleFactor != 1f || paddingPx != 0) "scale=$scaleFactor padding=$paddingPx" else "none")
         put("diagonalInches", String.format("%.2f", diagonalInches))
         put("timestamp", now)
       }

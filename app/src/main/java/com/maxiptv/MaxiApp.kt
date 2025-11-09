@@ -13,6 +13,9 @@ class MaxiApp : Application() {
     var isFireStick: Boolean = false
     var isPhone: Boolean = false
     var isTablet: Boolean = false
+    var isTvBox: Boolean = false
+    var isNativeTv: Boolean = false
+    var deviceCategory: String = "unknown"
     
     // 🔥 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK (AJUSTÁVEIS POR TAMANHO DE TV)
     var fireStickOverscanPadding: Int = 48 // dp - será ajustado automaticamente
@@ -23,6 +26,13 @@ class MaxiApp : Application() {
     super.onCreate()
     try {
       val ui = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+      isTv = false
+      isFireStick = false
+      isPhone = false
+      isTablet = false
+      isTvBox = false
+      isNativeTv = false
+      deviceCategory = "unknown"
       val isTvMode = ui.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
       
       // Detecção mais precisa de dispositivos
@@ -30,19 +40,59 @@ class MaxiApp : Application() {
       val model = android.os.Build.MODEL.lowercase()
       val brand = android.os.Build.BRAND.lowercase()
       val product = android.os.Build.PRODUCT.lowercase()
+      val baseFingerprint = listOf(manufacturer, model, brand, product).joinToString(" ")
       
       // Detecta Fire Stick especificamente (ANTES da detecção de TV)
       isFireStick = manufacturer.contains("amazon") || 
-                    model.contains("fire") || 
+                    model.contains("fire tv") ||
+                    model.contains("firetv") ||
+                    model.contains("fire stick") ||
+                    model.contains("firestick") ||
                     product.contains("fire")
+      
+      val nativeTvKeywords = listOf(
+        "philco", "smarttv", "androidtv", "tcl", "hisense", "sony", "panasonic",
+        "samsung", "sharp", "philips", "lg", "aoc", "skyworth", "coocaa",
+        "xiaomi tv", "mi tv", "toshiba", "jvc", "pioneer", "grundig", "akai",
+        "panasonic", "leeco", "hitachi", "haier"
+      )
+      val boxKeywords = listOf(
+        "tv box", "tvbox", "box", "ott", "ottbox", "mediabox", "media box",
+        "dongle", "stick", "amlogic", "rk3328", "rk3318", "rk3566", "rk3568",
+        "s905", "s905x", "s905w", "s905l", "s912", "h616", "h618", "s922",
+        "transpeed", "t95", "t96", "x96", "x88", "t95z", "a95x", "h96", "hk1",
+        "tanix", "mecool", "bqeel", "sunvell", "vontar", "mxq", "tx3", "tx6",
+        "turewell", "km5", "digiplus", "strong", "prox", "himedia", "beelink",
+        "magicsee", "yagala", "aobosi"
+      )
+      
+      // Detecta TV nativa vs box
+      isNativeTv = isTvMode && nativeTvKeywords.any { keyword ->
+        manufacturer.contains(keyword) ||
+        brand.contains(keyword) ||
+        model.contains(keyword) ||
+        product.contains(keyword)
+      }
+      
+      var probableBox = boxKeywords.any { keyword ->
+        baseFingerprint.contains(keyword)
+      }
+      
+      // Detecta padrões comuns de boxes genéricas (modelos curtos com sufixo K/M/T etc)
+      probableBox = probableBox ||
+        (!isNativeTv && model.matches(Regex("([0-9]{2,4}[a-z]{0,3}|[a-z]{1,3}[0-9]{2,4})(-[a-z0-9]+)?")))
+      
+      // Boxes normalmente não têm touchscreen
+      val hasTouchscreen = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN)
+      isTvBox = (!isNativeTv && !isFireStick && (probableBox || (isTvMode && !hasTouchscreen)))
       
       // Detecta TV (PRIORIZA UI Mode e características específicas)
       isTv = isTvMode ||  // UI Mode TV é o mais confiável
              isFireStick ||
+             isNativeTv ||
+             isTvBox ||
              model.contains("chromecast") ||
              product.contains("chromecast") ||
-             model.contains("tv") ||
-             product.contains("atv") ||
              model.contains("android tv") ||
              product.contains("android tv")
       
@@ -52,7 +102,6 @@ class MaxiApp : Application() {
       val smallestWidth = minOf(screenWidth, screenHeight)
       
       // Detecção mais precisa baseada em características do dispositivo
-      val hasTouchscreen = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN)
       val isPhoneLike = manufacturer.contains("samsung") || 
                        manufacturer.contains("xiaomi") || 
                        manufacturer.contains("huawei") || 
@@ -88,14 +137,23 @@ class MaxiApp : Application() {
       android.util.Log.i("MaxiApp", "Largura: ${screenWidth}dp")
       android.util.Log.i("MaxiApp", "Altura: ${screenHeight}dp")
       android.util.Log.i("MaxiApp", "Menor largura: ${smallestWidth}dp")
+      if (isTv) {
+        // Se classificamos como TV/Box, garantir flags de telefone/tablet desativadas
+        isPhone = false
+        isTablet = false
+      }
+      
+      deviceCategory = when {
+        isFireStick -> "fire_stick"
+        isNativeTv -> "native_tv"
+        isTvBox -> "tv_box"
+        isTablet -> "tablet"
+        isPhone -> "phone"
+        else -> if (hasTouchscreen) "touch_device" else "unknown"
+      }
+      
       android.util.Log.i("MaxiApp", "───────────────────────────────────────")
-      android.util.Log.i("MaxiApp", "✅ Tipo detectado: ${when {
-        isFireStick -> "Fire Stick"
-        isTv -> "TV Box / Android TV / Chromecast"
-        isTablet -> "Tablet"
-        isPhone -> "Smartphone"
-        else -> "Desconhecido"
-      }}")
+      android.util.Log.i("MaxiApp", "✅ Tipo detectado: $deviceCategory")
       
       // 🔥 CONFIGURAÇÃO AUTOMÁTICA POR TAMANHO DE TV (FIRE STICK)
       if (isFireStick) {

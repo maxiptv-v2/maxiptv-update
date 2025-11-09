@@ -85,12 +85,9 @@ class MainActivity : ComponentActivity() {
     
     val savedScale = prefs.getFloat("scaleFactor_v2", -1f)
     val savedPadding = prefs.getInt("padding_v2", -1)
-    if (savedScale in 0.5f..1.1f && savedPadding >= 0) {
-      rootView.post { applyPersisted(savedScale, savedPadding) }
-      return
-    }
+    val hasSavedOverscan = savedScale in 0.5f..1.1f && savedPadding >= 0
     
-    fun resetIfNeeded() {
+    fun resetIfNeeded(reason: String = "reset") {
       prefs.edit()
         .remove("scaleFactor_v2")
         .remove("padding_v2")
@@ -100,11 +97,11 @@ class MainActivity : ComponentActivity() {
       rootView.setPadding(0, 0, 0, 0)
       rootView.scaleX = 1f
       rootView.scaleY = 1f
-      android.util.Log.i("MainActivity", "🔄 Overscan automático desativado (perfil limpo)")
+      android.util.Log.i("MainActivity", "🔄 Overscan automático desativado (motivo=$reason)")
     }
     
     if (MaxiApp.isFireStick || MaxiApp.isPhone || MaxiApp.isTablet) {
-      resetIfNeeded()
+      resetIfNeeded("categoria não suportada (firestick/phone/tablet)")
       android.util.Log.d("MainActivity", "ℹ️ Overscan automático ignorado (Fire Stick / Phone / Tablet)")
       return
     }
@@ -116,69 +113,49 @@ class MainActivity : ComponentActivity() {
       val model = Build.MODEL.lowercase()
       val brand = Build.BRAND.lowercase()
       val product = Build.PRODUCT.lowercase()
+      val classification = MaxiApp.deviceCategory
       
-      val isTvMode = uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+      val xDpi = if (metrics.xdpi > 0f) metrics.xdpi else metrics.densityDpi.toFloat()
+      val yDpi = if (metrics.ydpi > 0f) metrics.ydpi else metrics.densityDpi.toFloat()
+      val widthInches = metrics.widthPixels / xDpi
+      val heightInches = metrics.heightPixels / yDpi
+      val diagonalInches = sqrt((widthInches * widthInches + heightInches * heightInches).toDouble())
+      
       val isProjector = listOf(manufacturer, model, product, brand).any { it.contains("projector") }
       
-    val tvBrandKeywords = listOf(
-      "philco", "philips", "sharp", "aoc", "tcl", "hisense", "skyworth",
-      "coocaa", "vizion", "aiwa", "sony", "panasonic", "samsung", "lg",
-      "xiaomi tv", "mi tv", "hkc", "seiki", "jvc", "pioneer", "toshiba",
-      "spectre", "insignia", "onida", "vu tv", "androidtv", "smart tv"
-      )
-      val isKnownAndroidTvBrand = tvBrandKeywords.any { keyword ->
-        manufacturer.contains(keyword) || brand.contains(keyword) || model.contains(keyword) || product.contains(keyword)
-      }
-      
-      val isBoxOrStick = model.contains("box") ||
-        product.contains("box") ||
-        model.contains("stick") ||
-        product.contains("stick") ||
-        brand.contains("box")
-      
-    fun isLargeDisplay(diagonal: Double, dpi: Int): Boolean =
-      diagonal >= 39.5 && dpi <= 260
-    
-    val xDpi = if (metrics.xdpi > 0f) metrics.xdpi else metrics.densityDpi.toFloat()
-    val yDpi = if (metrics.ydpi > 0f) metrics.ydpi else metrics.densityDpi.toFloat()
-    val widthInches = metrics.widthPixels / xDpi
-    val heightInches = metrics.heightPixels / yDpi
-    val diagonalInches = sqrt((widthInches * widthInches + heightInches * heightInches).toDouble())
-    
-    val allowOverscan = when {
-      isProjector -> true
-      isBoxOrStick -> false
-      isTvMode -> true
-      isKnownAndroidTvBrand && metrics.densityDpi <= 280 -> true
-      isLargeDisplay(diagonalInches, metrics.densityDpi) -> true
-      brand.contains("philco") || model.contains("philco") -> true
-      else -> false
-    }
-      
-      if (!allowOverscan) {
+      if (MaxiApp.isFireStick || MaxiApp.isTvBox) {
+        if (hasSavedOverscan) resetIfNeeded("categoria=${classification}")
         android.util.Log.d(
           "MainActivity",
-          "ℹ️ Overscan automático ignorado (brand=$brand model=$model diag=${"%.1f".format(diagonalInches)}\" dpi=${metrics.densityDpi})"
+          "ℹ️ Overscan ignorado (categoria=${classification}, diag=${"%.1f".format(diagonalInches)}\" dpi=${metrics.densityDpi})"
         )
-        resetIfNeeded()
+        return@post
+      }
+      
+      if (!MaxiApp.isNativeTv && !isProjector) {
+        if (hasSavedOverscan) resetIfNeeded("sem suporte a overscan (categoria=${classification})")
+        android.util.Log.d(
+          "MainActivity",
+          "ℹ️ Overscan automático ignorado (categoria=${classification}, brand=$brand model=$model diag=${"%.1f".format(diagonalInches)}\" dpi=${metrics.densityDpi})"
+        )
         return@post
       }
       
       val scaleFactor = when {
-        diagonalInches >= 85 -> 0.80f
-        diagonalInches >= 70 -> 0.84f
-        diagonalInches >= 60 -> 0.87f
-        diagonalInches >= 50 -> 0.90f
-        diagonalInches >= 40 -> 0.94f
-        else -> 0.97f
+        diagonalInches >= 85 -> 0.82f
+        diagonalInches >= 70 -> 0.86f
+        diagonalInches >= 60 -> 0.90f
+        diagonalInches >= 50 -> 0.93f
+        diagonalInches >= 40 -> 0.96f
+        else -> 0.98f
       }
       
       val paddingDp = when {
-        diagonalInches >= 80 -> 24
-        diagonalInches >= 60 -> 20
-        diagonalInches >= 50 -> 16
-        diagonalInches >= 40 -> 12
-        else -> 8
+        diagonalInches >= 80 -> 22
+        diagonalInches >= 60 -> 18
+        diagonalInches >= 50 -> 14
+        diagonalInches >= 40 -> 10
+        else -> 6
       }
       val paddingPx = (paddingDp * metrics.density).roundToInt()
       
@@ -200,7 +177,7 @@ class MainActivity : ComponentActivity() {
       
       android.util.Log.i(
         "MainActivity",
-        "✅ Overscan ajustado automaticamente (diag=${"%.1f".format(diagonalInches)}\" dpi=${metrics.densityDpi} scale=$scaleFactor padding=${paddingPx}px)"
+        "✅ Overscan ajustado automaticamente (categoria=${classification}, diag=${"%.1f".format(diagonalInches)}\" dpi=${metrics.densityDpi} scale=$scaleFactor padding=${paddingPx}px)"
       )
     }
   }
@@ -223,7 +200,12 @@ class MainActivity : ComponentActivity() {
   // 🎮 INTERCEPTAR EVENTOS DE D-PAD PARA TODAS AS TVs
   override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
     if (MaxiApp.isTv) {
-      val deviceType = if (MaxiApp.isFireStick) "Fire Stick" else "TV Box"
+      val deviceType = when {
+        MaxiApp.isFireStick -> "Fire Stick"
+        MaxiApp.isTvBox -> "TV Box"
+        MaxiApp.isNativeTv -> "Android TV"
+        else -> "TV"
+      }
       android.util.Log.i("MainActivity", "📺 D-pad pressionado em $deviceType: $keyCode")
       // Log específico para debug de TVs
       when (keyCode) {
