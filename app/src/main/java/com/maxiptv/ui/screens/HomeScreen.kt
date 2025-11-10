@@ -163,20 +163,43 @@ fun HomeScreen(nav: NavHostController) {
   val isTv = MaxiApp.isTv
   val isPhone = MaxiApp.isPhone
   val isFireStick = MaxiApp.isFireStick
+  val isNativeTv = MaxiApp.isNativeTv
+  val isTvBox = MaxiApp.isTvBox
   
-  // 🔥 PADDING ESPECÍFICO PARA FIRE STICK APENAS
+  // 🛡️ SAFE AREA GLOBAL (APLICADA NA RAIZ)
+  val safeAreaPadding = remember(isFireStick, isNativeTv, isTvBox, isPhone) {
+    when {
+      isFireStick -> PaddingValues(
+        horizontal = MaxiApp.fireStickOverscanPadding.dp,
+        vertical = MaxiApp.fireStickSafeAreaPadding.dp
+      )
+      isNativeTv -> PaddingValues(horizontal = 28.dp, vertical = 22.dp)
+      isTvBox -> PaddingValues(horizontal = 24.dp, vertical = 20.dp)
+      isPhone -> PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+      else -> PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+    }
+  }
+  
+  // 🔥 ESPAÇAMENTO INTERNO APÓS SAFE AREA
   val horizontalPadding = when {
-    isFireStick -> MaxiApp.fireStickOverscanPadding.dp  // APENAS Fire Stick
-    isTv -> 32.dp  // TV Box Android/Genéricos mantêm original
-    isPhone -> 16.dp  // Smartphones mantêm original
-    else -> 24.dp  // Tablets mantêm original
+    isFireStick -> (MaxiApp.fireStickSafeAreaPadding / 2).dp.coerceAtLeast(12.dp)
+    isTv -> 24.dp
+    isPhone -> 16.dp
+    else -> 20.dp
   }
   
   val verticalPadding = when {
-    isFireStick -> MaxiApp.fireStickSafeAreaPadding.dp  // APENAS Fire Stick
-    isTv -> 16.dp  // TV Box Android/Genéricos mantêm original
-    isPhone -> 12.dp  // Smartphones mantêm original
-    else -> 14.dp  // Tablets mantêm original
+    isFireStick -> (MaxiApp.fireStickSafeAreaPadding / 2).dp.coerceAtLeast(10.dp)
+    isTv -> 14.dp
+    isPhone -> 12.dp
+    else -> 14.dp
+  }
+  
+  val bottomSafeSpacer = when {
+    isFireStick -> MaxiApp.fireStickSafeAreaPadding.dp
+    isTv -> 24.dp
+    isPhone -> 12.dp
+    else -> 16.dp
   }
   
   // Dialog de confirmação de logout
@@ -513,8 +536,16 @@ fun HomeScreen(nav: NavHostController) {
     )
   }
   
-  Box(Modifier.fillMaxSize()) {
-  Column(Modifier.fillMaxSize()) {
+  Box(
+    modifier = Modifier
+      .fillMaxSize()
+      .padding(safeAreaPadding)
+  ) {
+  Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(bottomSafeSpacer / 2)
+    ) {
       // TopBar com Botão SAIR e Relógio Digital
       Box(
         modifier = Modifier
@@ -754,6 +785,8 @@ fun HomeScreen(nav: NavHostController) {
     ) {
       ExpiryWarningCard(daysUntilExpiry)
     }
+    
+    Spacer(Modifier.height(bottomSafeSpacer / 2))
   }
 }
 

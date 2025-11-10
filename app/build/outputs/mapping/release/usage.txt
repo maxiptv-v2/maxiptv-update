@@ -38212,7 +38212,6 @@ kotlin.ranges.RangesKt___RangesKt:
     public static final boolean byteRangeContains(kotlin.ranges.OpenEndRange,short)
     public static final byte coerceAtLeast(byte,byte)
     public static final double coerceAtLeast(double,double)
-    public static final java.lang.Comparable coerceAtLeast(java.lang.Comparable,java.lang.Comparable)
     public static final short coerceAtLeast(short,short)
     public static final byte coerceAtMost(byte,byte)
     public static final java.lang.Comparable coerceAtMost(java.lang.Comparable,java.lang.Comparable)
@@ -47007,7 +47006,6 @@ androidx.compose.foundation.layout.Arrangement:
     public static androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical getSpaceBetween()
     public static androidx.compose.foundation.layout.Arrangement$Horizontal getStart()
     public static androidx.compose.foundation.layout.Arrangement$Vertical getTop()
-    public static androidx.compose.foundation.layout.Arrangement$SpacedAligned spacedBy-0680j_4(float)
 androidx.compose.foundation.layout.BoxChildDataElement$$InternalSyntheticBackport$2$a8629f3b6ac8282aa5200891f36011ca341ec84722a274fd13816632f2f9a0e4$0
 androidx.compose.foundation.layout.BoxChildDataElement:
     public final kotlin.jvm.functions.Function1 inspectorInfo
@@ -47205,7 +47203,6 @@ androidx.compose.foundation.layout.SizeKt$width-3ABfNKs$$inlined$debugInspectorI
 androidx.compose.foundation.layout.SizeKt:
     public static synthetic androidx.compose.ui.Modifier fillMaxHeight$default(androidx.compose.ui.Modifier)
     public static androidx.compose.ui.Modifier fillMaxSize$default()
-    public static synthetic androidx.compose.ui.Modifier fillMaxWidth$default(androidx.compose.ui.Modifier)
     public static synthetic androidx.compose.ui.Modifier heightIn-VpY3zN4$default(androidx.compose.ui.Modifier,float)
 androidx.compose.foundation.layout.SizeNode$measure$1
 androidx.compose.foundation.layout.SizeNode:
@@ -51015,7 +51012,6 @@ androidx.compose.runtime.ComposablesKt:
     public static final androidx.compose.ui.geometry.RoundRect RoundRect-gG7oq9Y(float,float,float,float,long)
     public static final boolean access$isVisible(androidx.compose.ui.semantics.SemanticsNode)
     public static synthetic androidx.compose.ui.Modifier composed$default(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function3)
-    public static final int getCurrentCompositeKeyHash(androidx.compose.runtime.Composer)
     public static final kotlin.jvm.functions.Function2 getScrollCaptureScrollByAction(androidx.compose.ui.semantics.SemanticsNode)
     public static androidx.compose.ui.Modifier pointerHoverIcon$default(androidx.compose.ui.Modifier)
     public static final androidx.compose.ui.geometry.Rect toRect(androidx.compose.ui.geometry.MutableRect)
@@ -51109,24 +51105,19 @@ androidx.compose.runtime.ComposerImpl:
     public static void dispose$runtime_release()
     public static void endGroup()
     public final void endMovableGroup()
-    public final void endNode()
     public final void endProvider()
     public final void endProviders()
     public final void endReplaceGroup()
-    public final void endReplaceableGroup()
     public static void endReuseFromRoot()
     public final void ensureWriter()
     public static void exitGroup()
     public static void finalizeCompose()
-    public final androidx.compose.runtime.Applier getApplier()
     public final kotlin.coroutines.CoroutineContext getApplyCoroutineContext()
     public static boolean getAreChildrenComposing$runtime_release()
     public static androidx.compose.runtime.ControlledComposition getComposition()
     public final androidx.compose.runtime.tooling.CompositionData getCompositionData()
     public final int getCompoundKeyHash()
-    public final androidx.compose.runtime.PersistentCompositionLocalMap getCurrentCompositionLocalMap()
     public static androidx.compose.runtime.changelist.ChangeList getDeferredChanges$runtime_release()
-    public final boolean getInserting()
     public static java.lang.Object getNode()
     public static androidx.compose.runtime.SlotReader getReader$runtime_release()
     public final androidx.compose.runtime.RecomposeScope getRecomposeScope()
@@ -51553,7 +51544,6 @@ androidx.compose.runtime.RecomposeScopeImpl:
     public final void setSkipped(boolean)
     public final void setUsed()
     public final void start(int)
-    public final void updateScope(kotlin.jvm.functions.Function2)
 androidx.compose.runtime.RecomposeScopeImplKt:
     public static final java.lang.Object callbackLock
     static void <clinit>()
@@ -55594,11 +55584,6 @@ androidx.compose.ui.node.ComposeUiNode$Companion:
     public static final kotlin.jvm.functions.Function2 SetDensity
     public static final kotlin.jvm.functions.Function2 SetLayoutDirection
     public static final kotlin.jvm.functions.Function2 SetViewConfiguration
-    public static androidx.compose.ui.node.ComposeUiNode$Companion$VirtualConstructor$1 getConstructor()
-    public static androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 getSetCompositeKeyHash()
-    public static androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 getSetMeasurePolicy()
-    public static androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 getSetModifier()
-    public static androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 getSetResolvedCompositionLocals()
     public static kotlin.jvm.functions.Function0 getVirtualConstructor()
 androidx.compose.ui.node.ComposeUiNode:
     public abstract void setCompositeKeyHash()
@@ -58884,8 +58869,9 @@ androidx.compose.ui.unit.Dp:
     static void <clinit>()
     public static final synthetic float access$getHairline$cp()
     public static final synthetic float access$getUnspecified$cp()
+    public static final synthetic androidx.compose.ui.unit.Dp box-impl(float)
     public static int compareTo-0680j_4()
-    public static synthetic float unbox-impl()
+    public final synthetic float unbox-impl()
 androidx.compose.ui.unit.DpKt
 androidx.compose.ui.unit.DpOffset$$InternalSyntheticBackport$1$045ed7182852784d622826895f9998c1329cbcc8cdf5e905d76b7c2727f5a2b3$0
 androidx.compose.ui.unit.DpOffset$Companion
@@ -68700,20 +68686,19 @@ com.google.common.collect.ImmutableSet:
     public static boolean shouldTrim(int,int)
 com.google.common.collect.Iterables:
     public static final boolean AdminPanelScreen$lambda$1(androidx.compose.runtime.MutableState)
-    public static final float CategoryButton$lambda$62(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
-    public static final float DigitalClock$lambda$66(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
-    public static final float ExpiryWarningCard$lambda$59(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final float CategoryButton$lambda$63(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final float DigitalClock$lambda$67(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final float ExpiryWarningCard$lambda$60(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
     public static final java.util.List HomeScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List HomeScreen$lambda$1(androidx.compose.runtime.MutableState)
     public static final java.lang.String HomeScreen$lambda$18(androidx.compose.runtime.MutableState)
     public static final boolean HomeScreen$lambda$21(androidx.compose.runtime.MutableState)
     public static final com.maxiptv.data.LiveStream HomeScreen$lambda$24(androidx.compose.runtime.MutableState)
     public static final com.maxiptv.data.LiveStream HomeScreen$lambda$27(androidx.compose.runtime.MutableState)
-    public static final java.lang.String HomeScreen$lambda$3(androidx.compose.runtime.MutableState)
     public static final com.maxiptv.data.UpdateInfo HomeScreen$lambda$30(androidx.compose.runtime.MutableState)
     public static final boolean HomeScreen$lambda$33(androidx.compose.runtime.MutableState)
-    public static final float LogoutButton$lambda$64(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
-    public static final float NeonText_r9BaKPg$lambda$60(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final float LogoutButton$lambda$65(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final float NeonText_r9BaKPg$lambda$61(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
     public static final com.maxiptv.data.VodInfoResponse VodDetailsScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List VodDetailsScreen$lambda$1(androidx.compose.runtime.MutableState)
     public static final boolean VodDetailsScreen$lambda$12(androidx.compose.runtime.MutableState)
@@ -70471,6 +70456,7 @@ kotlin.ranges.RangesKt
 kotlin.ranges.RangesKt__RangesKt
 kotlin.ranges.RangesKt___RangesKt:
     public static long coerceAtLeast(long)
+    public static java.lang.Comparable coerceAtLeast(androidx.compose.ui.unit.Dp,androidx.compose.ui.unit.Dp)
     public static double coerceAtMost(double)
     public static long coerceAtMost(long,long)
     public static kotlin.ranges.IntProgression downTo(int,int)
