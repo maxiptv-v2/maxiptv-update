@@ -14,9 +14,12 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 173
-        versionName = "1.0.173"
+        versionCode = 174
+        versionName = "1.0.174"
     vectorDrawables.useSupportLibrary = true
+    ndk {
+      abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+    }
     buildConfigField("String", "DEFAULT_PLAYER_API", "\"https://aztv.cx/\"")
     buildConfigField("String", "DEFAULT_USER", "\"max\"")
     buildConfigField("String", "DEFAULT_PASS", "\"1h2yd90\"")
