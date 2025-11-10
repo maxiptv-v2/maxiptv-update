@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
 import com.maxiptv.ui.screens.*
+import com.maxiptv.ui.theme.MaxiSafeArea
 import com.maxiptv.ui.theme.MaxiTheme
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -66,7 +67,9 @@ class MainActivity : ComponentActivity() {
         }
         
         Surface(modifier = Modifier.fillMaxSize()) {
-          HomeNav(nav, this@MainActivity)
+          MaxiSafeArea {
+            HomeNav(nav, this@MainActivity)
+          }
         }
       }
     }

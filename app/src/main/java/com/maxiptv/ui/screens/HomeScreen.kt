@@ -163,24 +163,8 @@ fun HomeScreen(nav: NavHostController) {
   val isTv = MaxiApp.isTv
   val isPhone = MaxiApp.isPhone
   val isFireStick = MaxiApp.isFireStick
-  val isNativeTv = MaxiApp.isNativeTv
-  val isTvBox = MaxiApp.isTvBox
   
-  // 🛡️ SAFE AREA GLOBAL (APLICADA NA RAIZ)
-  val safeAreaPadding = remember(isFireStick, isNativeTv, isTvBox, isPhone) {
-    when {
-      isFireStick -> PaddingValues(
-        horizontal = MaxiApp.fireStickOverscanPadding.dp,
-        vertical = MaxiApp.fireStickSafeAreaPadding.dp
-      )
-      isNativeTv -> PaddingValues(horizontal = 28.dp, vertical = 22.dp)
-      isTvBox -> PaddingValues(horizontal = 24.dp, vertical = 20.dp)
-      isPhone -> PaddingValues(horizontal = 12.dp, vertical = 12.dp)
-      else -> PaddingValues(horizontal = 16.dp, vertical = 16.dp)
-    }
-  }
-  
-  // 🔥 ESPAÇAMENTO INTERNO APÓS SAFE AREA
+  // 🔥 ESPAÇAMENTO INTERNO
   val horizontalPadding = when {
     isFireStick -> (MaxiApp.fireStickSafeAreaPadding / 2).dp.coerceAtLeast(12.dp)
     isTv -> 24.dp
@@ -193,13 +177,6 @@ fun HomeScreen(nav: NavHostController) {
     isTv -> 14.dp
     isPhone -> 12.dp
     else -> 14.dp
-  }
-  
-  val bottomSafeSpacer = when {
-    isFireStick -> MaxiApp.fireStickSafeAreaPadding.dp
-    isTv -> 24.dp
-    isPhone -> 12.dp
-    else -> 16.dp
   }
   
   // Dialog de confirmação de logout
@@ -537,14 +514,10 @@ fun HomeScreen(nav: NavHostController) {
   }
   
   Box(
-    modifier = Modifier
-      .fillMaxSize()
-      .padding(safeAreaPadding)
+    modifier = Modifier.fillMaxSize()
   ) {
   Column(
-      modifier = Modifier
-        .fillMaxSize()
-        .padding(bottomSafeSpacer / 2)
+      modifier = Modifier.fillMaxSize()
     ) {
       // TopBar com Botão SAIR e Relógio Digital
       Box(
@@ -785,8 +758,6 @@ fun HomeScreen(nav: NavHostController) {
     ) {
       ExpiryWarningCard(daysUntilExpiry)
     }
-    
-    Spacer(Modifier.height(bottomSafeSpacer / 2))
   }
 }
 
