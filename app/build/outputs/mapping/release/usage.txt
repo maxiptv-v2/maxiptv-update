@@ -69745,8 +69745,8 @@ com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$2$invoke$lambda$4$$inlined$sorted
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$2
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$3
 com.maxiptv.ui.screens.VodScreenKt
-com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$1$scaledModifier$1$1
 com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$2
+com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$scaledModifier$1$1
 com.maxiptv.ui.theme.SafeAreaKt
 com.maxiptv.ui.theme.ThemeKt$MaxiTheme$1
 com.maxiptv.util.LangUtilsKt$WhenMappings

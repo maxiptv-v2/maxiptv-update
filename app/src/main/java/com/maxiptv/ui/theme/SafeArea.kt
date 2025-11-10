@@ -1,5 +1,6 @@
 package com.maxiptv.ui.theme
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +14,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
 import com.maxiptv.MaxiApp
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -43,10 +45,17 @@ fun MaxiSafeArea(
     diagonalInches
   ) {
     when {
-      MaxiApp.isFireStick -> PaddingValues(
-        horizontal = MaxiApp.fireStickOverscanPadding.dp,
-        vertical = MaxiApp.fireStickSafeAreaPadding.dp
-      )
+      MaxiApp.isFireStick -> {
+        val horizontal = MaxiApp.fireStickOverscanPadding.coerceAtLeast(20)
+        val top = (MaxiApp.fireStickSafeAreaPadding / 2).coerceAtLeast(10)
+        val bottom = (MaxiApp.fireStickSafeAreaPadding + 12).coerceAtLeast(28)
+        PaddingValues(
+          start = horizontal.dp,
+          top = top.dp,
+          end = horizontal.dp,
+          bottom = bottom.dp
+        )
+      }
 
       MaxiApp.isProjector -> {
         val horizontal = when {
@@ -135,29 +144,26 @@ fun MaxiSafeArea(
     }
   }
 
+  val baseModifier = Modifier
+    .fillMaxSize()
+    .padding(safePadding)
+
+  val scaledModifier = if (scaleFactor < 0.999f) {
+    baseModifier.graphicsLayer {
+      scaleX = scaleFactor
+      scaleY = scaleFactor
+      transformOrigin = TransformOrigin(0f, 0f)
+    }
+  } else {
+    baseModifier
+  }
+
   Box(
     modifier = modifier
       .fillMaxSize()
-      .padding(safePadding)
+      .background(MaterialTheme.colorScheme.background)
   ) {
-    val scaledModifier = if (scaleFactor < 0.999f) {
-      Modifier
-        .fillMaxSize()
-        .graphicsLayer {
-          scaleX = scaleFactor
-          scaleY = scaleFactor
-          transformOrigin = TransformOrigin(0.5f, 0.5f)
-        }
-    } else {
-      Modifier.fillMaxSize()
-    }
-
-    Box(
-      modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.Center
-    ) {
-      Box(modifier = scaledModifier, content = content)
-    }
+    Box(modifier = scaledModifier, content = content)
   }
 }
 

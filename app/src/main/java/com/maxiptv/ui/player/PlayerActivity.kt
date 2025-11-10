@@ -40,6 +40,9 @@ class PlayerActivity : ComponentActivity() {
     
     // ✅ API MODERNA - WindowInsetsController (substitui systemUiVisibility depreciado)
     windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+    androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+    window.statusBarColor = android.graphics.Color.TRANSPARENT
+    window.navigationBarColor = android.graphics.Color.TRANSPARENT
     
     // Configurar fullscreen completo - sem nenhuma barra
     windowInsetsController.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
