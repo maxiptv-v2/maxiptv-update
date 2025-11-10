@@ -1,12 +1,12 @@
 {
-    "version":  "v1.0.172",
-    "versionCode":  172,
-    "buildNumber":  172,
+    "version":  "v1.0.173",
+    "versionCode":  173,
+    "buildNumber":  173,
     "downloadUrl":  "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
     "releaseNotes":  "MaxiPTV v1.0.171 - Fire TV Correções\n\n🔥 FIRE TV / FIRE STICK\n- Detecção refinada dos modelos Amazon genuínos\n- Overscan desativado automaticamente nos layouts\n\n📺 ANDROID TV NATIVA\n- Mantidas otimizações anteriores de overscan\n\n⚙️ GERAL\n- versionCode 171 para distribuição automática\n- Logs remotos seguem funcionando",
     "minimumVersion":  "1.0.0",
     "forceUpdate":  false,
     "fileSize":  "3.6 MB",
-    "lastUpdated":  "2025-11-09T19:08:28Z",
+    "lastUpdated":  "2025-11-09T19:35:14Z",
     "checksum":  "sha256:placeholder"
 }
