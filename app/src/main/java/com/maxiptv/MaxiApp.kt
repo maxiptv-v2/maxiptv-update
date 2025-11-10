@@ -41,14 +41,41 @@ class MaxiApp : Application() {
       val brand = android.os.Build.BRAND.lowercase()
       val product = android.os.Build.PRODUCT.lowercase()
       val baseFingerprint = listOf(manufacturer, model, brand, product).joinToString(" ")
+
+      val fireModelKeywords = listOf(
+        "aft", // maioria dos modelos Fire TV usam prefixo AFT
+        "sheldon",
+        "mantis",
+        "yule",
+        "douglas",
+        "pike",
+        "tank",
+        "sloane",
+        "monroe",
+        "earl",
+        "hollywood",
+        "ariel",
+        "wulff",
+        "leona",
+        "bueller"
+      )
+      val fireProductKeywords = listOf(
+        "amz", "fireos", "fire_tv", "firetv", "stick", "ps720", "karnak", "douglas", "mantis", "sheldon", "tank", "sloane", "monroe"
+      )
       
       // Detecta Fire Stick especificamente (ANTES da detecção de TV)
-      isFireStick = manufacturer.contains("amazon") || 
+      val modelTokens = model.split(Regex("[^a-z0-9]+")).filter { it.isNotBlank() }
+      val productTokens = product.split(Regex("[^a-z0-9]+")).filter { it.isNotBlank() }
+
+      isFireStick = manufacturer.contains("amazon") ||
+                    brand.contains("amazon") ||
                     model.contains("fire tv") ||
                     model.contains("firetv") ||
                     model.contains("fire stick") ||
                     model.contains("firestick") ||
-                    product.contains("fire")
+                    modelTokens.any { token -> fireModelKeywords.any { token.contains(it) } } ||
+                    product.contains("fire") ||
+                    productTokens.any { token -> fireProductKeywords.any { token.contains(it) } }
       
       val nativeTvKeywords = listOf(
         "philco", "smarttv", "androidtv", "tcl", "hisense", "sony", "panasonic",

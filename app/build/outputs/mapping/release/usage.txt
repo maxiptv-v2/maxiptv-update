@@ -76302,7 +76302,7 @@ kotlin.text.Regex:
     public static kotlin.text.MatchResult find()
     public static kotlin.text.MatchResult matchEntire()
     public final java.lang.String replace(java.lang.String,androidx.compose.foundation.text.input.internal.HandwritingGestureApi34$performRemoveSpaceGesture$newText$1)
-    public static java.util.List split()
+    public final java.util.List split(java.lang.String)
 kotlin.text.RegexKt
 kotlin.text.RegexOption:
     public static final synthetic kotlin.enums.EnumEntries $ENTRIES
