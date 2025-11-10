@@ -15,6 +15,7 @@ class MaxiApp : Application() {
     var isTablet: Boolean = false
     var isTvBox: Boolean = false
     var isNativeTv: Boolean = false
+    var isProjector: Boolean = false
     var deviceCategory: String = "unknown"
     
     // 🔥 CONFIGURAÇÕES ESPECÍFICAS PARA FIRE STICK (AJUSTÁVEIS POR TAMANHO DE TV)
@@ -77,6 +78,11 @@ class MaxiApp : Application() {
                     product.contains("fire") ||
                     productTokens.any { token -> fireProductKeywords.any { token.contains(it) } }
       
+      val projectorKeywords = listOf(
+        "projector", "hy300", "hy-300", "yg300", "yg-300", "byintek", "xgimi",
+        "nebula", "dangbei", "wanbo", "jmgo", "blitzwolf", "cibest", "wimius",
+        "vankyo", "viewsonic"
+      )
       val nativeTvKeywords = listOf(
         "philco", "smarttv", "androidtv", "tcl", "hisense", "sony", "panasonic",
         "samsung", "sharp", "philips", "lg", "aoc", "skyworth", "coocaa",
@@ -92,6 +98,10 @@ class MaxiApp : Application() {
         "turewell", "km5", "digiplus", "strong", "prox", "himedia", "beelink",
         "magicsee", "yagala", "aobosi"
       )
+      
+      isProjector = listOf(manufacturer, brand, model, product).any { field ->
+        projectorKeywords.any { keyword -> field.contains(keyword) }
+      }
       
       // Detecta TV nativa vs box
       isNativeTv = isTvMode && nativeTvKeywords.any { keyword ->
@@ -118,6 +128,7 @@ class MaxiApp : Application() {
              isFireStick ||
              isNativeTv ||
              isTvBox ||
+             isProjector ||
              model.contains("chromecast") ||
              product.contains("chromecast") ||
              model.contains("android tv") ||
@@ -173,6 +184,7 @@ class MaxiApp : Application() {
       deviceCategory = when {
         isFireStick -> "fire_stick"
         isNativeTv -> "native_tv"
+        isProjector -> "projector"
         isTvBox -> "tv_box"
         isTablet -> "tablet"
         isPhone -> "phone"
