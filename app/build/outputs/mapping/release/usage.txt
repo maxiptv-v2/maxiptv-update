@@ -34025,6 +34025,19 @@ com.maxiptv.ui.theme.SafeAreaMetrics:
     private static final java.lang.String KEY_VERSION
     private static final java.lang.String KEY_WIDTH_DP
     private static final java.lang.String PREF_NAME
+com.maxiptv.ui.theme.SafeAreaOverride:
+    public static final int $stable
+    public final java.lang.String component1()
+    public final float component2()
+    public final float component3()
+    public final float component4()
+    public final float component5()
+    public final float component6()
+    public final com.maxiptv.ui.theme.SafeAreaOverride copy(java.lang.String,float,float,float,float,float)
+    public static synthetic com.maxiptv.ui.theme.SafeAreaOverride copy$default(com.maxiptv.ui.theme.SafeAreaOverride,java.lang.String,float,float,float,float,float,int,java.lang.Object)
+com.maxiptv.ui.theme.SafeAreaOverrides:
+    private static final java.lang.String KEY_PREFIX
+    private static final java.lang.String PREF_NAME
 com.maxiptv.ui.theme.SafeAreaSnapshot:
     public static final int $stable
     public final int component1()
@@ -34048,8 +34061,11 @@ com.maxiptv.ui.theme.SafeAreaSnapshot:
 com.maxiptv.ui.theme.SafePaddingResult:
     public final androidx.compose.foundation.layout.PaddingValues component1()
     public final java.lang.String component2()
-    public final com.maxiptv.ui.theme.SafePaddingResult copy(androidx.compose.foundation.layout.PaddingValues,java.lang.String)
-    public static synthetic com.maxiptv.ui.theme.SafePaddingResult copy$default(com.maxiptv.ui.theme.SafePaddingResult,androidx.compose.foundation.layout.PaddingValues,java.lang.String,int,java.lang.Object)
+    public final float component3()
+    public final boolean component4()
+    public final com.maxiptv.ui.theme.SafePaddingResult copy(androidx.compose.foundation.layout.PaddingValues,java.lang.String,float,boolean)
+    public static synthetic com.maxiptv.ui.theme.SafePaddingResult copy$default(com.maxiptv.ui.theme.SafePaddingResult,androidx.compose.foundation.layout.PaddingValues,java.lang.String,float,boolean,int,java.lang.Object)
+    public final boolean getOverscanAdjusted()
 com.maxiptv.util.LangUtilsKt:
     public static final java.lang.String langToString(com.maxiptv.util.Lang)
 com.squareup.moshi.AdapterMethodsFactory$1
@@ -56986,6 +57002,7 @@ androidx.compose.ui.platform.WrappedComposition$setContent$1:
     public final java.util.Collection invoke(kotlin.reflect.jvm.internal.impl.name.Name)
     public static kotlin.reflect.jvm.internal.impl.descriptors.ClassDescriptor invoke()
     public static kotlin.reflect.jvm.internal.impl.load.java.typeEnhancement.JavaTypeQualifiers invoke()
+    public final kotlinx.coroutines.flow.MutableStateFlow invoke()
     public final void invoke(androidx.compose.ui.focus.FocusState)
     public final void invoke(androidx.navigation.NavOptionsBuilder)
     public final void invoke(java.lang.String)
@@ -68993,6 +69010,8 @@ com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76e
 com.maxiptv.data.AuthResponse:
     static void <clinit>()
 com.maxiptv.data.ClientCode$$InternalSyntheticBackport$1$4ea37cb80831279c7f6a8b81de67fe1c0a4a99f3b87514a07bf5f4c100b494ae$0
+com.maxiptv.data.DeviceFingerprintInfo:
+    static void <clinit>()
 com.maxiptv.data.EpgProgramme$$InternalSyntheticBackport$1$63b6eeb5ebede298a1a0eaa2fcc73a4280b0b30a452773b5359c9656e22c6806$0
 com.maxiptv.data.EpgProgramme$$InternalSyntheticBackport$1$63b6eeb5ebede298a1a0eaa2fcc73a4280b0b30a452773b5359c9656e22c6806$1
 com.maxiptv.data.EpgProgramme:
@@ -69391,29 +69410,31 @@ com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1$userAccount$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$1$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$3$1$1
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$3$1
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$3$2$1
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$3$2
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$3:
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$2:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$1$1$1$1
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$1$1$1
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$1$1
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$11
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$1:
-    public final void invoke(androidx.compose.animation.AnimatedContentScopeImpl,androidx.navigation.NavBackStackEntry,androidx.compose.runtime.Composer)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$1
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$2$1
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$2
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$3
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$4
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$5
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$6
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$7
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$8
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$4$9
 com.maxiptv.ui.screens.HomeNavKt$HomeNav$4:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$1$1$1$1
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$1$1$1
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$1$1
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$11
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$1:
+    public final void invoke(androidx.compose.animation.AnimatedContentScopeImpl,androidx.navigation.NavBackStackEntry,androidx.compose.runtime.Composer)
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$2
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$3
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$4
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$5
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$6
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$7
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$8
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5$9
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$5:
     public static void invoke$75()
-com.maxiptv.ui.screens.HomeNavKt$HomeNav$5
+com.maxiptv.ui.screens.HomeNavKt$HomeNav$6
 com.maxiptv.ui.screens.HomeNavKt
 com.maxiptv.ui.screens.HomeScreenKt$CategoryButton$1$1
 com.maxiptv.ui.screens.HomeScreenKt$CategoryButton$2:
@@ -69795,7 +69816,30 @@ com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$1:
 com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$3
 com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$scaledModifier$1$1
 com.maxiptv.ui.theme.SafeAreaKt
-com.maxiptv.ui.theme.SafeAreaMetrics
+com.maxiptv.ui.theme.SafeAreaMetrics:
+    public static final com.maxiptv.ui.theme.SafeAreaMetrics INSTANCE
+    static void <clinit>()
+    public static void save()
+com.maxiptv.ui.theme.SafeAreaOverride:
+    static void <clinit>()
+    public static float getBottomDp()
+    public static float getEndDp()
+    public static java.lang.String getProfile()
+    public static float getScaleFactor()
+    public static float getStartDp()
+    public static float getTopDp()
+com.maxiptv.ui.theme.SafeAreaOverrides$$InternalSyntheticLambda$1$c96e96f13b52ec82187f661bc1106c93b7cb34058456923fe6136221046caebf$0
+com.maxiptv.ui.theme.SafeAreaOverrides$overrideFlow$1
+com.maxiptv.ui.theme.SafeAreaOverrides$update$flow$1:
+    public final kotlinx.coroutines.flow.MutableStateFlow invoke()
+com.maxiptv.ui.theme.SafeAreaOverrides:
+    public static final int $stable
+    public static final com.maxiptv.ui.theme.SafeAreaOverrides INSTANCE
+    public static com.maxiptv.ui.theme.SafeAreaOverride getCurrentOverride()
+    public static boolean hasOverride()
+    public static kotlinx.coroutines.flow.StateFlow overrideFlow()
+    public static android.content.SharedPreferences prefs()
+    public static void update()
 com.maxiptv.ui.theme.SafeAreaSnapshot$$InternalSyntheticBackport$1$2f89ef58956d2869cf8c59f75eadd6e6128977fb051b33d945c1618a5b9f229e$0
 com.maxiptv.ui.theme.SafeAreaSnapshot:
     static void <clinit>()
@@ -69818,6 +69862,7 @@ com.maxiptv.ui.theme.SafeAreaSnapshot:
 com.maxiptv.ui.theme.SafePaddingResult:
     public static androidx.compose.foundation.layout.PaddingValues getPadding()
     public static java.lang.String getProfile()
+    public static float getScaleFactor()
 com.maxiptv.ui.theme.ThemeKt$MaxiTheme$1
 com.maxiptv.util.LangUtilsKt$WhenMappings
 com.squareup.moshi.ArrayJsonAdapter$1:

@@ -1,0 +1,161 @@
+package com.maxiptv.ui.screens
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.maxiptv.data.UserManager
+import com.maxiptv.data.SessionManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+@Composable
+fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivity? = null) {
+  // 🔐 VERIFICAR SE JÁ EXISTE USUÁRIO LOGADO ao iniciar
+  var initialRoute by remember { mutableStateOf<String?>(null) }
+  var shouldNavigateToHome by remember { mutableStateOf(false) }
+  
+  // Ler código ou credenciais do Intent (se vier do downloader)
+  val intentCode = activity?.intent?.getStringExtra("code") ?: ""
+  val intentUsuario = activity?.intent?.getStringExtra("usuario") ?: ""
+  val intentSenha = activity?.intent?.getStringExtra("senha") ?: ""
+  val intentApi = activity?.intent?.getStringExtra("api") ?: ""
+  val hasIntentCode = intentCode.isNotBlank() && intentCode.length >= 3 && intentCode.length <= 10 && intentCode.all { it.isLetterOrDigit() }
+  val hasIntentCredentials = intentUsuario.isNotBlank() && intentSenha.isNotBlank()
+  
+  LaunchedEffect(Unit) {
+    android.util.Log.i("HomeNav", "🔍 Verificando sessão existente...")
+    
+    // 🚀 SEMPRE tentar login automático primeiro (mesmo se já tiver usuário logado)
+    // Isso permite que após baixar o APK, o app faça login automático
+    android.util.Log.i("HomeNav", "🚀 Tentando login automático (verificando código pendente)...")
+    
+    var autoLoginSuccess = false
+    
+    try {
+      // Buscar código pendente do download
+      val pendingUrl = "https://maxiptv-update-1.onrender.com/get-pending-code.php"
+      android.util.Log.d("HomeNav", "🔍 Buscando código pendente: $pendingUrl")
+      val (pendingHttpCode, pendingResponseBody) = withContext(Dispatchers.IO) {
+        val connection = java.net.URL(pendingUrl).openConnection() as java.net.HttpURLConnection
+        try {
+          connection.requestMethod = "GET"
+          connection.connectTimeout = 10000
+          connection.readTimeout = 10000
+          connection.connect()
+          
+          val code = connection.responseCode
+          val body = if (code == 200) {
+            connection.inputStream.bufferedReader().use { it.readText() }
+          } else {
+            connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+          }
+          code to body
+        } finally {
+          connection.disconnect()
+        }
+      }
+      
+      android.util.Log.d("HomeNav", "📡 Resposta HTTP: $pendingHttpCode")
+      if (pendingHttpCode == 200) {
+          val pendingResponse = pendingResponseBody
+          android.util.Log.d("HomeNav", "📥 Resposta COMPLETA: $pendingResponse")
+          val pendingJson = org.json.JSONObject(pendingResponse)
+          
+          val pendingStatus = pendingJson.optString("status", "")
+          android.util.Log.d("HomeNav", "📊 Status recebido: $pendingStatus")
+          
+          if (pendingStatus == "ok") {
+            val pendingCode = pendingJson.optString("code", "")
+            val pendingUsername = pendingJson.optString("username", "")
+            val pendingPassword = pendingJson.optString("password", "")
+            val pendingApiUrl = pendingJson.optString("api_url", "")
+            val pendingExpiryDate = pendingJson.optString("expiryDate", "")
+            
+            android.util.Log.i("HomeNav", "✅ Código pendente encontrado: $pendingCode")
+            
+            // Verificar se get-pending-code.php retornou credenciais completas
+            if (pendingPassword.isNotBlank() && pendingApiUrl.isNotBlank()) {
+              android.util.Log.i("HomeNav", "✅ Credenciais completas recebidas do get-pending-code.php")
+              android.util.Log.d("HomeNav", "   User: $pendingUsername")
+              android.util.Log.d("HomeNav", "   Pass: ***")
+              android.util.Log.d("HomeNav", "   API: $pendingApiUrl")
+              android.util.Log.d("HomeNav", "   ExpiryDate: $pendingExpiryDate")
+              
+              // Fazer login diretamente com as credenciais recebidas
+              android.util.Log.i("HomeNav", "✅ Login automático iniciado para: $pendingUsername")
+              
+              // Buscar usuário ou criar se não existir (funções suspend)
+              val existingUser = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                UserManager.getUsers().firstOrNull { it.username == pendingUsername }
+              }
+              
+              if (existingUser == null) {
+                // Criar novo usuário se não existir
+                android.util.Log.i("HomeNav", "📝 Criando novo usuário: $pendingUsername")
+                val newUser = com.maxiptv.data.UserAccount(
+                  id = java.util.UUID.randomUUID().toString(),
+                  username = pendingUsername,
+                  password = pendingPassword,
+                  apiUrl = pendingApiUrl,
+                  expiryDate = pendingExpiryDate,
+                  activeDeviceId = null,
+                  activeDeviceName = null,
+                  lastLoginTime = null
+                )
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                  UserManager.addUser(newUser)
+                }
+              }
+              
+              // Fazer login usando UserManager (suspend)
+              val (loggedUser, error) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                UserManager.login(pendingUsername, pendingPassword)
+              }
+              
+              if (loggedUser != null && error == null) {
+                android.util.Log.i("HomeNav", "✅ Login automático bem-sucedido: ${loggedUser.username}")
+                
+                // Configurar XRepo ANTES de salvar credenciais (importante para buscar canais)
+                android.util.Log.d("HomeNav", "⚙️ Configurando XRepo com API: $pendingApiUrl")
+                com.maxiptv.data.XRepo.configure(pendingApiUrl, pendingUsername, pendingPassword)
+                android.util.Log.d("HomeNav", "✅ XRepo configurado")
+                
+                // Salvar credenciais no SettingsRepo (suspend)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                  android.util.Log.d("HomeNav", "💾 Salvando credenciais no SettingsRepo...")
+                  com.maxiptv.data.SettingsRepo.save(
+                    b = pendingApiUrl,
+                    u = pendingUsername,
+                    p = pendingPassword,
+                    e = pendingExpiryDate
+                  )
+                  android.util.Log.d("HomeNav", "✅ Credenciais salvas")
+                }
+                
+                // Criar sessão no JSONBin (suspend)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                  android.util.Log.d("HomeNav", "🔐 Criando sessão no JSONBin...")
+                  val deviceId = UserManager.getDeviceId()
+                  val deviceName = UserManager.getDeviceName()
+                  val (success, message) = SessionManager.tryLogin(
+                    username = pendingUsername,
+                    deviceId = deviceId,
+                    deviceName = deviceName
+                  )
+                  if (success) {
+                    android.util.Log.d("HomeNav", "✅ Sessão criada: $message")
+                  } else {
+                    android.util.Log.w("HomeNav", "⚠️ Sessão não criada: $message")
+                  }
+                }
+                
+                android.util.Log.i("HomeNav", "🏠 Login automático completo! Definindo navegação para HOME")
+                autoLoginSuccess = true
+                initialRoute = "home"
+  

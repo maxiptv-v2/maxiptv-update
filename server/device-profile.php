@@ -73,6 +73,8 @@ if ($method === 'POST') {
     $screen = $payload['screen'] ?? [];
     $scaleFactor = $payload['scaleFactor'] ?? null;
     $overscanAdjusted = $payload['overscanAdjusted'] ?? false;
+    $source = $payload['source'] ?? 'app';
+    $usedCode = $payload['code'] ?? null;
 
     try {
         $record = jsonbin_get('fingerprint');
@@ -87,7 +89,7 @@ if ($method === 'POST') {
             'safeArea' => $profile,
             'scaleFactor' => $scaleFactor,
             'overscanAdjusted' => $overscanAdjusted,
-            'source' => $payload['source'] ?? 'app',
+            'source' => $source,
             'updatedAt' => gmdate('c')
         ];
 
@@ -99,6 +101,21 @@ if ($method === 'POST') {
                 return strtotime($a['updatedAt'] ?? '1970-01-01') <=> strtotime($b['updatedAt'] ?? '1970-01-01');
             });
             $record['_device_profiles'] = array_slice($record['_device_profiles'], -400, null, true);
+        }
+
+        // Opcional: anexar dados ao código usado, se informado
+        if (!empty($usedCode)) {
+            $codeKey = (string)$usedCode;
+            if (!isset($record[$codeKey]) || !is_array($record[$codeKey])) {
+                $record[$codeKey] = [];
+            }
+            $record[$codeKey]['deviceModel'] = $device['model'] ?? ($device['manufacturer'] ?? 'unknown');
+            $record[$codeKey]['manufacturer'] = $device['manufacturer'] ?? 'unknown';
+            $record[$codeKey]['usedScreenWidth'] = $screen['widthPx'] ?? null;
+            $record[$codeKey]['usedScreenHeight'] = $screen['heightPx'] ?? null;
+            $record[$codeKey]['usedDensityDpi'] = $screen['densityDpi'] ?? null;
+            $record[$codeKey]['overscanAdjusted'] = $overscanAdjusted;
+            $record[$codeKey]['lastCalibrationAt'] = gmdate('c');
         }
 
         jsonbin_put($record, 'fingerprint');
