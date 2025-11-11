@@ -9120,7 +9120,6 @@ androidx.compose.runtime.EffectsKt:
     public static final void DisposableEffect(java.lang.Object,java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,int)
     public static final void DisposableEffect(kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,int)
     public static final void LaunchedEffect(kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,int)
-    public static final void LaunchedEffect(java.lang.Object[],kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,int)
     public static final kotlinx.coroutines.CoroutineScope rememberCoroutineScope(kotlin.jvm.functions.Function0,androidx.compose.runtime.Composer,int,int)
 androidx.compose.runtime.ExpectKt$ThreadLocal$1
 androidx.compose.runtime.ExpectKt
@@ -34006,6 +34005,51 @@ com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$def
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$3$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$2$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$2$invoke$$inlined$items$default$3
+com.maxiptv.ui.theme.SafeAreaMetrics:
+    public static final int $stable
+    private static final int CURRENT_VERSION
+    private static final java.lang.String KEY_BOTTOM_DP
+    private static final java.lang.String KEY_BOTTOM_PX
+    private static final java.lang.String KEY_DENSITY
+    private static final java.lang.String KEY_DIAGONAL
+    private static final java.lang.String KEY_END_DP
+    private static final java.lang.String KEY_END_PX
+    private static final java.lang.String KEY_HEIGHT_DP
+    private static final java.lang.String KEY_PROFILE
+    private static final java.lang.String KEY_SCALE
+    private static final java.lang.String KEY_START_DP
+    private static final java.lang.String KEY_START_PX
+    private static final java.lang.String KEY_TOP_DP
+    private static final java.lang.String KEY_TOP_PX
+    private static final java.lang.String KEY_UPDATED_AT
+    private static final java.lang.String KEY_VERSION
+    private static final java.lang.String KEY_WIDTH_DP
+    private static final java.lang.String PREF_NAME
+com.maxiptv.ui.theme.SafeAreaSnapshot:
+    public static final int $stable
+    public final int component1()
+    public final float component10()
+    public final float component11()
+    public final float component12()
+    public final float component13()
+    public final int component14()
+    public final int component15()
+    public final long component16()
+    public final java.lang.String component2()
+    public final float component3()
+    public final float component4()
+    public final float component5()
+    public final float component6()
+    public final float component7()
+    public final float component8()
+    public final float component9()
+    public final com.maxiptv.ui.theme.SafeAreaSnapshot copy(int,java.lang.String,float,float,float,float,float,float,float,float,float,float,float,int,int,long)
+    public static synthetic com.maxiptv.ui.theme.SafeAreaSnapshot copy$default(com.maxiptv.ui.theme.SafeAreaSnapshot,int,java.lang.String,float,float,float,float,float,float,float,float,float,float,float,int,int,long,int,java.lang.Object)
+com.maxiptv.ui.theme.SafePaddingResult:
+    public final androidx.compose.foundation.layout.PaddingValues component1()
+    public final java.lang.String component2()
+    public final com.maxiptv.ui.theme.SafePaddingResult copy(androidx.compose.foundation.layout.PaddingValues,java.lang.String)
+    public static synthetic com.maxiptv.ui.theme.SafePaddingResult copy$default(com.maxiptv.ui.theme.SafePaddingResult,androidx.compose.foundation.layout.PaddingValues,java.lang.String,int,java.lang.Object)
 com.maxiptv.util.LangUtilsKt:
     public static final java.lang.String langToString(com.maxiptv.util.Lang)
 com.squareup.moshi.AdapterMethodsFactory$1
@@ -69745,9 +69789,35 @@ com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$2$invoke$lambda$4$$inlined$sorted
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$2
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$3
 com.maxiptv.ui.screens.VodScreenKt
-com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$2
+com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$1:
+    public int label
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$3
 com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$scaledModifier$1$1
 com.maxiptv.ui.theme.SafeAreaKt
+com.maxiptv.ui.theme.SafeAreaMetrics
+com.maxiptv.ui.theme.SafeAreaSnapshot$$InternalSyntheticBackport$1$2f89ef58956d2869cf8c59f75eadd6e6128977fb051b33d945c1618a5b9f229e$0
+com.maxiptv.ui.theme.SafeAreaSnapshot:
+    static void <clinit>()
+    public static float getBottomDp()
+    public static float getBottomPx()
+    public static float getDensity()
+    public static float getDiagonalInches()
+    public static float getEndDp()
+    public static float getEndPx()
+    public static java.lang.String getProfile()
+    public static float getScaleFactor()
+    public static int getScreenHeightDp()
+    public static int getScreenWidthDp()
+    public static float getStartDp()
+    public static float getStartPx()
+    public static float getTopDp()
+    public static float getTopPx()
+    public static long getUpdatedAt()
+    public static int getVersion()
+com.maxiptv.ui.theme.SafePaddingResult:
+    public static androidx.compose.foundation.layout.PaddingValues getPadding()
+    public static java.lang.String getProfile()
 com.maxiptv.ui.theme.ThemeKt$MaxiTheme$1
 com.maxiptv.util.LangUtilsKt$WhenMappings
 com.squareup.moshi.ArrayJsonAdapter$1:

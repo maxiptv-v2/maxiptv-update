@@ -3,10 +3,6 @@ package com.maxiptv.ui.theme
 import android.content.Context
 import android.view.View
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateBottomPadding
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.calculateTopPadding
 import androidx.compose.ui.unit.LayoutDirection
 
 data class SafeAreaSnapshot(
@@ -68,8 +64,8 @@ object SafeAreaMetrics {
 
     val topDp = padding.calculateTopPadding().value
     val bottomDp = padding.calculateBottomPadding().value
-    val startDp = padding.calculateStartPadding(layoutDirection).value
-    val endDp = padding.calculateEndPadding(layoutDirection).value
+    val startDp = padding.calculateLeftPadding(layoutDirection).value
+    val endDp = padding.calculateRightPadding(layoutDirection).value
 
     val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     prefs.edit()
@@ -108,8 +104,8 @@ object SafeAreaMetrics {
       endDp = prefs.getFloat(KEY_END_DP, 0f),
       topPx = prefs.getFloat(KEY_TOP_PX, 0f),
       bottomPx = prefs.getFloat(KEY_BOTTOM_PX, 0f),
-      startPx = prefs.getFloat(KEY_START_PX, 0f),
-      endPx = prefs.getFloat(KEY_END_PX, 0f),
+      startPx = prefs.getFloat(KEY_START_PX, 0f).takeIf { it != 0f } ?: (prefs.getFloat(KEY_START_DP, 0f) * density),
+      endPx = prefs.getFloat(KEY_END_PX, 0f).takeIf { it != 0f } ?: (prefs.getFloat(KEY_END_DP, 0f) * density),
       scaleFactor = prefs.getFloat(KEY_SCALE, 1f),
       diagonalInches = prefs.getFloat(KEY_DIAGONAL, 0f),
       density = density,
