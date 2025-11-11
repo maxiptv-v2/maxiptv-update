@@ -5,13 +5,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.maxiptv.data.UserManager
 import com.maxiptv.data.SessionManager
+import com.maxiptv.data.DeviceFingerprint
+import com.maxiptv.data.FingerprintApi
+import com.maxiptv.ui.theme.SafeAreaMetrics
+import com.maxiptv.ui.theme.SafeAreaOverrides
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -19,6 +25,8 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
   // 🔐 VERIFICAR SE JÁ EXISTE USUÁRIO LOGADO ao iniciar
   var initialRoute by remember { mutableStateOf<String?>(null) }
   var shouldNavigateToHome by remember { mutableStateOf(false) }
+  val context = LocalContext.current
+  val fingerprintInfo = remember { DeviceFingerprint.collect(context) }
   
   // Ler código ou credenciais do Intent (se vier do downloader)
   val intentCode = activity?.intent?.getStringExtra("code") ?: ""
@@ -389,6 +397,16 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
     }
   }
   
+  LaunchedEffect(initialRoute, fingerprintInfo.key) {
+    val route = initialRoute
+    if (route == "home" && !SafeAreaOverrides.hasOverride(context, fingerprintInfo.key)) {
+      val override = FingerprintApi.fetchOverride(context, fingerprintInfo)
+      override?.let {
+        SafeAreaOverrides.update(context, fingerprintInfo.key, it)
+      }
+    }
+  }
+  
   // Aguardar verificação antes de renderizar
   if (initialRoute == null) {
     // Mostrar splash/loading enquanto verifica
@@ -400,7 +418,7 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
     if (shouldNavigateToHome) {
       android.util.Log.i("HomeNav", "🚀 Executando navegação para home após login automático")
       android.util.Log.d("HomeNav", "   Aguardando NavHost estar pronto...")
-      kotlinx.coroutines.delay(300) // Delay maior para garantir que NavHost está completamente pronto
+      delay(300) // Delay maior para garantir que NavHost está completamente pronto
       
       try {
         android.util.Log.d("HomeNav", "   Tentando navegar para 'home'...")
@@ -413,7 +431,7 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
         android.util.Log.e("HomeNav", "❌ ERRO ao navegar para home: ${e.message}")
         android.util.Log.e("HomeNav", "   Stack trace: ${e.stackTraceToString()}")
         // Tentar novamente após mais delay
-        kotlinx.coroutines.delay(500)
+        delay(500)
         try {
           nav.navigate("home") {
             popUpTo(0) { inclusive = true }
@@ -423,6 +441,10 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
         } catch (e2: Exception) {
           android.util.Log.e("HomeNav", "❌ ERRO na segunda tentativa: ${e2.message}")
         }
+      }
+
+      SafeAreaMetrics.snapshot(context)?.let { snapshot ->
+        FingerprintApi.submitProfile(context, fingerprintInfo, snapshot)
       }
     }
   }

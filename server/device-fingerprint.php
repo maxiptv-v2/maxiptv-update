@@ -29,23 +29,20 @@ if (!is_array($data)) {
     exit;
 }
 
-$data['loggedAt'] = gmdate('c');
-$data['ip'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-$data['userAgent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
-
 try {
-    $record = jsonbin_get();
+    $record = jsonbin_get('fingerprint');
     if (!isset($record['_device_fingerprints']) || !is_array($record['_device_fingerprints'])) {
         $record['_device_fingerprints'] = [];
     }
 
+    $data['loggedAt'] = gmdate('c');
     $record['_device_fingerprints'][] = $data;
 
     if (count($record['_device_fingerprints']) > 200) {
         $record['_device_fingerprints'] = array_slice($record['_device_fingerprints'], -200);
     }
 
-    jsonbin_put($record);
+    jsonbin_put($record, 'fingerprint');
 
     echo json_encode(['status' => 'ok']);
 } catch (Exception $e) {
@@ -53,4 +50,5 @@ try {
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => 'falha ao salvar fingerprint']);
 }
+?>
 
