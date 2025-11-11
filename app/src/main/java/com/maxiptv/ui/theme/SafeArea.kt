@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,10 +16,14 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 import com.maxiptv.MaxiApp
 import kotlin.math.pow
 import kotlin.math.sqrt
+
+private data class SafePaddingResult(
+  val padding: PaddingValues,
+  val profile: String
+)
 
 @Composable
 fun MaxiSafeArea(
@@ -37,7 +43,7 @@ fun MaxiSafeArea(
     sqrt(width.pow(2.0) + height.pow(2.0))
   }
 
-  val safePadding = remember(
+  val paddingResult = remember(
     MaxiApp.isFireStick,
     MaxiApp.isNativeTv,
     MaxiApp.isTvBox,
@@ -49,11 +55,14 @@ fun MaxiSafeArea(
         val horizontal = MaxiApp.fireStickOverscanPadding.coerceAtLeast(20)
         val top = (MaxiApp.fireStickSafeAreaPadding / 2).coerceAtLeast(10)
         val bottom = (MaxiApp.fireStickSafeAreaPadding + 12).coerceAtLeast(28)
-        PaddingValues(
-          start = horizontal.dp,
-          top = top.dp,
-          end = horizontal.dp,
-          bottom = bottom.dp
+        SafePaddingResult(
+          padding = PaddingValues(
+            start = horizontal.dp,
+            top = top.dp,
+            end = horizontal.dp,
+            bottom = bottom.dp
+          ),
+          profile = "fire_stick"
         )
       }
 
@@ -70,7 +79,10 @@ fun MaxiSafeArea(
           diagonalInches >= 55 -> 36.dp
           else -> 30.dp
         }
-        PaddingValues(horizontal = horizontal, vertical = vertical)
+        SafePaddingResult(
+          padding = PaddingValues(horizontal = horizontal, vertical = vertical),
+          profile = "projector"
+        )
       }
 
       MaxiApp.isNativeTv -> {
@@ -88,7 +100,10 @@ fun MaxiSafeArea(
           diagonalInches >= 45 -> 28.dp
           else -> 24.dp
         }
-        PaddingValues(horizontal = horizontal, vertical = vertical)
+        SafePaddingResult(
+          padding = PaddingValues(horizontal = horizontal, vertical = vertical),
+          profile = "native_tv"
+        )
       }
 
       MaxiApp.isTvBox -> {
@@ -104,12 +119,21 @@ fun MaxiSafeArea(
           diagonalInches >= 45 -> 22.dp
           else -> 18.dp
         }
-        PaddingValues(horizontal = horizontal, vertical = vertical)
+        SafePaddingResult(
+          padding = PaddingValues(horizontal = horizontal, vertical = vertical),
+          profile = "tv_box"
+        )
       }
 
-      else -> PaddingValues()
+      else -> SafePaddingResult(
+        padding = PaddingValues(),
+        profile = "generic"
+      )
     }
   }
+
+  val safePadding = paddingResult.padding
+  val paddingProfile = paddingResult.profile
 
   val scaleFactor = remember(
     MaxiApp.isNativeTv,
@@ -142,6 +166,16 @@ fun MaxiSafeArea(
 
       else -> 1f
     }
+  }
+
+  LaunchedEffect(safePadding, scaleFactor, diagonalInches, paddingProfile) {
+    SafeAreaMetrics.save(
+      context = context,
+      padding = safePadding,
+      scaleFactor = scaleFactor,
+      diagonalInches = diagonalInches,
+      profile = paddingProfile
+    )
   }
 
   val baseModifier = Modifier
