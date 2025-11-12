@@ -1,8 +1,4 @@
 <?php
-require_once __DIR__ . '/config-000webhost.php';
-require_once __DIR__ . '/utils/jsonbin.php';
-require_once __DIR__ . '/utils/logger.php';
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -13,14 +9,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// Configurações JSONBin - Fingerprint (mesmo padrão dos outros PHP)
+$fingerprint_jsonbin_url = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b/latest";
+$fingerprint_jsonbin_update = "https://api.jsonbin.io/v3/b/68ec647643b1c97be964e96b";
+$fingerprint_apiKey = '$2a$10$3pxLra119/KvUF12CkD0kuHvXq/BPF4.YyEuqe/sVcNBoSMtMz1Ae';
+
+function jsonbin_get_fingerprint() {
+    global $fingerprint_jsonbin_url, $fingerprint_apiKey;
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $fingerprint_jsonbin_url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "X-Master-Key: $fingerprint_apiKey"
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200 || !$response) {
+        throw new Exception("JSONBin GET falhou (HTTP=$httpCode)");
+    }
+    
+    $json = json_decode($response, true);
+    if (!is_array($json) || !isset($json['record'])) {
+        throw new Exception("JSONBin resposta inválida");
+    }
+    
+    return $json['record'];
+}
+
+function jsonbin_put_fingerprint($record) {
+    global $fingerprint_jsonbin_update, $fingerprint_apiKey;
+    
+    $body = json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $fingerprint_jsonbin_update);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "X-Master-Key: $fingerprint_apiKey",
+        "Content-Type: application/json"
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode < 200 || $httpCode >= 300) {
+        throw new Exception("JSONBin PUT falhou (HTTP=$httpCode resp=$response)");
+    }
+}
+
 $rawInput = file_get_contents('php://input');
 if (!$rawInput) {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'payload vazio']);
     exit;
 }
-
-env_log('device-fingerprint', ['input' => $rawInput, 'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown']);
 
 $data = json_decode($rawInput, true);
 if (!is_array($data)) {
@@ -30,7 +83,7 @@ if (!is_array($data)) {
 }
 
 try {
-    $record = jsonbin_get('fingerprint');
+    $record = jsonbin_get_fingerprint();
     if (!isset($record['_device_fingerprints']) || !is_array($record['_device_fingerprints'])) {
         $record['_device_fingerprints'] = [];
     }
@@ -42,13 +95,12 @@ try {
         $record['_device_fingerprints'] = array_slice($record['_device_fingerprints'], -200);
     }
 
-    jsonbin_put($record, 'fingerprint');
+    jsonbin_put_fingerprint($record);
 
     echo json_encode(['status' => 'ok']);
 } catch (Exception $e) {
-    env_log('device-fingerprint-error', ['error' => $e->getMessage()]);
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'falha ao salvar fingerprint']);
+    echo json_encode(['status' => 'error', 'message' => 'falha ao salvar fingerprint: ' . $e->getMessage()]);
 }
 ?>
 
