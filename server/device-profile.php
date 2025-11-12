@@ -20,7 +20,7 @@ function jsonbin_get_fingerprint() {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $fingerprint_jsonbin_url);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "X-Master-Key: $fingerprint_apiKey"
+        "X-Master-Key: " . $fingerprint_apiKey
     ]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -51,8 +51,8 @@ function jsonbin_put_fingerprint($record) {
     curl_setopt($ch, CURLOPT_URL, $fingerprint_jsonbin_update);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "X-Master-Key: $fingerprint_apiKey",
-        "Content-Type: application/json"
+        "Content-Type: application/json",
+        "X-Master-Key: " . $fingerprint_apiKey
     ]);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
