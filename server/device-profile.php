@@ -35,11 +35,22 @@ function jsonbin_get_fingerprint() {
     }
     
     $json = json_decode($response, true);
-    if (!is_array($json) || !isset($json['record'])) {
+    if (!is_array($json)) {
         throw new Exception("JSONBin resposta inválida");
     }
     
-    return $json['record'];
+    // Se não tiver 'record' ou estiver vazio, retornar objeto vazio
+    if (!isset($json['record'])) {
+        return [];
+    }
+    
+    // Garantir que record seja um array
+    $record = $json['record'];
+    if (!is_array($record)) {
+        return [];
+    }
+    
+    return $record;
 }
 
 function jsonbin_put_fingerprint($record) {
@@ -80,7 +91,15 @@ if ($method === 'GET') {
 
     try {
         $record = jsonbin_get_fingerprint();
-        $profiles = $record['_device_profiles'] ?? [];
+        // Garantir que $record seja um array
+        if (!is_array($record)) {
+            $record = [];
+        }
+        // Garantir que _device_profiles seja um objeto (array associativo)
+        if (!isset($record['_device_profiles']) || !is_array($record['_device_profiles'])) {
+            $record['_device_profiles'] = [];
+        }
+        $profiles = $record['_device_profiles'];
 
         if (isset($profiles[$fingerprint])) {
             echo json_encode([
@@ -130,6 +149,11 @@ if ($method === 'POST') {
 
     try {
         $record = jsonbin_get_fingerprint();
+        // Garantir que $record seja um array (se JSONBin estiver vazio)
+        if (!is_array($record)) {
+            $record = [];
+        }
+        // Garantir que _device_profiles seja um objeto (array associativo)
         if (!isset($record['_device_profiles']) || !is_array($record['_device_profiles'])) {
             $record['_device_profiles'] = [];
         }
