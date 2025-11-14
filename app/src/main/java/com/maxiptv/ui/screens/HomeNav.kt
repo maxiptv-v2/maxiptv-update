@@ -13,7 +13,6 @@ import androidx.navigation.compose.rememberNavController
 import com.maxiptv.data.UserManager
 import com.maxiptv.data.SessionManager
 import com.maxiptv.data.DeviceFingerprint
-import com.maxiptv.data.FingerprintApi
 import com.maxiptv.ui.theme.SafeAreaMetrics
 import com.maxiptv.ui.theme.SafeAreaOverrides
 import kotlinx.coroutines.Dispatchers
@@ -397,15 +396,9 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
     }
   }
   
-  LaunchedEffect(initialRoute, fingerprintInfo.key) {
-    val route = initialRoute
-    if (route == "home" && !SafeAreaOverrides.hasOverride(context, fingerprintInfo.key)) {
-      val override = FingerprintApi.fetchOverride(context, fingerprintInfo)
-      override?.let {
-        SafeAreaOverrides.update(context, fingerprintInfo.key, it)
-      }
-    }
-  }
+  // Detecção automática local (sem servidor)
+  // A detecção automática é feita diretamente no MaxiSafeArea
+  // Não precisa buscar do servidor - tudo é calculado localmente
   
   // Aguardar verificação antes de renderizar
   if (initialRoute == null) {
@@ -443,9 +436,8 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
         }
       }
 
-      SafeAreaMetrics.snapshot(context)?.let { snapshot ->
-        FingerprintApi.submitProfile(context, fingerprintInfo, snapshot)
-      }
+      // Detecção automática local - não precisa enviar para servidor
+      // O SafeAreaAutoDetector já salva localmente quando detecta
     }
   }
   
