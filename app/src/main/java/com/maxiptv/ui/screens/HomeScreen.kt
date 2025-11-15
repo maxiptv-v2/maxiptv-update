@@ -505,16 +505,17 @@ fun HomeScreen(nav: NavHostController) {
     modifier = Modifier.fillMaxSize()
   ) {
   Column(
-      modifier = Modifier.fillMaxSize()
+      modifier = Modifier
+        .fillMaxSize()
+        .background(Color.Transparent) // Background transparente para evitar faixa cinza
     ) {
       // Logo Max IPTV com Neon e Botão SAIR (TopBar removida)
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .padding(
-            vertical = if (isFireStick) 12.dp else if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp,
-            horizontal = horizontalPadding
-          )
+          .padding(horizontal = horizontalPadding)
+          .padding(bottom = if (isFireStick) 12.dp else if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp)
+          // Padding do topo removido para eliminar faixa cinza
       ) {
         // Logo à esquerda
         Row(

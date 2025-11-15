@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maxiptv"
-    android:versionCode="193"
-    android:versionName="1.0.193" >
+    android:versionCode="195"
+    android:versionName="1.0.195" >
 
     <uses-sdk
         android:minSdkVersion="21"
@@ -62,7 +62,8 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="sensor"
-            android:stateNotNeeded="false" >
+            android:stateNotNeeded="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

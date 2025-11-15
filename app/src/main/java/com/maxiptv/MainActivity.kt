@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
@@ -43,6 +44,21 @@ class MainActivity : ComponentActivity() {
       val windowInsetsController = androidx.core.view.WindowInsetsControllerCompat(window, window.decorView)
       windowInsetsController.hide(androidx.core.view.WindowInsetsCompat.Type.statusBars())
       windowInsetsController.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+      
+      // 🔥 FLAGS ADICIONAIS PARA TODAS AS TVs: Garantir que status bar seja completamente oculta
+      window.addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
+      window.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+      window.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+      
+      // Forçar ocultar status bar de forma mais agressiva (Fire OS e TV Box)
+      window.decorView.systemUiVisibility = (
+        android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+        or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        or android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+      )
     }
     
     // 📱 CONFIGURAÇÕES ESPECÍFICAS PARA SMARTPHONES
@@ -75,7 +91,10 @@ class MainActivity : ComponentActivity() {
           }
         }
         
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Surface(
+          modifier = Modifier.fillMaxSize(),
+          color = Color.Transparent  // Transparente para evitar barra azul no topo
+        ) {
           MaxiSafeArea {
             HomeNav(nav, this@MainActivity)
           }
