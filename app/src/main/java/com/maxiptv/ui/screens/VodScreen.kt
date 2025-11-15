@@ -25,6 +25,8 @@ import androidx.navigation.NavHostController
 import com.maxiptv.MaxiApp
 import com.maxiptv.data.XRepo
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun VodScreen(nav: NavHostController) {
@@ -146,7 +148,18 @@ fun VodScreen(nav: NavHostController) {
               else Modifier
             )
         ) {
-          AsyncImage(model = v.stream_icon, contentDescription = v.name, modifier = Modifier.height(220.dp).fillMaxWidth(), contentScale = ContentScale.Crop)
+          AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+              .data(v.stream_icon)
+              .size(400, 600) // ⚡ Redimensionar para economizar memória (largura x altura em pixels)
+              .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+              .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+              .crossfade(200) // Transição suave
+              .build(),
+            contentDescription = v.name,
+            modifier = Modifier.height(220.dp).fillMaxWidth(),
+            contentScale = ContentScale.Crop
+          )
           Text(
             text = v.name,
             modifier = Modifier.padding(10.dp),
