@@ -34041,6 +34041,7 @@ com.maxiptv.ui.theme.SafeAreaMetrics:
     private static final java.lang.String KEY_WIDTH_DP
     private static final java.lang.String PREF_NAME
 com.maxiptv.ui.theme.SafeAreaOverride:
+    public static final int $stable
     public final java.lang.String component1()
     public final float component2()
     public final float component3()
@@ -69843,7 +69844,6 @@ com.maxiptv.ui.theme.SafeAreaKt$MaxiSafeArea$scaledModifier$1$1
 com.maxiptv.ui.theme.SafeAreaKt
 com.maxiptv.ui.theme.SafeAreaMetrics
 com.maxiptv.ui.theme.SafeAreaOverride:
-    public static final int $stable
     static void <clinit>()
     public static float getBottomDp()
     public static float getEndDp()
