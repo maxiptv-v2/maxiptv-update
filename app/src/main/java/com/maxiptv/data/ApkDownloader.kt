@@ -36,6 +36,65 @@ object ApkDownloader {
     }
     
     /**
+     * Obtém diretório de Downloads de forma compatível (API moderna quando disponível)
+     * ATUALIZADO: Usa métodos modernos para Android 10+ (API 29+)
+     */
+    private fun getDownloadsDirectory(context: Context): File? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android 10+ (API 29+): Usar método moderno
+            try {
+                // Tentar obter diretório público de Downloads via MediaStore
+                val downloadsUri = android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI
+                val projection = arrayOf(android.provider.MediaStore.Downloads._ID)
+                val cursor = context.contentResolver.query(
+                    downloadsUri,
+                    projection,
+                    null,
+                    null,
+                    null
+                )
+                cursor?.use {
+                    // Se conseguir acessar MediaStore, usar diretório padrão
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                } ?: run {
+                    // Fallback: usar diretório do app (sempre funciona)
+                    context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                        ?: context.getExternalFilesDir(null)?.let { File(it, "Downloads") }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Erro ao obter diretório moderno, usando fallback: ${e.message}")
+                // Fallback para método antigo se necessário
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    @Suppress("DEPRECATION")
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                } else {
+                    context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                        ?: context.getExternalFilesDir(null)?.let { File(it, "Downloads") }
+                }
+            }
+        } else {
+            // Android < 10: Usar método antigo (ainda funciona)
+            @Suppress("DEPRECATION")
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        }
+    }
+    
+    /**
+     * Obtém diretório raiz de armazenamento externo (compatível)
+     * ATUALIZADO: Usa métodos modernos quando disponível
+     */
+    private fun getExternalStorageRoot(context: Context): File? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android 10+: Usar diretório do app como base
+            context.getExternalFilesDir(null)?.parentFile?.parentFile
+        } else {
+            // Android < 10: Usar método antigo
+            @Suppress("DEPRECATION")
+            Environment.getExternalStorageDirectory()
+        }
+    }
+    
+    /**
      * Verifica se o app tem permissão para instalar APKs
      */
     fun canInstallPackages(context: Context): Boolean {
@@ -84,24 +143,30 @@ object ApkDownloader {
         val fileName = "maxiptv-$safeVersion-$timestamp.apk"
         
         // 🔥 LIMPAR ARQUIVOS ANTIGOS ANTES DE BAIXAR (evita cache do Fire OS)
+        // ATUALIZADO: Usa métodos modernos compatíveis com Android 10+
         try {
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            if (downloadsDir.exists() && downloadsDir.isDirectory) {
-                downloadsDir.listFiles()?.filter { 
-                    it.name.startsWith("maxiptv", ignoreCase = true) && it.name.endsWith(".apk", ignoreCase = true)
-                }?.forEach { oldFile ->
-                    try {
-                        oldFile.delete()
-                        Log.d(TAG, "🗑️ Arquivo antigo deletado: ${oldFile.name}")
-                    } catch (e: Exception) {
-                        Log.w(TAG, "⚠️ Não foi possível deletar arquivo antigo: ${oldFile.name}")
+            val downloadsDir = getDownloadsDirectory(appContext)
+            downloadsDir?.let { dir ->
+                if (dir.exists() && dir.isDirectory) {
+                    dir.listFiles()?.filter { 
+                        it.name.startsWith("maxiptv", ignoreCase = true) && it.name.endsWith(".apk", ignoreCase = true)
+                    }?.forEach { oldFile ->
+                        try {
+                            oldFile.delete()
+                            Log.d(TAG, "🗑️ Arquivo antigo deletado: ${oldFile.name}")
+                        } catch (e: Exception) {
+                            Log.w(TAG, "⚠️ Não foi possível deletar arquivo antigo: ${oldFile.name}")
+                        }
                     }
                 }
-                
-                // Também limpar em caminhos alternativos do Fire OS
-                if (isFireOS(appContext)) {
-                    val altPath1 = File(Environment.getExternalStorageDirectory(), "Download")
-                    val altPath2 = File(Environment.getExternalStorageDirectory(), "Downloads")
+            }
+            
+            // Também limpar em caminhos alternativos do Fire OS
+            if (isFireOS(appContext)) {
+                val storageRoot = getExternalStorageRoot(appContext)
+                storageRoot?.let { root ->
+                    val altPath1 = File(root, "Download")
+                    val altPath2 = File(root, "Downloads")
                     listOf(altPath1, altPath2).forEach { altDir ->
                         if (altDir.exists() && altDir.isDirectory) {
                             altDir.listFiles()?.filter {
@@ -175,9 +240,9 @@ object ApkDownloader {
                     Log.i(TAG, "✅ Download completo! Instalando...")
                     if (isFire) {
                         Log.i(TAG, "🔥 Fire OS detectado - aguardando antes de instalar...")
-                        // No Fire OS, aguardar um pouco mais para garantir que arquivo está pronto
+                        // No Fire OS, aguardar mais tempo para garantir que arquivo está pronto
                         try {
-                            Thread.sleep(1000)
+                            Thread.sleep(2000)
                         } catch (e: InterruptedException) {
                             Log.w(TAG, "⚠️ Interrupção durante espera")
                         }
@@ -246,9 +311,9 @@ object ApkDownloader {
                     
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
                         Log.i(TAG, "✅ Download já está completo! Instalando...")
-                        // No Fire OS, aguardar um pouco mais para garantir que arquivo está pronto
+                        // No Fire OS, aguardar mais tempo para garantir que arquivo está pronto
                         if (isFireOS(context)) {
-                            Thread.sleep(1000)
+                            Thread.sleep(2000)
                         }
                         installApk(context, fileName)
                         clearDownloadInfo(context)
@@ -312,21 +377,27 @@ object ApkDownloader {
             }
             
             // Tentar múltiplos caminhos possíveis (Fire OS pode ter caminhos diferentes)
+            // ATUALIZADO: Usa métodos modernos compatíveis com Android 10+
             val possiblePaths = mutableListOf<File>()
             
-            // Caminho padrão
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            possiblePaths.add(File(downloadsDir, fileName))
+            // Caminho padrão (usando método moderno)
+            val downloadsDir = getDownloadsDirectory(appContext)
+            downloadsDir?.let { dir ->
+                possiblePaths.add(File(dir, fileName))
+            }
             
             // Para Fire OS, tentar também caminhos alternativos
             if (isFire) {
-                // Caminho alternativo 1: Downloads direto
-                val altPath1 = File(Environment.getExternalStorageDirectory(), "Download/$fileName")
-                possiblePaths.add(altPath1)
-                
-                // Caminho alternativo 2: Downloads com D maiúsculo
-                val altPath2 = File(Environment.getExternalStorageDirectory(), "Downloads/$fileName")
-                possiblePaths.add(altPath2)
+                val storageRoot = getExternalStorageRoot(appContext)
+                storageRoot?.let { root ->
+                    // Caminho alternativo 1: Downloads direto
+                    val altPath1 = File(root, "Download/$fileName")
+                    possiblePaths.add(altPath1)
+                    
+                    // Caminho alternativo 2: Downloads com D maiúsculo
+                    val altPath2 = File(root, "Downloads/$fileName")
+                    possiblePaths.add(altPath2)
+                }
                 
                 Log.d(TAG, "🔍 Verificando caminhos possíveis no Fire OS:")
                 possiblePaths.forEach { path ->
@@ -345,17 +416,19 @@ object ApkDownloader {
             }
             
             // Se não encontrou no caminho exato, procurar qualquer APK do MaxiPTV
+            // ATUALIZADO: Usa métodos modernos compatíveis
             if (file == null) {
                 Log.w(TAG, "⚠️ Arquivo não encontrado no caminho exato, procurando alternativas...")
                 
-                val searchDirs = if (isFire) {
-                    listOf(
-                        downloadsDir,
-                        File(Environment.getExternalStorageDirectory(), "Download"),
-                        File(Environment.getExternalStorageDirectory(), "Downloads")
-                    )
-                } else {
-                    listOf(downloadsDir)
+                val searchDirs = mutableListOf<File>()
+                downloadsDir?.let { searchDirs.add(it) }
+                
+                if (isFire) {
+                    val storageRoot = getExternalStorageRoot(appContext)
+                    storageRoot?.let { root ->
+                        searchDirs.add(File(root, "Download"))
+                        searchDirs.add(File(root, "Downloads"))
+                    }
                 }
                 
                 for (searchDir in searchDirs) {
@@ -393,7 +466,7 @@ object ApkDownloader {
             }
             
             // No Fire OS, aguardar mais tempo para garantir que arquivo está completamente escrito
-            val waitTime = if (isFire) 1500L else 500L
+            val waitTime = if (isFire) 2000L else 500L
             Log.d(TAG, "⏳ Aguardando ${waitTime}ms para garantir arquivo completo...")
             Thread.sleep(waitTime)
             
@@ -489,10 +562,22 @@ object ApkDownloader {
                     // No Fire OS, garantir que o Intent tem todas as flags necessárias
                     if (isFire) {
                         installIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        installIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        installIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                         Log.d(TAG, "🔥 Flags adicionais aplicadas para Fire OS")
                         
-                        // No Fire OS, aguardar um pouco mais antes de iniciar instalação
-                        Thread.sleep(500)
+                        // No Fire OS, aguardar mais tempo antes de iniciar instalação (evita app fechar)
+                        // Isso dá tempo para o sistema processar o arquivo completamente
+                        Log.d(TAG, "⏳ Aguardando 2000ms antes de iniciar instalação no Fire OS...")
+                        Thread.sleep(2000)
+                        
+                        // Verificar novamente se arquivo ainda existe e tem tamanho válido
+                        if (!file.exists() || file.length() == 0L) {
+                            Log.e(TAG, "❌ Arquivo desapareceu ou ficou vazio após espera no Fire OS!")
+                            return
+                        }
+                        
+                        Log.d(TAG, "✅ Arquivo ainda válido após espera: ${file.length()} bytes")
                     }
                     
                     appContext.startActivity(installIntent)

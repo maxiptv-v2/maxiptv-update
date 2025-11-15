@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -61,6 +62,8 @@ fun LiveScreen(nav: NavHostController) {
   // Context precisa ser lido FORA do remember
   val context = LocalContext.current
   val isTv = MaxiApp.isTv
+  val isFireStick = MaxiApp.isFireStick
+  val isPhone = MaxiApp.isPhone
   
   // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer com RETRY AUTOMÁTICO E BUFFERS OTIMIZADOS
   val sharedPlayer = remember {
@@ -197,6 +200,56 @@ fun LiveScreen(nav: NavHostController) {
   
   // LAYOUT NORMAL (com TopBar, Categorias, Mini Player)
   Column(Modifier.fillMaxSize()) {
+    // TopBar com Logo e Botão Voltar (APENAS no Fire Stick para evitar que status bar cubra categorias)
+    if (isFireStick) {
+      val horizontalPadding = 12.dp
+      
+      Box(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(
+            vertical = 12.dp,
+            horizontal = horizontalPadding
+          )
+      ) {
+        // Logo à esquerda
+        Row(
+          modifier = Modifier.align(Alignment.CenterStart),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.Start
+        ) {
+          Icon(
+            imageVector = Icons.Filled.PlayArrow,
+            contentDescription = "Logo",
+            modifier = Modifier.size(40.dp),
+            tint = Color(0xFF00D4FF)
+          )
+          
+          Spacer(Modifier.width(12.dp))
+          
+          Text(
+            text = "Max IPTV",
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF00D4FF)
+          )
+        }
+        
+        // Botão Voltar à direita
+        IconButton(
+          onClick = { nav.popBackStack() },
+          modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+          Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = "Voltar",
+            tint = Color(0xFF00D4FF),
+            modifier = Modifier.size(40.dp)
+          )
+        }
+      }
+    }
+    
     CategoryChips(
       categories = categoriesWithAdult, 
       selectedId = selectedCat, 

@@ -5,8 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -38,7 +42,62 @@ fun VodScreen(nav: NavHostController) {
   val categoriesWithAdult = listOf("🔞 ADULTO" to "ADULT") + normalCats.map { it.category_name to it.category_id }
   
   LaunchedEffect(Unit) { XRepo.ensureVodLoaded() }
+  
+  val isFireStick = MaxiApp.isFireStick
+  val isTv = MaxiApp.isTv
+  val isPhone = MaxiApp.isPhone
+  
   Column(Modifier.fillMaxSize()) {
+    // TopBar com Logo e Botão Voltar (APENAS no Fire Stick para evitar que status bar cubra categorias)
+    if (isFireStick) {
+      val horizontalPadding = 12.dp
+      
+      Box(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(
+            vertical = 12.dp,
+            horizontal = horizontalPadding
+          )
+      ) {
+        // Logo à esquerda
+        Row(
+          modifier = Modifier.align(Alignment.CenterStart),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.Start
+        ) {
+          Icon(
+            imageVector = Icons.Filled.PlayArrow,
+            contentDescription = "Logo",
+            modifier = Modifier.size(40.dp),
+            tint = Color(0xFF00D4FF)
+          )
+          
+          Spacer(Modifier.width(12.dp))
+          
+          Text(
+            text = "Max IPTV",
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF00D4FF)
+          )
+        }
+        
+        // Botão Voltar à direita
+        IconButton(
+          onClick = { nav.popBackStack() },
+          modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+          Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = "Voltar",
+            tint = Color(0xFF00D4FF),
+            modifier = Modifier.size(40.dp)
+          )
+        }
+      }
+    }
+    
     CategoryChips(
       categories = categoriesWithAdult, 
       selectedId = selectedCat, 

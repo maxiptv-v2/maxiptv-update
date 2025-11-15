@@ -14,11 +14,20 @@ import com.maxiptv.MaxiApp
 @Composable
 fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, onSelect: (String?) -> Unit) {
   val isTv = MaxiApp.isTv
+  val isFireStick = MaxiApp.isFireStick
   val fontSize = if (isTv) 16.sp else 14.sp
-  val verticalPadding = if (isTv) 16.dp else 12.dp
+  // Fire Stick: TopBar explícito cria espaço, então só precisa de pequeno espaçamento
+  // TV Box: Não tem TopBar, então usa padding normal
+  val topPadding = if (isFireStick) 8.dp else if (isTv) 16.dp else 12.dp
+  val bottomPadding = if (isTv) 16.dp else 12.dp
   val horizontalPadding = if (isTv) 20.dp else 16.dp
   
-  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = horizontalPadding, vertical = verticalPadding)) {
+  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(
+    start = horizontalPadding,
+    end = horizontalPadding,
+    top = topPadding,
+    bottom = bottomPadding
+  )) {
     AssistChip(
       onClick = { onSelect(null) }, 
       label = { 

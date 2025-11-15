@@ -506,7 +506,7 @@ fun HomeScreen(nav: NavHostController) {
   ) {
   Column(
       modifier = Modifier.fillMaxSize()
-    ) {
+      ) {
       // Logo Max IPTV com Neon e Botão SAIR (TopBar removida)
       Box(
         modifier = Modifier
@@ -939,8 +939,8 @@ fun CategoryButton(
       Text(
         text = emoji,
         fontSize = emojiSize,
-        // Fire Stick pode não herdar cor corretamente, então definir explicitamente
-        color = if (deviceType == "firestick") Color.Black else Color.Unspecified
+        // Fire Stick: usar cor branca explícita (fundo verde claro)
+        color = if (deviceType == "firestick") Color.White else Color.Unspecified
       )
       Spacer(Modifier.height(if (deviceType == "phone") 2.dp else 4.dp))
       Text(
@@ -948,8 +948,8 @@ fun CategoryButton(
         fontSize = fontSize,
         fontWeight = FontWeight.Bold,
         fontFamily = FontFamily.SansSerif,
-        // Fire Stick pode não herdar cor corretamente, então definir explicitamente
-        color = if (deviceType == "firestick") Color.Black else Color.Unspecified,
+        // Fire Stick: usar cor branca explícita (fundo verde claro)
+        color = if (deviceType == "firestick") Color.White else Color.Unspecified,
         maxLines = 1
       )
     }
