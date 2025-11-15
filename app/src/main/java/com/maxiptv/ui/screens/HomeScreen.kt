@@ -37,8 +37,6 @@ import com.maxiptv.data.ApkDownloader
 import com.maxiptv.data.DeviceLogger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun HomeScreen(nav: NavHostController) {
@@ -49,7 +47,6 @@ fun HomeScreen(nav: NavHostController) {
   var daysUntilExpiry by remember { mutableStateOf(0) }
   var isLoggingOut by remember { mutableStateOf(false) }
   var showLogoutDialog by remember { mutableStateOf(false) }
-  var currentTime by remember { mutableStateOf("") }
   var showLiveCarousel by remember { mutableStateOf(true) }
   var eventosCanal by remember { mutableStateOf<com.maxiptv.data.LiveStream?>(null) }
   var conteudosCanal by remember { mutableStateOf<com.maxiptv.data.LiveStream?>(null) }
@@ -120,15 +117,6 @@ fun HomeScreen(nav: NavHostController) {
       android.util.Log.i("HomeScreen", "   URL: ${conteudosCanal?.toLiveUrl()}")
     } else {
       android.util.Log.w("HomeScreen", "❌ Categoria 'Avisos' não encontrada!")
-    }
-  }
-  
-  // Atualizar relógio a cada segundo
-  LaunchedEffect(Unit) {
-    while (true) {
-      val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-      currentTime = sdf.format(Date())
-      delay(1000)
     }
   }
   
@@ -519,58 +507,18 @@ fun HomeScreen(nav: NavHostController) {
   Column(
       modifier = Modifier.fillMaxSize()
     ) {
-      // TopBar com Botão SAIR e Relógio Digital
+      // Logo Max IPTV com Neon e Botão SAIR (TopBar removida)
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .background(Color(0xFF1A1A1A))
           .padding(
-            horizontal = horizontalPadding,
-            vertical = verticalPadding
+            vertical = if (isFireStick) 12.dp else if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp,
+            horizontal = horizontalPadding
           )
       ) {
-        // Botão SAIR posicionado à esquerda (não no canto)
-        LogoutButton(
-          isFocused = focusedButton == "logout",
-          deviceType = when {
-            isFireStick -> "firestick"
-            isTv -> "tv"
-            isPhone -> "phone"
-            else -> "tablet"
-          },
-          isLoading = isLoggingOut,
-          onFocusChanged = { focusedButton = if (it) "logout" else null },
-          onClick = { showLogoutDialog = true },
-          modifier = Modifier
-            .align(Alignment.CenterStart)
-            .padding(start = if (isTv) 16.dp else if (isPhone) 8.dp else 12.dp)
-        )
-        
-        // Relógio Digital centralizado
-        DigitalClock(
-          time = currentTime,
-          deviceType = when {
-            isFireStick -> "firestick"
-            isTv -> "tv"
-            isPhone -> "phone"
-            else -> "tablet"
-          },
-          modifier = Modifier.align(Alignment.Center)
-        )
-        
-      }
-      
-      // Logo Max IPTV com Neon (posicionado à esquerda)
-      Box(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(
-            vertical = if (isFireStick) 12.dp else if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp,  // APENAS Fire Stick tem mais espaço
-            horizontal = horizontalPadding
-          ),
-        contentAlignment = Alignment.CenterStart
-      ) {
+        // Logo à esquerda
         Row(
+          modifier = Modifier.align(Alignment.CenterStart),
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.Start
         ) {
@@ -598,6 +546,23 @@ fun HomeScreen(nav: NavHostController) {
             }
           )
         }
+        
+        // Botão SAIR posicionado à direita (um pouco à direita do logo)
+        LogoutButton(
+          isFocused = focusedButton == "logout",
+          deviceType = when {
+            isFireStick -> "firestick"
+            isTv -> "tv"
+            isPhone -> "phone"
+            else -> "tablet"
+          },
+          isLoading = isLoggingOut,
+          onFocusChanged = { focusedButton = if (it) "logout" else null },
+          onClick = { showLogoutDialog = true },
+          modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .padding(end = if (isTv) 16.dp else if (isPhone) 8.dp else 12.dp)
+        )
       }
       
       Spacer(Modifier.height(if (isTv) 12.dp else if (isPhone) 8.dp else 10.dp))
@@ -973,7 +938,9 @@ fun CategoryButton(
     ) {
       Text(
         text = emoji,
-        fontSize = emojiSize
+        fontSize = emojiSize,
+        // Fire Stick pode não herdar cor corretamente, então definir explicitamente
+        color = if (deviceType == "firestick") Color.Black else Color.Unspecified
       )
       Spacer(Modifier.height(if (deviceType == "phone") 2.dp else 4.dp))
       Text(
@@ -981,6 +948,8 @@ fun CategoryButton(
         fontSize = fontSize,
         fontWeight = FontWeight.Bold,
         fontFamily = FontFamily.SansSerif,
+        // Fire Stick pode não herdar cor corretamente, então definir explicitamente
+        color = if (deviceType == "firestick") Color.Black else Color.Unspecified,
         maxLines = 1
       )
     }

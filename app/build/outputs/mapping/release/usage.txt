@@ -15502,12 +15502,14 @@ androidx.compose.ui.text.font.Font:
     static void <clinit>()
 androidx.compose.ui.text.font.FontFamily$Companion:
     public final androidx.compose.ui.text.font.GenericFontFamily getCursive()
+    public final androidx.compose.ui.text.font.GenericFontFamily getMonospace()
     public final androidx.compose.ui.text.font.GenericFontFamily getSerif()
 androidx.compose.ui.text.font.FontFamily$Resolver:
     public abstract java.lang.Object preload(androidx.compose.ui.text.font.FontFamily,kotlin.coroutines.Continuation)
 androidx.compose.ui.text.font.FontFamily:
     public static final int $stable
     public static final synthetic androidx.compose.ui.text.font.GenericFontFamily access$getCursive$cp()
+    public static final synthetic androidx.compose.ui.text.font.GenericFontFamily access$getMonospace$cp()
     public static final synthetic androidx.compose.ui.text.font.GenericFontFamily access$getSerif$cp()
     public final boolean getCanLoadSynchronously()
     public static synthetic void getCanLoadSynchronously$annotations()
@@ -33995,6 +33997,10 @@ com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$1$1$3
 com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$2
 com.maxiptv.ui.screens.BannerCarouselKt
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$2
+com.maxiptv.ui.screens.HomeScreenKt$DigitalClock$2
+com.maxiptv.ui.screens.HomeScreenKt:
+    public static final void DigitalClock(java.lang.String,java.lang.String,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,int,int)
+    private static final float DigitalClock$lambda$61(androidx.compose.runtime.State)
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$2$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.PlayerSettingsScreenKt$PlayerSettingsScreen$2$3$3$1$1$2$1$1$invoke$$inlined$items$default$2
@@ -57769,7 +57775,6 @@ androidx.compose.ui.text.TextGranularity$Companion:
     public static int getItalic-_-LCdwA()
     public static int getLoose-usljTpc()
     public static androidx.compose.ui.text.font.FontWeight getMedium()
-    public static androidx.compose.ui.text.font.GenericFontFamily getMonospace()
     public static int getNext-eUduSuo()
     public static int getNone-EVpEnUU()
     public static int getNone-GVVA2EU()
@@ -58207,10 +58212,10 @@ androidx.compose.ui.text.font.FontFamily$Resolver:
 androidx.compose.ui.text.font.FontFamily:
     public static final androidx.compose.ui.text.TextGranularity$Companion Companion
     public static final androidx.compose.ui.text.font.GenericFontFamily Cursive
+    public static final androidx.compose.ui.text.font.GenericFontFamily Monospace
     public static final androidx.compose.ui.text.font.GenericFontFamily Serif
     public final boolean canLoadSynchronously
     public static final synthetic androidx.compose.ui.text.font.SystemFontFamily access$getDefault$cp()
-    public static final synthetic androidx.compose.ui.text.font.GenericFontFamily access$getMonospace$cp()
     public static final synthetic androidx.compose.ui.text.font.GenericFontFamily access$getSansSerif$cp()
 androidx.compose.ui.text.font.FontFamilyResolverImpl$createDefaultTypeface$1
 androidx.compose.ui.text.font.FontFamilyResolverImpl$resolve$result$1
@@ -58292,7 +58297,10 @@ androidx.compose.ui.text.font.FontWeight:
 androidx.compose.ui.text.font.FontWeightAdjustmentHelper
 androidx.compose.ui.text.font.FontWeightKt
 androidx.compose.ui.text.font.GenericFontFamily:
+    public final java.lang.String fontFamilyName
+    public final java.lang.String name
     static void <clinit>()
+    public void <init>()
     public final java.lang.String getName()
 androidx.compose.ui.text.font.LoadedFontFamily
 androidx.compose.ui.text.font.PlatformFontFamilyTypefaceAdapter$$InternalSyntheticThrowCCEIfNotNull$25$eff4041c6b42359efbe20440f3f1870ae76ef05af6ec1427ac7a46d88475f928$0
@@ -68774,20 +68782,18 @@ com.google.common.collect.ImmutableSet:
     public static boolean shouldTrim(int,int)
 com.google.common.collect.Iterables:
     public static final boolean AdminPanelScreen$lambda$1(androidx.compose.runtime.MutableState)
-    public static final float CategoryButton$lambda$62(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
-    public static final float DigitalClock$lambda$66(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
-    public static final float ExpiryWarningCard$lambda$59(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final float CategoryButton$lambda$57(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final float ExpiryWarningCard$lambda$54(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
     public static final java.util.List HomeScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List HomeScreen$lambda$1(androidx.compose.runtime.MutableState)
-    public static final java.lang.String HomeScreen$lambda$18(androidx.compose.runtime.MutableState)
-    public static final boolean HomeScreen$lambda$21(androidx.compose.runtime.MutableState)
+    public static final boolean HomeScreen$lambda$18(androidx.compose.runtime.MutableState)
+    public static final com.maxiptv.data.LiveStream HomeScreen$lambda$21(androidx.compose.runtime.MutableState)
     public static final com.maxiptv.data.LiveStream HomeScreen$lambda$24(androidx.compose.runtime.MutableState)
-    public static final com.maxiptv.data.LiveStream HomeScreen$lambda$27(androidx.compose.runtime.MutableState)
+    public static final com.maxiptv.data.UpdateInfo HomeScreen$lambda$27(androidx.compose.runtime.MutableState)
     public static final java.lang.String HomeScreen$lambda$3(androidx.compose.runtime.MutableState)
-    public static final com.maxiptv.data.UpdateInfo HomeScreen$lambda$30(androidx.compose.runtime.MutableState)
-    public static final boolean HomeScreen$lambda$33(androidx.compose.runtime.MutableState)
-    public static final float LogoutButton$lambda$64(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
-    public static final float NeonText_r9BaKPg$lambda$60(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final boolean HomeScreen$lambda$30(androidx.compose.runtime.MutableState)
+    public static final float LogoutButton$lambda$59(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
+    public static final float NeonText_r9BaKPg$lambda$55(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
     public static final com.maxiptv.data.VodInfoResponse VodDetailsScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List VodDetailsScreen$lambda$1(androidx.compose.runtime.MutableState)
     public static final boolean VodDetailsScreen$lambda$12(androidx.compose.runtime.MutableState)
@@ -68797,8 +68803,8 @@ com.google.common.collect.Iterables:
     public static final void access$FavoritesScreen$lambda$14(androidx.compose.runtime.MutableState)
     public static final void access$HomeScreen$lambda$13(androidx.compose.runtime.MutableState,boolean)
     public static final void access$HomeScreen$lambda$16(androidx.compose.runtime.MutableState,boolean)
-    public static final boolean access$HomeScreen$lambda$36(androidx.compose.runtime.MutableState)
-    public static final void access$HomeScreen$lambda$37(androidx.compose.runtime.MutableState)
+    public static final boolean access$HomeScreen$lambda$33(androidx.compose.runtime.MutableState)
+    public static final void access$HomeScreen$lambda$34(androidx.compose.runtime.MutableState)
     public static final void access$HomeScreen$lambda$7(androidx.compose.runtime.MutableState,boolean)
     public static final java.lang.String access$UserDialog$lambda$39(androidx.compose.runtime.MutableState)
     public static final java.lang.String access$UserDialog$lambda$42(androidx.compose.runtime.MutableState)
@@ -69451,7 +69457,6 @@ com.maxiptv.ui.screens.HomeScreenKt$CategoryButton$1$1
 com.maxiptv.ui.screens.HomeScreenKt$CategoryButton$2:
     public final void invoke(androidx.compose.foundation.layout.RowScope,androidx.compose.runtime.Composer,int)
 com.maxiptv.ui.screens.HomeScreenKt$CategoryButton$3
-com.maxiptv.ui.screens.HomeScreenKt$DigitalClock$2
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$1
 com.maxiptv.ui.screens.HomeScreenKt$DualCarousel$1$2:
     public final void invoke$77()
@@ -69472,35 +69477,34 @@ com.maxiptv.ui.screens.HomeScreenKt$ExpiryWarningCard$1:
     public final void invoke(androidx.compose.foundation.layout.ColumnScope,androidx.compose.runtime.Composer,int)
 com.maxiptv.ui.screens.HomeScreenKt$ExpiryWarningCard$2:
     public final void invoke(androidx.compose.runtime.Composer,int)
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$10$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$10$1$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$11$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$12$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$12$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$11$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$13$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14$2
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14$3
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$14
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15$2
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15$3
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15$2$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$15
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$16$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$16$2$1
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$16
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$1$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$1$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$10
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$11$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$12
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$2
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$3$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$4
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$5$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$6
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$7$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$8
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$1$4$9$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18$2
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$19
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$1$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$1$3$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$10
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$11$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$12
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$2
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$3$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$4
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$5$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$6
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$7$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$8
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$1$3$9$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$17$2
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$18
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$2:
@@ -69512,22 +69516,21 @@ com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$4$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$5$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$6$1:
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$5:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$6:
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$6$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1$1$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1$1$2
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1$2
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1:
-    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8:
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$7:
     public final void invoke$78()
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9$1$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9$2$1
-com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$1$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8$2$1
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$8
+com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9$1
 com.maxiptv.ui.screens.HomeScreenKt$LogoutButton$1$1
 com.maxiptv.ui.screens.HomeScreenKt$LogoutButton$2:
     public final void invoke(androidx.compose.foundation.layout.RowScope,androidx.compose.runtime.Composer,int)
