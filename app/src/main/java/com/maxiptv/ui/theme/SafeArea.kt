@@ -304,7 +304,7 @@ fun MaxiSafeArea(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(MaterialTheme.colorScheme.background)
+      // Background removido para evitar barra azul no topo
   ) {
     Box(modifier = scaledModifier, content = content)
     

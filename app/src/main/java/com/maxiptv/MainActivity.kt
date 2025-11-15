@@ -38,6 +38,11 @@ class MainActivity : ComponentActivity() {
       androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
       window.statusBarColor = android.graphics.Color.TRANSPARENT
       window.navigationBarColor = android.graphics.Color.TRANSPARENT
+      
+      // Ocultar completamente a status bar (incluindo texto "MaxiPTV")
+      val windowInsetsController = androidx.core.view.WindowInsetsControllerCompat(window, window.decorView)
+      windowInsetsController.hide(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+      windowInsetsController.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }
     
     // 📱 CONFIGURAÇÕES ESPECÍFICAS PARA SMARTPHONES

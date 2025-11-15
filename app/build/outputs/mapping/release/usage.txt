@@ -18368,7 +18368,6 @@ androidx.core.view.WindowInsetsCompat$Type:
     public static int ime()
     public static int mandatorySystemGestures()
     public static int navigationBars()
-    public static int statusBars()
     public static int systemGestures()
     public static int tappableElement()
 androidx.core.view.WindowInsetsCompat$TypeImpl30:
@@ -51676,7 +51675,7 @@ androidx.compose.runtime.Recomposer$RecomposerInfoImpl:
     public static long getPosition()
     public static boolean hasFlagSystem()
     public final void hide()
-    public final void hide$1()
+    public final void hide(int)
     public static boolean isLevel1Element()
     public static com.google.common.base.Splitter$SplittingIterator iterator()
     public static java.util.Iterator iterator()
@@ -59788,6 +59787,7 @@ androidx.core.view.WindowInsetsCompat$Type:
     public static int inferFileTypeFromResponseHeaders(java.util.Map)
     public static final void set(android.view.View,androidx.lifecycle.ViewModelStoreOwner)
     public static boolean startsWith(byte[],byte[])
+    public static int statusBars()
     public static int systemBars()
 androidx.core.view.WindowInsetsCompat$TypeImpl30$$InternalSyntheticApiModelOutline$2$b589ba04317a3b31c3fe73f4bd3f53d07e89d65fd2d5125cc106790ac25bedc3$0
 androidx.core.view.WindowInsetsCompat$TypeImpl30$$InternalSyntheticApiModelOutline$2$b589ba04317a3b31c3fe73f4bd3f53d07e89d65fd2d5125cc106790ac25bedc3$1
@@ -59819,7 +59819,6 @@ androidx.core.view.WindowInsetsControllerCompat$Impl20:
 androidx.core.view.WindowInsetsControllerCompat$Impl30:
     public final androidx.compose.runtime.Recomposer$RecomposerInfoImpl mCompatController
     public final androidx.collection.SimpleArrayMap mListeners
-    public final androidx.compose.runtime.Recomposer$RecomposerInfoImpl mSoftwareKeyboardControllerCompat
     public android.view.Window mWindow
 androidx.core.view.WindowInsetsControllerCompat$Impl
 androidx.core.view.WindowInsetsControllerCompat

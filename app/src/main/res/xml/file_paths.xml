@@ -2,5 +2,6 @@
 <paths>
     <external-path name="external_files" path="." />
     <external-path name="downloads" path="Download/" />
+    <external-path name="downloads_alt" path="Downloads/" />
 </paths>
 

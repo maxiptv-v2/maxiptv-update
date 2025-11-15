@@ -79,7 +79,49 @@ object ApkDownloader {
         
         // Remover caracteres inválidos da versão para o nome do arquivo
         val safeVersion = version.replace("v", "").replace(".", "_").replace(":", "_")
-        val fileName = "maxiptv-$safeVersion.apk"
+        // Adicionar timestamp ao nome para evitar cache do Fire OS
+        val timestamp = System.currentTimeMillis()
+        val fileName = "maxiptv-$safeVersion-$timestamp.apk"
+        
+        // 🔥 LIMPAR ARQUIVOS ANTIGOS ANTES DE BAIXAR (evita cache do Fire OS)
+        try {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            if (downloadsDir.exists() && downloadsDir.isDirectory) {
+                downloadsDir.listFiles()?.filter { 
+                    it.name.startsWith("maxiptv", ignoreCase = true) && it.name.endsWith(".apk", ignoreCase = true)
+                }?.forEach { oldFile ->
+                    try {
+                        oldFile.delete()
+                        Log.d(TAG, "🗑️ Arquivo antigo deletado: ${oldFile.name}")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "⚠️ Não foi possível deletar arquivo antigo: ${oldFile.name}")
+                    }
+                }
+                
+                // Também limpar em caminhos alternativos do Fire OS
+                if (isFireOS(appContext)) {
+                    val altPath1 = File(Environment.getExternalStorageDirectory(), "Download")
+                    val altPath2 = File(Environment.getExternalStorageDirectory(), "Downloads")
+                    listOf(altPath1, altPath2).forEach { altDir ->
+                        if (altDir.exists() && altDir.isDirectory) {
+                            altDir.listFiles()?.filter {
+                                it.name.startsWith("maxiptv", ignoreCase = true) && it.name.endsWith(".apk", ignoreCase = true)
+                            }?.forEach { oldFile ->
+                                try {
+                                    oldFile.delete()
+                                    Log.d(TAG, "🗑️ Arquivo antigo deletado (alt): ${oldFile.name}")
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "⚠️ Não foi possível deletar arquivo antigo (alt): ${oldFile.name}")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ Erro ao limpar arquivos antigos: ${e.message}")
+        }
+        
         val request = DownloadManager.Request(Uri.parse(downloadUrl))
             .setTitle("MaxiPTV Atualização")
             .setDescription("Baixando versão $version...")
@@ -427,6 +469,13 @@ object ApkDownloader {
                 }
             }
             
+            // Verificar permissão NOVAMENTE imediatamente antes de instalar (compatibilidade Fire OS)
+            if (!canInstallPackages(appContext)) {
+                Log.w(TAG, "⚠️ Permissão de instalação não concedida - solicitando novamente...")
+                requestInstallPermission(appContext)
+                return
+            }
+            
             // Verificar se há um app para lidar com a instalação
             val resolveInfo = appContext.packageManager.resolveActivity(
                 installIntent, 
@@ -441,11 +490,24 @@ object ApkDownloader {
                     if (isFire) {
                         installIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         Log.d(TAG, "🔥 Flags adicionais aplicadas para Fire OS")
+                        
+                        // No Fire OS, aguardar um pouco mais antes de iniciar instalação
+                        Thread.sleep(500)
                     }
                     
                     appContext.startActivity(installIntent)
                     Log.i(TAG, "✅ Instalação iniciada com sucesso!")
                     
+                } catch (e: SecurityException) {
+                    // Fire OS pode lançar SecurityException mesmo com permissão
+                    Log.e(TAG, "❌ SecurityException no Fire OS: ${e.message}", e)
+                    Log.e(TAG, "   Tentando solicitar permissão novamente...")
+                    requestInstallPermission(appContext)
+                } catch (e: android.content.ActivityNotFoundException) {
+                    // Fire OS pode não ter Activity para instalar
+                    Log.e(TAG, "❌ ActivityNotFoundException: ${e.message}", e)
+                    Log.e(TAG, "   Fire OS pode não ter PackageInstaller disponível")
+                    requestInstallPermission(appContext)
                 } catch (e: Exception) {
                     Log.e(TAG, "❌ Erro ao iniciar instalação: ${e.message}", e)
                     e.printStackTrace()
@@ -466,6 +528,10 @@ object ApkDownloader {
                         } catch (e2: Exception) {
                             Log.e(TAG, "❌ Erro no fallback também: ${e2.message}", e2)
                         }
+                    } else {
+                        // No Fire OS, se falhar, tentar solicitar permissão novamente
+                        Log.d(TAG, "🔥 Fire OS: Tentando solicitar permissão novamente após erro")
+                        requestInstallPermission(appContext)
                     }
                 }
             } else {
@@ -474,6 +540,12 @@ object ApkDownloader {
                 Log.e(TAG, "   1. Permissão de instalação não foi concedida")
                 Log.e(TAG, "   2. Fire OS bloqueou instalação de fontes desconhecidas")
                 Log.e(TAG, "   3. PackageInstaller não está disponível")
+                
+                // No Fire OS, quando resolveInfo é null, tentar solicitar permissão
+                if (isFire) {
+                    Log.d(TAG, "🔥 Fire OS: resolveInfo é null - solicitando permissão...")
+                    requestInstallPermission(appContext)
+                }
             }
             
         } catch (e: Exception) {

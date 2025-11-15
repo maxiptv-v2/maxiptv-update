@@ -44,11 +44,14 @@ object UpdateManager {
      */
     suspend fun checkForUpdate(context: Context): UpdateInfo? = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "🔍 Verificando atualizações em: $UPDATE_JSON_URL")
+            // Adicionar timestamp na URL para evitar cache do Fire OS
+            val urlWithTimestamp = "$UPDATE_JSON_URL?t=${System.currentTimeMillis()}"
+            Log.d(TAG, "🔍 Verificando atualizações em: $urlWithTimestamp")
             
             val request = Request.Builder()
-                .url(UPDATE_JSON_URL)
+                .url(urlWithTimestamp)
                 .addHeader("Cache-Control", "no-cache")
+                .addHeader("Pragma", "no-cache")
                 .build()
             
             val response = client.newCall(request).execute()
