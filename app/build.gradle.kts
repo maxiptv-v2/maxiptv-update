@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 200
-        versionName = "1.0.200"
+        versionCode = 201
+        versionName = "1.0.201"
     vectorDrawables.useSupportLibrary = true
     ndk {
       abiFilters += listOf("armeabi-v7a", "arm64-v8a")
@@ -86,6 +86,7 @@ dependencies {
   // ExoPlayer moderno (agora parte do AndroidX Media3)
   implementation("androidx.media3:media3-exoplayer:1.4.1")
   implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
+  implementation("androidx.media3:media3-exoplayer-dash:1.4.1") // DASH streams (recomendado)
   implementation("androidx.media3:media3-ui:1.4.1")
   implementation("androidx.media3:media3-common:1.4.1")
   implementation("androidx.media3:media3-datasource-okhttp:1.4.1")

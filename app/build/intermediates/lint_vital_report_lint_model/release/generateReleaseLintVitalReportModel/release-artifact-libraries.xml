@@ -747,6 +747,19 @@
       externalAnnotations="annotations.zip"
       proguardRules="proguard.txt"/>
   <library
+      name="androidx.media3:media3-exoplayer-dash:1.4.1@aar"
+      jars="C:\Users\maxca\.gradle\caches\8.9\transforms\421e6fb1973481d81ab7e99d28744981\transformed\media3-exoplayer-dash-1.4.1\jars\classes.jar"
+      resolved="androidx.media3:media3-exoplayer-dash:1.4.1"
+      folder="C:\Users\maxca\.gradle\caches\8.9\transforms\421e6fb1973481d81ab7e99d28744981\transformed\media3-exoplayer-dash-1.4.1"
+      manifest="AndroidManifest.xml"
+      resFolder="res"
+      assetsFolder="assets"
+      lintJar="lint.jar"
+      publicResources="public.txt"
+      symbolFile="R.txt"
+      externalAnnotations="annotations.zip"
+      proguardRules="proguard.txt"/>
+  <library
       name="androidx.media3:media3-ui:1.4.1@aar"
       jars="C:\Users\maxca\.gradle\caches\8.9\transforms\9617ab2180782dd203bb262d99792812\transformed\media3-ui-1.4.1\jars\classes.jar"
       resolved="androidx.media3:media3-ui:1.4.1"
