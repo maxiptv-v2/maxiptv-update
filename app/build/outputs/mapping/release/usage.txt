@@ -33995,8 +33995,6 @@ com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$1$1$3
 com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$2
 com.maxiptv.ui.screens.BannerCarouselKt
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$2
-com.maxiptv.ui.screens.HomeNavKt:
-    private static final boolean HomeNav$isExpired(java.lang.String)
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$2$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.PlayerSettingsScreenKt$PlayerSettingsScreen$2$3$3$1$1$2$1$1$invoke$$inlined$items$default$2
@@ -34079,6 +34077,9 @@ com.maxiptv.ui.theme.SafePaddingResult:
     public final boolean getOverscanAdjusted()
 com.maxiptv.util.LangUtilsKt:
     public static final java.lang.String langToString(com.maxiptv.util.Lang)
+com.maxiptv.utils.DateUtils:
+    public static final int $stable
+    private static final java.lang.String TAG
 com.squareup.moshi.AdapterMethodsFactory$1
 com.squareup.moshi.AdapterMethodsFactory$2
 com.squareup.moshi.AdapterMethodsFactory$3
@@ -69883,6 +69884,9 @@ com.maxiptv.ui.theme.SafePaddingResult:
     public static float getScaleFactor()
 com.maxiptv.ui.theme.ThemeKt$MaxiTheme$1
 com.maxiptv.util.LangUtilsKt$WhenMappings
+com.maxiptv.utils.DateUtils:
+    public static final com.maxiptv.utils.DateUtils INSTANCE
+    static void <clinit>()
 com.squareup.moshi.ArrayJsonAdapter$1:
     private static com.squareup.moshi.JsonAdapter create$com$squareup$moshi$RecordJsonAdapter$1()
     public static void createFieldBindings()

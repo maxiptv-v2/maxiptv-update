@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
+import com.maxiptv.data.ApkDownloader
 import com.maxiptv.ui.screens.*
 import com.maxiptv.ui.theme.MaxiSafeArea
 import com.maxiptv.ui.theme.MaxiTheme
@@ -26,6 +27,9 @@ class MainActivity : ComponentActivity() {
   @OptIn(ExperimentalMaterial3Api::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    
+    // 🔄 Verificar se há download pendente (para Fire Stick quando app fecha durante download)
+    ApkDownloader.checkPendingDownload(this)
     
     // 📺 CONFIGURAÇÕES PARA TODAS AS TVs (Fire Stick + TV Box)
     if (MaxiApp.isTv) {

@@ -263,10 +263,10 @@ object SafeAreaAutoDetector {
       return null
     }
     
-    // Retorna ajustes calculados
+    // Retorna ajustes calculados (sem padding no topo para eliminar faixa cinza)
     return SafeAreaOverride(
       profile = "auto_detected",
-      topDp = baseTop,
+      topDp = 0f, // Removido padding do topo para eliminar faixa cinza
       bottomDp = baseBottom,
       startDp = baseStart,
       endDp = baseEnd,

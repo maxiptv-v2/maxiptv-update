@@ -25,6 +25,7 @@ import com.maxiptv.data.UserManager
 import com.maxiptv.data.UserAccount
 import com.maxiptv.data.SessionManager
 import com.maxiptv.MaxiApp
+import com.maxiptv.utils.DateUtils
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,7 +87,7 @@ fun LoginScreen(
           // Verificar se recebeu todos os campos necessários
           if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
             // Validar data de expiração antes de fazer login
-            if (expiryDate.isNotBlank() && isExpired(expiryDate)) {
+            if (expiryDate.isNotBlank() && DateUtils.isExpired(expiryDate)) {
               android.util.Log.e("LoginScreen", "❌ Usuário expirado: $expiryDate")
               errorMessage = "Usuário expirado. Data de validade: $expiryDate"
               isLoading = false
@@ -288,7 +289,7 @@ fun LoginScreen(
                 // Verificar se recebeu todos os campos necessários
                 if (user.isNotBlank() && pass.isNotBlank() && api.isNotBlank()) {
                   // Validar data de expiração antes de fazer login
-                  if (expiryDate.isNotBlank() && isExpired(expiryDate)) {
+                  if (expiryDate.isNotBlank() && DateUtils.isExpired(expiryDate)) {
                     android.util.Log.e("LoginScreen", "❌ Usuário expirado: $expiryDate")
                     errorMessage = "Usuário expirado. Data de validade: $expiryDate"
                     isLoading = false
@@ -413,30 +414,5 @@ suspend fun doLogin(user: String, pass: String, api: String, onSuccess: () -> Un
   }
 }
 
-/**
- * Verificar se data de expiração está vencida (formato DD/MM/YYYY)
- */
-fun isExpired(expiryDate: String): Boolean {
-  return try {
-    if (expiryDate.isBlank()) return false // Se não tem data, não está expirado
-    
-    val parts = expiryDate.split("/")
-    if (parts.size != 3) return true // Formato inválido = considerado expirado
-    
-    val day = parts[0].toInt()
-    val month = parts[1].toInt() - 1 // Calendar months are 0-based
-    val year = parts[2].toInt()
-    
-    val calendar = java.util.Calendar.getInstance()
-    calendar.set(year, month, day, 23, 59, 59)
-    
-    val expiryTime = calendar.timeInMillis
-    val currentTime = System.currentTimeMillis()
-    
-    currentTime > expiryTime
-  } catch (e: Exception) {
-    android.util.Log.e("LoginScreen", "❌ Erro ao verificar expiração: ${e.message}")
-    true // Em caso de erro, considerar expirado por segurança
-  }
-}
+// Função isExpired movida para DateUtils para evitar duplicação
 

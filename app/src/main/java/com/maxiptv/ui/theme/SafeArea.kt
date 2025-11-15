@@ -78,7 +78,7 @@ fun MaxiSafeArea(
       SafePaddingResult(
         padding = PaddingValues(
           start = override.startDp.dp,
-          top = override.topDp.dp,
+          top = 0.dp, // Removido padding do topo para eliminar faixa cinza
           end = override.endDp.dp,
           bottom = override.bottomDp.dp
         ),
@@ -90,7 +90,7 @@ fun MaxiSafeArea(
       SafePaddingResult(
         padding = PaddingValues(
           start = autoOverride.startDp.dp,
-          top = autoOverride.topDp.dp,
+          top = 0.dp, // Removido padding do topo para eliminar faixa cinza
           end = autoOverride.endDp.dp,
           bottom = autoOverride.bottomDp.dp
         ),
@@ -102,12 +102,11 @@ fun MaxiSafeArea(
       when {
         MaxiApp.isFireStick -> {
           val horizontal = MaxiApp.fireStickOverscanPadding.coerceAtLeast(20)
-          val top = (MaxiApp.fireStickSafeAreaPadding / 2).coerceAtLeast(10)
           val bottom = (MaxiApp.fireStickSafeAreaPadding + 12).coerceAtLeast(28)
           SafePaddingResult(
             padding = PaddingValues(
               start = horizontal.dp,
-              top = top.dp,
+              top = 0.dp, // Removido padding do topo para eliminar faixa cinza
               end = horizontal.dp,
               bottom = bottom.dp
             ),
@@ -131,7 +130,7 @@ fun MaxiSafeArea(
             diagonalInches >= 32 -> 38.dp
             else -> 32.dp
           }
-          val vertical = when {
+          val bottom = when {
             diagonalInches >= 100 -> 58.dp
             diagonalInches >= 80 -> 52.dp
             diagonalInches >= 70 -> 48.dp
@@ -145,7 +144,12 @@ fun MaxiSafeArea(
             else -> 20.dp
           }
           SafePaddingResult(
-            padding = PaddingValues(horizontal = horizontal, vertical = vertical),
+            padding = PaddingValues(
+              start = horizontal,
+              top = 0.dp, // Removido padding do topo para eliminar faixa cinza
+              end = horizontal,
+              bottom = bottom
+            ),
             profile = "projector_auto",
             scaleFactor = 0.9f,
             overscanAdjusted = true
@@ -167,7 +171,7 @@ fun MaxiSafeArea(
             diagonalInches >= 32 -> 32.dp
             else -> 28.dp
           }
-          val vertical = when {
+          val bottom = when {
             diagonalInches >= 85 -> 50.dp
             diagonalInches >= 75 -> 46.dp
             diagonalInches >= 70 -> 42.dp
@@ -182,7 +186,12 @@ fun MaxiSafeArea(
             else -> 20.dp
           }
           SafePaddingResult(
-            padding = PaddingValues(horizontal = horizontal, vertical = vertical),
+            padding = PaddingValues(
+              start = horizontal,
+              top = 0.dp, // Removido padding do topo para eliminar faixa cinza
+              end = horizontal,
+              bottom = bottom
+            ),
             profile = "native_tv_auto",
             scaleFactor = when {
               diagonalInches >= 85 -> 0.86f
@@ -216,7 +225,7 @@ fun MaxiSafeArea(
             diagonalInches >= 32 -> 24.dp
             else -> 20.dp
           }
-          val vertical = when {
+          val bottom = when {
             diagonalInches >= 75 -> 38.dp
             diagonalInches >= 70 -> 36.dp
             diagonalInches >= 65 -> 32.dp
@@ -230,7 +239,12 @@ fun MaxiSafeArea(
             else -> 14.dp
           }
           SafePaddingResult(
-            padding = PaddingValues(horizontal = horizontal, vertical = vertical),
+            padding = PaddingValues(
+              start = horizontal,
+              top = 0.dp, // Removido padding do topo para eliminar faixa cinza
+              end = horizontal,
+              bottom = bottom
+            ),
             profile = "tv_box_auto",
             scaleFactor = when {
               diagonalInches >= 75 -> 0.90f
