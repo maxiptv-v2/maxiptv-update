@@ -923,8 +923,8 @@ fun CategoryButton(
       .then(
         if (isFocused) 
           Modifier
-            // Borda vermelha mais fina (3.dp em vez de 8.dp)
-            .border(3.dp, Color(0xFFFF0000), RoundedCornerShape(8.dp))
+            // Borda vermelha mais grossa (6.dp para melhor visibilidade)
+            .border(6.dp, Color(0xFFFF0000), RoundedCornerShape(8.dp))
             .shadow(
               elevation = 25.dp,
               spotColor = Color(0xFFFF0000).copy(alpha = 1f),
@@ -949,13 +949,13 @@ fun CategoryButton(
         .background(Color(0xFF00FF00), RoundedCornerShape(8.dp)),  // Background verde garantido
       contentAlignment = Alignment.Center
     ) {
-      // Overlay branco transparente quando focado
+      // Overlay branco transparente quando focado (mais visível)
       if (isFocused) {
         Box(
           modifier = Modifier
             .fillMaxSize()
             .background(
-              Color.White.copy(alpha = 0.2f),
+              Color.White.copy(alpha = 0.5f),  // Aumentado de 0.2f para 0.5f para melhor visibilidade
               RoundedCornerShape(8.dp)
             )
         )
