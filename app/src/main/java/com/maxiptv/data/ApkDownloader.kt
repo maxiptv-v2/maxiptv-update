@@ -237,25 +237,34 @@ object ApkDownloader {
                 Log.d(TAG, "📡 BroadcastReceiver recebido: downloadId=$id (esperado=$downloadId)")
                 
                 if (id == downloadId) {
-                    Log.i(TAG, "✅ Download completo! Instalando...")
-                    if (isFire) {
-                        Log.i(TAG, "🔥 Fire OS detectado - aguardando antes de instalar...")
-                        // No Fire OS, aguardar mais tempo para garantir que arquivo está pronto
-                        try {
-                            Thread.sleep(2000)
-                        } catch (e: InterruptedException) {
-                            Log.w(TAG, "⚠️ Interrupção durante espera")
-                        }
-                    }
+                    Log.i(TAG, "✅ Download completo! BroadcastReceiver recebido corretamente")
+                    Log.d(TAG, "   Download ID: $id")
+                    Log.d(TAG, "   FileName: $fileName")
+                    Log.d(TAG, "   Fire OS: $isFire")
+                    
+                    // Aguardar um pouco para garantir que arquivo está pronto (Fire OS e TV Box)
+                    val waitTime = if (isFire) 2000L else 1000L
+                    Log.d(TAG, "⏳ Aguardando ${waitTime}ms antes de instalar...")
                     try {
+                        Thread.sleep(waitTime)
+                    } catch (e: InterruptedException) {
+                        Log.w(TAG, "⚠️ Interrupção durante espera")
+                    }
+                    
+                    try {
+                        Log.i(TAG, "🚀 Iniciando instalação do APK...")
                         installApk(appContext, fileName)
-                        // Limpar informações salvas
-                        clearDownloadInfo(appContext)
+                        // Limpar informações salvas apenas se instalação iniciou com sucesso
+                        // (não limpar aqui - deixar installApk limpar após sucesso)
                     } catch (e: Exception) {
                         Log.e(TAG, "❌ Erro ao instalar após download: ${e.message}", e)
+                        Log.e(TAG, "   Stack trace: ${e.stackTraceToString()}")
                         e.printStackTrace()
+                        // Não limpar informações - tentar novamente na próxima vez que app abrir
                     }
                     // Não fazer unregister aqui - pode causar crash se contexto já foi destruído
+                } else {
+                    Log.d(TAG, "📡 BroadcastReceiver recebido, mas ID não corresponde (recebido=$id, esperado=$downloadId)")
                 }
             }
         }
@@ -311,10 +320,10 @@ object ApkDownloader {
                     
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
                         Log.i(TAG, "✅ Download já está completo! Instalando...")
-                        // No Fire OS, aguardar mais tempo para garantir que arquivo está pronto
-                        if (isFireOS(context)) {
-                            Thread.sleep(2000)
-                        }
+                        // Aguardar um pouco para garantir que arquivo está pronto (Fire OS e TV Box)
+                        val waitTime = if (isFireOS(context)) 2000L else 1000L
+                        Log.d(TAG, "⏳ Aguardando ${waitTime}ms antes de instalar...")
+                        Thread.sleep(waitTime)
                         installApk(context, fileName)
                         clearDownloadInfo(context)
                     } else if (status == DownloadManager.STATUS_FAILED) {
@@ -372,8 +381,23 @@ object ApkDownloader {
             val appContext = context.applicationContext
             val isFire = isFireOS(appContext)
             
+            Log.i(TAG, "📦 Iniciando processo de instalação...")
+            Log.d(TAG, "   FileName: $fileName")
+            Log.d(TAG, "   Fire OS: $isFire")
+            Log.d(TAG, "   Context: ${appContext.javaClass.simpleName}")
+            
+            // Verificar permissão ANTES de procurar arquivo
+            if (!canInstallPackages(appContext)) {
+                Log.w(TAG, "⚠️ Permissão de instalação não concedida - solicitando...")
+                requestInstallPermission(appContext)
+                return
+            }
+            Log.d(TAG, "✅ Permissão de instalação verificada")
+            
             if (isFire) {
                 Log.i(TAG, "🔥 Fire OS detectado - usando tratamento especial")
+            } else {
+                Log.i(TAG, "📺 TV Box/Android detectado - usando tratamento padrão")
             }
             
             // Tentar múltiplos caminhos possíveis (Fire OS pode ter caminhos diferentes)
@@ -386,23 +410,23 @@ object ApkDownloader {
                 possiblePaths.add(File(dir, fileName))
             }
             
-            // Para Fire OS, tentar também caminhos alternativos
-            if (isFire) {
-                val storageRoot = getExternalStorageRoot(appContext)
-                storageRoot?.let { root ->
-                    // Caminho alternativo 1: Downloads direto
-                    val altPath1 = File(root, "Download/$fileName")
-                    possiblePaths.add(altPath1)
-                    
-                    // Caminho alternativo 2: Downloads com D maiúsculo
-                    val altPath2 = File(root, "Downloads/$fileName")
-                    possiblePaths.add(altPath2)
-                }
+            // Para Fire OS e TV Box, tentar também caminhos alternativos
+            val storageRoot = getExternalStorageRoot(appContext)
+            storageRoot?.let { root ->
+                // Caminho alternativo 1: Downloads direto
+                val altPath1 = File(root, "Download/$fileName")
+                possiblePaths.add(altPath1)
                 
-                Log.d(TAG, "🔍 Verificando caminhos possíveis no Fire OS:")
-                possiblePaths.forEach { path ->
-                    Log.d(TAG, "   - ${path.absolutePath} (existe=${path.exists()})")
-                }
+                // Caminho alternativo 2: Downloads com D maiúsculo
+                val altPath2 = File(root, "Downloads/$fileName")
+                possiblePaths.add(altPath2)
+            }
+            
+            Log.d(TAG, "🔍 Verificando caminhos possíveis:")
+            possiblePaths.forEach { path ->
+                val exists = path.exists()
+                val size = if (exists) path.length() else 0L
+                Log.d(TAG, "   - ${path.absolutePath} (existe=$exists, tamanho=$size bytes)")
             }
             
             // Procurar o arquivo nos caminhos possíveis
@@ -417,19 +441,17 @@ object ApkDownloader {
             
             // Se não encontrou no caminho exato, procurar qualquer APK do MaxiPTV
             // ATUALIZADO: Usa métodos modernos compatíveis
+            val searchDirs = mutableListOf<File>()
+            downloadsDir?.let { searchDirs.add(it) }
+            
+            // Para TV Box também, procurar em caminhos alternativos (reutilizar storageRoot já declarado)
+            storageRoot?.let { root ->
+                searchDirs.add(File(root, "Download"))
+                searchDirs.add(File(root, "Downloads"))
+            }
+            
             if (file == null) {
                 Log.w(TAG, "⚠️ Arquivo não encontrado no caminho exato, procurando alternativas...")
-                
-                val searchDirs = mutableListOf<File>()
-                downloadsDir?.let { searchDirs.add(it) }
-                
-                if (isFire) {
-                    val storageRoot = getExternalStorageRoot(appContext)
-                    storageRoot?.let { root ->
-                        searchDirs.add(File(root, "Download"))
-                        searchDirs.add(File(root, "Downloads"))
-                    }
-                }
                 
                 for (searchDir in searchDirs) {
                     if (searchDir.exists() && searchDir.isDirectory) {
@@ -454,30 +476,50 @@ object ApkDownloader {
                 Log.e(TAG, "❌ Nenhum APK encontrado para instalar")
                 Log.e(TAG, "   Caminhos verificados:")
                 possiblePaths.forEach { path ->
-                    Log.e(TAG, "     - ${path.absolutePath}")
+                    Log.e(TAG, "     - ${path.absolutePath} (existe=${path.exists()})")
                 }
+                searchDirs.forEach { dir ->
+                    Log.e(TAG, "     - Diretório de busca: ${dir.absolutePath} (existe=${dir.exists()})")
+                }
+                // Não limpar informações - tentar novamente na próxima vez
                 return
             }
             
             // Verificar se o arquivo não está vazio
-            if (file.length() == 0L) {
-                Log.e(TAG, "❌ APK está vazio ou corrompido!")
+            val fileSize = file.length()
+            if (fileSize == 0L) {
+                Log.e(TAG, "❌ APK está vazio ou corrompido! (tamanho: $fileSize bytes)")
                 return
             }
             
-            // No Fire OS, aguardar mais tempo para garantir que arquivo está completamente escrito
-            val waitTime = if (isFire) 2000L else 500L
+            Log.i(TAG, "✅ APK encontrado e válido: ${file.absolutePath} (${fileSize} bytes)")
+            
+            // Aguardar um pouco para garantir que arquivo está completamente escrito (Fire OS e TV Box)
+            val waitTime = if (isFire) 2000L else 1000L
             Log.d(TAG, "⏳ Aguardando ${waitTime}ms para garantir arquivo completo...")
             Thread.sleep(waitTime)
             
             // Verificar novamente se arquivo ainda existe e tem tamanho válido
-            if (!file.exists() || file.length() == 0L) {
-                Log.e(TAG, "❌ Arquivo desapareceu ou ficou vazio após espera!")
+            if (!file.exists()) {
+                Log.e(TAG, "❌ Arquivo desapareceu após espera!")
                 return
             }
             
-            Log.i(TAG, "📦 Instalando APK: ${file.absolutePath} (${file.length()} bytes)")
+            val finalSize = file.length()
+            if (finalSize == 0L) {
+                Log.e(TAG, "❌ Arquivo ficou vazio após espera! (tamanho: $finalSize bytes)")
+                return
+            }
+            
+            if (finalSize != fileSize) {
+                Log.w(TAG, "⚠️ Tamanho do arquivo mudou após espera (antes: $fileSize, depois: $finalSize)")
+            }
+            
+            Log.i(TAG, "📦 Instalando APK: ${file.absolutePath} (${finalSize} bytes)")
             installApkFile(appContext, file)
+            
+            // Limpar informações apenas se chegou até aqui (instalação iniciou)
+            clearDownloadInfo(appContext)
             
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao instalar APK: ${e.message}", e)
@@ -580,8 +622,14 @@ object ApkDownloader {
                         Log.d(TAG, "✅ Arquivo ainda válido após espera: ${file.length()} bytes")
                     }
                     
+                    Log.d(TAG, "🚀 Iniciando Activity de instalação...")
+                    Log.d(TAG, "   Intent: $installIntent")
+                    Log.d(TAG, "   Uri: $uri")
+                    Log.d(TAG, "   ResolveInfo: ${resolveInfo.activityInfo.packageName}")
+                    
                     appContext.startActivity(installIntent)
                     Log.i(TAG, "✅ Instalação iniciada com sucesso!")
+                    Log.i(TAG, "   O sistema deve mostrar diálogo de instalação agora")
                     
                 } catch (e: SecurityException) {
                     // Fire OS pode lançar SecurityException mesmo com permissão
