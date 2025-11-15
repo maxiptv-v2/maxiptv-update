@@ -427,7 +427,12 @@ fun <T> SearchSection(
     LazyRow(
       horizontalArrangement = Arrangement.spacedBy(if (deviceType == "tv") 16.dp else if (deviceType == "phone") 12.dp else 14.dp)
     ) {
-      items(items) { item ->
+      items(items, key = { when (it) {
+        is LiveStream -> it.stream_id
+        is com.maxiptv.data.VodItem -> it.stream_id
+        is com.maxiptv.data.SeriesItem -> it.series_id
+        else -> it.hashCode()
+      }}) { item ->
         when (item) {
           is LiveStream -> SearchChannelCard(
             channel = item,

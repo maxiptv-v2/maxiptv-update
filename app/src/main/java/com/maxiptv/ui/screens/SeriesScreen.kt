@@ -107,7 +107,7 @@ fun SeriesScreen(nav: NavHostController) {
         }.first()
       }.values.toList()
       
-      items(grouped) { s ->
+      items(grouped, key = { it.series_id }) { s ->
         var isFocused by remember { mutableStateOf(false) }
         val isTv = MaxiApp.isTv
         val titleSize = if (isTv) 16.sp else 14.sp

@@ -203,7 +203,7 @@ fun AdultContentScreen(nav: NavHostController) {
         }
       } else {
         LazyVerticalGrid(columns = GridCells.Adaptive(160.dp), modifier = Modifier.padding(horizontal = 8.dp)) {
-          items(filtered) { v ->
+          items(filtered, key = { it.stream_id }) { v ->
             var isFocused by remember { mutableStateOf(false) }
             
             Card(

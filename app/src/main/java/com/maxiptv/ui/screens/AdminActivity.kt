@@ -520,7 +520,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
             }
             }
             
-            items(globalSessions) { session ->
+            items(globalSessions, key = { "${it.username}_${it.deviceId}" }) { session ->
               GlobalSessionCard(
                 session = session,
                 onForceLogout = {
@@ -564,7 +564,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
             }
             }
             
-            items(activeUsers) { user ->
+            items(activeUsers, key = { it.id }) { user ->
               ActiveUserCard(
                 user = user,
                 onEdit = { editingUser = user },
@@ -678,7 +678,7 @@ fun AdminPanelScreen(onClose: () -> Unit) {
               }
             }
           } else {
-            items(users) { user ->
+            items(users, key = { it.id }) { user ->
               android.util.Log.d("AdminActivity", "🎨 Renderizando UserCard para: ${user.username}")
               UserCard(
                 user = user,

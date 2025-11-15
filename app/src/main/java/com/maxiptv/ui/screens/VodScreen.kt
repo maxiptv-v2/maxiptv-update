@@ -130,7 +130,7 @@ fun VodScreen(nav: NavHostController) {
         }.first()
       }.values.toList()
       
-      items(grouped) { v ->
+      items(grouped, key = { it.stream_id }) { v ->
         var isFocused by remember { mutableStateOf(false) }
         val isTv = MaxiApp.isTv
         val titleSize = if (isTv) 16.sp else 14.sp

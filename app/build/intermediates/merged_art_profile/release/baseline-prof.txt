@@ -2028,9 +2028,10 @@ HSPLandroidx/compose/foundation/layout/c;->i(Lx0/q;F)Lx0/q;
 HSPLandroidx/compose/foundation/layout/c;->j(Lx0/q;FF)Lx0/q;
 HSPLandroidx/compose/foundation/layout/c;->k(Lx0/q;FFFF)Lx0/q;
 HSPLandroidx/compose/foundation/layout/c;->l(F)Lx0/q;
-HSPLandroidx/compose/foundation/layout/c;->m(Lx0/q;)Lx0/q;
+HSPLandroidx/compose/foundation/layout/c;->m(F)Lx0/q;
 HSPLandroidx/compose/foundation/layout/c;->n(Lx0/q;)Lx0/q;
 HSPLandroidx/compose/foundation/layout/c;->o(Lx0/q;)Lx0/q;
+HSPLandroidx/compose/foundation/layout/c;->p(Lx0/q;)Lx0/q;
 Lt/m0;
 HSPLt/m0;->y0(Lo2/b;)J
 HSPLt/m0;->a(Ls1/t;Ls1/s;I)I
@@ -2086,7 +2087,7 @@ HSPLu/f;->c()I
 HSPLu/f;->d()I
 HSPLu/f;->f()V
 Lu/g;
-HSPLu/g;-><init>(Ln/i;Lh8/k;Lt0/a;)V
+HSPLu/g;-><init>(Lh8/k;Lh8/k;Lt0/a;)V
 HSPLu/g;->getKey()Lh8/k;
 HSPLu/g;->b()Lh8/k;
 HSPLn/i;-><init>(ILjava/lang/Object;)V
@@ -2095,7 +2096,7 @@ HSPLu/h;-><init>(ILjava/lang/Object;)V
 Lu/i;
 HSPLu/i;-><init>(Lh8/k;)V
 HSPLu/i;->N0()Lw/r0;
-HSPLu/i;->u3(ILh8/k;Lt0/a;)V
+HSPLu/i;->u3(ILo7/u;Lh8/k;Lt0/a;)V
 Lu/j;
 Lu/m;
 Lu/k;
@@ -2229,7 +2230,7 @@ HSPLv/g;->invoke(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 HSPLq/q;-><init>(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;I)V
 HSPLza/z;->e(Lv/c;Lx0/q;Lv/l0;Lt/c0;ZLt/g;Lt/e;Lr/y0;ZLh8/k;Ll0/o;II)V
 Lv/h;
-HSPLv/h;-><init>(Lh8/n;Lo7/t;Lt0/a;)V
+HSPLv/h;-><init>(Lo7/u;Lh8/n;Lo7/u;Lt0/a;)V
 HSPLv/h;->getKey()Lh8/k;
 HSPLv/h;->b()Lh8/k;
 Lv/i;
@@ -2238,7 +2239,7 @@ HSPLv/i;-><init>(I)V
 Lv/j;
 HSPLv/j;-><init>(Lh8/k;)V
 HSPLv/j;->N0()Lw/r0;
-HSPLv/j;->u3(ILo7/t;Lt0/a;)V
+HSPLv/j;->u3(ILo7/u;Lo7/u;Lt0/a;)V
 Lv/k;
 Lv/m;
 Lv/l;

@@ -44,7 +44,7 @@ class PlayerActivity : ComponentActivity() {
     window.statusBarColor = android.graphics.Color.TRANSPARENT
     window.navigationBarColor = android.graphics.Color.TRANSPARENT
     
-    // Configurar fullscreen completo - sem nenhuma barra
+    // Configurar fullscreen completo - sem nenhuma barra (TopBar, Status Bar, Navigation Bar)
     windowInsetsController.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
     windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     
@@ -52,6 +52,7 @@ class PlayerActivity : ComponentActivity() {
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+    window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)  // Garantir fullscreen completo
     
     // ✅ API MODERNA - OnBackPressedCallback (substitui onBackPressed depreciado)
     onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

@@ -4058,7 +4058,6 @@ androidx.compose.foundation.layout.SizeKt$requiredHeight-3ABfNKs$$inlined$debugI
 androidx.compose.foundation.layout.SizeKt$requiredHeightIn-VpY3zN4$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$requiredWidth-3ABfNKs$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$requiredWidthIn-VpY3zN4$$inlined$debugInspectorInfo$1
-androidx.compose.foundation.layout.SizeKt$widthIn-VpY3zN4$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt:
     public static final androidx.compose.ui.Modifier requiredHeight-3ABfNKs(androidx.compose.ui.Modifier,float)
     public static final androidx.compose.ui.Modifier requiredHeightIn-VpY3zN4(androidx.compose.ui.Modifier,float,float)
@@ -4067,8 +4066,6 @@ androidx.compose.foundation.layout.SizeKt:
     public static final androidx.compose.ui.Modifier requiredWidth-3ABfNKs(androidx.compose.ui.Modifier,float)
     public static final androidx.compose.ui.Modifier requiredWidthIn-VpY3zN4(androidx.compose.ui.Modifier,float,float)
     public static synthetic androidx.compose.ui.Modifier requiredWidthIn-VpY3zN4$default(androidx.compose.ui.Modifier,float,float,int,java.lang.Object)
-    public static final androidx.compose.ui.Modifier widthIn-VpY3zN4(androidx.compose.ui.Modifier,float,float)
-    public static synthetic androidx.compose.ui.Modifier widthIn-VpY3zN4$default(androidx.compose.ui.Modifier,float,float,int,java.lang.Object)
 androidx.compose.foundation.layout.SizeNode:
     public synthetic void <init>(float,float,float,float,boolean,int,kotlin.jvm.internal.DefaultConstructorMarker)
     public final boolean getEnforceIncoming()
@@ -34071,30 +34068,20 @@ com.maxiptv.R$xml
 com.maxiptv.R
 com.maxiptv.ui.screens.AdminActivity:
     public static final int $stable
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$10
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$2
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$6
 com.maxiptv.ui.screens.AdminActivityKt:
     private static final void AdminPanelScreen$showRevokeDialog(androidx.compose.runtime.MutableState,androidx.compose.runtime.MutableState,androidx.compose.runtime.MutableState,int,java.lang.String)
-com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$1$1$1$1
 com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$1$1$2$1
 com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$1$1$3
 com.maxiptv.ui.screens.BannerCarouselKt$BannerCarousel$2
 com.maxiptv.ui.screens.BannerCarouselKt
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.HomeScreenKt$DigitalClock$2
 com.maxiptv.ui.screens.HomeScreenKt:
     public static final void DigitalClock(java.lang.String,java.lang.String,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,int,int)
     private static final float DigitalClock$lambda$61(androidx.compose.runtime.State)
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.PlayerSettingsScreenKt$PlayerSettingsScreen$2$3$3$1$1$2$1$1$invoke$$inlined$items$default$2
-com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$invoke$$inlined$items$default$2
-com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$3
-com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$3
 com.maxiptv.ui.theme.SafeAreaAutoDetector:
     public static final int $stable
@@ -47300,6 +47287,7 @@ androidx.compose.foundation.layout.PaddingKt$padding$1$$InternalSyntheticThrowCC
 androidx.compose.foundation.layout.PaddingKt$padding$1
 androidx.compose.foundation.layout.PaddingKt$padding$2$$InternalSyntheticThrowCCEIfNotNull$17$3bec8d65975a95521309deefc56e5de57b922db3cc18e59a31b1982ebf895665$0
 androidx.compose.foundation.layout.PaddingKt$padding$2$$InternalSyntheticThrowCCEIfNotNull$17$3c247926da1a2aa5e4f0440fc24899b2158b941832846f829e7c86c6d384c65b$0
+androidx.compose.foundation.layout.PaddingKt$padding$2$$InternalSyntheticThrowCCEIfNotNull$17$a8b23d55bb875e19f156bb50f80438f8fa1c6846714b954e9c768b1eab9cb0bd$0
 androidx.compose.foundation.layout.PaddingKt$padding$2$$InternalSyntheticThrowCCEIfNotNull$17$bb2da7ffe66c73c8af39daed7bfc4072a5fa0d9459db28593d78691ad45589e0$0
 androidx.compose.foundation.layout.PaddingKt$padding$2$$InternalSyntheticThrowCCEIfNotNull$17$db0fc0ab5552aca360a3da9fec46355d845c1cc5a400a57ceca9fbc269a267ef$0
 androidx.compose.foundation.layout.PaddingKt$padding$2
@@ -47375,6 +47363,7 @@ androidx.compose.foundation.layout.SizeKt$size-3ABfNKs$$inlined$debugInspectorIn
 androidx.compose.foundation.layout.SizeKt$size-VpY3zN4$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$sizeIn-qDBjuR0$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt$width-3ABfNKs$$inlined$debugInspectorInfo$1
+androidx.compose.foundation.layout.SizeKt$widthIn-VpY3zN4$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.SizeKt:
     public static synthetic androidx.compose.ui.Modifier fillMaxHeight$default(androidx.compose.ui.Modifier)
     public static androidx.compose.ui.Modifier fillMaxSize$default(androidx.compose.ui.Modifier)
@@ -47552,7 +47541,7 @@ androidx.compose.foundation.lazy.LazyListPrefetchStrategy
 androidx.compose.foundation.lazy.LazyListPrefetchStrategyKt
 androidx.compose.foundation.lazy.LazyListScope:
     public abstract void item()
-    public abstract void items(int,kotlin.jvm.functions.Function1,androidx.compose.runtime.internal.ComposableLambdaImpl)
+    public abstract void items(int,com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$10,kotlin.jvm.functions.Function1,androidx.compose.runtime.internal.ComposableLambdaImpl)
 androidx.compose.foundation.lazy.LazyListScrollPosition:
     public static final int $stable
     static void <clinit>()
@@ -47776,7 +47765,7 @@ androidx.compose.foundation.lazy.grid.LazyGridPrefetchStrategy$-CC
 androidx.compose.foundation.lazy.grid.LazyGridPrefetchStrategy
 androidx.compose.foundation.lazy.grid.LazyGridPrefetchStrategyKt
 androidx.compose.foundation.lazy.grid.LazyGridScope:
-    public abstract void items(int,com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$11,androidx.compose.runtime.internal.ComposableLambdaImpl)
+    public abstract void items(int,com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$10,com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$10,androidx.compose.runtime.internal.ComposableLambdaImpl)
 androidx.compose.foundation.lazy.grid.LazyGridScrollPosition:
     public static final int $stable
     static void <clinit>()
@@ -69447,39 +69436,28 @@ com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$1$1$1$2$1$1
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$1$1:
     public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,androidx.compose.runtime.Composer,int)
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$1$1
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$1
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$2:
-    public final void invoke$9()
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$3$1$1:
-    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$3$1
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$4
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$5$1$1:
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$10$1:
     public final void invoke()
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$5$2$1:
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$10$2$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$6$1$2$1:
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$10$3$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$6$1$2
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$6:
-    public final void invoke(androidx.compose.foundation.layout.ColumnScope,androidx.compose.runtime.Composer,int)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$1$1
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$2$1:
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$10$4$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$2
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$3$1:
-    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$4$1:
-    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$4
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$8$1
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$8
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$12:
-    public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,int,androidx.compose.runtime.Composer,int)
-com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$1:
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$10$4
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$11$1:
+    public final void invoke$9()
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$11
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$1
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$2
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$3:
     public final java.lang.Integer invoke(int)
+    public final java.lang.Integer invoke(com.maxiptv.data.LiveStream)
+    public final java.lang.String invoke(com.maxiptv.data.UserAccount)
     public final java.lang.Void invoke()
     public final void invoke(androidx.compose.ui.focus.FocusState)
+    public static java.lang.Object invoke$48()
+    public final java.lang.Object invoke$49()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$1()
     private static java.lang.Void invoke$com$maxiptv$ui$screens$AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$1()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$5()
@@ -69498,12 +69476,29 @@ com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$item
     private static java.lang.Void invoke$com$maxiptv$ui$screens$PlayerSettingsScreenKt$PlayerSettingsScreen$2$3$3$1$1$2$1$1$invoke$$inlined$items$default$1()
     private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$SearchScreenKt$SearchSection$1$1$invoke$$inlined$items$default$1()
     private static java.lang.Void invoke$com$maxiptv$ui$screens$SearchScreenKt$SearchSection$1$1$invoke$$inlined$items$default$1()
-    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$1()
-    private static java.lang.Void invoke$com$maxiptv$ui$screens$SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$1()
-    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$1()
-    private static java.lang.Void invoke$com$maxiptv$ui$screens$VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$1()
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$4$1$1:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$4$1
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$5
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$6
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$1
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$2$1:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$7$2
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$8$1$2$1:
+    public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$8$1$2
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$8:
+    public final void invoke(androidx.compose.foundation.layout.ColumnScope,androidx.compose.runtime.Composer,int)
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$9
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$11
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$12:
+    public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,int,androidx.compose.runtime.Composer,int)
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$5
+com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$6
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$7
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$8
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$2$2$invoke$$inlined$items$default$9
@@ -69521,19 +69516,19 @@ com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$3
 com.maxiptv.ui.screens.AdminActivityKt$AdminPanelScreen$syncUsersFromJsonBin$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.AdminActivityKt$UserCard$2
-com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1$1:
-    public final void invoke(androidx.compose.foundation.layout.ColumnScope,androidx.compose.runtime.Composer,int)
-    public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,androidx.compose.runtime.Composer,int)
-com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1$2$1$1$1$1
-com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1$2$1$2$1$1
-com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1$2$1$3$1$1
-com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1$2$1$4$1$1
-com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1$2
-com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1$3$1$1$1
-com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1$3:
-    public final void invoke(androidx.compose.foundation.layout.ColumnScope,androidx.compose.runtime.Composer,int)
-    public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,androidx.compose.runtime.Composer,int)
 com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$1:
+    public final void invoke(androidx.compose.foundation.layout.ColumnScope,androidx.compose.runtime.Composer,int)
+    public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,androidx.compose.runtime.Composer,int)
+com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$2$1$1$1$1
+com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$2$1$2$1$1
+com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$2$1$3$1$1
+com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$2$1$4$1$1
+com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$2
+com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$3$1$1
+com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1$3:
+    public final void invoke(androidx.compose.foundation.layout.ColumnScope,androidx.compose.runtime.Composer,int)
+    public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,androidx.compose.runtime.Composer,int)
+com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1$1:
     public final void invoke(androidx.compose.foundation.lazy.LazyListScope)
 com.maxiptv.ui.screens.AdminActivityKt$UserDialog$1
 com.maxiptv.ui.screens.AdminActivityKt$UserDialog$2
@@ -69545,9 +69540,11 @@ com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$3$1$1$2$2$1
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$3
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$2$1$1$1
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$2$1$2
-com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$1$2$1
-com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$1$3
+com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$1
+com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$2$2$1
+com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$2$3
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlined$items$default$4
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4
 com.maxiptv.ui.screens.AdultContentScreenKt
@@ -69751,12 +69748,14 @@ com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$3$3$3
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$3$3
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$2$3
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesScreen$3
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$2
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$3
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$4
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$5
-com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1$6
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$1
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$2$2
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$2$3
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$2$4
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$2$5
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$2$6
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.FavoritesScreenKt$FavoritesSection$1$1$invoke$$inlined$items$default$4:
     public final void invoke(androidx.compose.foundation.lazy.LazyItemScope,int,androidx.compose.runtime.Composer,int)
@@ -69914,16 +69913,20 @@ com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$4
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$1$2
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$2$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$1$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$1$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$2$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$2$4
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$2$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$1$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$1$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$1$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$4
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$invoke$$inlined$items$default$4
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1
@@ -70092,10 +70095,12 @@ com.maxiptv.ui.screens.SearchScreenKt$SearchScreen$3$7$4
 com.maxiptv.ui.screens.SearchScreenKt$SearchScreen$3$7:
     public final void invoke(androidx.compose.foundation.lazy.LazyListScope)
 com.maxiptv.ui.screens.SearchScreenKt$SearchScreen$4
-com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$1$1
-com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$1$2
-com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$1$3
+com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$1
+com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$2$1
+com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$2$2
+com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$2$3
 com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1$invoke$$inlined$items$default$4
 com.maxiptv.ui.screens.SearchScreenKt$SearchSection$1$1
@@ -70140,9 +70145,18 @@ com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$1$2
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$3$1
-com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$1$1
-com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$1$2$1
+com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$1:
+    public final java.lang.Void invoke()
+    public final java.lang.Object invoke$49()
+    public static java.lang.Object invoke$50()
+    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$1()
+    private static java.lang.Void invoke$com$maxiptv$ui$screens$SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$1()
+    private static synthetic bridge java.lang.Object invoke$com$maxiptv$ui$screens$VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$1()
+    private static java.lang.Void invoke$com$maxiptv$ui$screens$VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$1()
+com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$2$1
+com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$2$2$1
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$4
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$5
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$lambda$3$$inlined$sortedBy$1
@@ -70183,10 +70197,12 @@ com.maxiptv.ui.screens.VodScreenKt$VodScreen$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$1$2
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$2
-com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$1$1
-com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$1$2$1
-com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$1$3
+com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$1
+com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$2$1
+com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$2$2$1
+com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$2$3
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$1
+com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$4
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$5
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$lambda$4$$inlined$sortedBy$1
@@ -73322,7 +73338,7 @@ kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationAndCon
     public final java.util.Map getMemberAnnotations()
     public static java.util.Map getPropertyConstants()
 kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationAndConstantLoader$loadAnnotationDefaultValue$1:
-    public final java.lang.Object invoke$48()
+    public final java.lang.Object invoke$51()
 kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationAndConstantLoader$loadAnnotationsAndInitializers$1$MemberAnnotationVisitor:
     public static kotlin.reflect.jvm.internal.impl.load.kotlin.MemberSignature getSignature()
 kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationAndConstantLoader$loadAnnotationsAndInitializers$1:
@@ -73331,7 +73347,7 @@ kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationAndCon
     public final synthetic java.util.HashMap $propertyConstants
     public static kotlin.reflect.jvm.internal.impl.load.kotlin.KotlinJvmBinaryClass$AnnotationVisitor visitField()
 kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationAndConstantLoader$loadPropertyConstant$1:
-    public final java.lang.Object invoke$48()
+    public final java.lang.Object invoke$51()
 kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationAndConstantLoader$storage$1
 kotlin.reflect.jvm.internal.impl.load.kotlin.AbstractBinaryClassAnnotationAndConstantLoader:
     public abstract int computeJvmParameterIndexShift()
@@ -74580,7 +74596,7 @@ kotlin.reflect.jvm.internal.impl.name.FqNameUnsafe$1:
     public static kotlin.reflect.jvm.internal.impl.descriptors.CallableDescriptor invoke$1()
     public static kotlin.reflect.jvm.internal.impl.name.Name invoke$1()
     public final java.lang.Boolean invoke$20()
-    public static java.lang.Object invoke$49()
+    public static java.lang.Object invoke$52()
 kotlin.reflect.jvm.internal.impl.name.FqNameUnsafe:
     public final java.lang.String asString()
     public static boolean isRoot()
@@ -74987,7 +75003,7 @@ kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl$renderConstruct
 kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl$renderSuperTypes$1
 kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl$renderTypeConstructor$1$$InternalSyntheticThrowCCEIfNotNull$14$9668d561186d99a9377c12b18bf29186d67311acb90fbfdc686894918864af52$0
 kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl$renderTypeConstructor$1:
-    public static java.lang.Object invoke$50()
+    public static java.lang.Object invoke$53()
 kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl:
     public static final kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl COMPACT
     public static final kotlin.reflect.jvm.internal.impl.renderer.DescriptorRendererImpl COMPACT_WITHOUT_SUPERTYPES
@@ -77366,16 +77382,16 @@ kotlinx.coroutines.flow.FlowKt__DistinctKt
 kotlinx.coroutines.flow.FlowKt__EmittersKt
 kotlinx.coroutines.flow.FlowKt__LimitKt
 kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1:
-    public final java.lang.Object invoke$51()
+    public final java.lang.Object invoke$54()
 kotlinx.coroutines.flow.FlowKt__MergeKt:
     public static final int DEFAULT_CONCURRENCY
 kotlinx.coroutines.flow.FlowKt__ReduceKt
 kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1$1:
     public int label
-    public static java.lang.Object invoke$52()
+    public static java.lang.Object invoke$55()
 kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1$2$WhenMappings
 kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1$2:
-    public final java.lang.Object invoke$53()
+    public final java.lang.Object invoke$56()
 kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 kotlinx.coroutines.flow.FlowKt__ShareKt
@@ -77428,10 +77444,10 @@ kotlinx.coroutines.flow.StartedLazily
 kotlinx.coroutines.flow.StartedWhileSubscribed$$InternalSyntheticBackport$2$f2fad8e332c8dae81e58224fbbb91edda0938a189198f98e5545e7a4f3b019b3$0
 kotlinx.coroutines.flow.StartedWhileSubscribed$$InternalSyntheticBackport$2$f2fad8e332c8dae81e58224fbbb91edda0938a189198f98e5545e7a4f3b019b3$1
 kotlinx.coroutines.flow.StartedWhileSubscribed$command$1:
-    public static java.lang.Object invoke$54()
+    public static java.lang.Object invoke$57()
 kotlinx.coroutines.flow.StartedWhileSubscribed$command$2:
     public int label
-    public final java.lang.Object invoke$53()
+    public final java.lang.Object invoke$56()
 kotlinx.coroutines.flow.StateFlowImpl$$InternalSyntheticThrowCCEIfNotNull$204$48f8e1a998bfe838c6c4c78d934377956702ea666a83e7852d7dcc1778b7fce1$0
 kotlinx.coroutines.flow.StateFlowImpl:
     public final boolean compareAndSet(androidx.compose.runtime.external.kotlinx.collections.immutable.PersistentSet,androidx.compose.runtime.external.kotlinx.collections.immutable.implementations.persistentOrderedSet.PersistentOrderedSet)
@@ -77457,7 +77473,7 @@ kotlinx.coroutines.flow.internal.AbstractSharedFlow:
 kotlinx.coroutines.flow.internal.ChannelFlow$collect$2:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1:
-    public static java.lang.Object invoke$55()
+    public static java.lang.Object invoke$58()
 kotlinx.coroutines.flow.internal.ChannelFlow:
     public java.lang.Object collect(kotlinx.coroutines.flow.FlowCollector,kotlin.coroutines.Continuation)
     public abstract kotlin.jvm.functions.Function2 getCollectToFun$kotlinx_coroutines_core()
@@ -77487,7 +77503,7 @@ kotlinx.coroutines.flow.internal.SafeCollector:
     public static void checkContext()
     public static void exceptionTransparencyViolated()
 kotlinx.coroutines.flow.internal.SafeCollectorKt$emitFun$1:
-    public final java.lang.Object invoke$51()
+    public final java.lang.Object invoke$54()
 kotlinx.coroutines.flow.internal.SafeCollector_commonKt$checkContext$result$1
 kotlinx.coroutines.flow.internal.SafeCollector_commonKt
 kotlinx.coroutines.flow.internal.StackFrameContinuation:
@@ -77614,7 +77630,7 @@ kotlinx.coroutines.internal.ThreadContextKt$countAll$1$$InternalSyntheticThrowCC
 kotlinx.coroutines.internal.ThreadContextKt$countAll$1$$InternalSyntheticThrowCCEIfNotNull$290$a546074a2ed249d1eabefdc79e18209b1ee65e7faf56680f7461c253f28dd8e6$2
 kotlinx.coroutines.internal.ThreadContextKt$countAll$1:
     public static kotlinx.coroutines.internal.ThreadState invoke()
-    public static java.lang.Object invoke$56()
+    public static java.lang.Object invoke$59()
     public static void invoke$85()
 kotlinx.coroutines.internal.ThreadContextKt$findOne$1
 kotlinx.coroutines.internal.ThreadContextKt$updateState$1
@@ -78409,7 +78425,7 @@ kotlinx.serialization.json.internal.JsonTreeListDecoder:
     public static kotlinx.serialization.json.JsonArray getValue()
 kotlinx.serialization.json.internal.JsonTreeListEncoder
 kotlinx.serialization.json.internal.JsonTreeReader$readDeepRecursive$1:
-    public static java.lang.Object invoke$57()
+    public static java.lang.Object invoke$60()
 kotlinx.serialization.json.internal.JsonTreeReader:
     public static kotlinx.serialization.json.JsonElement readDeepRecursive()
     public static java.lang.Object readObject()

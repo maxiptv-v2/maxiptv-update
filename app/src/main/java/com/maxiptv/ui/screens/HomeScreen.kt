@@ -21,6 +21,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -854,6 +855,9 @@ fun CategoryButton(
   onClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val configuration = LocalConfiguration.current
+  val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+  
   val infiniteTransition = rememberInfiniteTransition(label = "greenGlow")
   val glowAlpha by infiniteTransition.animateFloat(
     initialValue = 0.6f,
@@ -865,38 +869,45 @@ fun CategoryButton(
     label = "greenGlow"
   )
   
+  // Ajustar altura baseado na orientação APENAS para smartphone em modo paisagem
+  // Fire Stick: sempre usa valores fixos (tela normal da TV)
   val buttonHeight = when (deviceType) {
-    "firestick" -> 90.dp  // APENAS Fire Stick - mais alto
-    "tv" -> 80.dp  // TV Box Android/Genéricos mantêm original
-    "phone" -> 65.dp  // Smartphones mantêm original
-    else -> 72.dp  // Tablets mantêm original
+    "firestick" -> 90.dp  // Fire Stick: sempre igual (tela normal da TV)
+    "tv" -> 80.dp  // TV Box: manter sempre igual
+    "phone" -> if (isLandscape) 50.dp else 65.dp  // Reduzir significativamente em paisagem (smartphone)
+    else -> 72.dp  // Tablets: manter sempre igual
   }
   
   val fontSize = when (deviceType) {
-    "firestick" -> 20.sp  // APENAS Fire Stick - texto maior
-    "tv" -> 18.sp  // TV Box Android/Genéricos mantêm original
-    "phone" -> 12.sp  // Smartphones mantêm original
-    else -> 15.sp  // Tablets mantêm original
+    "firestick" -> 20.sp  // Fire Stick: sempre igual (tela normal da TV)
+    "tv" -> 18.sp  // TV Box: manter sempre igual
+    "phone" -> if (isLandscape) 10.sp else 12.sp  // Reduzir em paisagem (smartphone)
+    else -> 15.sp  // Tablets: manter sempre igual
   }
   
   val emojiSize = when (deviceType) {
-    "firestick" -> 28.sp  // APENAS Fire Stick - emoji maior
-    "tv" -> 24.sp  // TV Box Android/Genéricos mantêm original
-    "phone" -> 16.sp  // Smartphones mantêm original
-    else -> 20.sp  // Tablets mantêm original
+    "firestick" -> 28.sp  // Fire Stick: sempre igual (tela normal da TV)
+    "tv" -> 24.sp  // TV Box: manter sempre igual
+    "phone" -> if (isLandscape) 14.sp else 16.sp  // Reduzir em paisagem (smartphone)
+    else -> 20.sp  // Tablets: manter sempre igual
   }
   
+  // Reduzir padding em paisagem APENAS para smartphone
   val padding = when (deviceType) {
-    "firestick" -> PaddingValues(horizontal = 20.dp, vertical = 18.dp)  // APENAS Fire Stick - mais padding
-    "tv" -> PaddingValues(horizontal = 16.dp, vertical = 16.dp)  // TV Box Android/Genéricos mantêm original
-    "phone" -> PaddingValues(horizontal = 6.dp, vertical = 8.dp)  // Smartphones mantêm original
-    else -> PaddingValues(horizontal = 12.dp, vertical = 12.dp)  // Tablets mantêm original
+    "firestick" -> PaddingValues(horizontal = 20.dp, vertical = 18.dp)  // Fire Stick: sempre igual
+    "tv" -> PaddingValues(horizontal = 16.dp, vertical = 16.dp)  // TV Box: sempre igual
+    "phone" -> if (isLandscape)
+      PaddingValues(horizontal = 4.dp, vertical = 4.dp)  // Padding mínimo em paisagem (smartphone)
+    else
+      PaddingValues(horizontal = 6.dp, vertical = 8.dp)
+    else -> PaddingValues(horizontal = 12.dp, vertical = 12.dp)  // Tablets: sempre igual
   }
   
   Button(
     onClick = onClick,
     modifier = modifier
       .height(buttonHeight)
+      .fillMaxWidth()  // Garantir largura completa
       .onFocusChanged { onFocusChanged(it.isFocused) }
       .focusable()
       .shadow(
@@ -912,7 +923,8 @@ fun CategoryButton(
       .then(
         if (isFocused) 
           Modifier
-            .border(8.dp, Color(0xFFFF0000), RoundedCornerShape(8.dp))
+            // Borda vermelha mais fina (3.dp em vez de 8.dp)
+            .border(3.dp, Color(0xFFFF0000), RoundedCornerShape(8.dp))
             .shadow(
               elevation = 25.dp,
               spotColor = Color(0xFFFF0000).copy(alpha = 1f),
@@ -922,7 +934,7 @@ fun CategoryButton(
           Modifier
       ),
     colors = ButtonDefaults.buttonColors(
-      containerColor = Color(0xFF00FF00),
+      containerColor = Color(0xFF00FF00),  // Verde sempre preenche completamente
       contentColor = Color.Black
     ),
     shape = RoundedCornerShape(8.dp),
@@ -931,27 +943,76 @@ fun CategoryButton(
     ),
     contentPadding = padding
   ) {
-    Column(
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.Center,
-      modifier = Modifier.fillMaxWidth()
+    Box(
+      modifier = Modifier
+        .fillMaxSize()  // Garantir que Box preenche todo o espaço do botão
+        .background(Color(0xFF00FF00), RoundedCornerShape(8.dp)),  // Background verde garantido
+      contentAlignment = Alignment.Center
     ) {
-      Text(
-        text = emoji,
-        fontSize = emojiSize,
-        // Fire Stick: usar cor branca explícita (fundo verde claro)
-        color = if (deviceType == "firestick") Color.White else Color.Unspecified
-      )
-      Spacer(Modifier.height(if (deviceType == "phone") 2.dp else 4.dp))
-      Text(
-        text = text,
-        fontSize = fontSize,
-        fontWeight = FontWeight.Bold,
-        fontFamily = FontFamily.SansSerif,
-        // Fire Stick: usar cor branca explícita (fundo verde claro)
-        color = if (deviceType == "firestick") Color.White else Color.Unspecified,
-        maxLines = 1
-      )
+      // Overlay branco transparente quando focado
+      if (isFocused) {
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .background(
+              Color.White.copy(alpha = 0.2f),
+              RoundedCornerShape(8.dp)
+            )
+        )
+      }
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+          .fillMaxWidth()
+          .fillMaxHeight()  // Garantir que ocupa toda altura disponível
+          // Fire Stick: garantir altura mínima para conteúdo não desaparecer com scaleFactor
+          .then(
+            if (deviceType == "firestick") 
+              Modifier.heightIn(min = 50.dp)  // Altura mínima garantida para Fire Stick
+            else 
+              Modifier
+          )
+      ) {
+        // Emoji sempre visível - ESPECIALMENTE no Fire Stick quando aplica ajustes de safe area
+        Text(
+          text = emoji,
+          fontSize = emojiSize,
+          // Fire Stick: usar cor branca explícita (fundo verde claro)
+          color = if (deviceType == "firestick") Color.White else Color.Unspecified,
+          // Fire Stick: garantir altura mínima para não desaparecer com scaleFactor
+          modifier = when {
+            deviceType == "firestick" -> Modifier.heightIn(min = 24.dp)  // Altura mínima garantida
+            deviceType == "phone" && isLandscape -> Modifier.heightIn(min = 14.dp)
+            else -> Modifier
+          }
+        )
+        // Espaçamento adaptativo
+        Spacer(Modifier.height(
+          when {
+            deviceType == "phone" && isLandscape -> 1.dp
+            deviceType == "phone" -> 2.dp
+            deviceType == "firestick" -> 4.dp  // Espaçamento adequado para Fire Stick
+            else -> 4.dp
+          }
+        ))
+        // Texto sempre visível - ESPECIALMENTE no Fire Stick quando aplica ajustes de safe area
+        Text(
+          text = text,
+          fontSize = fontSize,
+          fontWeight = FontWeight.Bold,
+          fontFamily = FontFamily.SansSerif,
+          // Fire Stick: usar cor branca explícita (fundo verde claro)
+          color = if (deviceType == "firestick") Color.White else Color.Unspecified,
+          maxLines = 1,
+          // Fire Stick: garantir altura mínima para não desaparecer com scaleFactor
+          modifier = when {
+            deviceType == "firestick" -> Modifier.heightIn(min = 18.dp)  // Altura mínima garantida
+            deviceType == "phone" && isLandscape -> Modifier.heightIn(min = 10.dp)
+            else -> Modifier
+          }
+        )
+      }
     }
   }
 }

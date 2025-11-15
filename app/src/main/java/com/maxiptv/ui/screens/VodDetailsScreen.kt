@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.maxiptv.data.FavoritesManager
+import com.maxiptv.MaxiApp
 import kotlinx.coroutines.launch
 
 @Composable
@@ -118,6 +119,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     Spacer(Modifier.height(16.dp))
     
     // 🎨 BOTÃO ASSISTIR COM FOCO MAIS FORTE
+    // Limitar largura máxima nas TVs para não ficar esticado
     var isAssistirFocused by remember { mutableStateOf(false) }
     Button(
       onClick = { 
@@ -158,7 +160,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         ctx.startActivity(playerIntent)
       },
       modifier = Modifier
-        .fillMaxWidth()
+        .then(if (MaxiApp.isTv) Modifier.widthIn(max = 600.dp) else Modifier.fillMaxWidth())
         .onFocusChanged { isAssistirFocused = it.isFocused }
         .focusable()
         .then(
@@ -181,9 +183,11 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     Spacer(Modifier.height(12.dp))
     
     // ⭐ BOTÃO FAVORITO
+    // Limitar largura máxima nas TVs para não ficar esticado
     var isFavoriteFocused by remember { mutableStateOf(false) }
     Row(
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier
+        .then(if (MaxiApp.isTv) Modifier.widthIn(max = 600.dp) else Modifier.fillMaxWidth()),
       horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
       Button(
@@ -202,6 +206,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         },
         modifier = Modifier
           .weight(1f)
+          .then(if (MaxiApp.isTv) Modifier.widthIn(max = 290.dp) else Modifier)
           .onFocusChanged { isFavoriteFocused = it.isFocused }
           .focusable()
           .then(
@@ -235,7 +240,9 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       
       OutlinedButton(
         onClick = { showOptionsDialog = true },
-        modifier = Modifier.weight(1f)
+        modifier = Modifier
+          .weight(1f)
+          .then(if (MaxiApp.isTv) Modifier.widthIn(max = 290.dp) else Modifier)
       ) {
         Icon(Icons.Default.Settings, contentDescription = "Opções")
         Spacer(Modifier.width(8.dp))

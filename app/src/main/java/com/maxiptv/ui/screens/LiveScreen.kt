@@ -182,6 +182,7 @@ fun LiveScreen(nav: NavHostController) {
   if (isFullscreen && current != null) {
     // Fullscreen limpo - só o player com controles nativos
     // BACK do controle remoto sai do fullscreen (BackHandler acima)
+    // IMPORTANTE: Nenhuma TopBar é renderizada em fullscreen
     androidx.compose.ui.viewinterop.AndroidView(
       factory = { ctx ->
         androidx.media3.ui.PlayerView(ctx).apply {
@@ -195,13 +196,14 @@ fun LiveScreen(nav: NavHostController) {
       },
       modifier = Modifier.fillMaxSize().background(Color.Black)
     )
-    return // IMPORTANTE: Sair da função, não renderizar nada mais
+    return // IMPORTANTE: Sair da função ANTES de renderizar TopBar ou qualquer outro elemento
   }
   
   // LAYOUT NORMAL (com TopBar, Categorias, Mini Player)
+  // IMPORTANTE: TopBar só é renderizada quando NÃO está em fullscreen
   Column(Modifier.fillMaxSize()) {
-    // TopBar com Logo e Botão Voltar (APENAS no Fire Stick para evitar que status bar cubra categorias)
-    if (isFireStick) {
+    // TopBar com Logo e Botão Voltar (APENAS no Fire Stick e APENAS quando NÃO está em fullscreen)
+    if (isFireStick && !isFullscreen) {
       val horizontalPadding = 12.dp
       
       Box(
@@ -293,7 +295,7 @@ fun LiveScreen(nav: NavHostController) {
           val iconSize = 48.dp
           
           LazyColumn { 
-            items(filtered) { s ->
+            items(filtered, key = { it.stream_id }) { s ->
               ListItem(
                 headlineContent = { 
                   Text(
@@ -404,7 +406,7 @@ fun LiveScreen(nav: NavHostController) {
           val iconSize = 40.dp
           
           LazyColumn { 
-            items(filtered) { s ->
+            items(filtered, key = { it.stream_id }) { s ->
               ListItem(
                 headlineContent = { 
                   Text(
