@@ -937,7 +937,7 @@ fun CategoryButton(
       ),
     colors = ButtonDefaults.buttonColors(
       containerColor = Color(0xFF00D4FF),  // ✅ Azul ciano premium sempre preenche completamente
-      contentColor = Color.White  // ✅ Texto branco para melhor contraste com azul ciano
+      contentColor = Color.Black  // ✅ Texto preto para melhor contraste com azul ciano
     ),
     shape = RoundedCornerShape(8.dp),
     elevation = ButtonDefaults.buttonElevation(
@@ -980,8 +980,8 @@ fun CategoryButton(
         Text(
           text = emoji,
           fontSize = emojiSize,
-          // ✅ Cor branca para contraste com azul ciano premium
-          color = Color.White,
+          // ✅ Cor preta para contraste com azul ciano premium
+          color = Color.Black,
           // Fire Stick: garantir altura mínima para não desaparecer com scaleFactor
           modifier = when {
             deviceType == "firestick" -> Modifier.heightIn(min = 24.dp)  // Altura mínima garantida
@@ -1015,8 +1015,8 @@ fun CategoryButton(
             "phone" -> 0.2.sp  // Smartphone: espaçamento menor para cards pequenos
             else -> 0.3.sp  // Tablets: espaçamento médio
           },
-          // ✅ Cor branca para contraste com azul ciano premium
-          color = Color.White,
+          // ✅ Cor preta para contraste com azul ciano premium
+          color = Color.Black,
           maxLines = 1,
           // Fire Stick: garantir altura mínima para não desaparecer com scaleFactor
           modifier = when {
