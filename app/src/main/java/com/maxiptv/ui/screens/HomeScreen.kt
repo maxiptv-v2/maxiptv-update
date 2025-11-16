@@ -859,16 +859,9 @@ fun CategoryButton(
   val configuration = LocalConfiguration.current
   val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
   
-  val infiniteTransition = rememberInfiniteTransition(label = "cyanGlow")
-  val glowAlpha by infiniteTransition.animateFloat(
-    initialValue = 0.6f,
-    targetValue = 1f,
-    animationSpec = infiniteRepeatable(
-      animation = tween(1200, easing = FastOutSlowInEasing),
-      repeatMode = RepeatMode.Reverse
-    ),
-    label = "cyanGlow"
-  )
+  // ✅ Removido glow animado que causava reflexo neon excessivo
+  // Mantendo apenas cor sólida sem animação de brilho
+  val glowAlpha = 0.7f // Valor fixo e reduzido para evitar reflexo excessivo
   
   // Ajustar altura baseado na orientação APENAS para smartphone em modo paisagem
   // Fire Stick: sempre usa valores fixos (tela normal da TV)
@@ -918,14 +911,15 @@ fun CategoryButton(
       )
       .onFocusChanged { onFocusChanged(it.isFocused) }
       .focusable()
+      // ✅ Shadow reduzido para evitar reflexo neon excessivo
       .shadow(
-        elevation = 12.dp,
-        spotColor = Color(0xFF00D4FF).copy(alpha = glowAlpha), // ✅ Azul ciano premium
-        ambientColor = Color(0xFF00D4FF).copy(alpha = glowAlpha) // ✅ Azul ciano premium
+        elevation = 4.dp, // Reduzido de 12.dp para 4.dp
+        spotColor = Color(0xFF00D4FF).copy(alpha = 0.3f), // Alpha reduzido para menos brilho
+        ambientColor = Color(0xFF00D4FF).copy(alpha = 0.2f) // Alpha reduzido para menos brilho
       )
       .border(
         width = 2.dp,
-        color = Color(0xFF00D4FF).copy(alpha = glowAlpha), // ✅ Azul ciano premium
+        color = Color(0xFF00D4FF).copy(alpha = 0.8f), // Alpha reduzido para borda mais suave
         shape = RoundedCornerShape(8.dp)
       )
       .then(
@@ -1007,10 +1001,20 @@ fun CategoryButton(
         // Texto sempre visível - ESPECIALMENTE no Fire Stick quando aplica ajustes de safe area
         Text(
           text = text,
-          fontSize = 26.sp, // ✅ Tamanho fixo conforme solicitado
+          fontSize = when (deviceType) {
+            "firestick" -> 20.sp  // Fire Stick: proporcional ao card (90dp altura)
+            "tv" -> 18.sp  // TV Box: proporcional ao card (80dp altura)
+            "phone" -> if (isLandscape) 10.sp else 12.sp  // Smartphone: proporcional ao card pequeno (50-65dp altura)
+            else -> 15.sp  // Tablets: proporcional ao card (72dp altura)
+          },
           fontWeight = FontWeight.Black, // ✅ Peso máximo conforme solicitado
           fontFamily = FontFamily.SansSerif, // ✅ Roboto Condensed Bold (SansSerif com Black = Condensed Bold)
-          letterSpacing = 0.5.sp, // ✅ Espaçamento entre letras conforme solicitado
+          letterSpacing = when (deviceType) {
+            "firestick" -> 0.5.sp  // Fire Stick: espaçamento adequado
+            "tv" -> 0.4.sp  // TV Box: espaçamento adequado
+            "phone" -> 0.2.sp  // Smartphone: espaçamento menor para cards pequenos
+            else -> 0.3.sp  // Tablets: espaçamento médio
+          },
           // ✅ Cor branca para contraste com azul ciano premium
           color = Color.White,
           maxLines = 1,
