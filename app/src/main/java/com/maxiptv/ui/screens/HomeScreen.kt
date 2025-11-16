@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
@@ -634,8 +636,7 @@ fun HomeScreen(nav: NavHostController) {
             else -> "tablet"
           },
           onFocusChanged = { focusedButton = if (it) "live" else null },
-          onClick = { nav.navigate("live") },
-          modifier = Modifier.weight(1f)
+          onClick = { nav.navigate("live") }
         )
         
         CategoryButton(
@@ -649,8 +650,7 @@ fun HomeScreen(nav: NavHostController) {
             else -> "tablet"
           },
           onFocusChanged = { focusedButton = if (it) "vod" else null },
-          onClick = { nav.navigate("vod") },
-          modifier = Modifier.weight(1f)
+          onClick = { nav.navigate("vod") }
         )
         
         CategoryButton(
@@ -664,8 +664,7 @@ fun HomeScreen(nav: NavHostController) {
             else -> "tablet"
           },
           onFocusChanged = { focusedButton = if (it) "series" else null },
-        onClick = { nav.navigate("series") },
-          modifier = Modifier.weight(1f)
+        onClick = { nav.navigate("series") }
         )
         
         CategoryButton(
@@ -679,8 +678,7 @@ fun HomeScreen(nav: NavHostController) {
             else -> "tablet"
           },
           onFocusChanged = { focusedButton = if (it) "favorites" else null },
-          onClick = { nav.navigate("favorites") },
-          modifier = Modifier.weight(1f)
+          onClick = { nav.navigate("favorites") }
         )
         
         CategoryButton(
@@ -694,8 +692,7 @@ fun HomeScreen(nav: NavHostController) {
             else -> "tablet"
           },
           onFocusChanged = { focusedButton = if (it) "search" else null },
-          onClick = { nav.navigate("search") },
-          modifier = Modifier.weight(1f)
+          onClick = { nav.navigate("search") }
         )
         
         CategoryButton(
@@ -709,8 +706,7 @@ fun HomeScreen(nav: NavHostController) {
             else -> "tablet"
           },
           onFocusChanged = { focusedButton = if (it) "settings" else null },
-          onClick = { nav.navigate("player-settings") },
-          modifier = Modifier.weight(1f)
+          onClick = { nav.navigate("player-settings") }
         )
         
       }
@@ -856,176 +852,136 @@ fun CategoryButton(
   onClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
+  // ✅ Novo design baseado na imagem: botões com ícones e texto abaixo
+  CategoryButtonNew(
+    text = text,
+    isFocused = isFocused,
+    deviceType = deviceType,
+    onFocusChanged = onFocusChanged,
+    onClick = onClick,
+    modifier = modifier
+  )
+}
+
+@Composable
+fun CategoryButtonNew(
+  text: String,
+  isFocused: Boolean,
+  deviceType: String,
+  onFocusChanged: (Boolean) -> Unit,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier
+) {
   val configuration = LocalConfiguration.current
   val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
   
-  // ✅ Removido glow animado que causava reflexo neon excessivo
-  // Mantendo apenas cor sólida sem animação de brilho
-  val glowAlpha = 0.7f // Valor fixo e reduzido para evitar reflexo excessivo
+  // ✅ Animação de zoom quando focado
+  val scale by animateFloatAsState(
+    targetValue = if (isFocused) 1.15f else 1.0f,
+    animationSpec = spring(
+      dampingRatio = Spring.DampingRatioMediumBouncy,
+      stiffness = Spring.StiffnessLow
+    ),
+    label = "zoom"
+  )
   
-  // Ajustar altura baseado na orientação APENAS para smartphone em modo paisagem
-  // Fire Stick: sempre usa valores fixos (tela normal da TV)
-  val buttonHeight = when (deviceType) {
-    "firestick" -> 90.dp  // Fire Stick: sempre igual (tela normal da TV)
-    "tv" -> 80.dp  // TV Box: manter sempre igual
-    "phone" -> if (isLandscape) 50.dp else 65.dp  // Reduzir significativamente em paisagem (smartphone)
-    else -> 72.dp  // Tablets: manter sempre igual
+  // ✅ Ícones baseados na imagem (usando apenas ícones disponíveis no Material Icons)
+  val icon = when (text.lowercase()) {
+    "live" -> Icons.Filled.PlayArrow
+    "filmes" -> Icons.Filled.PlayArrow // ✅ Play para filmes
+    "séries", "series" -> Icons.Filled.PlayArrow // ✅ Play para séries
+    "buscar" -> Icons.Filled.Search
+    "config" -> Icons.Filled.Settings
+    "favoritos" -> Icons.Filled.Star
+    else -> Icons.Filled.PlayArrow // ✅ Fallback para PlayArrow
   }
   
-  val fontSize = when (deviceType) {
-    "firestick" -> 20.sp  // Fire Stick: sempre igual (tela normal da TV)
-    "tv" -> 18.sp  // TV Box: manter sempre igual
-    "phone" -> if (isLandscape) 10.sp else 12.sp  // Reduzir em paisagem (smartphone)
-    else -> 15.sp  // Tablets: manter sempre igual
+  // ✅ Tamanhos proporcionais por dispositivo (baseado na imagem)
+  val iconSize = when (deviceType) {
+    "firestick" -> 48.dp
+    "tv" -> 44.dp
+    "phone" -> if (isLandscape) 24.dp else 32.dp
+    else -> 36.dp
   }
   
-  val emojiSize = when (deviceType) {
-    "firestick" -> 28.sp  // Fire Stick: sempre igual (tela normal da TV)
-    "tv" -> 24.sp  // TV Box: manter sempre igual
-    "phone" -> if (isLandscape) 14.sp else 16.sp  // Reduzir em paisagem (smartphone)
-    else -> 20.sp  // Tablets: manter sempre igual
+  val buttonSize = when (deviceType) {
+    "firestick" -> 120.dp  // Botão quadrado maior para TV
+    "tv" -> 110.dp
+    "phone" -> if (isLandscape) 60.dp else 80.dp
+    else -> 90.dp
   }
   
-  // Reduzir padding em paisagem APENAS para smartphone
-  val padding = when (deviceType) {
-    "firestick" -> PaddingValues(horizontal = 20.dp, vertical = 18.dp)  // Fire Stick: sempre igual
-    "tv" -> PaddingValues(horizontal = 16.dp, vertical = 16.dp)  // TV Box: sempre igual
-    "phone" -> if (isLandscape)
-      PaddingValues(horizontal = 4.dp, vertical = 4.dp)  // Padding mínimo em paisagem (smartphone)
-    else
-      PaddingValues(horizontal = 6.dp, vertical = 8.dp)
-    else -> PaddingValues(horizontal = 12.dp, vertical = 12.dp)  // Tablets: sempre igual
+  val textSize = when (deviceType) {
+    "firestick" -> 16.sp
+    "tv" -> 15.sp
+    "phone" -> if (isLandscape) 10.sp else 12.sp
+    else -> 13.sp
   }
   
-  Button(
-    onClick = onClick,
+  // ✅ Fundo escuro como na imagem
+  val darkBackground = Color(0xFF1A1A1A) // Dark gray similar à imagem
+  
+  Box(
     modifier = modifier
-      .height(buttonHeight)
-      .then(
-        // ✅ Fire Stick/Native TV: aplicar 90% da largura real nos cards também
-        when {
-          deviceType == "firestick" -> Modifier.fillMaxWidth(0.90f)  // Fire Stick: 90%
-          deviceType == "tv" && MaxiApp.isNativeTv -> Modifier.fillMaxWidth(0.90f)  // Native TV: 90%
-          else -> Modifier.fillMaxWidth()  // TV Box e outros: largura completa (100%)
-        }
-      )
+      .size(buttonSize)
+      .graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+      }
       .onFocusChanged { onFocusChanged(it.isFocused) }
       .focusable()
-      // ✅ Shadow reduzido para evitar reflexo neon excessivo
+      .clickable { onClick() }
       .shadow(
-        elevation = 4.dp, // Reduzido de 12.dp para 4.dp
-        spotColor = Color(0xFF00D4FF).copy(alpha = 0.3f), // Alpha reduzido para menos brilho
-        ambientColor = Color(0xFF00D4FF).copy(alpha = 0.2f) // Alpha reduzido para menos brilho
-      )
-      .border(
-        width = 2.dp,
-        color = Color(0xFF00D4FF).copy(alpha = 0.8f), // Alpha reduzido para borda mais suave
-        shape = RoundedCornerShape(8.dp)
+        elevation = if (isFocused) 12.dp else 4.dp,
+        spotColor = Color(0xFF00D4FF).copy(alpha = if (isFocused) 0.8f else 0.3f),
+        ambientColor = Color(0xFF00D4FF).copy(alpha = if (isFocused) 0.6f else 0.2f),
+        shape = RoundedCornerShape(12.dp)
       )
       .then(
-        if (isFocused) 
-          Modifier
-            // Borda vermelha mais grossa (6.dp para melhor visibilidade)
-            .border(6.dp, Color(0xFFFF0000), RoundedCornerShape(8.dp))
-            .shadow(
-              elevation = 25.dp,
-              spotColor = Color(0xFFFF0000).copy(alpha = 1f),
-              ambientColor = Color(0xFFFF0000).copy(alpha = 0.8f)
-            )
-        else 
+        if (isFocused)
+          Modifier.border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(12.dp))
+        else
           Modifier
       ),
-    colors = ButtonDefaults.buttonColors(
-      containerColor = Color(0xFF00D4FF),  // ✅ Azul ciano premium sempre preenche completamente
-      contentColor = Color.Black  // ✅ Texto preto para melhor contraste com azul ciano
-    ),
-    shape = RoundedCornerShape(8.dp),
-    elevation = ButtonDefaults.buttonElevation(
-      defaultElevation = 0.dp // Removido elevation padrão para usar shadow customizado
-    ),
-    contentPadding = padding
+    contentAlignment = Alignment.Center
   ) {
-    Box(
-      modifier = Modifier
-        .fillMaxSize()  // Garantir que Box preenche todo o espaço do botão
-        .background(Color(0xFF00D4FF), RoundedCornerShape(8.dp)),  // ✅ Background azul ciano premium garantido
-      contentAlignment = Alignment.Center
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.Center,
+      modifier = Modifier.fillMaxSize()
     ) {
-      // Overlay branco transparente quando focado (mais visível)
-      if (isFocused) {
-        Box(
-          modifier = Modifier
-            .fillMaxSize()
-            .background(
-              Color.White.copy(alpha = 0.5f),  // Aumentado de 0.2f para 0.5f para melhor visibilidade
-              RoundedCornerShape(8.dp)
-            )
-        )
-      }
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+      // ✅ Ícone com brilho azul (baseado na imagem)
+      Box(
         modifier = Modifier
-          .fillMaxWidth()
-          .fillMaxHeight()  // Garantir que ocupa toda altura disponível
-          // Fire Stick: garantir altura mínima para conteúdo não desaparecer com scaleFactor
-          .then(
-            if (deviceType == "firestick") 
-              Modifier.heightIn(min = 50.dp)  // Altura mínima garantida para Fire Stick
-            else 
-              Modifier
-          )
+          .size(iconSize)
+          .background(darkBackground, RoundedCornerShape(12.dp))
+          .shadow(
+            elevation = 8.dp,
+            spotColor = Color(0xFF00D4FF).copy(alpha = 0.9f),
+            ambientColor = Color(0xFF00D4FF).copy(alpha = 0.7f),
+            shape = RoundedCornerShape(12.dp)
+          ),
+        contentAlignment = Alignment.Center
       ) {
-        // Emoji sempre visível - ESPECIALMENTE no Fire Stick quando aplica ajustes de safe area
-        Text(
-          text = emoji,
-          fontSize = emojiSize,
-          // ✅ Cor preta para contraste com azul ciano premium
-          color = Color.Black,
-          // Fire Stick: garantir altura mínima para não desaparecer com scaleFactor
-          modifier = when {
-            deviceType == "firestick" -> Modifier.heightIn(min = 24.dp)  // Altura mínima garantida
-            deviceType == "phone" && isLandscape -> Modifier.heightIn(min = 14.dp)
-            else -> Modifier
-          }
-        )
-        // Espaçamento adaptativo
-        Spacer(Modifier.height(
-          when {
-            deviceType == "phone" && isLandscape -> 1.dp
-            deviceType == "phone" -> 2.dp
-            deviceType == "firestick" -> 4.dp  // Espaçamento adequado para Fire Stick
-            else -> 4.dp
-          }
-        ))
-        // Texto sempre visível - ESPECIALMENTE no Fire Stick quando aplica ajustes de safe area
-        Text(
-          text = text,
-          fontSize = when (deviceType) {
-            "firestick" -> 20.sp  // Fire Stick: proporcional ao card (90dp altura)
-            "tv" -> 18.sp  // TV Box: proporcional ao card (80dp altura)
-            "phone" -> if (isLandscape) 10.sp else 12.sp  // Smartphone: proporcional ao card pequeno (50-65dp altura)
-            else -> 15.sp  // Tablets: proporcional ao card (72dp altura)
-          },
-          fontWeight = FontWeight.Black, // ✅ Peso máximo conforme solicitado
-          fontFamily = FontFamily.SansSerif, // ✅ Roboto Condensed Bold (SansSerif com Black = Condensed Bold)
-          letterSpacing = when (deviceType) {
-            "firestick" -> 0.5.sp  // Fire Stick: espaçamento adequado
-            "tv" -> 0.4.sp  // TV Box: espaçamento adequado
-            "phone" -> 0.2.sp  // Smartphone: espaçamento menor para cards pequenos
-            else -> 0.3.sp  // Tablets: espaçamento médio
-          },
-          // ✅ Cor preta para contraste com azul ciano premium
-          color = Color.Black,
-          maxLines = 1,
-          // Fire Stick: garantir altura mínima para não desaparecer com scaleFactor
-          modifier = when {
-            deviceType == "firestick" -> Modifier.heightIn(min = 18.dp)  // Altura mínima garantida
-            deviceType == "phone" && isLandscape -> Modifier.heightIn(min = 10.dp)
-            else -> Modifier
-          }
+        Icon(
+          imageVector = icon,
+          contentDescription = text,
+          tint = Color(0xFF00D4FF), // ✅ Azul brilhante como na imagem
+          modifier = Modifier.size(iconSize * 0.6f)
         )
       }
+      
+      Spacer(Modifier.height(8.dp))
+      
+      // ✅ Texto abaixo em azul brilhante (baseado na imagem)
+      Text(
+        text = text,
+        fontSize = textSize,
+        fontWeight = FontWeight.Bold,
+        fontFamily = FontFamily.SansSerif,
+        color = Color(0xFF00D4FF), // ✅ Azul brilhante como na imagem
+        maxLines = 1
+      )
     }
   }
 }
