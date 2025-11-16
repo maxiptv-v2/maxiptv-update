@@ -58,8 +58,12 @@ object XRepo {
     }
     val userAgentInterceptor = okhttp3.Interceptor { chain ->
       val request = chain.request().newBuilder()
-        // User-Agent original que funcionava antes
-        .header("User-Agent", "MaxiPTV/1.1.0 (Android)")
+        // ✅ Xtream Code API: User-Agent compatível
+        .header("User-Agent", "MaxiPTV/1.1.1 (Android)")
+        // ✅ Headers adicionais para melhor compatibilidade com Xtream Code
+        .header("Accept", "*/*")
+        .header("Accept-Language", "pt-BR,pt;q=0.9,en;q=0.8")
+        .header("Connection", "keep-alive")
         .build()
       chain.proceed(request)
     }

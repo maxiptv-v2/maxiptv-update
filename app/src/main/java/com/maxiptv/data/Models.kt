@@ -20,6 +20,7 @@ data class LiveStream(val stream_id: Int, val name: String, val category_id: Str
     // Remove player_api.php e adiciona live/
     val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
     val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+    // ✅ Xtream Code API: Formato padrão é HLS (.m3u8), mas ExoPlayer detecta automaticamente outros formatos
     return "${baseUrl}live/$user/$pass/$stream_id.m3u8"
   }
 }
@@ -34,8 +35,10 @@ data class VodInfoResponse(val info: VodInfo?, val movie_data: Map<String,Any>?)
     get() {
       val id = (movie_data?.get("stream_id") as? Number)?.toInt() ?: return null
       val (base, user, pass) = SettingsRepo.loadBlocking()
-      val baseUrl = if (base.endsWith("/")) base else "$base/"
-      return baseUrl.replace("player_api.php", "movie/$user/$pass/$id.mp4")
+      val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
+      val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+      // ✅ Xtream Code API: Formato padrão é MP4, mas ExoPlayer suporta outros formatos automaticamente
+      return "${baseUrl}movie/$user/$pass/$id.mp4"
     }
 }
 data class VodInfo(val name: String?, val plot: String?, val cover: String?) { val isValid: Boolean get() = !name.isNullOrBlank() }
@@ -77,6 +80,7 @@ data class Episode(val id: String, val title: String?, val episode_num: String?,
       val (base, user, pass) = SettingsRepo.loadBlocking()
       val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
       val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+      // ✅ Xtream Code API: Formato padrão é MP4, mas ExoPlayer suporta outros formatos automaticamente
       return "${baseUrl}series/$user/$pass/$id.mp4"
     }
 }

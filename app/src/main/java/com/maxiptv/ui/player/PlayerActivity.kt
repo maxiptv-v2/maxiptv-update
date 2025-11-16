@@ -34,6 +34,10 @@ class PlayerActivity : ComponentActivity() {
   private lateinit var windowInsetsController: WindowInsetsControllerCompat
   private var reconnectAttempts = 0 // Contador de tentativas de reconexão
   private val maxReconnectAttempts = 5 // Máximo de tentativas
+  private var bufferingCount = 0 // Contador de eventos de buffering
+  private var lastBufferingTime = 0L // Último tempo de buffering
+  private var currentMaxBitrate = 2_200_000 // Bitrate máximo atual (começa em 2.2Mbps)
+  private var qualityReduced = false // Flag para saber se qualidade já foi reduzida
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -177,9 +181,14 @@ class PlayerActivity : ComponentActivity() {
       .followSslRedirects(true)
       .build()
     
+    // 🌐 XTREAM CODE API: Configurar DataSource com headers adequados
+    // ✅ OkHttpClient já configurado com followRedirects e followSslRedirects
     val dataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
     
+    // ✅ DefaultMediaSourceFactory detecta automaticamente formato baseado na URL/extensão
+    // Suporta: .m3u8 (HLS), .mp4/.mpd (DASH), .mp4/.ts (Progressive)
+    // Xtream Code usa: live/.../stream_id.m3u8 (HLS), movie/.../id.mp4 (Progressive), series/.../id.mp4 (Progressive)
     val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
     
     // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES
@@ -233,10 +242,11 @@ class PlayerActivity : ComponentActivity() {
         
         exo.setMediaItem(mediaItem)
         
-        // 📊 QUALIDADE ADAPTATIVA: Ultra agressiva para Wi-Fi lento (evita travamentos)
+        // 📊 QUALIDADE ADAPTATIVA: Começa com valores padrão, reduz automaticamente se Wi-Fi lento
+        currentMaxBitrate = if (isLive) 2_200_000 else 2_500_000
         exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
           .setPreferredTextLanguage(null) // Sem legendas
-          .setMaxVideoBitrate(if (isLive) 2_200_000 else 2_500_000) // LIVE: 2.2Mbps, VOD: 2.5Mbps (REDUZIDO)
+          .setMaxVideoBitrate(currentMaxBitrate) // Começa com bitrate padrão
           .setMaxVideoSize(1280, 720) // Limitar a 720p para performance
           .setMinVideoBitrate(if (isLive) 500_000 else 400_000) // Bitrate mínimo REDUZIDO
           .build()
@@ -252,7 +262,42 @@ class PlayerActivity : ComponentActivity() {
                 android.util.Log.w("PlayerActivity", "⚠️ Player em IDLE")
               }
               Player.STATE_BUFFERING -> {
-                android.util.Log.i("PlayerActivity", "⏳ Bufferizando...")
+                val now = System.currentTimeMillis()
+                
+                // ⚡ DETECÇÃO DE WI-FI LENTO: Se buffering muito frequente, reduzir qualidade
+                if (lastBufferingTime > 0 && now - lastBufferingTime < 5000) { 
+                  // Buffering a cada 5 segundos ou menos = Wi-Fi lento
+                  bufferingCount++
+                  android.util.Log.w("PlayerActivity", "⚠️ Buffering frequente detectado ($bufferingCount eventos em ${(now - lastBufferingTime) / 1000}s)")
+                  
+                  // Se mais de 3 buffering em pouco tempo, reduzir qualidade
+                  if (bufferingCount >= 3 && !qualityReduced && currentMaxBitrate > 1_000_000) {
+                    qualityReduced = true
+                    currentMaxBitrate = if (isLive) 1_200_000 else 1_500_000 // Reduzir para 1.2Mbps (LIVE) ou 1.5Mbps (VOD)
+                    
+                    android.util.Log.i("PlayerActivity", "📉 Wi-Fi lento detectado! Reduzindo qualidade para ${currentMaxBitrate / 1000}kbps")
+                    
+                    // Aplicar novo bitrate
+                    exo.trackSelectionParameters = TrackSelectionParameters.Builder(this@PlayerActivity)
+                      .setPreferredTextLanguage(null)
+                      .setMaxVideoBitrate(currentMaxBitrate)
+                      .setMaxVideoSize(854, 480) // Reduzir resolução para 480p
+                      .setMinVideoBitrate(if (isLive) 300_000 else 250_000) // Bitrate mínimo ainda menor
+                      .build()
+                    
+                    android.util.Log.i("PlayerActivity", "✅ Qualidade reduzida automaticamente para evitar travamentos")
+                  }
+                } else {
+                  // Reset contador se buffering espaçado (rede normal)
+                  if (lastBufferingTime > 0 && now - lastBufferingTime > 10000) {
+                    bufferingCount = 0
+                    qualityReduced = false
+                    android.util.Log.d("PlayerActivity", "✅ Rede estável, resetando contador de buffering")
+                  }
+                }
+                
+                lastBufferingTime = now
+                android.util.Log.i("PlayerActivity", "⏳ Bufferizando... (contador: $bufferingCount)")
               }
               Player.STATE_READY -> {
                 android.util.Log.i("PlayerActivity", "✅ Player pronto")
@@ -307,6 +352,15 @@ class PlayerActivity : ComponentActivity() {
             if (isPlaying) {
               // Reset contador quando voltar a tocar normalmente
               reconnectAttempts = 0
+              
+              // Se está tocando bem por mais de 30 segundos, resetar contador de buffering
+              android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                if (exo.isPlaying && bufferingCount > 0) {
+                  bufferingCount = 0
+                  qualityReduced = false
+                  android.util.Log.d("PlayerActivity", "✅ Reprodução estável, resetando detecção de Wi-Fi lento")
+                }
+              }, 30000) // 30 segundos
             }
           }
         })

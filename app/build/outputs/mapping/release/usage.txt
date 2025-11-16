@@ -61398,7 +61398,6 @@ androidx.media3.common.BasePlayer:
     public final int getRepeatModeForNavigation()
     public final boolean hasNextMediaItem()
     public final boolean hasPreviousMediaItem()
-    public final boolean isPlaying()
     public final void pause()
     public final void play()
     public final void repeatCurrentMediaItem(int)
@@ -61879,7 +61878,6 @@ androidx.media3.common.TrackSelectionParameters$Builder:
     public static androidx.media3.common.TrackSelectionParameters$Builder set()
     public androidx.media3.common.TrackSelectionParameters$Builder setIgnoredTextSelectionFlags()
     public void setOverrideForType(androidx.media3.common.TrackSelectionOverride)
-    public androidx.media3.common.TrackSelectionParameters$Builder setPreferredTextLanguage()
     public void setTrackTypeDisabled(int)
 androidx.media3.common.TrackSelectionParameters:
     public static final androidx.media3.common.TrackSelectionParameters DEFAULT
@@ -64713,7 +64711,6 @@ androidx.media3.exoplayer.trackselection.DefaultTrackSelector$Parameters$Builder
     public static androidx.media3.exoplayer.trackselection.DefaultTrackSelector$Parameters$Builder setMaxVideoSize()
     public static androidx.media3.exoplayer.trackselection.DefaultTrackSelector$Parameters$Builder setMinVideoBitrate()
     public static androidx.media3.exoplayer.trackselection.DefaultTrackSelector$Parameters$Builder setOverrideForType()
-    public final androidx.media3.common.TrackSelectionParameters$Builder setPreferredTextLanguage()
     public static androidx.media3.exoplayer.trackselection.DefaultTrackSelector$Parameters$Builder setPreferredTextLanguage()
     public static androidx.media3.exoplayer.trackselection.DefaultTrackSelector$Parameters$Builder setPreferredTextLanguageAndRoleFlagsToCaptioningManagerSettings()
     public static varargs androidx.media3.exoplayer.trackselection.DefaultTrackSelector$Parameters$Builder setPreferredTextLanguages()
@@ -69436,6 +69433,7 @@ com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0
     public final void onVisibilityChanged()
 com.maxiptv.ui.player.PlayerActivity$onCreate$1
 com.maxiptv.ui.player.PlayerActivity$onCreate$5$1$$InternalSyntheticLambda$4$5feebefa9f5d2bf6a54a536b7e986229ade48bc94ce5e794e1cc04e1ee92925a$0
+com.maxiptv.ui.player.PlayerActivity$onCreate$5$1$$InternalSyntheticLambda$4$a990fc82a7450b56892ae26e9487b82b7ae385e9679feb29c46d31284835919d$0
 com.maxiptv.ui.player.PlayerActivity$onCreate$5$1:
     public final synthetic void onDeviceVolumeChanged(int,boolean)
 com.maxiptv.ui.player.PlayerActivity$onCreate$customDns$1$lookup$$inlined$sortedBy$1

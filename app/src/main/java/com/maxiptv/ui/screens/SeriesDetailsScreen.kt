@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.maxiptv.data.FavoritesManager
 import kotlinx.coroutines.launch
@@ -227,7 +228,7 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
           
           Spacer(Modifier.height(12.dp))
           
-          // ⭐ BOTÃO FAVORITO
+          // ⭐ BOTÃO FAVORITO (mesmo tamanho do botão "Original | HD")
           var isFavoriteFocused by remember { mutableStateOf(false) }
           Button(
             onClick = {
@@ -244,7 +245,7 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
               }
             },
             modifier = Modifier
-              .fillMaxWidth()
+              .fillMaxWidth()  // Mesma largura do botão "Original | HD"
               .onFocusChanged { isFavoriteFocused = it.isFocused }
               .focusable()
               .then(
@@ -263,15 +264,18 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
             colors = ButtonDefaults.buttonColors(
               containerColor = if (isFavorite) Color(0xFFFFD700) else Color(0xFF666666),
               contentColor = if (isFavorite) Color.Black else Color.White
-            )
+            ),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)  // Padding igual ao botão "Original | HD"
           ) {
             Icon(
               imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.FavoriteBorder,
-              contentDescription = if (isFavorite) "Remover dos favoritos" else "Adicionar aos favoritos"
+              contentDescription = if (isFavorite) "Remover dos favoritos" else "Adicionar aos favoritos",
+              modifier = Modifier.size(20.dp)  // Ícone menor
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(6.dp))  // Espaçamento menor
             Text(
-              text = if (isFavorite) "⭐ Favorita" else "⭐ Favoritar",
+              text = if (isFavorite) "⭐" else "⭐",
+              fontSize = 14.sp,  // Texto menor
               fontWeight = FontWeight.Bold
             )
           }
@@ -373,7 +377,8 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
         Row(
           Modifier
             .fillMaxWidth()
-            .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+            .horizontalScroll(androidx.compose.foundation.rememberScrollState())
+            .padding(end = 8.dp),  // ⚡ Padding apenas no final para evitar que cards saiam da tela
           horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
         ) {
           combinedSeasons.forEach { season ->
@@ -399,15 +404,15 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
             Card(
               modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
+                .padding(vertical = 4.dp)  // Padding vertical apenas
                 .onFocusChanged { isFocused = it.isFocused }
                 .focusable()
                 .then(
                   if (isFocused) 
                     Modifier
-                      .border(6.dp, Color(0xFF9C27B0), RoundedCornerShape(8.dp))
+                      .border(4.dp, Color(0xFF9C27B0), RoundedCornerShape(8.dp))  // Borda mais fina para não sair da tela
                       .shadow(
-                        elevation = 20.dp,
+                        elevation = 16.dp,  // Elevation reduzida
                         spotColor = Color(0xFF9C27B0).copy(alpha = 0.8f),
                         ambientColor = Color(0xFF9C27B0).copy(alpha = 0.6f),
                         shape = RoundedCornerShape(8.dp)
@@ -417,8 +422,20 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
                 )
             ) {
               ListItem(
-                headlineContent = { Text("Episódio ${ep.episode_num ?: "?"}: ${ep.title ?: "Sem título"}") },
-                supportingContent = { Text(ep.info?.plot ?: "") },
+                headlineContent = { 
+                  Text(
+                    "Episódio ${ep.episode_num ?: "?"}: ${ep.title ?: "Sem título"}",
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                  ) 
+                },
+                supportingContent = { 
+                  Text(
+                    ep.info?.plot ?: "",
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                  ) 
+                },
                 trailingContent = { 
                   // 🎨 BOTÃO PLAY COM FOCO MAIS FORTE
                   var isPlayFocused by remember { mutableStateOf(false) }
