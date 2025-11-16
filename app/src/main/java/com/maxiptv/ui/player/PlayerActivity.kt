@@ -36,6 +36,8 @@ class PlayerActivity : ComponentActivity() {
   private var lastBufferingTime = 0L // Último tempo de buffering
   private var currentMaxBitrate = 2_200_000 // Bitrate máximo atual (começa em 2.2Mbps)
   private var qualityReduced = false // Flag para saber se qualidade já foi reduzida
+  private var lastPosition = 0L // Última posição do player (para detectar travamento)
+  private var lastPositionTime = 0L // Último tempo que a posição mudou
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -178,8 +180,8 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚡ Configurar DataSource com timeouts diferentes para LIVE vs VOD/SERIES
     val isLive = contentType == "live"
-    val connectTimeout = if (isLive) 5000 else 8000    // VOD: 8s (REDUZIDO), LIVE: 5s (ULTRA REDUZIDO)
-    val readTimeout = if (isLive) 5000 else 10000     // VOD: 10s (REDUZIDO), LIVE: 5s (ULTRA REDUZIDO)
+    val connectTimeout = if (isLive) 8000 else 8000    // LIVE: 8s (aumentado para melhor estabilidade)
+    val readTimeout = if (isLive) 10000 else 10000     // LIVE: 10s (aumentado para melhor estabilidade)
     
     // 🌐 DNS OTIMIZADO: Priorizar IPv4 para melhor compatibilidade
     val customDns = object : Dns {
@@ -212,16 +214,16 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES
     val loadControl: LoadControl = if (isLive) {
-      // 📺 LIVE: Buffers ULTRA MENORES para zero travamentos (IPTV precisa de buffers mínimos)
+      // 📺 LIVE: Buffers balanceados para estabilidade sem travamentos
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          2000,   // minBufferMs: 2 segundos (ULTRA REDUZIDO - start instantâneo)
-          6000,   // maxBufferMs: 6 segundos (ULTRA REDUZIDO - evita acúmulo)
-          1000,   // bufferForPlaybackMs: 1 segundo (start ultra rápido)
-          2000    // bufferForPlaybackAfterRebufferMs: 2 segundos (reconexão rápida)
+          5000,   // minBufferMs: 5 segundos (buffer inicial adequado para estabilidade)
+          12000,  // maxBufferMs: 12 segundos (buffer máximo para evitar travamentos)
+          1500,   // bufferForPlaybackMs: 1.5 segundos (start rápido mas estável)
+          3000    // bufferForPlaybackAfterRebufferMs: 3 segundos (buffer após reconexão)
         )
         .setPrioritizeTimeOverSizeThresholds(true) // Prioriza tempo real
-        .setBackBuffer(3000, true) // 3s de back buffer (ULTRA REDUZIDO)
+        .setBackBuffer(5000, true) // 5s de back buffer (mais buffer para estabilidade)
         .build()
     } else {
       // 🎬 VOD/SERIES: Buffers ULTRA REDUZIDOS para Wi-Fi lento (evita travamentos)
@@ -379,6 +381,46 @@ class PlayerActivity : ComponentActivity() {
               
               // Player tocando: timeout normal para controles
               pv.controllerShowTimeoutMs = 5000
+              
+              // ✅ DETECÇÃO DE TRAVAMENTO: Verificar se player não está progredindo
+              if (isLive) {
+                val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                val checkProgress = object : Runnable {
+                  override fun run() {
+                    if (exo.isPlaying && exo.playbackState == Player.STATE_READY) {
+                      val currentPos = exo.currentPosition
+                      val now = System.currentTimeMillis()
+                      
+                      if (lastPosition == currentPos && lastPositionTime > 0) {
+                        // Posição não mudou - verificar há quanto tempo
+                        val timeStuck = now - lastPositionTime
+                        if (timeStuck > 8000) { // Travado por mais de 8 segundos
+                          android.util.Log.w("PlayerActivity", "⚠️ Travamento detectado! Posição não mudou há ${timeStuck / 1000}s")
+                          if (reconnectAttempts < maxReconnectAttempts) {
+                            reconnectAttempts++
+                            android.util.Log.i("PlayerActivity", "🔄 Reconectando devido a travamento...")
+                            exo.stop()
+                            exo.clearMediaItems()
+                            exo.setMediaItem(mediaItem)
+                            exo.prepare()
+                            exo.playWhenReady = true
+                            lastPosition = 0L
+                            lastPositionTime = 0L
+                          }
+                        }
+                      } else {
+                        // Posição mudou - atualizar
+                        lastPosition = currentPos
+                        lastPositionTime = now
+                      }
+                      
+                      // Verificar novamente em 2 segundos
+                      handler.postDelayed(this, 2000)
+                    }
+                  }
+                }
+                handler.postDelayed(checkProgress, 2000) // Começar verificação após 2 segundos
+              }
               
               // Se está tocando bem por mais de 30 segundos, resetar contador de buffering
               android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({

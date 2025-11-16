@@ -62395,9 +62395,7 @@ androidx.media3.exoplayer.DefaultLivePlaybackSpeedControl:
     public static long smooth(float,long,long)
     public static void updateSmoothedMinPossibleLiveOffsetUs()
 androidx.media3.exoplayer.DefaultLoadControl$1
-androidx.media3.exoplayer.DefaultLoadControl$Builder:
-    public int targetBufferBytes
-    public final void setPrioritizeTimeOverSizeThresholds()
+androidx.media3.exoplayer.DefaultLoadControl$Builder
 androidx.media3.exoplayer.DefaultLoadControl:
     public static int calculateTargetBufferBytes()
     public final androidx.media3.exoplayer.upstream.DefaultAllocator getAllocator()

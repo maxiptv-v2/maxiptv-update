@@ -70,23 +70,23 @@ fun LiveScreen(nav: NavHostController) {
     val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
-      .setConnectTimeoutMs(5000) // OTIMIZADO: 8s → 5s
-      .setReadTimeoutMs(5000)    // OTIMIZADO: 8s → 5s
+      .setConnectTimeoutMs(8000) // Aumentado para melhor estabilidade (8s)
+      .setReadTimeoutMs(10000)    // Aumentado para melhor estabilidade (10s)
       .setKeepPostFor302Redirects(true)
     
     val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
       .setDataSourceFactory(dataSourceFactory)
     
-    // ⚡ BUFFERS ULTRA OTIMIZADOS PARA LIVE (igual ao PlayerActivity)
+    // ⚡ BUFFERS BALANCEADOS PARA LIVE (igual ao PlayerActivity - aumentados para estabilidade)
     val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
       .setBufferDurationsMs(
-        2000,   // minBufferMs: 2 segundos (ULTRA REDUZIDO)
-        6000,   // maxBufferMs: 6 segundos (ULTRA REDUZIDO)
-        1000,   // bufferForPlaybackMs: 1 segundo (ultra rápido)
-        2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
+        5000,   // minBufferMs: 5 segundos (buffer inicial adequado para estabilidade)
+        12000,  // maxBufferMs: 12 segundos (buffer máximo para evitar travamentos)
+        1500,   // bufferForPlaybackMs: 1.5 segundos (start rápido mas estável)
+        3000    // bufferForPlaybackAfterRebufferMs: 3 segundos (buffer após reconexão)
       )
       .setPrioritizeTimeOverSizeThresholds(true)
-      .setBackBuffer(3000, true) // 3s de back buffer
+      .setBackBuffer(5000, true) // 5s de back buffer (mais buffer para estabilidade)
       .build()
     
     androidx.media3.exoplayer.ExoPlayer.Builder(context)
