@@ -14,6 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -115,10 +119,23 @@ fun SeriesScreen(nav: NavHostController) {
         val isTv = MaxiApp.isTv
         val titleSize = if (isTv) 16.sp else 14.sp
         
+        val scale by animateFloatAsState(
+          targetValue = if (isFocused) 1.1f else 1.0f,
+          animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+          ),
+          label = "seriesZoom"
+        )
+        
         Card(
           onClick = { nav.navigate("series/${s.series_id}") }, 
           modifier = Modifier
             .padding(8.dp)
+            .graphicsLayer {
+              scaleX = scale
+              scaleY = scale
+            }
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
             .then(

@@ -18,6 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -297,6 +301,16 @@ fun LiveScreen(nav: NavHostController) {
           
           LazyColumn { 
             items(filtered, key = { it.stream_id }) { s ->
+              val isFocused = current == s
+              val scale by animateFloatAsState(
+                targetValue = if (isFocused) 1.1f else 1.0f,
+                animationSpec = spring(
+                  dampingRatio = Spring.DampingRatioMediumBouncy,
+                  stiffness = Spring.StiffnessLow
+                ),
+                label = "liveChannelZoom"
+              )
+              
               ListItem(
                 headlineContent = { 
                   Text(
@@ -347,6 +361,10 @@ fun LiveScreen(nav: NavHostController) {
                       android.util.Log.i("LiveScreen", "🎯 Canal com foco: ${s.name}")
                       current = s
                     }
+                  }
+                  .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
                   }
               )
               HorizontalDivider()

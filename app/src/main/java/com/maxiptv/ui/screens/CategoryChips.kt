@@ -1,10 +1,16 @@
 package com.maxiptv.ui.screens
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,6 +35,16 @@ fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, on
     top = topPadding,
     bottom = bottomPadding
   )) {
+    var isTodasFocused by remember { mutableStateOf(false) }
+    val todasScale by animateFloatAsState(
+      targetValue = if (isTodasFocused) 1.15f else 1.0f,
+      animationSpec = spring(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessLow
+      ),
+      label = "todasZoom"
+    )
+    
     AssistChip(
       onClick = { onSelect(null) }, 
       label = { 
@@ -39,9 +55,26 @@ fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, on
           fontFamily = FontFamily.SansSerif
         ) 
       }, 
-      modifier = Modifier.padding(end = 8.dp)
+      modifier = Modifier
+        .padding(end = 8.dp)
+        .graphicsLayer {
+          scaleX = todasScale
+          scaleY = todasScale
+        }
+        .onFocusChanged { isTodasFocused = it.isFocused }
+        .focusable()
     )
     categories.forEach { (name, id) ->
+      var isFocused by remember { mutableStateOf(false) }
+      val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.15f else 1.0f,
+        animationSpec = spring(
+          dampingRatio = Spring.DampingRatioMediumBouncy,
+          stiffness = Spring.StiffnessLow
+        ),
+        label = "categoryZoom"
+      )
+      
       FilterChip(
         selected = selectedId == id, 
         onClick = { onSelect(id) }, 
@@ -53,7 +86,14 @@ fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, on
             fontFamily = FontFamily.SansSerif
           ) 
         }, 
-        modifier = Modifier.padding(end = 8.dp)
+        modifier = Modifier
+          .padding(end = 8.dp)
+          .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+          }
+          .onFocusChanged { isFocused = it.isFocused }
+          .focusable()
       )
     }
   }

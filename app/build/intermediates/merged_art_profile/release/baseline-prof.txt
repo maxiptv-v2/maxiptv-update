@@ -439,7 +439,8 @@ HSPLo/h;->invokeSuspend(Ljava/lang/Object;)Ljava/lang/Object;
 Lo/i;
 HSPLo/i;-><clinit>()V
 HSPLo/i;->a(FLo/q2;Ll0/o;)Ll0/q3;
-HSPLo/i;->b(Ljava/lang/Object;Lo/r2;Lo/n;Ljava/lang/Float;Ljava/lang/String;Li8/k;Ll0/o;II)Ll0/q3;
+HSPLo/i;->b(FLo/q1;Ljava/lang/String;Ll0/o;)Ll0/q3;
+HSPLo/i;->c(Ljava/lang/Object;Lo/r2;Lo/n;Ljava/lang/Float;Ljava/lang/String;Li8/k;Ll0/o;II)Ll0/q3;
 Lo/j;
 HSPLo/j;->c()J
 HSPLo/j;->e()Ljava/lang/Object;
