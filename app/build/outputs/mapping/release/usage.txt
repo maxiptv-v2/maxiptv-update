@@ -15619,7 +15619,6 @@ androidx.compose.ui.text.font.FontVariation$Settings:
     public int hashCode()
 androidx.compose.ui.text.font.FontVariation
 androidx.compose.ui.text.font.FontWeight$Companion:
-    public final androidx.compose.ui.text.font.FontWeight getBlack()
     public static synthetic void getBlack$annotations()
     public static synthetic void getBold$annotations()
     public static synthetic void getExtraBold$annotations()
@@ -15650,7 +15649,6 @@ androidx.compose.ui.text.font.FontWeight$Companion:
     public static synthetic void getW900$annotations()
 androidx.compose.ui.text.font.FontWeight:
     public static final int $stable
-    public static final synthetic androidx.compose.ui.text.font.FontWeight access$getBlack$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getExtraLight$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getLight$cp()
     public static final synthetic androidx.compose.ui.text.font.FontWeight access$getThin$cp()
@@ -57877,6 +57875,7 @@ androidx.compose.ui.text.TextGranularity$Companion:
     public static int getAsync-PKNRLFQ()
     public static int getAuto-vmbZdU8()
     public static int getBalanced-fcGXIks()
+    public static androidx.compose.ui.text.font.FontWeight getBlack()
     public static int getBlocking-PKNRLFQ()
     public static androidx.compose.ui.text.font.FontWeight getBold()
     public static int getBoth-EVpEnUU()
@@ -58405,7 +58404,6 @@ androidx.compose.ui.text.font.FontVariation$Setting
 androidx.compose.ui.text.font.FontVariation$Settings
 androidx.compose.ui.text.font.FontWeight$Companion
 androidx.compose.ui.text.font.FontWeight:
-    public static final androidx.compose.ui.text.font.FontWeight Black
     public static final androidx.compose.ui.text.TextGranularity$Companion Companion
     public static final androidx.compose.ui.text.font.FontWeight ExtraLight
     public static final androidx.compose.ui.text.font.FontWeight Light

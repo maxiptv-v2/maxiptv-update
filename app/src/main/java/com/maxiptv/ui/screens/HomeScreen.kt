@@ -859,7 +859,7 @@ fun CategoryButton(
   val configuration = LocalConfiguration.current
   val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
   
-  val infiniteTransition = rememberInfiniteTransition(label = "greenGlow")
+  val infiniteTransition = rememberInfiniteTransition(label = "cyanGlow")
   val glowAlpha by infiniteTransition.animateFloat(
     initialValue = 0.6f,
     targetValue = 1f,
@@ -867,7 +867,7 @@ fun CategoryButton(
       animation = tween(1200, easing = FastOutSlowInEasing),
       repeatMode = RepeatMode.Reverse
     ),
-    label = "greenGlow"
+    label = "cyanGlow"
   )
   
   // Ajustar altura baseado na orientação APENAS para smartphone em modo paisagem
@@ -920,12 +920,12 @@ fun CategoryButton(
       .focusable()
       .shadow(
         elevation = 12.dp,
-        spotColor = Color(0xFF00FF00).copy(alpha = glowAlpha),
-        ambientColor = Color(0xFF00FF00).copy(alpha = glowAlpha)
+        spotColor = Color(0xFF00D4FF).copy(alpha = glowAlpha), // ✅ Azul ciano premium
+        ambientColor = Color(0xFF00D4FF).copy(alpha = glowAlpha) // ✅ Azul ciano premium
       )
       .border(
         width = 2.dp,
-        color = Color(0xFF00FF00).copy(alpha = glowAlpha),
+        color = Color(0xFF00D4FF).copy(alpha = glowAlpha), // ✅ Azul ciano premium
         shape = RoundedCornerShape(8.dp)
       )
       .then(
@@ -942,8 +942,8 @@ fun CategoryButton(
           Modifier
       ),
     colors = ButtonDefaults.buttonColors(
-      containerColor = Color(0xFF00FF00),  // Verde sempre preenche completamente
-      contentColor = Color.Black
+      containerColor = Color(0xFF00D4FF),  // ✅ Azul ciano premium sempre preenche completamente
+      contentColor = Color.White  // ✅ Texto branco para melhor contraste com azul ciano
     ),
     shape = RoundedCornerShape(8.dp),
     elevation = ButtonDefaults.buttonElevation(
@@ -954,7 +954,7 @@ fun CategoryButton(
     Box(
       modifier = Modifier
         .fillMaxSize()  // Garantir que Box preenche todo o espaço do botão
-        .background(Color(0xFF00FF00), RoundedCornerShape(8.dp)),  // Background verde garantido
+        .background(Color(0xFF00D4FF), RoundedCornerShape(8.dp)),  // ✅ Background azul ciano premium garantido
       contentAlignment = Alignment.Center
     ) {
       // Overlay branco transparente quando focado (mais visível)
@@ -986,8 +986,8 @@ fun CategoryButton(
         Text(
           text = emoji,
           fontSize = emojiSize,
-          // Fire Stick: usar cor branca explícita (fundo verde claro)
-          color = if (deviceType == "firestick") Color.White else Color.Unspecified,
+          // ✅ Cor branca para contraste com azul ciano premium
+          color = Color.White,
           // Fire Stick: garantir altura mínima para não desaparecer com scaleFactor
           modifier = when {
             deviceType == "firestick" -> Modifier.heightIn(min = 24.dp)  // Altura mínima garantida
@@ -1007,11 +1007,12 @@ fun CategoryButton(
         // Texto sempre visível - ESPECIALMENTE no Fire Stick quando aplica ajustes de safe area
         Text(
           text = text,
-          fontSize = fontSize,
-          fontWeight = FontWeight.Bold,
-          fontFamily = FontFamily.SansSerif,
-          // Fire Stick: usar cor branca explícita (fundo verde claro)
-          color = if (deviceType == "firestick") Color.White else Color.Unspecified,
+          fontSize = 26.sp, // ✅ Tamanho fixo conforme solicitado
+          fontWeight = FontWeight.Black, // ✅ Peso máximo conforme solicitado
+          fontFamily = FontFamily.SansSerif, // ✅ Roboto Condensed Bold (SansSerif com Black = Condensed Bold)
+          letterSpacing = 0.5.sp, // ✅ Espaçamento entre letras conforme solicitado
+          // ✅ Cor branca para contraste com azul ciano premium
+          color = Color.White,
           maxLines = 1,
           // Fire Stick: garantir altura mínima para não desaparecer com scaleFactor
           modifier = when {
