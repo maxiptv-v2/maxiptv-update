@@ -70,13 +70,13 @@ fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, on
           .onFocusChanged { isTodasFocused = it.isFocused }
           .focusable()
       )
-      // Overlay branco transparente quando focado (alpha reduzido para não tampar fontes)
+      // Overlay branco transparente quando focado (clareado e afinado)
       if (isTodasFocused) {
         Box(
           modifier = Modifier
             .matchParentSize()
             .background(
-              Color.White.copy(alpha = 0.15f),
+              Color.White.copy(alpha = 0.2f),
               RoundedCornerShape(8.dp)
             )
         )
@@ -116,13 +116,13 @@ fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, on
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
         )
-        // Overlay branco transparente quando focado (alpha reduzido para não tampar fontes)
+        // Overlay branco transparente quando focado (clareado e afinado)
         if (isFocused) {
           Box(
             modifier = Modifier
               .matchParentSize()
               .background(
-                Color.White.copy(alpha = 0.15f),
+                Color.White.copy(alpha = 0.2f),
                 RoundedCornerShape(8.dp)
               )
           )

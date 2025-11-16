@@ -371,13 +371,13 @@ fun LiveScreen(nav: NavHostController) {
                       }
                     }
                 )
-                // Overlay branco transparente quando focado (alpha reduzido para não tampar fontes)
+                // Overlay branco transparente quando focado (clareado e afinado)
                 if (isFocused) {
                   Box(
                     modifier = Modifier
                       .matchParentSize()
                       .background(
-                        Color.White.copy(alpha = 0.15f),
+                        Color.White.copy(alpha = 0.2f),
                         RoundedCornerShape(4.dp)
                       )
                   )
