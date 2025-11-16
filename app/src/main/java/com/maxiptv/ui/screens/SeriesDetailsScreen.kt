@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.maxiptv.data.FavoritesManager
+import com.maxiptv.MaxiApp
 import kotlinx.coroutines.launch
 
 @Composable
@@ -204,7 +205,7 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
     Modifier
       .fillMaxSize()
       .verticalScroll(rememberScrollState())
-      .padding(16.dp)
+      .padding(horizontal = if (MaxiApp.isTv) 20.dp else 16.dp, vertical = 16.dp)  // TV: mais padding horizontal para evitar que episódios saiam da tela
   ) {
     if (info == null) {
       CircularProgressIndicator()
@@ -245,7 +246,7 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
               }
             },
             modifier = Modifier
-              .fillMaxWidth()  // Mesma largura do botão "Original | HD"
+              .then(if (MaxiApp.isTv) Modifier.widthIn(max = 600.dp) else Modifier.fillMaxWidth())  // TV: largura limitada, smartphone: largura completa
               .onFocusChanged { isFavoriteFocused = it.isFocused }
               .focusable()
               .then(
@@ -404,7 +405,7 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
             Card(
               modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)  // Padding vertical apenas
+                .padding(horizontal = if (MaxiApp.isTv) 0.dp else 0.dp, vertical = 4.dp)  // Padding já aplicado na Column principal
                 .onFocusChanged { isFocused = it.isFocused }
                 .focusable()
                 .then(
@@ -501,3 +502,4 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
     }
   }
 }
+

@@ -56,7 +56,7 @@ class PlayerActivity : ComponentActivity() {
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
-    window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)  // Garantir fullscreen completo
+    // ✅ FLAG_FULLSCREEN removido (deprecated em API 30+) - WindowInsetsController já faz isso
     
     // ✅ API MODERNA - OnBackPressedCallback (substitui onBackPressed depreciado)
     onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -109,10 +109,10 @@ class PlayerActivity : ComponentActivity() {
     
     // ✅ HABILITAR CONTROLES (pause, play, seek, avançar/retroceder)
     pv.useController = true
-    pv.controllerShowTimeoutMs = 5000 // Controles somem após 5 segundos de inatividade
+    pv.controllerShowTimeoutMs = 5000 // Controles somem após 5 segundos de inatividade (apenas quando tocando)
     pv.controllerHideOnTouch = false // Não esconder no toque
     
-    // Mostrar controles ao tocar na tela
+    // ✅ Listener para mostrar controles quando necessário
     pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
       android.util.Log.d("PlayerActivity", "Controles visíveis: $visibility")
     })
@@ -353,6 +353,9 @@ class PlayerActivity : ComponentActivity() {
               // Reset contador quando voltar a tocar normalmente
               reconnectAttempts = 0
               
+              // Player tocando: timeout normal para controles
+              pv.controllerShowTimeoutMs = 5000
+              
               // Se está tocando bem por mais de 30 segundos, resetar contador de buffering
               android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 if (exo.isPlaying && bufferingCount > 0) {
@@ -361,6 +364,13 @@ class PlayerActivity : ComponentActivity() {
                   android.util.Log.d("PlayerActivity", "✅ Reprodução estável, resetando detecção de Wi-Fi lento")
                 }
               }, 30000) // 30 segundos
+            } else {
+              // ✅ Player pausado: sempre mostrar controles para exibir minutos
+              if (exo.playbackState == Player.STATE_READY) {
+                pv.showController()
+                pv.controllerShowTimeoutMs = 0 // Nunca esconder quando pausado
+                android.util.Log.d("PlayerActivity", "⏸️ Player pausado - controles sempre visíveis para mostrar minutos")
+              }
             }
           }
         })

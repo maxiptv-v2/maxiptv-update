@@ -51,6 +51,16 @@ fun MaxiSafeArea(
       null
     }
   }
+  
+  // ✅ DETECÇÃO AUTOMÁTICA DE OVERFLOW (elementos fora da tela)
+  // Só aplica se não houver override manual e se estiver habilitado
+  val overflowCorrections = remember(overrideState, context, fingerprintInfo.key) {
+    if (overrideState == null && OverflowDetector.isEnabled(context)) {
+      OverflowDetector.loadOverflowCorrections(context, fingerprintInfo.key)
+    } else {
+      null
+    }
+  }
 
   val diagonalInches = remember(context) {
     val metrics = context.resources.displayMetrics
@@ -67,13 +77,14 @@ fun MaxiSafeArea(
   val paddingResult = remember(
     overrideState,
     autoDetectedOverride,
+    overflowCorrections,
     MaxiApp.isFireStick,
     MaxiApp.isNativeTv,
     MaxiApp.isTvBox,
     MaxiApp.isProjector,
     diagonalInches
   ) {
-    // Prioridade: override salvo localmente > detecção automática > valores padrão
+    // Prioridade: override salvo localmente > detecção automática > correção de overflow > valores padrão
     overrideState?.let { override ->
       SafePaddingResult(
         padding = PaddingValues(
@@ -99,18 +110,22 @@ fun MaxiSafeArea(
         overscanAdjusted = true
       )
     } ?: run {
+      // ✅ Aplicar correções de overflow se detectadas (antes dos valores padrão)
+      val overflowStart = overflowCorrections?.first ?: 0f
+      val overflowEnd = overflowCorrections?.second ?: 0f
+      
       when {
         MaxiApp.isFireStick -> {
-          val horizontal = MaxiApp.fireStickOverscanPadding.coerceAtLeast(20)
-          val bottom = (MaxiApp.fireStickSafeAreaPadding + 12).coerceAtLeast(28)
+          val baseHorizontal = MaxiApp.fireStickOverscanPadding.coerceAtLeast(20).toFloat()
+          val baseBottom = ((MaxiApp.fireStickSafeAreaPadding + 12).coerceAtLeast(28)).toFloat()
           SafePaddingResult(
             padding = PaddingValues(
-              start = horizontal.dp,
-              top = 0.dp, // Removido padding do topo para eliminar faixa cinza
-              end = horizontal.dp,
-              bottom = bottom.dp
+              start = (baseHorizontal + overflowStart).dp,
+              top = 0.dp,
+              end = (baseHorizontal + overflowEnd).dp,
+              bottom = (baseBottom + overflowStart.coerceAtMost(overflowEnd)).dp
             ),
-            profile = "fire_stick_auto",
+            profile = "fire_stick_auto${if (overflowCorrections != null) "_overflow" else ""}",
             scaleFactor = 0.96f,
             overscanAdjusted = true
           )

@@ -112,13 +112,13 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         Spacer(Modifier.height(8.dp))
         Button(onClick = { showOptionsDialog = true }) {
           Text("🎬 $selectedLanguage | $selectedQuality")
-        }
-        
+    }
+    
         Spacer(Modifier.height(12.dp))
-        
+    
         // 🎨 BOTÕES NA MESMA LINHA: Assistir, Favoritar e Opções
         // Colocados DEBAIXO do botão "Original | FHD"
-        var isAssistirFocused by remember { mutableStateOf(false) }
+    var isAssistirFocused by remember { mutableStateOf(false) }
         var isFavoriteFocused by remember { mutableStateOf(false) }
         var isOpcoesFocused by remember { mutableStateOf(false) }
         
@@ -128,118 +128,118 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
           horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
           // Botão Assistir
-          Button(
-            onClick = { 
-              // Buscar o stream_id correto baseado no idioma escolhido
-              val currentTitle = info?.info?.name ?: ""
-              val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
-              
-              val targetVersion = allVods.find { vod ->
-                val vodBase = vod.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
-                val matchesTitle = vodBase == baseTitle
-                val matchesLanguage = when (selectedLanguage) {
-                  "Legendado" -> vod.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
-                  "Dublado" -> vod.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
-                  "Original" -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
-                  else -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
-                }
-                matchesTitle && matchesLanguage
-              }
-              
-              val streamId = targetVersion?.stream_id ?: vodId
-              val (base, user, pass) = SettingsRepo.loadBlocking()
-              val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
-              val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-              val url = "${baseUrl}movie/$user/$pass/$streamId.mp4"
-              
-              android.util.Log.i("VodDetails", "Idioma escolhido: $selectedLanguage")
-              android.util.Log.i("VodDetails", "Stream ID: $streamId (${targetVersion?.name ?: "padrão"})")
-              
-              // 🎯 Usar startActivityForResult para navegação inteligente
-              val playerIntent = Intent(ctx, PlayerActivity::class.java)
-                .putExtra("url", url)
-                .putExtra("contentType", "vod")
-                .putExtra("returnToCategory", "vod")
-                .putExtra("categoryId", vodId.toString())
-              
-              // Para Compose, vamos usar uma abordagem diferente
-              // O PlayerActivity vai navegar de volta automaticamente
-              ctx.startActivity(playerIntent)
-            },
-            modifier = Modifier
-              .weight(1.5f)  // Assistir ocupa mais espaço
-              .onFocusChanged { isAssistirFocused = it.isFocused }
-              .focusable()
-              .then(
-                if (isAssistirFocused) 
-                  Modifier
-                    .border(4.dp, Color(0xFFFF5722), androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
-                    .shadow(
-                      elevation = 16.dp,
-                      spotColor = Color(0xFFFF5722).copy(alpha = 0.9f),
-                      ambientColor = Color(0xFFFF5722).copy(alpha = 0.7f),
-                      shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-                    )
-                else 
-                  Modifier
-              )
-          ) { 
-            Text("▶ Assistir") 
+    Button(
+      onClick = { 
+        // Buscar o stream_id correto baseado no idioma escolhido
+        val currentTitle = info?.info?.name ?: ""
+        val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
+        
+        val targetVersion = allVods.find { vod ->
+          val vodBase = vod.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
+          val matchesTitle = vodBase == baseTitle
+          val matchesLanguage = when (selectedLanguage) {
+            "Legendado" -> vod.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
+            "Dublado" -> vod.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
+            "Original" -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+            else -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
           }
-          
+          matchesTitle && matchesLanguage
+        }
+        
+        val streamId = targetVersion?.stream_id ?: vodId
+        val (base, user, pass) = SettingsRepo.loadBlocking()
+        val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
+        val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+        val url = "${baseUrl}movie/$user/$pass/$streamId.mp4"
+        
+        android.util.Log.i("VodDetails", "Idioma escolhido: $selectedLanguage")
+        android.util.Log.i("VodDetails", "Stream ID: $streamId (${targetVersion?.name ?: "padrão"})")
+        
+        // 🎯 Usar startActivityForResult para navegação inteligente
+        val playerIntent = Intent(ctx, PlayerActivity::class.java)
+          .putExtra("url", url)
+          .putExtra("contentType", "vod")
+          .putExtra("returnToCategory", "vod")
+          .putExtra("categoryId", vodId.toString())
+        
+        // Para Compose, vamos usar uma abordagem diferente
+        // O PlayerActivity vai navegar de volta automaticamente
+        ctx.startActivity(playerIntent)
+      },
+      modifier = Modifier
+              .weight(1.5f)  // Assistir ocupa mais espaço
+        .onFocusChanged { isAssistirFocused = it.isFocused }
+        .focusable()
+        .then(
+          if (isAssistirFocused) 
+            Modifier
+              .border(4.dp, Color(0xFFFF5722), androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+              .shadow(
+                elevation = 16.dp,
+                spotColor = Color(0xFFFF5722).copy(alpha = 0.9f),
+                ambientColor = Color(0xFFFF5722).copy(alpha = 0.7f),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+              )
+          else 
+            Modifier
+        )
+    ) { 
+      Text("▶ Assistir") 
+    }
+    
           // Botão Favoritar (menor)
-          Button(
-            onClick = {
-              scope.launch {
-                if (isFavorite) {
-                  FavoritesManager.removeFavoriteMovie(vodId)
-                  isFavorite = false
-                  android.util.Log.i("VodDetails", "❌ Filme $vodId removido dos favoritos")
-                } else {
-                  FavoritesManager.addFavoriteMovie(vodId)
-                  isFavorite = true
-                  android.util.Log.i("VodDetails", "✅ Filme $vodId adicionado aos favoritos")
-                }
-              }
-            },
-            modifier = Modifier
+      Button(
+        onClick = {
+          scope.launch {
+            if (isFavorite) {
+              FavoritesManager.removeFavoriteMovie(vodId)
+              isFavorite = false
+              android.util.Log.i("VodDetails", "❌ Filme $vodId removido dos favoritos")
+            } else {
+              FavoritesManager.addFavoriteMovie(vodId)
+              isFavorite = true
+              android.util.Log.i("VodDetails", "✅ Filme $vodId adicionado aos favoritos")
+            }
+          }
+        },
+        modifier = Modifier
               .weight(1f)  // Favoritar ocupa menos espaço
-              .onFocusChanged { isFavoriteFocused = it.isFocused }
-              .focusable()
-              .then(
-                if (isFavoriteFocused)
-                  Modifier
-                    .border(3.dp, Color(0xFFFFD700), RoundedCornerShape(8.dp))
-                    .shadow(
-                      elevation = 12.dp,
-                      spotColor = Color(0xFFFFD700).copy(alpha = 0.9f),
-                      ambientColor = Color(0xFFFFD700).copy(alpha = 0.7f),
-                      shape = RoundedCornerShape(8.dp)
-                    )
-                else
-                  Modifier
-              ),
-            colors = ButtonDefaults.buttonColors(
-              containerColor = if (isFavorite) Color(0xFFFFD700) else Color(0xFF666666),
-              contentColor = if (isFavorite) Color.Black else Color.White
-            )
-          ) {
-            Icon(
-              imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.FavoriteBorder,
+          .onFocusChanged { isFavoriteFocused = it.isFocused }
+          .focusable()
+          .then(
+            if (isFavoriteFocused)
+              Modifier
+                .border(3.dp, Color(0xFFFFD700), RoundedCornerShape(8.dp))
+                .shadow(
+                  elevation = 12.dp,
+                  spotColor = Color(0xFFFFD700).copy(alpha = 0.9f),
+                  ambientColor = Color(0xFFFFD700).copy(alpha = 0.7f),
+                  shape = RoundedCornerShape(8.dp)
+                )
+            else
+              Modifier
+          ),
+        colors = ButtonDefaults.buttonColors(
+          containerColor = if (isFavorite) Color(0xFFFFD700) else Color(0xFF666666),
+          contentColor = if (isFavorite) Color.Black else Color.White
+        )
+      ) {
+        Icon(
+          imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.FavoriteBorder,
               contentDescription = if (isFavorite) "Remover dos favoritos" else "Adicionar aos favoritos",
               modifier = Modifier.size(20.dp)  // Ícone menor
-            )
+        )
             Spacer(Modifier.width(4.dp))  // Espaçamento menor
-            Text(
+        Text(
               text = if (isFavorite) "⭐" else "⭐",
               fontSize = 14.sp,  // Texto menor
-              fontWeight = FontWeight.Bold
-            )
-          }
-          
+          fontWeight = FontWeight.Bold
+        )
+      }
+      
           // Botão Opções
-          OutlinedButton(
-            onClick = { showOptionsDialog = true },
+      OutlinedButton(
+        onClick = { showOptionsDialog = true },
             modifier = Modifier
               .weight(1f)  // Opções ocupa menos espaço
               .onFocusChanged { isOpcoesFocused = it.isFocused }
@@ -257,7 +257,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
                 else
                   Modifier
               )
-          ) {
+      ) {
             Icon(
               Icons.Default.Settings,
               contentDescription = "Opções",
