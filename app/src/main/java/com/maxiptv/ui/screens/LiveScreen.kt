@@ -301,7 +301,7 @@ fun LiveScreen(nav: NavHostController) {
           
           LazyColumn { 
             items(filtered, key = { it.stream_id }) { s ->
-              val isFocused = current == s
+              var isFocused by remember { mutableStateOf(false) }
               val scale by animateFloatAsState(
                 targetValue = if (isFocused) 1.1f else 1.0f,
                 animationSpec = spring(
@@ -363,6 +363,7 @@ fun LiveScreen(nav: NavHostController) {
                     }
                     .focusable()
                     .onFocusChanged { focusState ->
+                      isFocused = focusState.isFocused
                       if (focusState.isFocused) {
                         // Quando ganha foco, tocar o canal
                         android.util.Log.i("LiveScreen", "🎯 Canal com foco: ${s.name}")
@@ -370,13 +371,13 @@ fun LiveScreen(nav: NavHostController) {
                       }
                     }
                 )
-                // Overlay branco transparente quando focado
+                // Overlay branco transparente quando focado (alpha reduzido para não tampar fontes)
                 if (isFocused) {
                   Box(
                     modifier = Modifier
                       .matchParentSize()
                       .background(
-                        Color.White.copy(alpha = 0.3f),
+                        Color.White.copy(alpha = 0.15f),
                         RoundedCornerShape(4.dp)
                       )
                   )
@@ -445,24 +446,8 @@ fun LiveScreen(nav: NavHostController) {
           
           LazyColumn { 
             items(filtered, key = { it.stream_id }) { s ->
-              val isFocusedPhone = current == s
-              val scalePhone by animateFloatAsState(
-                targetValue = if (isFocusedPhone) 1.1f else 1.0f,
-                animationSpec = spring(
-                  dampingRatio = Spring.DampingRatioMediumBouncy,
-                  stiffness = Spring.StiffnessLow
-                ),
-                label = "liveChannelZoomPhone"
-              )
-              
-              Box(
-                modifier = Modifier
-                  .graphicsLayer {
-                    scaleX = scalePhone
-                    scaleY = scalePhone
-                  }
-              ) {
-                ListItem(
+              // Smartphone usa touch - sem zoom e overlay (mantém como estava)
+              ListItem(
                 headlineContent = { 
                   Text(
                     text = s.name,
@@ -500,20 +485,7 @@ fun LiveScreen(nav: NavHostController) {
                 },
                 modifier = Modifier
                   .clickable { current = s }
-                  .focusable()
               )
-              // Overlay branco transparente quando focado
-              if (isFocusedPhone) {
-                Box(
-                  modifier = Modifier
-                    .matchParentSize()
-                    .background(
-                      Color.White.copy(alpha = 0.3f),
-                      RoundedCornerShape(4.dp)
-                    )
-                )
-              }
-              }
               HorizontalDivider()
             } 
           }
