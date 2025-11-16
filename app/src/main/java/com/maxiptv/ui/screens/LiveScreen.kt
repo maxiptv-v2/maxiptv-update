@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.maxiptv.MaxiApp
 import com.maxiptv.data.XRepo
+import com.maxiptv.ui.components.fillMaxWidthAdjusted
 import com.maxiptv.data.LiveStream
 import com.maxiptv.data.EpgProgramme
 import com.maxiptv.data.EpgParser
@@ -208,7 +209,7 @@ fun LiveScreen(nav: NavHostController) {
       
       Box(
         modifier = Modifier
-          .fillMaxWidth()
+          .fillMaxWidthAdjusted() // ✅ Fire Stick/Native TV: 90% da largura real
           .padding(
             vertical = 12.dp,
             horizontal = horizontalPadding

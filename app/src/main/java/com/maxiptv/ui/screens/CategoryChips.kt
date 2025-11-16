@@ -10,6 +10,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.maxiptv.MaxiApp
+import com.maxiptv.ui.components.fillMaxWidthAdjusted
 
 @Composable
 fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, onSelect: (String?) -> Unit) {
@@ -22,7 +23,7 @@ fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, on
   val bottomPadding = if (isTv) 16.dp else 12.dp
   val horizontalPadding = if (isTv) 20.dp else 16.dp
   
-  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(
+  Row(Modifier.fillMaxWidthAdjusted().horizontalScroll(rememberScrollState()).padding( // ✅ Fire Stick/Native TV: 90% da largura real
     start = horizontalPadding,
     end = horizontalPadding,
     top = topPadding,

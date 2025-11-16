@@ -77,6 +77,33 @@ fun Modifier.safeForTv(): Modifier {
 }
 
 /**
+ * Modifier que aplica fillMaxWidth com fator reduzido para Fire Stick e Native TV
+ * Esses dispositivos mostram aproximadamente 90% da medida real da tela
+ * TV Box genérica não precisa porque já funciona corretamente
+ */
+@Composable
+fun Modifier.fillMaxWidthAdjusted(): Modifier {
+    return when {
+        MaxiApp.isFireStick -> {
+            // Fire Stick: mostra ~90% da medida real, aplicar 0.90f
+            this.fillMaxWidth(0.90f)
+        }
+        MaxiApp.isNativeTv -> {
+            // Native TV: mostra ~90% da medida real, aplicar 0.90f
+            this.fillMaxWidth(0.90f)
+        }
+        MaxiApp.isTvBox -> {
+            // TV Box genérica: já funciona corretamente, usar 100%
+            this.fillMaxWidth()
+        }
+        else -> {
+            // Outros dispositivos: usar 100%
+            this.fillMaxWidth()
+        }
+    }
+}
+
+/**
  * Modifier para textos que nunca estouram
  * Aplica largura máxima e garante ellipsis
  */

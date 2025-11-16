@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.maxiptv.MaxiApp
 import com.maxiptv.data.XRepo
+import com.maxiptv.ui.components.fillMaxWidthAdjusted
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
@@ -56,7 +57,7 @@ fun VodScreen(nav: NavHostController) {
       
       Box(
         modifier = Modifier
-          .fillMaxWidth()
+          .fillMaxWidthAdjusted() // ✅ Fire Stick/Native TV: 90% da largura real
           .padding(
             vertical = 12.dp,
             horizontal = horizontalPadding

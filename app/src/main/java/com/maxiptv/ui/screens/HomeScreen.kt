@@ -32,6 +32,7 @@ import com.maxiptv.MaxiApp
 import com.maxiptv.data.UserManager
 import com.maxiptv.data.SessionManager
 import com.maxiptv.data.XRepo
+import com.maxiptv.ui.components.fillMaxWidthAdjusted
 import com.maxiptv.data.UpdateManager
 import com.maxiptv.data.UpdateInfo
 import com.maxiptv.data.ApkDownloader
@@ -511,7 +512,7 @@ fun HomeScreen(nav: NavHostController) {
       // Logo Max IPTV com Neon e Botão SAIR (TopBar removida)
       Box(
         modifier = Modifier
-          .fillMaxWidth()
+          .fillMaxWidthAdjusted() // ✅ Fire Stick/Native TV: 90% da largura real
           .padding(
             vertical = if (isFireStick) 12.dp else if (isTv) 8.dp else if (isPhone) 4.dp else 6.dp,
             horizontal = horizontalPadding
@@ -609,7 +610,7 @@ fun HomeScreen(nav: NavHostController) {
       // Botões de Categoria com Ícones (responsivos por dispositivo)
       Row(
         modifier = Modifier
-          .fillMaxWidth()
+          .fillMaxWidthAdjusted() // ✅ Fire Stick/Native TV: 90% da largura real
           .padding(
             horizontal = horizontalPadding
           ),
@@ -907,7 +908,14 @@ fun CategoryButton(
     onClick = onClick,
     modifier = modifier
       .height(buttonHeight)
-      .fillMaxWidth()  // Garantir largura completa
+      .then(
+        // ✅ Fire Stick/Native TV: aplicar 90% da largura real nos cards também
+        when {
+          deviceType == "firestick" -> Modifier.fillMaxWidth(0.90f)  // Fire Stick: 90%
+          deviceType == "tv" && MaxiApp.isNativeTv -> Modifier.fillMaxWidth(0.90f)  // Native TV: 90%
+          else -> Modifier.fillMaxWidth()  // TV Box e outros: largura completa (100%)
+        }
+      )
       .onFocusChanged { onFocusChanged(it.isFocused) }
       .focusable()
       .shadow(
