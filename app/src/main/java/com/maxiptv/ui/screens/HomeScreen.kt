@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,6 +61,8 @@ fun HomeScreen(nav: NavHostController) {
   var updateAvailable by remember { mutableStateOf<UpdateInfo?>(null) }
   var showUpdateDialog by remember { mutableStateOf(false) }
   var isDownloading by remember { mutableStateOf(false) }
+  var updateError by remember { mutableStateOf<String?>(null) }
+  var showErrorDialog by remember { mutableStateOf(false) }
   val context = LocalContext.current
   
   LaunchedEffect(Unit) {
@@ -67,6 +70,21 @@ fun HomeScreen(nav: NavHostController) {
       DeviceLogger.logDevice(context)
     } catch (e: Exception) {
       android.util.Log.e("HomeScreen", "Erro ao registrar dispositivo: ${e.message}")
+    }
+  }
+  
+  // Registrar callback de erro para Fire OS usando DisposableEffect
+  DisposableEffect(MaxiApp.isFireStick) {
+    if (MaxiApp.isFireStick) {
+      ApkDownloader.setErrorCallback { errorMessage ->
+        updateError = errorMessage
+        showErrorDialog = true
+        isDownloading = false
+        android.util.Log.e("HomeScreen", "🔥 Erro de atualização no Fire OS: $errorMessage")
+      }
+    }
+    onDispose {
+      ApkDownloader.clearErrorCallback()
     }
   }
   
@@ -502,6 +520,83 @@ fun HomeScreen(nav: NavHostController) {
           Text("DEPOIS", fontWeight = FontWeight.Bold)
         }
       }
+    )
+  }
+  
+  // Dialog de erro de atualização (apenas Fire OS)
+  if (showErrorDialog && updateError != null && MaxiApp.isFireStick) {
+    AlertDialog(
+      onDismissRequest = { 
+        showErrorDialog = false
+        updateError = null
+      },
+      title = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = null,
+            tint = Color(0xFFFF5722),
+            modifier = Modifier.size(32.dp)
+          )
+          Spacer(Modifier.width(12.dp))
+          Text(
+            "Erro ao Atualizar",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = Color(0xFFFF5722)
+          )
+        }
+      },
+      text = {
+        Column {
+          Text(
+            updateError ?: "Erro desconhecido",
+            fontSize = 16.sp,
+            lineHeight = 22.sp,
+            color = Color.White
+          )
+          Spacer(Modifier.height(12.dp))
+          Text(
+            "O app não será fechado. Você pode tentar novamente ou instalar manualmente pelo arquivo baixado.",
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            color = Color.Gray
+          )
+        }
+      },
+      confirmButton = {
+        var isOkFocused by remember { mutableStateOf(false) }
+        Button(
+          onClick = { 
+            showErrorDialog = false
+            updateError = null
+          },
+          modifier = Modifier
+            .onFocusChanged { isOkFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isOkFocused)
+                Modifier
+                  .border(4.dp, Color(0xFFFF5722), RoundedCornerShape(8.dp))
+                  .shadow(
+                    elevation = 15.dp,
+                    spotColor = Color(0xFFFF5722).copy(alpha = 0.9f),
+                    ambientColor = Color(0xFFFF5722).copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(8.dp)
+                  )
+              else
+                Modifier
+            ),
+          colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFFFF5722)
+          )
+        ) {
+          Text("ENTENDI", fontWeight = FontWeight.Bold)
+        }
+      },
+      containerColor = Color(0xFF1A1A1A),
+      titleContentColor = Color(0xFFFF5722),
+      textContentColor = Color.White
     )
   }
   

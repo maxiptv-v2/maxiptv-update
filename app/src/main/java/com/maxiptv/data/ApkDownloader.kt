@@ -26,6 +26,33 @@ object ApkDownloader {
     // Receiver estático para funcionar mesmo quando o app fecha
     private var downloadReceiver: BroadcastReceiver? = null
     
+    // Callback para erros (apenas Fire OS)
+    private var errorCallback: ((String) -> Unit)? = null
+    
+    /**
+     * Define callback para receber erros de instalação (apenas Fire OS)
+     */
+    fun setErrorCallback(callback: (String) -> Unit) {
+        errorCallback = callback
+    }
+    
+    /**
+     * Remove callback de erros
+     */
+    fun clearErrorCallback() {
+        errorCallback = null
+    }
+    
+    /**
+     * Notifica erro através do callback (apenas Fire OS)
+     */
+    private fun notifyError(context: Context, message: String) {
+        if (isFireOS(context)) {
+            errorCallback?.invoke(message)
+            Log.e(TAG, "🔥 Erro no Fire OS: $message")
+        }
+    }
+    
     /**
      * Verifica se está rodando no Fire OS / Fire Stick
      */
@@ -257,9 +284,11 @@ object ApkDownloader {
                         // Limpar informações salvas apenas se instalação iniciou com sucesso
                         // (não limpar aqui - deixar installApk limpar após sucesso)
                     } catch (e: Exception) {
+                        val errorMsg = "Erro ao instalar após download: ${e.message ?: "Erro desconhecido"}. Tente baixar novamente."
                         Log.e(TAG, "❌ Erro ao instalar após download: ${e.message}", e)
                         Log.e(TAG, "   Stack trace: ${e.stackTraceToString()}")
                         e.printStackTrace()
+                        notifyError(appContext, errorMsg)
                         // Não limpar informações - tentar novamente na próxima vez que app abrir
                     }
                     // Não fazer unregister aqui - pode causar crash se contexto já foi destruído
@@ -542,7 +571,9 @@ object ApkDownloader {
             
             // Verificar permissão novamente antes de instalar (especialmente importante no Fire OS)
             if (!canInstallPackages(appContext)) {
-                Log.w(TAG, "⚠️ Permissão de instalação não concedida - solicitando...")
+                val errorMsg = "Permissão de instalação não concedida. Por favor, habilite 'Instalar apps de fontes desconhecidas' nas configurações."
+                Log.w(TAG, "⚠️ $errorMsg")
+                notifyError(appContext, errorMsg)
                 requestInstallPermission(appContext)
                 return
             }
@@ -558,13 +589,15 @@ object ApkDownloader {
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "❌ Erro ao criar Uri com FileProvider: ${e.message}", e)
+                    val errorMsg = "Erro ao preparar arquivo para instalação: ${e.message ?: "Erro desconhecido"}. Verifique se o arquivo foi baixado corretamente."
+                    notifyError(appContext, errorMsg)
                     // Fallback: tentar sem FileProvider (pode funcionar em versões antigas do Fire OS)
                     if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N) {
                         Uri.fromFile(file).also {
                             Log.d(TAG, "✅ Uri criado sem FileProvider (fallback): $it")
                         }
                     } else {
-                        throw e
+                        return // Não lançar exceção, apenas retornar
                     }
                 }
             } else {
@@ -586,7 +619,9 @@ object ApkDownloader {
             
             // Verificar permissão NOVAMENTE imediatamente antes de instalar (compatibilidade Fire OS)
             if (!canInstallPackages(appContext)) {
-                Log.w(TAG, "⚠️ Permissão de instalação não concedida - solicitando novamente...")
+                val errorMsg = "Permissão de instalação não concedida. Por favor, habilite 'Instalar apps de fontes desconhecidas' nas configurações."
+                Log.w(TAG, "⚠️ $errorMsg")
+                notifyError(appContext, errorMsg)
                 requestInstallPermission(appContext)
                 return
             }
@@ -615,7 +650,9 @@ object ApkDownloader {
                         
                         // Verificar novamente se arquivo ainda existe e tem tamanho válido
                         if (!file.exists() || file.length() == 0L) {
-                            Log.e(TAG, "❌ Arquivo desapareceu ou ficou vazio após espera no Fire OS!")
+                            val errorMsg = "Arquivo de atualização desapareceu ou está corrompido. Tente baixar novamente."
+                            Log.e(TAG, "❌ $errorMsg")
+                            notifyError(appContext, errorMsg)
                             return
                         }
                         
@@ -633,15 +670,18 @@ object ApkDownloader {
                     
                 } catch (e: SecurityException) {
                     // Fire OS pode lançar SecurityException mesmo com permissão
+                    val errorMsg = "Erro de segurança ao instalar: ${e.message ?: "Permissão negada"}. Verifique se 'Instalar apps de fontes desconhecidas' está habilitado nas configurações."
                     Log.e(TAG, "❌ SecurityException no Fire OS: ${e.message}", e)
-                    Log.e(TAG, "   Tentando solicitar permissão novamente...")
+                    notifyError(appContext, errorMsg)
                     requestInstallPermission(appContext)
                 } catch (e: android.content.ActivityNotFoundException) {
                     // Fire OS pode não ter Activity para instalar
+                    val errorMsg = "Sistema de instalação não encontrado. O Fire OS pode não ter PackageInstaller disponível. Tente instalar manualmente pelo arquivo baixado."
                     Log.e(TAG, "❌ ActivityNotFoundException: ${e.message}", e)
-                    Log.e(TAG, "   Fire OS pode não ter PackageInstaller disponível")
+                    notifyError(appContext, errorMsg)
                     requestInstallPermission(appContext)
                 } catch (e: Exception) {
+                    val errorMsg = "Erro ao iniciar instalação: ${e.message ?: "Erro desconhecido"}. Verifique as configurações do Fire OS."
                     Log.e(TAG, "❌ Erro ao iniciar instalação: ${e.message}", e)
                     e.printStackTrace()
                     
@@ -662,21 +702,27 @@ object ApkDownloader {
                             Log.e(TAG, "❌ Erro no fallback também: ${e2.message}", e2)
                         }
                     } else {
-                        // No Fire OS, se falhar, tentar solicitar permissão novamente
-                        Log.d(TAG, "🔥 Fire OS: Tentando solicitar permissão novamente após erro")
-                        requestInstallPermission(appContext)
+                        // No Fire OS, se falhar, mostrar erro
+                        notifyError(appContext, errorMsg)
+                        Log.d(TAG, "🔥 Fire OS: Erro capturado e notificado")
                     }
                 }
             } else {
+                val errorMsg = "Nenhum aplicativo encontrado para instalar o APK. Possíveis causas:\n" +
+                        "1. Permissão de instalação não foi concedida\n" +
+                        "2. Fire OS bloqueou instalação de fontes desconhecidas\n" +
+                        "3. PackageInstaller não está disponível\n\n" +
+                        "Por favor, habilite 'Instalar apps de fontes desconhecidas' nas configurações."
                 Log.e(TAG, "❌ Nenhum app encontrado para instalar APK")
                 Log.e(TAG, "   Isso pode indicar que:")
                 Log.e(TAG, "   1. Permissão de instalação não foi concedida")
                 Log.e(TAG, "   2. Fire OS bloqueou instalação de fontes desconhecidas")
                 Log.e(TAG, "   3. PackageInstaller não está disponível")
                 
-                // No Fire OS, quando resolveInfo é null, tentar solicitar permissão
+                // No Fire OS, quando resolveInfo é null, mostrar erro
                 if (isFire) {
-                    Log.d(TAG, "🔥 Fire OS: resolveInfo é null - solicitando permissão...")
+                    Log.d(TAG, "🔥 Fire OS: resolveInfo é null - mostrando erro...")
+                    notifyError(appContext, errorMsg)
                     requestInstallPermission(appContext)
                 }
             }

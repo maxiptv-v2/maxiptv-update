@@ -1,0 +1,190 @@
+﻿PROBLEMA CRÃTICO: Aplicativo Android nÃ£o atualiza no Fire OS (Amazon Fire Stick)
+
+CONTEXTO TÃ‰CNICO:
+- App desenvolvido em Kotlin com Jetpack Compose
+- Target SDK: 34, Min SDK: 21
+- Sistema de atualizaÃ§Ã£o: DownloadManager + FileProvider
+- Assinatura: v1 e v2 habilitadas (enableV1Signing = true, enableV2Signing = true)
+- Fire OS requer assinatura v1 e v2 (jÃ¡ configurado)
+
+SINTOMA:
+- APK Ã© baixado com sucesso
+- Quando usuÃ¡rio clica em "Atualizar", o app fecha
+- APK nÃ£o Ã© instalado
+- App continua na versÃ£o antiga
+
+ARQUITETURA IMPLEMENTADA:
+
+1. UpdateManager.kt:
+   - Verifica atualizaÃ§Ã£o via JSON remoto
+   - Adiciona timestamp na URL para evitar cache
+   - Headers: Cache-Control: no-cache, Pragma: no-cache
+
+2. ApkDownloader.kt:
+   - Usa DownloadManager para baixar APK
+   - BroadcastReceiver com ApplicationContext (persiste quando app fecha)
+   - SharedPreferences para salvar downloadId e fileName
+   - Limpa arquivos antigos antes de baixar
+   - Adiciona timestamp no nome do arquivo
+   - Aguarda 2000ms no Fire OS antes de instalar
+   - Usa FileProvider para criar URI seguro
+   - Verifica permissÃ£o REQUEST_INSTALL_PACKAGES antes de instalar
+   - Intent flags especÃ­ficos para Fire OS: FLAG_ACTIVITY_CLEAR_TOP, FLAG_ACTIVITY_SINGLE_TOP, FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+
+3. DetecÃ§Ã£o Fire OS:
+    private fun isFireOS(context: Context): Boolean {
+        return MaxiApp.isFireStick || 
+               android.os.Build.MANUFACTURER.lowercase().contains("amazon") ||
+               android.os.Build.BRAND.lowercase().contains("amazon")
+    }
+
+4. FunÃ§Ã£o de Download:
+    fun downloadAndInstall(context: Context, downloadUrl: String, version: String) {
+        Log.i(TAG, "ðŸ“¥ Iniciando download: $downloadUrl")
+        
+        // Usar ApplicationContext para persistir mesmo quando Activity fecha
+        val appContext = context.applicationContext
+        
+        // Verificar permissÃ£o ANTES de baixar
+        if (!canInstallPackages(appContext)) {
+            Log.w(TAG, "âš ï¸ App nÃ£o tem permissÃ£o para instalar APKs")
+            requestInstallPermission(appContext)
+            return
+        }
+        
+        // Remover caracteres invÃ¡lidos da versÃ£o para o nome do arquivo
+        val safeVersion = version.replace("v", "").replace(".", "_").replace(":", "_")
+        // Adicionar timestamp ao nome para evitar cache do Fire OS
+        val timestamp = System.currentTimeMillis()
+        val fileName = "maxiptv-$safeVersion-$timestamp.apk"
+        
+        // ðŸ”¥ LIMPAR ARQUIVOS ANTIGOS ANTES DE BAIXAR (evita cache do Fire OS)
+        // ATUALIZADO: Usa mÃ©todos modernos compatÃ­veis com Android 10+
+        try {
+            val downloadsDir = getDownloadsDirectory(appContext)
+            downloadsDir?.let { dir ->
+                if (dir.exists() && dir.isDirectory) {
+                    dir.listFiles()?.filter { 
+                        it.name.startsWith("maxiptv", ignoreCase = true) && it.name.endsWith(".apk", ignoreCase = true)
+                    }?.forEach { oldFile ->
+                        try {
+                            oldFile.delete()
+                            Log.d(TAG, "ðŸ—‘ï¸ Arquivo antigo deletado: ${oldFile.name}")
+                        } catch (e: Exception) {
+                            Log.w(TAG, "âš ï¸ NÃ£o foi possÃ­vel deletar arquivo antigo: ${oldFile.name}")
+                        }
+                    }
+                }
+            }
+            
+            // TambÃ©m limpar em caminhos alternativos do Fire OS
+            if (isFireOS(appContext)) 
+
+5. FunÃ§Ã£o de InstalaÃ§Ã£o:
+    private fun installApkFile(context: Context, file: File) {
+        try {
+            val appContext = context.applicationContext
+            val isFire = isFireOS(appContext)
+            
+            Log.i(TAG, "ðŸ“¦ Preparando instalaÃ§Ã£o do APK: ${file.absolutePath}")
+            Log.i(TAG, "   Tamanho: ${file.length()} bytes")
+            Log.i(TAG, "   Fire OS: $isFire")
+            
+            // Verificar permissÃ£o novamente antes de instalar (especialmente importante no Fire OS)
+            if (!canInstallPackages(appContext)) {
+                Log.w(TAG, "âš ï¸ PermissÃ£o de instalaÃ§Ã£o nÃ£o concedida - solicitando...")
+                requestInstallPermission(appContext)
+                return
+            }
+            
+            val uri: Uri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                try {
+                    FileProvider.getUriForFile(
+                        appContext,
+                        "${appContext.packageName}.fileprovider",
+                        file
+                    ).also {
+                        Log.d(TAG, "âœ… Uri criado com FileProvider: $it")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "âŒ Erro ao criar Uri com FileProvider: ${e.message}", e)
+                    // Fallback: tentar sem FileProvider (pode funcionar em versÃµes antigas do Fire OS)
+                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N) {
+                        Uri.fromFile(file).also {
+                            Log.d(TAG, "âœ… Uri criado sem FileProvider (fallback): $it")
+                        }
+                    } else {
+                        throw e
+                    }
+                }
+            } else {
+                Uri.fromFile(file).also {
+                    Log.d(TAG, "âœ… Uri criado sem FileProvider (Android < 7.0): $it")
+                }
+            }
+ 
+
+6. AndroidManifest.xml:
+   - PermissÃ£o REQUEST_INSTALL_PACKAGES declarada
+   - FileProvider configurado com authorities
+   - Provider com file_paths.xml
+
+7. build.gradle.kts:
+   - enableV1Signing = true
+   - enableV2Signing = true
+
+PROBLEMAS IDENTIFICADOS NO CÃ“DIGO:
+
+1. O app fecha quando clica em "Atualizar" - isso sugere que:
+   - O Intent de instalaÃ§Ã£o pode estar causando crash
+   - O Fire OS pode estar bloqueando a Activity
+   - O contexto pode estar sendo destruÃ­do antes da instalaÃ§Ã£o
+
+2. PossÃ­veis causas:
+   - Fire OS pode requerer PackageInstaller API em vez de Intent.ACTION_VIEW
+   - O FileProvider pode nÃ£o estar funcionando corretamente no Fire OS
+   - O BroadcastReceiver pode nÃ£o estar persistindo corretamente
+   - O arquivo pode nÃ£o estar completamente escrito quando tenta instalar
+
+PERGUNTAS ESPECÃFICAS:
+
+1. O Fire OS 8 requer PackageInstaller API em vez de Intent.ACTION_VIEW para instalaÃ§Ã£o?
+2. Como garantir que o BroadcastReceiver persista mesmo quando o app fecha no Fire OS?
+3. O FileProvider funciona corretamente no Fire OS ou precisa de configuraÃ§Ã£o especial?
+4. HÃ¡ algum flag adicional necessÃ¡rio no Intent para Fire OS?
+5. O Fire OS bloqueia Intent.ACTION_VIEW para instalaÃ§Ã£o de APKs?
+6. Devo usar PackageInstaller.Session em vez de Intent.ACTION_VIEW?
+7. HÃ¡ algum tempo mÃ­nimo necessÃ¡rio entre download completo e tentativa de instalaÃ§Ã£o no Fire OS?
+8. O Fire OS requer que o app tenha permissÃ£o especial alÃ©m de REQUEST_INSTALL_PACKAGES?
+
+SOLUÃ‡Ã•ES SUGERIDAS:
+
+Por favor, forneÃ§a:
+1. CÃ³digo Kotlin completo para usar PackageInstaller API se necessÃ¡rio
+2. VerificaÃ§Ãµes adicionais necessÃ¡rias para Fire OS
+3. Melhor forma de garantir que BroadcastReceiver persista
+4. ConfiguraÃ§Ãµes adicionais no AndroidManifest.xml se necessÃ¡rio
+5. Tratamento de erros especÃ­fico para Fire OS
+
+CÃ“DIGO ATUAL DE INSTALAÃ‡ÃƒO (trecho crÃ­tico):
+
+`kotlin
+val installIntent = Intent(Intent.ACTION_VIEW).apply {
+    setDataAndType(uri, "application/vnd.android.package-archive")
+    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+    }
+}
+
+if (isFire) {
+    installIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    installIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+    installIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+    Thread.sleep(2000)
+}
+
+appContext.startActivity(installIntent)
+`
+
+O que estÃ¡ faltando ou errado neste cÃ³digo para Fire OS?

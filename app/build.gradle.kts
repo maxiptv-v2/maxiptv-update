@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 227
-        versionName = "1.0.227"
+        versionCode = 229
+        versionName = "1.0.229"
     vectorDrawables.useSupportLibrary = true
     ndk {
       abiFilters += listOf("armeabi-v7a", "arm64-v8a")
@@ -35,6 +35,9 @@ android {
         storeFile = file(keystoreProperties["storeFile"] as String)
         storePassword = keystoreProperties["storePassword"] as String
       }
+      // ✅ Habilitar v1 e v2 signing para compatibilidade com Fire OS
+      enableV1Signing = true
+      enableV2Signing = true
     }
   }
   
