@@ -10,7 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,25 +48,40 @@ fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, on
       label = "todasZoom"
     )
     
-    AssistChip(
-      onClick = { onSelect(null) }, 
-      label = { 
-        Text(
-          "Todas",
-          fontSize = fontSize,
-          fontWeight = FontWeight.SemiBold,
-          fontFamily = FontFamily.SansSerif
-        ) 
-      }, 
+    Box(
       modifier = Modifier
         .padding(end = 8.dp)
         .graphicsLayer {
           scaleX = todasScale
           scaleY = todasScale
         }
-        .onFocusChanged { isTodasFocused = it.isFocused }
-        .focusable()
-    )
+    ) {
+      AssistChip(
+        onClick = { onSelect(null) }, 
+        label = { 
+          Text(
+            "Todas",
+            fontSize = fontSize,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = FontFamily.SansSerif
+          ) 
+        }, 
+        modifier = Modifier
+          .onFocusChanged { isTodasFocused = it.isFocused }
+          .focusable()
+      )
+      // Overlay branco transparente quando focado
+      if (isTodasFocused) {
+        Box(
+          modifier = Modifier
+            .matchParentSize()
+            .background(
+              Color.White.copy(alpha = 0.3f),
+              RoundedCornerShape(8.dp)
+            )
+        )
+      }
+    }
     categories.forEach { (name, id) ->
       var isFocused by remember { mutableStateOf(false) }
       val scale by animateFloatAsState(
@@ -75,26 +93,41 @@ fun CategoryChips(categories: List<Pair<String,String>>, selectedId: String?, on
         label = "categoryZoom"
       )
       
-      FilterChip(
-        selected = selectedId == id, 
-        onClick = { onSelect(id) }, 
-        label = { 
-          Text(
-            name,
-            fontSize = fontSize,
-            fontWeight = if (selectedId == id) FontWeight.Bold else FontWeight.SemiBold,
-            fontFamily = FontFamily.SansSerif
-          ) 
-        }, 
+      Box(
         modifier = Modifier
           .padding(end = 8.dp)
           .graphicsLayer {
             scaleX = scale
             scaleY = scale
           }
-          .onFocusChanged { isFocused = it.isFocused }
-          .focusable()
-      )
+      ) {
+        FilterChip(
+          selected = selectedId == id, 
+          onClick = { onSelect(id) }, 
+          label = { 
+            Text(
+              name,
+              fontSize = fontSize,
+              fontWeight = if (selectedId == id) FontWeight.Bold else FontWeight.SemiBold,
+              fontFamily = FontFamily.SansSerif
+            ) 
+          }, 
+          modifier = Modifier
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+        )
+        // Overlay branco transparente quando focado
+        if (isFocused) {
+          Box(
+            modifier = Modifier
+              .matchParentSize()
+              .background(
+                Color.White.copy(alpha = 0.3f),
+                RoundedCornerShape(8.dp)
+              )
+          )
+        }
+      }
     }
   }
 }

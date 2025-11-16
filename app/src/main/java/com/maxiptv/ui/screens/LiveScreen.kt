@@ -311,62 +311,77 @@ fun LiveScreen(nav: NavHostController) {
                 label = "liveChannelZoom"
               )
               
-              ListItem(
-                headlineContent = { 
-                  Text(
-                    text = s.name,
-                    fontSize = headlineSize,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = FontFamily.SansSerif,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                  ) 
-                }, 
-                supportingContent = { 
-                  Text(
-                    text = s.categoryName ?: "-",
-                    fontSize = supportingSize,
-                    fontFamily = FontFamily.SansSerif,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                  ) 
-                },
-                leadingContent = {
-                  Box(
-                    modifier = Modifier
-                      .size(iconSize + 8.dp)
-                      .padding(4.dp),
-                    contentAlignment = Alignment.Center
-                  ) {
-                    AsyncImage(
-                      model = s.stream_icon,
-                      contentDescription = s.name,
-                      modifier = Modifier
-                        .size(iconSize - 4.dp),
-                      contentScale = ContentScale.Inside
-                    )
-                  }
-                },
+              Box(
                 modifier = Modifier
-                  .clickable { 
-                    // 1x OK = tocar canal onde está o foco
-                    android.util.Log.i("LiveScreen", "🎯 Canal clicado: ${s.name}")
-                    current = s
-                    android.util.Log.i("LiveScreen", "🎯 Canal atual mudou para: ${current?.name}")
-                  }
-                  .focusable()
-                  .onFocusChanged { focusState ->
-                    if (focusState.isFocused) {
-                      // Quando ganha foco, tocar o canal
-                      android.util.Log.i("LiveScreen", "🎯 Canal com foco: ${s.name}")
-                      current = s
-                    }
-                  }
                   .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                   }
-              )
+              ) {
+                ListItem(
+                  headlineContent = { 
+                    Text(
+                      text = s.name,
+                      fontSize = headlineSize,
+                      fontWeight = FontWeight.SemiBold,
+                      fontFamily = FontFamily.SansSerif,
+                      maxLines = 2,
+                      overflow = TextOverflow.Ellipsis
+                    ) 
+                  }, 
+                  supportingContent = { 
+                    Text(
+                      text = s.categoryName ?: "-",
+                      fontSize = supportingSize,
+                      fontFamily = FontFamily.SansSerif,
+                      maxLines = 1,
+                      overflow = TextOverflow.Ellipsis
+                    ) 
+                  },
+                  leadingContent = {
+                    Box(
+                      modifier = Modifier
+                        .size(iconSize + 8.dp)
+                        .padding(4.dp),
+                      contentAlignment = Alignment.Center
+                    ) {
+                      AsyncImage(
+                        model = s.stream_icon,
+                        contentDescription = s.name,
+                        modifier = Modifier
+                          .size(iconSize - 4.dp),
+                        contentScale = ContentScale.Inside
+                      )
+                    }
+                  },
+                  modifier = Modifier
+                    .clickable { 
+                      // 1x OK = tocar canal onde está o foco
+                      android.util.Log.i("LiveScreen", "🎯 Canal clicado: ${s.name}")
+                      current = s
+                      android.util.Log.i("LiveScreen", "🎯 Canal atual mudou para: ${current?.name}")
+                    }
+                    .focusable()
+                    .onFocusChanged { focusState ->
+                      if (focusState.isFocused) {
+                        // Quando ganha foco, tocar o canal
+                        android.util.Log.i("LiveScreen", "🎯 Canal com foco: ${s.name}")
+                        current = s
+                      }
+                    }
+                )
+                // Overlay branco transparente quando focado
+                if (isFocused) {
+                  Box(
+                    modifier = Modifier
+                      .matchParentSize()
+                      .background(
+                        Color.White.copy(alpha = 0.3f),
+                        RoundedCornerShape(4.dp)
+                      )
+                  )
+                }
+              }
               HorizontalDivider()
             } 
           }
@@ -430,7 +445,24 @@ fun LiveScreen(nav: NavHostController) {
           
           LazyColumn { 
             items(filtered, key = { it.stream_id }) { s ->
-              ListItem(
+              val isFocusedPhone = current == s
+              val scalePhone by animateFloatAsState(
+                targetValue = if (isFocusedPhone) 1.1f else 1.0f,
+                animationSpec = spring(
+                  dampingRatio = Spring.DampingRatioMediumBouncy,
+                  stiffness = Spring.StiffnessLow
+                ),
+                label = "liveChannelZoomPhone"
+              )
+              
+              Box(
+                modifier = Modifier
+                  .graphicsLayer {
+                    scaleX = scalePhone
+                    scaleY = scalePhone
+                  }
+              ) {
+                ListItem(
                 headlineContent = { 
                   Text(
                     text = s.name,
@@ -470,6 +502,18 @@ fun LiveScreen(nav: NavHostController) {
                   .clickable { current = s }
                   .focusable()
               )
+              // Overlay branco transparente quando focado
+              if (isFocusedPhone) {
+                Box(
+                  modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                      Color.White.copy(alpha = 0.3f),
+                      RoundedCornerShape(4.dp)
+                    )
+                )
+              }
+              }
               HorizontalDivider()
             } 
           }

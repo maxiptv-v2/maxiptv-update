@@ -1839,7 +1839,7 @@ HSPLt/i;->d(I[I[IZ)V
 HSPLt/i;->e(I[I[IZ)V
 HSPLt/i;->f(I[I[IZ)V
 Landroidx/compose/foundation/layout/BoxChildDataElement;
-HSPLandroidx/compose/foundation/layout/BoxChildDataElement;-><init>(Lx0/i;)V
+HSPLandroidx/compose/foundation/layout/BoxChildDataElement;-><init>(Lx0/i;Z)V
 HSPLandroidx/compose/foundation/layout/BoxChildDataElement;->i()Lx0/p;
 HSPLandroidx/compose/foundation/layout/BoxChildDataElement;->equals(Ljava/lang/Object;)Z
 HSPLandroidx/compose/foundation/layout/BoxChildDataElement;->hashCode()I
@@ -1872,6 +1872,7 @@ Lt/q;
 Landroidx/compose/foundation/layout/a;
 HSPLandroidx/compose/foundation/layout/a;-><clinit>()V
 HSPLandroidx/compose/foundation/layout/a;->a(Lx0/i;)Lx0/q;
+HSPLandroidx/compose/foundation/layout/a;->b()Lx0/q;
 Lt/r;
 HSPLt/r;-><clinit>()V
 HSPLt/r;->a(Lt/g;Lx0/g;Ll0/o;I)Lt/s;

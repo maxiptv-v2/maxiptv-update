@@ -3732,12 +3732,8 @@ androidx.compose.foundation.layout.BoxMeasurePolicy:
     private final boolean component2()
     public final androidx.compose.foundation.layout.BoxMeasurePolicy copy(androidx.compose.ui.Alignment,boolean)
     public static synthetic androidx.compose.foundation.layout.BoxMeasurePolicy copy$default(androidx.compose.foundation.layout.BoxMeasurePolicy,androidx.compose.ui.Alignment,boolean,int,java.lang.Object)
-androidx.compose.foundation.layout.BoxScope:
-    public abstract androidx.compose.ui.Modifier matchParentSize(androidx.compose.ui.Modifier)
-androidx.compose.foundation.layout.BoxScopeInstance$matchParentSize$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.BoxScopeInstance:
     public static final int $stable
-    public androidx.compose.ui.Modifier matchParentSize(androidx.compose.ui.Modifier)
 androidx.compose.foundation.layout.BoxWithConstraintsKt$BoxWithConstraints$1$1$measurables$1
 androidx.compose.foundation.layout.BoxWithConstraintsKt$BoxWithConstraints$1$1
 androidx.compose.foundation.layout.BoxWithConstraintsKt$BoxWithConstraints$2
@@ -47208,7 +47204,6 @@ androidx.compose.foundation.layout.Arrangement:
 androidx.compose.foundation.layout.BoxChildDataElement$$InternalSyntheticBackport$1$a8629f3b6ac8282aa5200891f36011ca341ec84722a274fd13816632f2f9a0e4$0
 androidx.compose.foundation.layout.BoxChildDataElement:
     public final kotlin.jvm.functions.Function1 inspectorInfo
-    public final boolean matchParentSize
     public static androidx.compose.foundation.layout.BoxChildDataNode create()
     public static void update$13()
 androidx.compose.foundation.layout.BoxChildDataNode:
@@ -47218,8 +47213,10 @@ androidx.compose.foundation.layout.BoxChildDataNode:
     public final void setAlignment()
     public static void setMatchParentSize()
 androidx.compose.foundation.layout.BoxKt$Box$2
+androidx.compose.foundation.layout.BoxKt$EmptyBoxMeasurePolicy$1$1$$InternalSyntheticThrowCCEIfNotNull$11$0d6b20d2d0bdbbe1d7a9d488c79af98b3fadc6714482f08c53ab033f996e808c$0
 androidx.compose.foundation.layout.BoxKt$EmptyBoxMeasurePolicy$1$1:
     public final void invoke(androidx.compose.ui.layout.Placeable$PlacementScope)
+    public final void invoke$5()
 androidx.compose.foundation.layout.BoxKt:
     public static final androidx.compose.ui.layout.MeasurePolicy DefaultBoxMeasurePolicy
     public static final boolean access$getMatchesParentSize(androidx.compose.ui.layout.Measurable)
@@ -47231,7 +47228,9 @@ androidx.compose.foundation.layout.BoxMeasurePolicy$measure$5:
     public final void invoke(java.lang.String)
 androidx.compose.foundation.layout.BoxScope:
     public abstract androidx.compose.ui.Modifier align(androidx.compose.ui.BiasAlignment)
+    public abstract androidx.compose.ui.Modifier matchParentSize()
 androidx.compose.foundation.layout.BoxScopeInstance$align$$inlined$debugInspectorInfo$1
+androidx.compose.foundation.layout.BoxScopeInstance$matchParentSize$$inlined$debugInspectorInfo$1
 androidx.compose.foundation.layout.ColumnMeasurePolicy$placeHelper$1$1
 androidx.compose.foundation.layout.ColumnMeasurePolicy:
     static void <clinit>()
@@ -68850,11 +68849,13 @@ com.google.common.base.Platform$JdkPatternCompiler
 com.google.common.base.Platform
 com.google.common.base.Preconditions
 com.google.common.base.Predicates$1:
+    public static final boolean CategoryChips$lambda$17$lambda$1(androidx.compose.runtime.MutableState)
+    public static final boolean CategoryChips$lambda$17$lambda$16$lambda$9(androidx.compose.runtime.MutableState)
     public static final boolean HomeNav$lambda$4(androidx.compose.runtime.MutableState)
     public static final boolean LoginScreen$lambda$10(androidx.compose.runtime.MutableState)
     public static final boolean LoginScreen$lambda$13(androidx.compose.runtime.MutableState)
-    public static final float access$CategoryChips$lambda$15$lambda$14$lambda$10(androidx.compose.runtime.State)
-    public static final float access$CategoryChips$lambda$15$lambda$3(androidx.compose.runtime.State)
+    public static final float access$CategoryChips$lambda$17$lambda$16$lambda$11(androidx.compose.runtime.State)
+    public static final float access$CategoryChips$lambda$17$lambda$3(androidx.compose.runtime.State)
     public static final void access$HomeNav$lambda$5(androidx.compose.runtime.MutableState,boolean)
     public static final boolean access$LoginScreen$lambda$10(androidx.compose.runtime.MutableState)
     public static final int access$LoginScreen$lambda$19(androidx.compose.runtime.MutableState)
@@ -69602,14 +69603,14 @@ com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4$invoke$$inlin
 com.maxiptv.ui.screens.AdultContentScreenKt$AdultContentScreen$4$4
 com.maxiptv.ui.screens.AdultContentScreenKt
 com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$1$1
-com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$2:
+com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$2$1$1
+com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$2$2:
     public final void invoke(androidx.compose.runtime.Composer,int)
-com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$3$1
-com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$4$1
-com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$5$1$1
-com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$5$2
-com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$5$3$1
-com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$5$4$1
+com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$2$3$1
+com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$3$1$1
+com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$3$2$1$1
+com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$3$2$2
+com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$1$3$2$3$1
 com.maxiptv.ui.screens.CategoryChipsKt$CategoryChips$2
 com.maxiptv.ui.screens.CategoryChipsKt
 com.maxiptv.ui.screens.ComposableSingletons$AdminActivityKt$lambda-10$1
@@ -69985,20 +69986,22 @@ com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$5
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$1$2
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$2$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$2$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$2$3$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$2$5
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$2$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$2$2$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$2$2$4
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1$invoke$$inlined$items$default$3
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$1$1:
-    public static final float access$invoke$lambda$2$lambda$0(androidx.compose.runtime.State)
+    public static final float access$invoke$lambda$3$lambda$0(androidx.compose.runtime.State)
+    public static final float access$invoke$lambda$3$lambda$0$1(androidx.compose.runtime.State)
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$3$2$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$1
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$2
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$3
-com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$4
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$1$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$2$1
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$2$2
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$2$3
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$2$2$4
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$invoke$$inlined$items$default$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$invoke$$inlined$items$default$2
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$6$4$1$1$invoke$$inlined$items$default$3
