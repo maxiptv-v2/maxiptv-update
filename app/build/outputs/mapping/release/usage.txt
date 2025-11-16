@@ -69448,10 +69448,10 @@ com.maxiptv.data.VodInfoResponse:
     static void <clinit>()
 com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$0:
     public final void onVisibilityChanged()
-com.maxiptv.ui.player.PlayerActivity$onCreate$1
-com.maxiptv.ui.player.PlayerActivity$onCreate$5$1$$InternalSyntheticLambda$4$5feebefa9f5d2bf6a54a536b7e986229ade48bc94ce5e794e1cc04e1ee92925a$0
-com.maxiptv.ui.player.PlayerActivity$onCreate$5$1$$InternalSyntheticLambda$4$a990fc82a7450b56892ae26e9487b82b7ae385e9679feb29c46d31284835919d$0
-com.maxiptv.ui.player.PlayerActivity$onCreate$5$1:
+com.maxiptv.ui.player.PlayerActivity$onCreate$2
+com.maxiptv.ui.player.PlayerActivity$onCreate$6$1$$InternalSyntheticLambda$4$9ae8291f8f3f2eb1a3dcba7080fbe9f630810fffe1b6e166813db521af9b36e9$0
+com.maxiptv.ui.player.PlayerActivity$onCreate$6$1$$InternalSyntheticLambda$4$c29521a749562b536f8523cde49aeda4615c3045aa36b2af22cf51e453139e1c$0
+com.maxiptv.ui.player.PlayerActivity$onCreate$6$1:
     public final synthetic void onDeviceVolumeChanged(int,boolean)
 com.maxiptv.ui.player.PlayerActivity$onCreate$customDns$1$lookup$$inlined$sortedBy$1
 com.maxiptv.ui.player.PlayerActivity:

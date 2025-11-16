@@ -1,19 +1,17 @@
 package com.maxiptv.ui.player
+import android.content.Intent
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
-import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.ui.PlayerView
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.media3.common.Player
-import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.common.C
@@ -41,6 +39,17 @@ class PlayerActivity : ComponentActivity() {
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    
+    // ✅ Se já existe um player, liberar antes de criar novo (singleTop pode reutilizar Activity)
+    if (player != null) {
+      android.util.Log.w("PlayerActivity", "⚠️ Player existente detectado - liberando antes de criar novo")
+      player?.let { exo ->
+        exo.stop()
+        exo.clearMediaItems()
+        exo.release()
+      }
+      player = null
+    }
     
     // ✅ API MODERNA - WindowInsetsController (substitui systemUiVisibility depreciado)
     windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
@@ -86,6 +95,16 @@ class PlayerActivity : ComponentActivity() {
             }
             startActivity(returnIntent)
           }
+          
+          // ✅ Liberar player ANTES de fechar
+          android.util.Log.i("PlayerActivity", "🛑 Fechando player e liberando recursos...")
+          player?.let { exo ->
+            exo.stop()
+            exo.clearMediaItems()
+            exo.release()
+            android.util.Log.i("PlayerActivity", "✅ Player liberado completamente")
+          }
+          player = null
           
           // Fechar o player
           finish()
@@ -277,15 +296,20 @@ class PlayerActivity : ComponentActivity() {
                     
                     android.util.Log.i("PlayerActivity", "📉 Wi-Fi lento detectado! Reduzindo qualidade para ${currentMaxBitrate / 1000}kbps")
                     
-                    // Aplicar novo bitrate
-                    exo.trackSelectionParameters = TrackSelectionParameters.Builder(this@PlayerActivity)
+                    // ✅ Aplicar novo bitrate e forçar re-seleção de tracks
+                    val newParams = TrackSelectionParameters.Builder(this@PlayerActivity)
                       .setPreferredTextLanguage(null)
                       .setMaxVideoBitrate(currentMaxBitrate)
                       .setMaxVideoSize(854, 480) // Reduzir resolução para 480p
                       .setMinVideoBitrate(if (isLive) 300_000 else 250_000) // Bitrate mínimo ainda menor
                       .build()
                     
+                    exo.trackSelectionParameters = newParams
+                    
+                    // ✅ Forçar re-seleção de tracks para aplicar nova qualidade imediatamente
+                    // O ExoPlayer aplica automaticamente quando em buffering, mas garantimos aqui
                     android.util.Log.i("PlayerActivity", "✅ Qualidade reduzida automaticamente para evitar travamentos")
+                    android.util.Log.i("PlayerActivity", "   Novo bitrate: ${currentMaxBitrate / 1000}kbps, Resolução: 854x480")
                   }
                 } else {
                   // Reset contador se buffering espaçado (rede normal)
@@ -388,8 +412,62 @@ class PlayerActivity : ComponentActivity() {
     }
   }
   
-  override fun onStop() { super.onStop(); player?.pause() }
-  override fun onDestroy() { super.onDestroy(); player?.release(); player = null }
+  override fun onPause() {
+    super.onPause()
+    // ✅ Pausar player quando Activity perde foco
+    player?.let { exo ->
+      if (exo.isPlaying) {
+        exo.pause()
+        android.util.Log.d("PlayerActivity", "⏸️ Player pausado em onPause")
+      }
+    }
+  }
+  
+  override fun onStop() {
+    super.onStop()
+    // ✅ Parar player quando Activity para
+    player?.let { exo ->
+      exo.stop()
+      android.util.Log.d("PlayerActivity", "⏹️ Player parado em onStop")
+    }
+  }
+  
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    // ✅ Quando singleTop reutiliza Activity, liberar player anterior ANTES de criar novo
+    android.util.Log.i("PlayerActivity", "🔄 Nova Intent recebida (singleTop) - liberando player anterior...")
+    player?.let { exo ->
+      exo.stop()
+      exo.clearMediaItems()
+      exo.release()
+      android.util.Log.i("PlayerActivity", "✅ Player anterior liberado")
+    }
+    player = null
+    
+    // Resetar variáveis de controle
+    reconnectAttempts = 0
+    bufferingCount = 0
+    lastBufferingTime = 0L
+    qualityReduced = false
+    currentMaxBitrate = 2_200_000
+    
+    // Recriar player com nova URL
+    setIntent(intent)
+    recreate() // Recriar Activity para garantir limpeza completa
+  }
+  
+  override fun onDestroy() {
+    super.onDestroy()
+    // ✅ Liberar player completamente quando Activity é destruída
+    android.util.Log.i("PlayerActivity", "🧹 Liberando player em onDestroy...")
+    player?.let { exo ->
+      exo.stop()
+      exo.clearMediaItems()
+      exo.release()
+      android.util.Log.i("PlayerActivity", "✅ Player liberado completamente em onDestroy")
+    }
+    player = null
+  }
   
   private fun getStatusBarHeight(): Int {
     var result = 0
