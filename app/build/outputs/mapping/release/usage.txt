@@ -34075,6 +34075,14 @@ com.maxiptv.R$mipmap
 com.maxiptv.R$string
 com.maxiptv.R$xml
 com.maxiptv.R
+com.maxiptv.ui.components.SafeLayoutConstraints
+com.maxiptv.ui.components.SafeLayoutKt$SafeBox$2
+com.maxiptv.ui.components.SafeLayoutKt$SafeButton$1
+com.maxiptv.ui.components.SafeLayoutKt$SafeButton$2
+com.maxiptv.ui.components.SafeLayoutKt$SafeColumn$2
+com.maxiptv.ui.components.SafeLayoutKt$SafeHorizontalScrollableRow$2
+com.maxiptv.ui.components.SafeLayoutKt$SafeText$1
+com.maxiptv.ui.components.SafeLayoutKt
 com.maxiptv.ui.screens.AdminActivity:
     public static final int $stable
 com.maxiptv.ui.screens.AdminActivityKt:

@@ -219,9 +219,19 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
         )
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-          Text(info?.info?.name ?: "Série", style = MaterialTheme.typography.titleLarge)
+          Text(
+            info?.info?.name ?: "Série", 
+            style = MaterialTheme.typography.titleLarge,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+          )
           Spacer(Modifier.height(8.dp))
-          Text(info?.info?.plot ?: "Sem descrição", style = MaterialTheme.typography.bodyMedium)
+          Text(
+            info?.info?.plot ?: "Sem descrição", 
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis
+          )
           Spacer(Modifier.height(8.dp))
           Button(onClick = { showLanguageDialog = true }) {
             Text("🎬 $selectedLanguage | $selectedQuality")

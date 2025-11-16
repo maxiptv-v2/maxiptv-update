@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.maxiptv.data.FavoritesManager
 import com.maxiptv.MaxiApp
@@ -106,9 +107,19 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       )
       Spacer(Modifier.width(16.dp))
       Column(Modifier.weight(1f)) {
-        Text(info?.info?.name ?: "Filme", style = MaterialTheme.typography.titleLarge)
+        Text(
+          info?.info?.name ?: "Filme", 
+          style = MaterialTheme.typography.titleLarge,
+          maxLines = 2,
+          overflow = TextOverflow.Ellipsis
+        )
         Spacer(Modifier.height(8.dp))
-        Text(info?.info?.plot ?: "Sem descrição", style = MaterialTheme.typography.bodyMedium)
+        Text(
+          info?.info?.plot ?: "Sem descrição", 
+          style = MaterialTheme.typography.bodyMedium,
+          maxLines = 4,
+          overflow = TextOverflow.Ellipsis
+        )
         Spacer(Modifier.height(8.dp))
         Button(onClick = { showOptionsDialog = true }) {
           Text("🎬 $selectedLanguage | $selectedQuality")

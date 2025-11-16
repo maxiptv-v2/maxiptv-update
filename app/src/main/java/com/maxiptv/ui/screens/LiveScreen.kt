@@ -302,14 +302,18 @@ fun LiveScreen(nav: NavHostController) {
                     text = s.name,
                     fontSize = headlineSize,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = FontFamily.SansSerif
+                    fontFamily = FontFamily.SansSerif,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                   ) 
                 }, 
                 supportingContent = { 
                   Text(
                     text = s.categoryName ?: "-",
                     fontSize = supportingSize,
-                    fontFamily = FontFamily.SansSerif
+                    fontFamily = FontFamily.SansSerif,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                   ) 
                 },
                 leadingContent = {
@@ -413,14 +417,18 @@ fun LiveScreen(nav: NavHostController) {
                     text = s.name,
                     fontSize = headlineSize,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = FontFamily.SansSerif
+                    fontFamily = FontFamily.SansSerif,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                   ) 
                 }, 
                 supportingContent = { 
                   Text(
                     text = s.categoryName ?: "-",
                     fontSize = supportingSize,
-                    fontFamily = FontFamily.SansSerif
+                    fontFamily = FontFamily.SansSerif,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                   ) 
                 },
                 leadingContent = {
