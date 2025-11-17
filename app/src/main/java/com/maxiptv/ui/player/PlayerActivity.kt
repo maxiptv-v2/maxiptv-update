@@ -2,6 +2,7 @@ package com.maxiptv.ui.player
 import android.content.Intent
 import android.os.Bundle
 import android.view.GestureDetector
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -19,11 +20,19 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.VideoSize
+import androidx.media3.common.Format
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Tracks
+import androidx.lifecycle.lifecycleScope
+import com.maxiptv.MaxiApp
+import com.maxiptv.data.PlayerSettingsManager
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Dns
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import java.net.InetAddress
 import java.net.Inet4Address
+import android.app.AlertDialog
 
 class PlayerActivity : ComponentActivity() {
   private var player: ExoPlayer? = null
@@ -38,6 +47,8 @@ class PlayerActivity : ComponentActivity() {
   private var qualityReduced = false // Flag para saber se qualidade já foi reduzida
   private var lastPosition = 0L // Última posição do player (para detectar travamento)
   private var lastPositionTime = 0L // Último tempo que a posição mudou
+  private lateinit var pv: PlayerView // PlayerView para acesso em outros métodos
+  private var contentType: String = "live" // Tipo de conteúdo (live, vod, series)
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -114,7 +125,7 @@ class PlayerActivity : ComponentActivity() {
       }
     })
     
-    val pv = PlayerView(this)
+    pv = PlayerView(this)
     // Forçar PlayerView a ocupar toda a tela, incluindo áreas do sistema
     pv.layoutParams = FrameLayout.LayoutParams(
       ViewGroup.LayoutParams.MATCH_PARENT, 
@@ -137,6 +148,10 @@ class PlayerActivity : ComponentActivity() {
     pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
       android.util.Log.d("PlayerActivity", "Controles visíveis: $visibility")
     })
+    
+    // ✅ CONTROLES AVANÇADOS: Configurar botões de avançar/retroceder 10s
+    pv.setCustomErrorMessage("")
+    pv.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
     
     // ✅ API MODERNA - GestureDetector (substitui GestureDetectorCompat depreciado)
     gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
@@ -170,7 +185,7 @@ class PlayerActivity : ComponentActivity() {
     
     setContentView(pv)
     val url = intent.getStringExtra("url") ?: return
-    val contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
+    contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
     
     // Log da URL para debug
     android.util.Log.i("PlayerActivity", "=== REPRODUZINDO URL ===")
@@ -263,14 +278,54 @@ class PlayerActivity : ComponentActivity() {
         
         exo.setMediaItem(mediaItem)
         
-        // 📊 QUALIDADE ADAPTATIVA: Começa com valores padrão, reduz automaticamente se Wi-Fi lento
-        currentMaxBitrate = if (isLive) 2_200_000 else 2_500_000
-        exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
-          .setPreferredTextLanguage(null) // Sem legendas
-          .setMaxVideoBitrate(currentMaxBitrate) // Começa com bitrate padrão
-          .setMaxVideoSize(1280, 720) // Limitar a 720p para performance
-          .setMinVideoBitrate(if (isLive) 500_000 else 400_000) // Bitrate mínimo REDUZIDO
-          .build()
+        // ✅ FASE 1: APLICAR CONFIGURAÇÕES DO PlayerSettingsManager
+        lifecycleScope.launch {
+          try {
+            // Aplicar velocidade de reprodução configurada
+            val playbackSpeed = PlayerSettingsManager.getPlaybackSpeed()
+            exo.playbackParameters = PlaybackParameters(playbackSpeed.multiplier)
+            android.util.Log.i("PlayerActivity", "✅ Velocidade aplicada: ${playbackSpeed.displayName} (${playbackSpeed.multiplier}x)")
+            
+            // Aplicar qualidade de vídeo configurada
+            val videoQuality = PlayerSettingsManager.getVideoQuality()
+            if (videoQuality != PlayerSettingsManager.VideoQuality.AUTO) {
+              currentMaxBitrate = videoQuality.maxBitrate
+              val (width, height) = when (videoQuality) {
+                PlayerSettingsManager.VideoQuality.HD -> 1280 to 720
+                PlayerSettingsManager.VideoQuality.SD -> 854 to 480
+                PlayerSettingsManager.VideoQuality.ULTRA_LOW -> 640 to 360
+                else -> 1280 to 720
+              }
+              exo.trackSelectionParameters = TrackSelectionParameters.Builder(this@PlayerActivity)
+                .setPreferredTextLanguage(null)
+                .setMaxVideoBitrate(videoQuality.maxBitrate)
+                .setMinVideoBitrate(videoQuality.minBitrate)
+                .setMaxVideoSize(width, height)
+                .build()
+              android.util.Log.i("PlayerActivity", "✅ Qualidade aplicada: ${videoQuality.displayName} (${videoQuality.maxBitrate / 1000}Kbps)")
+            } else {
+              // Qualidade automática: usar valores padrão
+              currentMaxBitrate = if (isLive) 2_200_000 else 2_500_000
+              exo.trackSelectionParameters = TrackSelectionParameters.Builder(this@PlayerActivity)
+                .setPreferredTextLanguage(null)
+                .setMaxVideoBitrate(currentMaxBitrate)
+                .setMaxVideoSize(1280, 720)
+                .setMinVideoBitrate(if (isLive) 500_000 else 400_000)
+                .build()
+              android.util.Log.i("PlayerActivity", "✅ Qualidade automática aplicada")
+            }
+          } catch (e: Exception) {
+            android.util.Log.e("PlayerActivity", "❌ Erro ao aplicar configurações: ${e.message}")
+            // Usar valores padrão em caso de erro
+            currentMaxBitrate = if (isLive) 2_200_000 else 2_500_000
+            exo.trackSelectionParameters = TrackSelectionParameters.Builder(this@PlayerActivity)
+              .setPreferredTextLanguage(null)
+              .setMaxVideoBitrate(currentMaxBitrate)
+              .setMaxVideoSize(1280, 720)
+              .setMinVideoBitrate(if (isLive) 500_000 else 400_000)
+              .build()
+          }
+        }
         
         exo.prepare()
         exo.playWhenReady = true
@@ -332,7 +387,11 @@ class PlayerActivity : ComponentActivity() {
                 if (format != null) {
                   val bitrate = format.bitrate / 1000 // Kbps
                   val resolution = "${format.width}x${format.height}"
-                  android.util.Log.i("PlayerActivity", "📊 Qualidade: $resolution @ ${bitrate}kbps")
+                  val speed = exo.playbackParameters.speed
+                  android.util.Log.i("PlayerActivity", "📊 Qualidade: $resolution @ ${bitrate}kbps | Velocidade: ${speed}x")
+                  
+                  // ✅ FASE 1: Indicador visual de qualidade atual (pode ser expandido depois)
+                  // Por enquanto apenas log, mas pode adicionar overlay visual
                 }
               }
               Player.STATE_ENDED -> {
@@ -518,5 +577,138 @@ class PlayerActivity : ComponentActivity() {
       result = resources.getDimensionPixelSize(resourceId)
     }
     return result
+  }
+  
+  // ✅ FASE 1: CONTROLES AVANÇADOS - Avançar/Retroceder 10 segundos
+  override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    if (MaxiApp.isTv && player != null) {
+      when (keyCode) {
+        KeyEvent.KEYCODE_DPAD_LEFT -> {
+          // Retroceder 10 segundos
+          val newPosition = (player!!.currentPosition - 10000).coerceAtLeast(0)
+          player!!.seekTo(newPosition)
+          showSeekIndicator(-10)
+          return true
+        }
+        KeyEvent.KEYCODE_DPAD_RIGHT -> {
+          // Avançar 10 segundos
+          val duration = player!!.duration
+          if (duration != C.TIME_UNSET) {
+            val newPosition = (player!!.currentPosition + 10000).coerceAtMost(duration)
+            player!!.seekTo(newPosition)
+            showSeekIndicator(10)
+          }
+          return true
+        }
+        KeyEvent.KEYCODE_MENU -> {
+          // Mostrar menu de qualidade
+          showQualityDialog()
+          return true
+        }
+      }
+    }
+    return super.onKeyDown(keyCode, event)
+  }
+  
+  // ✅ FASE 1: Indicador visual de seek (avançar/retroceder)
+  private fun showSeekIndicator(seconds: Int) {
+    // Por enquanto apenas log, mas pode adicionar overlay visual depois
+    android.util.Log.i("PlayerActivity", "⏩ Seek: ${if (seconds > 0) "+" else ""}$seconds segundos")
+  }
+  
+  // ✅ FASE 1: Dialog para seleção manual de qualidade
+  private fun showQualityDialog() {
+    val exo = player ?: return
+    
+    // Buscar tracks disponíveis
+    val currentTracks = exo.currentTracks
+    val videoTracks = mutableListOf<Format>()
+    
+    currentTracks?.groups?.forEach { group ->
+      if (group.type == C.TRACK_TYPE_VIDEO) {
+        for (i in 0 until group.length) {
+          val format = group.getTrackFormat(i)
+          if (format.sampleMimeType?.startsWith("video/") == true) {
+            videoTracks.add(format)
+          }
+        }
+      }
+    }
+    
+    if (videoTracks.isEmpty()) {
+      // Se não há tracks disponíveis ainda, mostrar opções baseadas em configurações
+      val qualityOptions = PlayerSettingsManager.VideoQuality.values().map { quality ->
+        "${quality.displayName} (${quality.maxBitrate / 1000}Kbps)"
+      }
+      
+      AlertDialog.Builder(this)
+        .setTitle("Selecionar Qualidade")
+        .setItems(qualityOptions.toTypedArray()) { _, which ->
+          val selectedQuality = PlayerSettingsManager.VideoQuality.values()[which]
+          applyQuality(selectedQuality)
+        }
+        .setNegativeButton("Cancelar", null)
+        .show()
+    } else {
+      // Mostrar tracks disponíveis do stream
+      val qualityOptions = videoTracks.mapIndexed { index, format ->
+        val resolution = "${format.width}x${format.height}"
+        val bitrate = format.bitrate / 1000 // Kbps
+        val codec = format.codecs ?: "unknown"
+        "$resolution @ ${bitrate}Kbps ($codec)"
+      }
+      
+      AlertDialog.Builder(this)
+        .setTitle("Selecionar Qualidade")
+        .setItems(qualityOptions.toTypedArray()) { _, which ->
+          val selectedFormat = videoTracks[which]
+          applyFormatQuality(selectedFormat)
+        }
+        .setNegativeButton("Cancelar", null)
+        .show()
+    }
+  }
+  
+  // ✅ FASE 1: Aplicar qualidade selecionada manualmente
+  private fun applyQuality(quality: PlayerSettingsManager.VideoQuality) {
+    val exo = player ?: return
+    
+    lifecycleScope.launch {
+      try {
+        PlayerSettingsManager.setVideoQuality(quality)
+        currentMaxBitrate = quality.maxBitrate
+        
+        val (width, height) = when (quality) {
+          PlayerSettingsManager.VideoQuality.HD -> 1280 to 720
+          PlayerSettingsManager.VideoQuality.SD -> 854 to 480
+          PlayerSettingsManager.VideoQuality.ULTRA_LOW -> 640 to 360
+          else -> 1280 to 720
+        }
+        exo.trackSelectionParameters = TrackSelectionParameters.Builder(this@PlayerActivity)
+          .setPreferredTextLanguage(null)
+          .setMaxVideoBitrate(quality.maxBitrate)
+          .setMinVideoBitrate(quality.minBitrate)
+          .setMaxVideoSize(width, height)
+          .build()
+        
+        android.util.Log.i("PlayerActivity", "✅ Qualidade manual aplicada: ${quality.displayName}")
+      } catch (e: Exception) {
+        android.util.Log.e("PlayerActivity", "❌ Erro ao aplicar qualidade: ${e.message}")
+      }
+    }
+  }
+  
+  // ✅ FASE 1: Aplicar formato específico do stream
+  private fun applyFormatQuality(format: Format) {
+    val exo = player ?: return
+    
+    exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
+      .setPreferredTextLanguage(null)
+      .setMaxVideoBitrate(format.bitrate)
+      .setMaxVideoSize(format.width, format.height)
+      .setMinVideoBitrate(format.bitrate / 2) // Metade do bitrate como mínimo
+      .build()
+    
+    android.util.Log.i("PlayerActivity", "✅ Formato aplicado: ${format.width}x${format.height} @ ${format.bitrate / 1000}Kbps")
   }
 }
