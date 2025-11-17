@@ -34086,6 +34086,8 @@ com.maxiptv.ui.components.SafeLayoutKt:
     public static final void SafeText--d7PcZs(java.lang.String,androidx.compose.ui.Modifier,int,long,long,androidx.compose.ui.text.font.FontWeight,androidx.compose.runtime.Composer,int,int)
     public static final androidx.compose.ui.Modifier safeForTv(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,int)
     public static final androidx.compose.ui.Modifier safeText(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,int)
+com.maxiptv.ui.player.PlayerActivity:
+    private final void applyFormatQuality(androidx.media3.common.Format)
 com.maxiptv.ui.screens.AdminActivity:
     public static final int $stable
 com.maxiptv.ui.screens.AdminActivityKt:
@@ -69483,7 +69485,6 @@ com.maxiptv.ui.player.PlayerActivity$onCreate$customDns$1$lookup$$inlined$sorted
 com.maxiptv.ui.player.PlayerActivity:
     public static final int $stable
     static void <clinit>()
-    public static void applyFormatQuality()
     public static void applyQuality()
     public static int getStatusBarHeight()
     public static void toggleFullscreen()

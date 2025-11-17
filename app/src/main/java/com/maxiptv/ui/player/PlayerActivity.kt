@@ -33,10 +33,12 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import java.net.InetAddress
 import java.net.Inet4Address
 import android.app.AlertDialog
-import android.widget.ImageButton
+import android.widget.Button
 import android.view.Gravity
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.graphics.Typeface
 
 class PlayerActivity : ComponentActivity() {
   private var player: ExoPlayer? = null
@@ -53,7 +55,7 @@ class PlayerActivity : ComponentActivity() {
   private var lastPositionTime = 0L // Último tempo que a posição mudou
   private lateinit var pv: PlayerView // PlayerView para acesso em outros métodos
   private var contentType: String = "live" // Tipo de conteúdo (live, vod, series)
-  private var qualityButton: ImageButton? = null // Botão de qualidade
+  private var qualityButton: Button? = null // Botão de qualidade (mudado para Button para suportar texto "H")
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -163,37 +165,59 @@ class PlayerActivity : ComponentActivity() {
       addView(pv)
     }
     
-    // Criar botão de qualidade
-    qualityButton = ImageButton(this).apply {
-      // Ícone de qualidade (usar ícone de settings ou HD)
-      setImageResource(android.R.drawable.ic_menu_preferences)
+    // Criar botão de qualidade 3D com "H" dentro
+    qualityButton = Button(this).apply {
+      text = "H" // Texto "H" para HD
       contentDescription = "Selecionar Qualidade"
       
-      // Estilo do botão
-      val drawable = GradientDrawable().apply {
-        setColor(Color.argb(200, 0, 0, 0)) // Fundo preto semi-transparente
-        cornerRadius = 24f // Bordas arredondadas
-        setStroke(2, Color.argb(255, 0, 212, 255)) // Borda azul ciano
+      // Estilo 3D do botão (efeito de profundidade)
+      val shadowLayer = GradientDrawable().apply {
+        setColor(Color.argb(180, 0, 0, 0)) // Sombra escura
+        cornerRadius = 12f
       }
-      background = drawable
+      
+      val mainLayer = GradientDrawable().apply {
+        setColor(Color.argb(255, 0, 212, 255)) // Azul ciano brilhante
+        cornerRadius = 12f
+        setStroke(2, Color.argb(255, 255, 255, 255)) // Borda branca
+      }
+      
+      val highlightLayer = GradientDrawable().apply {
+        setColor(Color.argb(100, 255, 255, 255)) // Destaque branco no topo (efeito 3D)
+        cornerRadius = 12f
+      }
+      
+      // Criar LayerDrawable para efeito 3D (sombra + botão + destaque)
+      val layers = arrayOf(
+        shadowLayer,
+        mainLayer,
+        highlightLayer
+      )
+      background = LayerDrawable(layers).apply {
+        setLayerInset(0, 4, 4, 0, 0) // Sombra deslocada
+        setLayerInset(1, 0, 0, 4, 4) // Botão principal
+        setLayerInset(2, 2, 2, 6, 6) // Destaque no topo
+      }
+      
+      // Estilo do texto
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      textSize = if (MaxiApp.isTv) 20f else 18f // Tamanho do texto
       
       // Tamanho do botão
       val buttonSize = if (MaxiApp.isTv) 56 else 48 // TV: maior, smartphone: menor
-      val topMargin = if (MaxiApp.isTv) 80 else 60 // Margem do topo
+      val bottomMargin = if (MaxiApp.isTv) 100 else 80 // Margem de baixo (ao lado dos controles)
       val endMargin = if (MaxiApp.isTv) 24 else 16 // Margem da direita
       layoutParams = FrameLayout.LayoutParams(
         buttonSize,
         buttonSize,
-        Gravity.TOP or Gravity.END // Canto superior direito
+        Gravity.BOTTOM or Gravity.END // Canto inferior direito (ao lado dos controles)
       ).apply {
-        setMargins(0, topMargin, endMargin, 0) // left, top, right, bottom
+        setMargins(0, 0, endMargin, bottomMargin) // left, top, right, bottom
       }
       
-      // Padding interno
-      setPadding(12, 12, 12, 12)
-      
-      // Cor do ícone (azul ciano)
-      setColorFilter(Color.rgb(0, 212, 255))
+      // Padding interno mínimo
+      setPadding(0, 0, 0, 0)
       
       // Click listener
       setOnClickListener {
@@ -680,7 +704,15 @@ class PlayerActivity : ComponentActivity() {
   private fun showQualityDialog() {
     val exo = player ?: return
     
-    // Buscar tracks disponíveis
+    // ✅ SEMPRE mostrar opções de qualidade pré-definidas (mais confiável)
+    val qualityOptions = mutableListOf<String>()
+    
+    // Adicionar opções pré-definidas (sempre disponíveis)
+    PlayerSettingsManager.VideoQuality.values().forEach { quality ->
+      qualityOptions.add("${quality.displayName} (${quality.maxBitrate / 1000}Kbps)")
+    }
+    
+    // Buscar tracks disponíveis do stream (opcional)
     val currentTracks = exo.currentTracks
     val videoTracks = mutableListOf<Format>()
     
@@ -695,38 +727,15 @@ class PlayerActivity : ComponentActivity() {
       }
     }
     
-    if (videoTracks.isEmpty()) {
-      // Se não há tracks disponíveis ainda, mostrar opções baseadas em configurações
-      val qualityOptions = PlayerSettingsManager.VideoQuality.values().map { quality ->
-        "${quality.displayName} (${quality.maxBitrate / 1000}Kbps)"
+    AlertDialog.Builder(this)
+      .setTitle("Selecionar Qualidade")
+      .setItems(qualityOptions.toTypedArray()) { _, which ->
+        // Aplicar qualidade selecionada
+        val selectedQuality = PlayerSettingsManager.VideoQuality.values()[which]
+        applyQuality(selectedQuality)
       }
-      
-      AlertDialog.Builder(this)
-        .setTitle("Selecionar Qualidade")
-        .setItems(qualityOptions.toTypedArray()) { _, which ->
-          val selectedQuality = PlayerSettingsManager.VideoQuality.values()[which]
-          applyQuality(selectedQuality)
-        }
-        .setNegativeButton("Cancelar", null)
-        .show()
-    } else {
-      // Mostrar tracks disponíveis do stream
-      val qualityOptions = videoTracks.mapIndexed { index, format ->
-        val resolution = "${format.width}x${format.height}"
-        val bitrate = format.bitrate / 1000 // Kbps
-        val codec = format.codecs ?: "unknown"
-        "$resolution @ ${bitrate}Kbps ($codec)"
-      }
-      
-      AlertDialog.Builder(this)
-        .setTitle("Selecionar Qualidade")
-        .setItems(qualityOptions.toTypedArray()) { _, which ->
-          val selectedFormat = videoTracks[which]
-          applyFormatQuality(selectedFormat)
-        }
-        .setNegativeButton("Cancelar", null)
-        .show()
-    }
+      .setNegativeButton("Cancelar", null)
+      .show()
   }
   
   // ✅ FASE 1: Aplicar qualidade selecionada manualmente
