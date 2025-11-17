@@ -69467,16 +69467,17 @@ com.maxiptv.data.VodInfo:
 com.maxiptv.data.VodInfoResponse:
     static void <clinit>()
 com.maxiptv.ui.components.SafeLayoutKt
-com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$0:
+com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$0
+com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$1:
     public final void onVisibilityChanged()
 com.maxiptv.ui.player.PlayerActivity$applyQuality$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.player.PlayerActivity$onCreate$2
-com.maxiptv.ui.player.PlayerActivity$onCreate$6$1:
+com.maxiptv.ui.player.PlayerActivity$onCreate$7$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.player.PlayerActivity$onCreate$6$2$$InternalSyntheticLambda$3$1514c19c5087e670932a5ce0ab322b0436d84fb0f6b5e836f931a7fea173de46$0
-com.maxiptv.ui.player.PlayerActivity$onCreate$6$2$$InternalSyntheticLambda$3$77670d1e8fdd8d0d4c4d4b7751784e98dd4dde6c75372f9aef243c41b1556976$0
-com.maxiptv.ui.player.PlayerActivity$onCreate$6$2:
+com.maxiptv.ui.player.PlayerActivity$onCreate$7$2$$InternalSyntheticLambda$3$812423fe7d18f5acf0248d235be3981dbc6272054ac13245968ca16af8858781$0
+com.maxiptv.ui.player.PlayerActivity$onCreate$7$2$$InternalSyntheticLambda$3$d49530c3b2aa2bd228cf5542d29d7e3fa2848d7a11a50931e1dbb9fe1e5f6013$0
+com.maxiptv.ui.player.PlayerActivity$onCreate$7$2:
     public final synthetic void onDeviceVolumeChanged(int,boolean)
 com.maxiptv.ui.player.PlayerActivity$onCreate$customDns$1$lookup$$inlined$sortedBy$1
 com.maxiptv.ui.player.PlayerActivity:
@@ -69485,7 +69486,6 @@ com.maxiptv.ui.player.PlayerActivity:
     public static void applyFormatQuality()
     public static void applyQuality()
     public static int getStatusBarHeight()
-    public static void showQualityDialog()
     public static void toggleFullscreen()
 com.maxiptv.ui.screens.AdminActivity$onCreate$1$1$1$1
 com.maxiptv.ui.screens.AdminActivity$onCreate$1

@@ -33,6 +33,10 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import java.net.InetAddress
 import java.net.Inet4Address
 import android.app.AlertDialog
+import android.widget.ImageButton
+import android.view.Gravity
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 
 class PlayerActivity : ComponentActivity() {
   private var player: ExoPlayer? = null
@@ -49,6 +53,7 @@ class PlayerActivity : ComponentActivity() {
   private var lastPositionTime = 0L // Último tempo que a posição mudou
   private lateinit var pv: PlayerView // PlayerView para acesso em outros métodos
   private var contentType: String = "live" // Tipo de conteúdo (live, vod, series)
+  private var qualityButton: ImageButton? = null // Botão de qualidade
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -144,14 +149,69 @@ class PlayerActivity : ComponentActivity() {
     pv.controllerShowTimeoutMs = 5000 // Controles somem após 5 segundos de inatividade (apenas quando tocando)
     pv.controllerHideOnTouch = false // Não esconder no toque
     
-    // ✅ Listener para mostrar controles quando necessário
-    pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
-      android.util.Log.d("PlayerActivity", "Controles visíveis: $visibility")
-    })
-    
     // ✅ CONTROLES AVANÇADOS: Configurar botões de avançar/retroceder 10s
     pv.setCustomErrorMessage("")
     pv.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+    
+    // ✅ FASE 1: BOTÃO VISUAL DE QUALIDADE
+    // Criar FrameLayout para adicionar botão sobre o PlayerView
+    val rootLayout = FrameLayout(this).apply {
+      layoutParams = FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+      )
+      addView(pv)
+    }
+    
+    // Criar botão de qualidade
+    qualityButton = ImageButton(this).apply {
+      // Ícone de qualidade (usar ícone de settings ou HD)
+      setImageResource(android.R.drawable.ic_menu_preferences)
+      contentDescription = "Selecionar Qualidade"
+      
+      // Estilo do botão
+      val drawable = GradientDrawable().apply {
+        setColor(Color.argb(200, 0, 0, 0)) // Fundo preto semi-transparente
+        cornerRadius = 24f // Bordas arredondadas
+        setStroke(2, Color.argb(255, 0, 212, 255)) // Borda azul ciano
+      }
+      background = drawable
+      
+      // Tamanho do botão
+      val buttonSize = if (MaxiApp.isTv) 56 else 48 // TV: maior, smartphone: menor
+      val topMargin = if (MaxiApp.isTv) 80 else 60 // Margem do topo
+      val endMargin = if (MaxiApp.isTv) 24 else 16 // Margem da direita
+      layoutParams = FrameLayout.LayoutParams(
+        buttonSize,
+        buttonSize,
+        Gravity.TOP or Gravity.END // Canto superior direito
+      ).apply {
+        setMargins(0, topMargin, endMargin, 0) // left, top, right, bottom
+      }
+      
+      // Padding interno
+      setPadding(12, 12, 12, 12)
+      
+      // Cor do ícone (azul ciano)
+      setColorFilter(Color.rgb(0, 212, 255))
+      
+      // Click listener
+      setOnClickListener {
+        showQualityDialog()
+      }
+      
+      // Inicialmente escondido (só aparece quando controles estão visíveis)
+      visibility = android.view.View.GONE
+    }
+    
+    rootLayout.addView(qualityButton)
+    
+    // ✅ Listener para mostrar controles quando necessário (DEPOIS de criar o botão)
+    pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
+      android.util.Log.d("PlayerActivity", "Controles visíveis: $visibility")
+      // Mostrar/esconder botão de qualidade junto com controles
+      qualityButton?.visibility = if (visibility == android.view.View.VISIBLE) android.view.View.VISIBLE else android.view.View.GONE
+    })
     
     // ✅ API MODERNA - GestureDetector (substitui GestureDetectorCompat depreciado)
     gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
@@ -183,7 +243,7 @@ class PlayerActivity : ComponentActivity() {
       false
     }
     
-    setContentView(pv)
+    setContentView(rootLayout) // Usar rootLayout em vez de pv diretamente
     val url = intent.getStringExtra("url") ?: return
     contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
     

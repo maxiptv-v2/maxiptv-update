@@ -1,7 +1,7 @@
 {
-    "version":  "v1.0.237",
-    "versionCode":  237,
-    "buildNumber":  237,
-    "lastUpdated":  "2025-11-16T19:05:56Z",
+    "version":  "v1.0.239",
+    "versionCode":  239,
+    "buildNumber":  239,
+    "lastUpdated":  "2025-11-16T19:43:36Z",
     "releaseNotes":  "MaxiPTV v1.0.173 - Fire Stick Compatível\n\n🔥 FIRE TV / FIRE STICK\n- APK agora inclui bibliotecas arm64-v8a e armeabi-v7a\n- Fluxo de instalação mantém overscan desativado\n\n📺 ANDROID TV NATIVA\n- Ajustes anteriores preservados\n\n⚙️ GERAL\n- Logs remotos ativos para diagnóstico"
 }
