@@ -121,6 +121,7 @@ if ($BuildType -eq "debug") {
     # 8. Commit e Push
     Write-Host "Enviando para GitHub..." -ForegroundColor Yellow
     git add .
+    # ✅ Sempre incluir "Build X" na mensagem de commit
     git commit -m "Release $newVersion - Build $newVersionCode"
     
     $remoteUrl = "https://$GitHubToken@github.com/$GitHubRepo.git"

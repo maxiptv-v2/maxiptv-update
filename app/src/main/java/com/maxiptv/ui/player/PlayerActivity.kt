@@ -44,6 +44,11 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.Typeface
 
+// ✅ FASE 1: Enum para qualidade de conexão
+private enum class ConnectionQuality {
+  EXCELLENT, GOOD, POOR
+}
+
 class PlayerActivity : ComponentActivity() {
   private var player: ExoPlayer? = null
   private var isFullscreen = true // Inicia em fullscreen
@@ -57,6 +62,13 @@ class PlayerActivity : ComponentActivity() {
   private var qualityReduced = false // Flag para saber se qualidade já foi reduzida
   private var lastPosition = 0L // Última posição do player (para detectar travamento)
   private var lastPositionTime = 0L // Último tempo que a posição mudou
+  // ✅ FASE 2: Variáveis para failover e detecção de qualidade
+  private var originalStreamUrl: String = "" // URL original do stream para failover
+  private var failoverAttempts = 0 // Contador de tentativas de failover
+  private val maxFailoverAttempts = 4 // Máximo de tentativas de failover
+  private var lastVideoFormat: Format? = null // Último formato de vídeo para detectar degradação
+  private var qualityDegradedWarningShown = false // Flag para não mostrar aviso repetidamente
+  private var qualityDegradedToast: android.widget.Toast? = null // Toast para aviso de qualidade degradada
   private lateinit var pv: PlayerView // PlayerView para acesso em outros métodos
   private var contentType: String = "live" // Tipo de conteúdo (live, vod, series)
   private var qualityButton: Button? = null // Botão de qualidade (mudado para Button para suportar texto "H")
@@ -71,11 +83,36 @@ class PlayerActivity : ComponentActivity() {
   private var remainingTimeHandler: android.os.Handler? = null // Handler para atualizar tempo restante
   private var bufferIndicatorOverlay: android.widget.TextView? = null // Overlay de indicador de buffer
   private var bufferIndicatorHandler: android.os.Handler? = null // Handler para atualizar indicador de buffer
+  // ✅ FASE 1: Overlays para melhorias profissionais
+  private var latencyOverlay: android.widget.TextView? = null // Overlay de latência (Live)
+  private var statsOverlay: android.widget.TextView? = null // Overlay de estatísticas detalhadas
+  private var latencyHandler: android.os.Handler? = null // Handler para atualizar latência
+  private var statsHandler: android.os.Handler? = null // Handler para atualizar estatísticas
+  private var connectionQuality: ConnectionQuality = ConnectionQuality.GOOD // Qualidade de conexão estimada
+  private var lastBufferSize = 0L // Último tamanho de buffer para calcular velocidade
+  private var lastBufferTime = 0L // Último tempo de buffer
   private val bufferIndicatorRunnable = object : Runnable {
     override fun run() {
       updateBufferIndicator()
       bufferIndicatorHandler?.postDelayed(this, 500) // Atualizar a cada 500ms (mais frequente que tempo restante)
     }
+  }
+  private val latencyRunnable = object : Runnable {
+    override fun run() {
+      updateLatency()
+      latencyHandler?.postDelayed(this, 1000) // Atualizar a cada 1 segundo
+    }
+  }
+  private val statsRunnable = object : Runnable {
+    override fun run() {
+      updateStreamStats()
+      statsHandler?.postDelayed(this, 2000) // Atualizar a cada 2 segundos
+    }
+  }
+  
+  // ✅ FASE 1: Enum para qualidade de conexão
+  private enum class ConnectionQuality {
+    EXCELLENT, GOOD, POOR
   }
   private val remainingTimeRunnable = object : Runnable {
     override fun run() {
@@ -276,6 +313,56 @@ class PlayerActivity : ComponentActivity() {
     
     // Adicionar indicador de buffer ao rootLayout (canto superior esquerdo)
     rootLayout.addView(bufferIndicatorOverlay)
+    
+    // ✅ FASE 1: Criar overlay de latência (Live apenas)
+    latencyOverlay = android.widget.TextView(this).apply {
+      text = ""
+      textSize = if (MaxiApp.isTv) 13f else 10f
+      setTextColor(android.graphics.Color.WHITE)
+      setTypeface(null, android.graphics.Typeface.BOLD)
+      setPadding(8, 5, 8, 5)
+      gravity = android.view.Gravity.CENTER
+      visibility = android.view.View.GONE
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        android.view.Gravity.TOP or android.view.Gravity.START
+      ).apply {
+        setMargins(if (MaxiApp.isTv) 40 else 20, if (MaxiApp.isTv) 120 else 90, 0, 0) // Abaixo do buffer indicator
+      }
+    }
+    rootLayout.addView(latencyOverlay)
+    
+    // ✅ FASE 1: Criar overlay de estatísticas detalhadas (acessível via long press no buffer indicator)
+    statsOverlay = android.widget.TextView(this).apply {
+      text = ""
+      textSize = if (MaxiApp.isTv) 12f else 9f
+      setTextColor(android.graphics.Color.WHITE)
+      setTypeface(null, android.graphics.Typeface.NORMAL)
+      setPadding(12, 8, 12, 8)
+      gravity = android.view.Gravity.START
+      visibility = android.view.View.GONE
+      maxLines = 8
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        android.view.Gravity.TOP or android.view.Gravity.START
+      ).apply {
+        setMargins(if (MaxiApp.isTv) 40 else 20, if (MaxiApp.isTv) 160 else 130, 0, 0) // Abaixo do latency overlay
+      }
+    }
+    rootLayout.addView(statsOverlay)
+    
+    // ✅ FASE 1: Adicionar long press listener ao buffer indicator para mostrar/esconder stats
+    bufferIndicatorOverlay?.setOnLongClickListener {
+      if (statsOverlay?.visibility == android.view.View.VISIBLE) {
+        statsOverlay?.visibility = android.view.View.GONE
+      } else {
+        statsOverlay?.visibility = android.view.View.VISIBLE
+        updateStreamStats() // Atualizar imediatamente
+      }
+      true
+    }
     
     // Criar botão de qualidade 3D com "H" dentro
     qualityButton = Button(this).apply {
@@ -744,18 +831,11 @@ class PlayerActivity : ComponentActivity() {
     val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
     
     // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES
+    // ✅ FASE 1: Buffer dinâmico baseado em qualidade de conexão estimada (inicia com GOOD)
     val loadControl: LoadControl = if (isLive) {
-      // 📺 LIVE: Buffers balanceados para estabilidade sem travamentos
-      DefaultLoadControl.Builder()
-        .setBufferDurationsMs(
-          5000,   // minBufferMs: 5 segundos (buffer inicial adequado para estabilidade)
-          12000,  // maxBufferMs: 12 segundos (buffer máximo para evitar travamentos)
-          1500,   // bufferForPlaybackMs: 1.5 segundos (start rápido mas estável)
-          3000    // bufferForPlaybackAfterRebufferMs: 3 segundos (buffer após reconexão)
-        )
-        .setPrioritizeTimeOverSizeThresholds(true) // Prioriza tempo real
-        .setBackBuffer(5000, true) // 5s de back buffer (mais buffer para estabilidade)
-        .build()
+      // 📺 LIVE: Buffer dinâmico baseado em qualidade de conexão
+      // Inicia com qualidade GOOD, será ajustado dinamicamente conforme estatísticas
+      createAdaptiveLoadControl(isLive = true)
     } else {
       // 🎬 VOD/SERIES: Buffers ULTRA REDUZIDOS para Wi-Fi lento (evita travamentos)
       DefaultLoadControl.Builder()
@@ -776,15 +856,21 @@ class PlayerActivity : ComponentActivity() {
       .build().also { exo ->
         pv.player = exo
         
+        // ✅ FASE 2: Salvar URL original para failover
+        originalStreamUrl = url
+        
         // 🎬 CONFIGURAR MEDIAITEM COM LIVE CONFIGURATION
+        // ✅ FASE 2: Modo Low Latency HLS para reduzir latência
         val mediaItem = if (isLive) {
           MediaItem.Builder()
             .setUri(url)
             .setLiveConfiguration(
               MediaItem.LiveConfiguration.Builder()
-                .setTargetOffsetMs(C.TIME_UNSET) // Offset automático
-                .setMinPlaybackSpeed(0.95f) // Velocidade mínima
-                .setMaxPlaybackSpeed(1.05f) // Velocidade máxima
+                .setTargetOffsetMs(0) // ✅ FASE 2: Tentar pegar segmento mais recente (Low Latency)
+                .setMinOffsetMs(0) // ✅ FASE 2: Offset mínimo zero
+                .setMaxOffsetMs(5000) // ✅ FASE 2: Máximo 5s de atraso (Low Latency)
+                .setMinPlaybackSpeed(0.98f) // ✅ FASE 2: Velocidade mínima ajustada para Low Latency
+                .setMaxPlaybackSpeed(1.02f) // ✅ FASE 2: Velocidade máxima ajustada para Low Latency
                 .build()
             )
             .build()
@@ -917,6 +1003,11 @@ class PlayerActivity : ComponentActivity() {
                 
                 // ✅ MELHORIA 3: Iniciar atualização de indicador de buffer
                 startBufferIndicatorUpdates()
+                // ✅ FASE 1: Iniciar atualização de latência e estatísticas (apenas para Live)
+                if (contentType == "live") {
+                  startLatencyUpdates()
+                  startStatsUpdates()
+                }
               }
               Player.STATE_ENDED -> {
                 android.util.Log.i("PlayerActivity", "🏁 Reprodução finalizada")
@@ -933,35 +1024,46 @@ class PlayerActivity : ComponentActivity() {
               val resolution = "${format.width}x${format.height}"
               val bitrate = format.bitrate
               showQualityIndicator(resolution, bitrate)
+              android.util.Log.i("PlayerActivity", "📊 Qualidade: $resolution @ ${bitrate / 1000}Kbps")
+              
+              // ✅ FASE 2: Detectar degradação de qualidade
+              detectQualityDegradation(format)
+              lastVideoFormat = format // Salvar formato atual para comparação futura
             }
           }
           
           override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-            android.util.Log.e("PlayerActivity", "❌ ERRO no player: ${error.message}")
+            android.util.Log.e("PlayerActivity", "❌ Erro no player: ${error.message}", error)
             android.util.Log.e("PlayerActivity", "   Tipo: ${error.errorCode}")
             android.util.Log.e("PlayerActivity", "   Causa: ${error.cause}")
             
-            // ⚡ RECONEXÃO AUTOMÁTICA MELHORADA (com limite de tentativas)
-            if (reconnectAttempts < maxReconnectAttempts) {
-              reconnectAttempts++
-              android.util.Log.i("PlayerActivity", "🔄 Tentativa $reconnectAttempts/$maxReconnectAttempts em 2 segundos...")
-              
-              pv.postDelayed({
-                try {
-                  android.util.Log.i("PlayerActivity", "🔄 Reconectando...")
-                  // Limpar buffer antes de reconectar
-                  exo.stop()
-                  exo.clearMediaItems()
-                  exo.setMediaItem(mediaItem) // ✅ Usar mediaItem configurado
-                  exo.prepare()
-                  exo.playWhenReady = true
-                  android.util.Log.i("PlayerActivity", "✅ Reconexão iniciada")
-                } catch (e: Exception) {
-                  android.util.Log.e("PlayerActivity", "❌ Falha na reconexão: ${e.message}")
-                }
-              }, 2000)
+            // ✅ FASE 2: Tentar failover automático em caso de erro (prioridade)
+            if (contentType == "live" && failoverAttempts < maxFailoverAttempts) {
+              android.util.Log.i("PlayerActivity", "🔄 Tentando failover automático (tentativa ${failoverAttempts + 1}/$maxFailoverAttempts)...")
+              retryWithFailover(originalStreamUrl, failoverAttempts + 1)
             } else {
-              android.util.Log.e("PlayerActivity", "❌ Máximo de tentativas atingido. Verifique sua conexão.")
+              // ⚡ RECONEXÃO AUTOMÁTICA MELHORADA (com limite de tentativas) - fallback
+              if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++
+                android.util.Log.i("PlayerActivity", "🔄 Tentativa de reconexão $reconnectAttempts/$maxReconnectAttempts em 2 segundos...")
+                
+                pv.postDelayed({
+                  try {
+                    android.util.Log.i("PlayerActivity", "🔄 Reconectando...")
+                    // Limpar buffer antes de reconectar
+                    exo.stop()
+                    exo.clearMediaItems()
+                    exo.setMediaItem(mediaItem) // ✅ Usar mediaItem configurado
+                    exo.prepare()
+                    exo.playWhenReady = true
+                    android.util.Log.i("PlayerActivity", "✅ Reconexão iniciada")
+                  } catch (e: Exception) {
+                    android.util.Log.e("PlayerActivity", "❌ Falha na reconexão: ${e.message}")
+                  }
+                }, 2000)
+              } else {
+                android.util.Log.e("PlayerActivity", "❌ Máximo de tentativas atingido. Verifique sua conexão.")
+              }
             }
           }
           
@@ -1051,6 +1153,9 @@ class PlayerActivity : ComponentActivity() {
     stopRemainingTimeUpdates()
     // ✅ MELHORIA 3: Pausar atualização de indicador de buffer
     stopBufferIndicatorUpdates()
+    // ✅ FASE 1: Pausar atualização de latência e estatísticas
+    stopLatencyUpdates()
+    stopStatsUpdates()
     // ✅ Pausar player quando Activity perde foco
     player?.let { exo ->
       if (exo.isPlaying) {
@@ -1066,6 +1171,9 @@ class PlayerActivity : ComponentActivity() {
     stopRemainingTimeUpdates()
     // ✅ MELHORIA 3: Parar atualização de indicador de buffer
     stopBufferIndicatorUpdates()
+    // ✅ FASE 1: Parar atualização de latência e estatísticas
+    stopLatencyUpdates()
+    stopStatsUpdates()
     // ✅ Parar player quando Activity para
     player?.let { exo ->
       exo.stop()
@@ -1087,6 +1195,11 @@ class PlayerActivity : ComponentActivity() {
     player?.let {
       if (it.playbackState == Player.STATE_READY || it.playbackState == Player.STATE_BUFFERING) {
         startBufferIndicatorUpdates()
+        // ✅ FASE 1: Retomar latência e estatísticas se for Live
+        if (contentType == "live") {
+          startLatencyUpdates()
+          startStatsUpdates()
+        }
       }
     }
   }
@@ -1109,6 +1222,12 @@ class PlayerActivity : ComponentActivity() {
     lastBufferingTime = 0L
     qualityReduced = false
     currentMaxBitrate = 2_200_000
+    // ✅ FASE 2: Resetar variáveis de failover e detecção de qualidade
+    failoverAttempts = 0
+    qualityDegradedWarningShown = false
+    lastVideoFormat = null
+    qualityDegradedToast?.cancel()
+    qualityDegradedToast = null
     
     // Recriar player com nova URL
     setIntent(intent)
@@ -1438,6 +1557,216 @@ class PlayerActivity : ComponentActivity() {
     bufferIndicatorHandler = null
   }
   
+  // ✅ FASE 1: Calcular latência para Live (HLS)
+  private fun calculateLatency(): Long {
+    val exo = player ?: return 0L
+    if (contentType != "live") return 0L // Apenas para live
+    
+    val currentPos = exo.currentPosition
+    val bufferedPos = exo.bufferedPosition
+    
+    // Para HLS live, latência = diferença entre buffer e posição atual
+    val latency = bufferedPos - currentPos
+    return latency.coerceIn(0, 20000) // Máximo 20s
+  }
+  
+  // ✅ FASE 1: Atualizar overlay de latência
+  private fun updateLatency() {
+    val exo = player ?: return
+    if (contentType != "live") {
+      latencyOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
+    val latencyMs = calculateLatency()
+    val latencySeconds = latencyMs / 1000
+    
+    val (color, text) = when {
+      latencySeconds < 3 -> android.graphics.Color.argb(255, 76, 175, 80) to "Latência: ${latencySeconds}s" // Verde
+      latencySeconds < 5 -> android.graphics.Color.argb(255, 255, 193, 7) to "Latência: ${latencySeconds}s" // Amarelo
+      else -> android.graphics.Color.argb(255, 244, 67, 54) to "Latência: ${latencySeconds}s" // Vermelho
+    }
+    
+    latencyOverlay?.let { overlay ->
+      overlay.text = text
+      overlay.setTextColor(color)
+      overlay.background = GradientDrawable().apply {
+        setColor(android.graphics.Color.argb(200, 0, 0, 0)) // Fundo preto semi-transparente
+        cornerRadius = 6f
+        setStroke(2, color) // Borda com cor do status
+      }
+      overlay.visibility = android.view.View.VISIBLE
+    }
+  }
+  
+  // ✅ FASE 1: Iniciar atualização de latência
+  private fun startLatencyUpdates() {
+    stopLatencyUpdates() // Parar qualquer atualização anterior
+    
+    latencyHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    latencyHandler?.post(latencyRunnable)
+    android.util.Log.d("PlayerActivity", "📊 Iniciando atualização de latência")
+  }
+  
+  // ✅ FASE 1: Parar atualização de latência
+  private fun stopLatencyUpdates() {
+    latencyHandler?.removeCallbacks(latencyRunnable)
+    latencyHandler = null
+  }
+  
+  // ✅ FASE 1: Obter estatísticas do stream atual
+  private fun getStreamStats(): StreamStats {
+    val exo = player ?: return StreamStats()
+    
+    // Obter track de vídeo atual
+    val videoTrack = exo.currentTracks?.groups?.firstOrNull { 
+      it.type == C.TRACK_TYPE_VIDEO && it.isSelected 
+    }
+    
+    val format = videoTrack?.getTrackFormat(0)
+    val audioTrack = exo.currentTracks?.groups?.firstOrNull {
+      it.type == C.TRACK_TYPE_AUDIO && it.isSelected
+    }
+    val audioFormat = audioTrack?.getTrackFormat(0)
+    
+    return StreamStats(
+      bitrate = format?.bitrate ?: 0,
+      resolution = "${format?.width ?: 0}x${format?.height ?: 0}",
+      fps = format?.frameRate ?: 0f,
+      codec = format?.codecs ?: "N/A",
+      audioBitrate = audioFormat?.bitrate ?: 0,
+      audioCodec = audioFormat?.codecs ?: "N/A",
+      audioChannels = audioFormat?.channelCount ?: 0
+    )
+  }
+  
+  // ✅ FASE 1: Atualizar overlay de estatísticas
+  private fun updateStreamStats() {
+    val exo = player ?: return
+    if (contentType != "live") {
+      statsOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
+    val stats = getStreamStats()
+    val latencyMs = calculateLatency()
+    val latencySeconds = latencyMs / 1000
+    
+    // Calcular qualidade de conexão baseado em múltiplos fatores
+    val bufferedPosition = exo.bufferedPosition
+    val currentPosition = exo.currentPosition
+    val bufferAhead = bufferedPosition - currentPosition
+    
+    // Estimar qualidade de conexão
+    val estimatedQuality = when {
+      latencySeconds < 3 && bufferAhead > 5000 && stats.bitrate > 1500000 -> ConnectionQuality.EXCELLENT
+      latencySeconds < 5 && bufferAhead > 3000 && stats.bitrate > 800000 -> ConnectionQuality.GOOD
+      else -> ConnectionQuality.POOR
+    }
+    connectionQuality = estimatedQuality
+    
+    val statsText = buildString {
+      append("📊 Estatísticas\n")
+      append("━━━━━━━━━━━━━━━━\n")
+      append("Resolução: ${stats.resolution}\n")
+      append("Bitrate: ${stats.bitrate / 1000}Kbps\n")
+      append("FPS: ${stats.fps.toInt()}\n")
+      append("Codec: ${stats.codec}\n")
+      append("━━━━━━━━━━━━━━━━\n")
+      append("Áudio: ${stats.audioCodec}\n")
+      append("Bitrate Áudio: ${stats.audioBitrate / 1000}Kbps\n")
+      append("Canais: ${stats.audioChannels}\n")
+      append("━━━━━━━━━━━━━━━━\n")
+      append("Latência: ${latencySeconds}s\n")
+      append("Buffer: ${bufferAhead / 1000}s\n")
+      append("Qualidade: ${when (estimatedQuality) {
+        ConnectionQuality.EXCELLENT -> "Excelente"
+        ConnectionQuality.GOOD -> "Boa"
+        ConnectionQuality.POOR -> "Ruim"
+      }}\n")
+    }
+    
+    statsOverlay?.let { overlay ->
+      overlay.text = statsText
+      overlay.background = GradientDrawable().apply {
+        setColor(android.graphics.Color.argb(220, 0, 0, 0)) // Fundo preto semi-transparente
+        cornerRadius = 8f
+        setStroke(2, android.graphics.Color.argb(255, 0, 212, 255)) // Borda azul ciano
+      }
+    }
+  }
+  
+  // ✅ FASE 1: Iniciar atualização de estatísticas
+  private fun startStatsUpdates() {
+    stopStatsUpdates() // Parar qualquer atualização anterior
+    
+    statsHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    statsHandler?.post(statsRunnable)
+    android.util.Log.d("PlayerActivity", "📊 Iniciando atualização de estatísticas")
+  }
+  
+  // ✅ FASE 1: Parar atualização de estatísticas
+  private fun stopStatsUpdates() {
+    statsHandler?.removeCallbacks(statsRunnable)
+    statsHandler = null
+  }
+  
+  // ✅ FASE 1: Criar LoadControl adaptativo baseado em qualidade de conexão
+  private fun createAdaptiveLoadControl(isLive: Boolean): LoadControl {
+    return when (connectionQuality) {
+      ConnectionQuality.EXCELLENT -> {
+        // Buffer maior para conexão excelente
+        DefaultLoadControl.Builder()
+          .setBufferDurationsMs(
+            8000,   // minBufferMs: 8 segundos
+            15000,  // maxBufferMs: 15 segundos
+            2000,   // bufferForPlaybackMs: 2 segundos
+            4000    // bufferForPlaybackAfterRebufferMs: 4 segundos
+          )
+          .setPrioritizeTimeOverSizeThresholds(true)
+          .setBackBuffer(6000, true) // 6s de back buffer
+          .build()
+      }
+      ConnectionQuality.GOOD -> {
+        // Buffer padrão
+        DefaultLoadControl.Builder()
+          .setBufferDurationsMs(
+            5000,   // minBufferMs: 5 segundos
+            12000,  // maxBufferMs: 12 segundos
+            1500,   // bufferForPlaybackMs: 1.5 segundos
+            3000    // bufferForPlaybackAfterRebufferMs: 3 segundos
+          )
+          .setPrioritizeTimeOverSizeThresholds(true)
+          .setBackBuffer(5000, true) // 5s de back buffer
+          .build()
+      }
+      ConnectionQuality.POOR -> {
+        // Buffer menor para conexão ruim
+        DefaultLoadControl.Builder()
+          .setBufferDurationsMs(
+            3000,   // minBufferMs: 3 segundos
+            8000,   // maxBufferMs: 8 segundos
+            1000,   // bufferForPlaybackMs: 1 segundo
+            2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
+          )
+          .setPrioritizeTimeOverSizeThresholds(true)
+          .setBackBuffer(3000, true) // 3s de back buffer
+          .build()
+      }
+    }
+  }
+  
+  // ✅ FASE 1: Data class para estatísticas do stream
+  private data class StreamStats(
+    val bitrate: Int = 0,
+    val resolution: String = "N/A",
+    val fps: Float = 0f,
+    val codec: String = "N/A",
+    val audioBitrate: Int = 0,
+    val audioCodec: String = "N/A",
+    val audioChannels: Int = 0
+  )
+  
   // ✅ MELHORIA 1: Mostrar indicador visual de qualidade atual
   private fun showQualityIndicator(resolution: String, bitrate: Int?) {
     qualityOverlay?.let { overlay ->
@@ -1680,5 +2009,137 @@ class PlayerActivity : ComponentActivity() {
       }
       .setNegativeButton("Cancelar", null)
       .show()
+  }
+  
+  // ✅ FASE 2: Detectar degradação de qualidade
+  private fun detectQualityDegradation(currentFormat: Format) {
+    val exo = player ?: return
+    if (contentType != "live") return // Apenas para live
+    
+    lastVideoFormat?.let { previousFormat ->
+      val currentBitrate = currentFormat.bitrate
+      val previousBitrate = previousFormat.bitrate
+      val currentWidth = currentFormat.width
+      val previousWidth = previousFormat.width
+      
+      // Detectar se qualidade caiu drasticamente
+      val bitrateDrop = previousBitrate > 0 && currentBitrate < previousBitrate * 0.7 // Redução de mais de 30%
+      val resolutionDrop = previousWidth > 0 && currentWidth < previousWidth * 0.8 // Redução de mais de 20%
+      
+      if ((bitrateDrop || resolutionDrop) && !qualityDegradedWarningShown) {
+        qualityDegradedWarningShown = true
+        
+        val message = when {
+          bitrateDrop && resolutionDrop -> "Qualidade reduzida devido à conexão (bitrate e resolução)"
+          bitrateDrop -> "Bitrate reduzido devido à conexão"
+          resolutionDrop -> "Resolução reduzida devido à conexão"
+          else -> "Qualidade reduzida devido à conexão"
+        }
+        
+        android.util.Log.w("PlayerActivity", "⚠️ $message")
+        
+        // Mostrar toast não intrusivo
+        qualityDegradedToast?.cancel()
+        qualityDegradedToast = android.widget.Toast.makeText(
+          this,
+          message,
+          android.widget.Toast.LENGTH_SHORT
+        ).apply {
+          setGravity(android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL, 0, 100)
+          show()
+        }
+        
+        // Resetar flag após 30 segundos para permitir novo aviso se qualidade melhorar e depois piorar novamente
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+          qualityDegradedWarningShown = false
+        }, 30000)
+      }
+    }
+  }
+  
+  // ✅ FASE 2: Failover adaptado para Xtream Code API
+  private fun retryWithFailover(originalUrl: String, attempt: Int) {
+    val exo = player ?: return
+    
+    failoverAttempts = attempt
+    
+    when (attempt) {
+      1 -> {
+        // Tentativa 1: Adicionar timestamp para evitar cache
+        val urlWithTimestamp = if (originalUrl.contains("?")) {
+          "$originalUrl&t=${System.currentTimeMillis()}"
+        } else {
+          "$originalUrl?t=${System.currentTimeMillis()}"
+        }
+        android.util.Log.i("PlayerActivity", "🔄 Failover tentativa 1: Adicionando timestamp para evitar cache")
+        retryStream(urlWithTimestamp)
+      }
+      2 -> {
+        // Tentativa 2: Reduzir qualidade e tentar novamente
+        android.util.Log.i("PlayerActivity", "🔄 Failover tentativa 2: Reduzindo qualidade")
+        if (currentMaxBitrate > 1_000_000) {
+          currentMaxBitrate = (currentMaxBitrate * 0.7).toInt() // Reduzir 30%
+          exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
+            .setMaxVideoBitrate(currentMaxBitrate)
+            .setMinVideoBitrate((currentMaxBitrate * 0.3).toInt())
+            .build()
+        }
+        retryStream(originalUrl)
+      }
+      3 -> {
+        // Tentativa 3: Limpar buffer e tentar novamente com timestamp
+        android.util.Log.i("PlayerActivity", "🔄 Failover tentativa 3: Limpando buffer e tentando novamente")
+        exo.stop()
+        exo.clearMediaItems()
+        val urlWithTimestamp = if (originalUrl.contains("?")) {
+          "$originalUrl&t=${System.currentTimeMillis()}"
+        } else {
+          "$originalUrl?t=${System.currentTimeMillis()}"
+        }
+        retryStream(urlWithTimestamp)
+      }
+      else -> {
+        // Tentativa final: URL original sem modificações
+        android.util.Log.i("PlayerActivity", "🔄 Failover tentativa final: URL original")
+        retryStream(originalUrl)
+      }
+    }
+  }
+  
+  // ✅ FASE 2: Retry stream com delay
+  private fun retryStream(url: String) {
+    val exo = player ?: return
+    
+    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+      try {
+        exo.stop()
+        exo.clearMediaItems()
+        
+        val mediaItem = if (contentType == "live") {
+          MediaItem.Builder()
+            .setUri(url)
+            .setLiveConfiguration(
+              MediaItem.LiveConfiguration.Builder()
+                .setTargetOffsetMs(0)
+                .setMinOffsetMs(0)
+                .setMaxOffsetMs(5000)
+                .setMinPlaybackSpeed(0.98f)
+                .setMaxPlaybackSpeed(1.02f)
+                .build()
+            )
+            .build()
+        } else {
+          MediaItem.fromUri(url)
+        }
+        
+        exo.setMediaItem(mediaItem)
+        exo.prepare()
+        exo.playWhenReady = true
+        
+        android.util.Log.i("PlayerActivity", "✅ Stream reiniciado após failover")
+      } catch (e: Exception) {
+        android.util.Log.e("PlayerActivity", "❌ Erro ao reiniciar stream: ${e.message}", e)
+      }
+    }, 2000) // Aguardar 2 segundos antes de tentar novamente
   }
 }
