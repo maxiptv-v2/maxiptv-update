@@ -281,6 +281,10 @@ object ApkDownloader {
                     try {
                         Log.i(TAG, "🚀 Iniciando instalação do APK...")
                         installApk(appContext, fileName)
+                        // ✅ CORRIGIDO: Não fechar app imediatamente - deixar usuário fechar manualmente
+                        // O delay aumentado no HomeScreen (5s + 3 tentativas) garante que versão será verificada corretamente
+                        // Fechar app muito cedo pode causar problemas com PackageManager não atualizando versão
+                        Log.i(TAG, "✅ Instalação iniciada - app continuará rodando para verificar versão corretamente")
                         // Limpar informações salvas apenas se instalação iniciou com sucesso
                         // (não limpar aqui - deixar installApk limpar após sucesso)
                     } catch (e: Exception) {
@@ -667,6 +671,11 @@ object ApkDownloader {
                     appContext.startActivity(installIntent)
                     Log.i(TAG, "✅ Instalação iniciada com sucesso!")
                     Log.i(TAG, "   O sistema deve mostrar diálogo de instalação agora")
+                    
+                    // ✅ CORRIGIDO: Não fechar app automaticamente após instalação
+                    // O delay aumentado no HomeScreen (5s + 3 tentativas) garante que versão será verificada corretamente
+                    // Fechar app muito cedo pode causar problemas com PackageManager não atualizando versão
+                    Log.i(TAG, "✅ Instalação iniciada - app continuará rodando para verificar versão corretamente")
                     
                 } catch (e: SecurityException) {
                     // Fire OS pode lançar SecurityException mesmo com permissão

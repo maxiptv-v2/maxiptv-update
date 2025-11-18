@@ -89,19 +89,68 @@ fun HomeScreen(nav: NavHostController) {
   }
   
   // Verificar atualizações ao abrir o app
+  // ✅ CORRIGIDO: Aumentar delay para garantir que PackageManager atualizou versão após instalação
+  // ✅ Tentar múltiplas vezes antes de considerar que há atualização disponível
   LaunchedEffect(Unit) {
     try {
-      android.util.Log.i("HomeScreen", "🔍 Verificando atualizações...")
-      val update = UpdateManager.checkForUpdate(context)
-      if (update != null) {
-        android.util.Log.i("HomeScreen", "🆕 Atualização disponível: ${update.version}")
-        updateAvailable = update
-        showUpdateDialog = true
-      } else {
-        android.util.Log.i("HomeScreen", "✅ App está atualizado")
+      // Aguardar 5 segundos para garantir que PackageManager atualizou versão após instalação
+      // Isso é especialmente importante após uma atualização automática
+      delay(5000)
+      
+      // Tentar verificar versão múltiplas vezes (até 3 tentativas) para garantir precisão
+      var attempts = 0
+      var update: UpdateInfo? = null
+      
+      while (attempts < 3 && update == null) {
+        attempts++
+        android.util.Log.i("HomeScreen", "🔍 Verificando atualizações (tentativa $attempts/3)...")
+        
+        val currentVersion = UpdateManager.getCurrentVersionName(context)
+        val currentVersionCode = try {
+          val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+          if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            packageInfo.longVersionCode.toInt()
+          } else {
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode
+          }
+        } catch (e: Exception) {
+          android.util.Log.w("HomeScreen", "⚠️ Erro ao obter versionCode na tentativa $attempts: ${e.message}")
+          0
+        }
+        
+        android.util.Log.i("HomeScreen", "📊 Versão atual instalada: $currentVersion (code: $currentVersionCode)")
+        
+        update = UpdateManager.checkForUpdate(context)
+        
+        if (update != null) {
+          android.util.Log.i("HomeScreen", "🆕 Atualização disponível: ${update.version} (code: ${update.versionCode})")
+          android.util.Log.i("HomeScreen", "   Versão atual: $currentVersion (code: $currentVersionCode)")
+          
+          // Verificar novamente se realmente precisa atualizar (pode ser cache do PackageManager)
+          if (update.versionCode > currentVersionCode) {
+            android.util.Log.i("HomeScreen", "✅ Confirmação: atualização realmente necessária")
+            updateAvailable = update
+            showUpdateDialog = true
+            break
+          } else {
+            android.util.Log.i("HomeScreen", "⚠️ PackageManager ainda não atualizou - aguardando mais...")
+            update = null
+            if (attempts < 3) {
+              delay(3000) // Aguardar mais 3 segundos antes da próxima tentativa
+            }
+          }
+        } else {
+          android.util.Log.i("HomeScreen", "✅ App está atualizado (tentativa $attempts)")
+          break
+        }
+      }
+      
+      if (update == null && attempts >= 3) {
+        android.util.Log.w("HomeScreen", "⚠️ Não foi possível confirmar status de atualização após 3 tentativas")
       }
     } catch (e: Exception) {
-      android.util.Log.e("HomeScreen", "❌ Erro ao verificar update: ${e.message}")
+      android.util.Log.e("HomeScreen", "❌ Erro ao verificar update: ${e.message}", e)
     }
   }
   
