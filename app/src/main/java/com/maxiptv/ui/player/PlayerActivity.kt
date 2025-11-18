@@ -61,9 +61,28 @@ class PlayerActivity : ComponentActivity() {
   private var contentType: String = "live" // Tipo de conteúdo (live, vod, series)
   private var qualityButton: Button? = null // Botão de qualidade (mudado para Button para suportar texto "H")
   private var subtitleButton: Button? = null // Botão de legendas
+  private var audioButton: Button? = null // ✅ MELHORIA 7: Botão de áudio
   private var isQualityButtonFocused = false
   private var isSubtitleButtonFocused = false
+  private var isAudioButtonFocused = false // ✅ MELHORIA 7: Foco do botão de áudio
   private var subtitlesEnabled = true // Legendas habilitadas por padrão
+  private var qualityOverlay: android.widget.TextView? = null // Overlay de qualidade atual
+  private var remainingTimeOverlay: android.widget.TextView? = null // Overlay de tempo restante (VOD/Series)
+  private var remainingTimeHandler: android.os.Handler? = null // Handler para atualizar tempo restante
+  private var bufferIndicatorOverlay: android.widget.TextView? = null // Overlay de indicador de buffer
+  private var bufferIndicatorHandler: android.os.Handler? = null // Handler para atualizar indicador de buffer
+  private val bufferIndicatorRunnable = object : Runnable {
+    override fun run() {
+      updateBufferIndicator()
+      bufferIndicatorHandler?.postDelayed(this, 500) // Atualizar a cada 500ms (mais frequente que tempo restante)
+    }
+  }
+  private val remainingTimeRunnable = object : Runnable {
+    override fun run() {
+      updateRemainingTime()
+      remainingTimeHandler?.postDelayed(this, 1000) // Atualizar a cada 1 segundo
+    }
+  }
   
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -184,6 +203,79 @@ class PlayerActivity : ComponentActivity() {
       )
       addView(pv)
     }
+    
+    // ✅ MELHORIA 1: Criar overlay de qualidade atual (DEPOIS de criar rootLayout)
+    qualityOverlay = android.widget.TextView(this).apply {
+      text = ""
+      textSize = if (MaxiApp.isTv) 18f else 14f
+      setTextColor(android.graphics.Color.WHITE)
+      setTypeface(null, android.graphics.Typeface.BOLD)
+      setPadding(16, 12, 16, 12)
+      background = GradientDrawable().apply {
+        setColor(android.graphics.Color.argb(200, 0, 0, 0)) // Fundo preto semi-transparente
+        cornerRadius = 8f
+        setStroke(2, android.graphics.Color.argb(255, 0, 212, 255)) // Borda azul ciano
+      }
+      gravity = android.view.Gravity.CENTER
+      visibility = android.view.View.GONE
+      alpha = 0f
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        android.view.Gravity.TOP or android.view.Gravity.END
+      ).apply {
+        setMargins(0, if (MaxiApp.isTv) 80 else 60, if (MaxiApp.isTv) 40 else 20, 0)
+      }
+    }
+    
+    // Adicionar overlay ao rootLayout (canto superior direito)
+    rootLayout.addView(qualityOverlay)
+    
+    // ✅ MELHORIA 2: Criar overlay de tempo restante (VOD/Series apenas)
+    remainingTimeOverlay = android.widget.TextView(this).apply {
+      text = ""
+      textSize = if (MaxiApp.isTv) 16f else 12f
+      setTextColor(android.graphics.Color.WHITE)
+      setTypeface(null, android.graphics.Typeface.BOLD)
+      setPadding(12, 8, 12, 8)
+      background = GradientDrawable().apply {
+        setColor(android.graphics.Color.argb(180, 0, 0, 0)) // Fundo preto semi-transparente
+        cornerRadius = 6f
+      }
+      gravity = android.view.Gravity.CENTER
+      visibility = android.view.View.GONE
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        android.view.Gravity.BOTTOM or android.view.Gravity.START
+      ).apply {
+        setMargins(if (MaxiApp.isTv) 40 else 20, 0, 0, if (MaxiApp.isTv) 120 else 80)
+      }
+    }
+    
+    // Adicionar overlay de tempo restante ao rootLayout (canto inferior esquerdo)
+    rootLayout.addView(remainingTimeOverlay)
+    
+    // ✅ MELHORIA 3: Criar indicador visual de buffer melhorado
+    bufferIndicatorOverlay = android.widget.TextView(this).apply {
+      text = ""
+      textSize = if (MaxiApp.isTv) 14f else 11f
+      setTextColor(android.graphics.Color.WHITE)
+      setTypeface(null, android.graphics.Typeface.BOLD)
+      setPadding(10, 6, 10, 6)
+      gravity = android.view.Gravity.CENTER
+      visibility = android.view.View.GONE
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        android.view.Gravity.TOP or android.view.Gravity.START
+      ).apply {
+        setMargins(if (MaxiApp.isTv) 40 else 20, if (MaxiApp.isTv) 80 else 60, 0, 0)
+      }
+    }
+    
+    // Adicionar indicador de buffer ao rootLayout (canto superior esquerdo)
+    rootLayout.addView(bufferIndicatorOverlay)
     
     // Criar botão de qualidade 3D com "H" dentro
     qualityButton = Button(this).apply {
@@ -309,6 +401,9 @@ class PlayerActivity : ComponentActivity() {
       isFocusable = true
       isFocusableInTouchMode = false
       
+      // ✅ Definir ID único para navegação de foco
+      id = android.view.View.generateViewId()
+      
       // Inicialmente escondido (só aparece quando controles estão visíveis)
       visibility = android.view.View.GONE
     }
@@ -420,10 +515,143 @@ class PlayerActivity : ComponentActivity() {
       
       isFocusable = true
       isFocusableInTouchMode = false
+      
+      // ✅ Definir ID único para navegação de foco
+      id = android.view.View.generateViewId()
+      
       visibility = android.view.View.GONE
     }
     
     rootLayout.addView(subtitleButton)
+    
+    // ✅ MELHORIA 7: BOTÃO DE ÁUDIO
+    audioButton = Button(this).apply {
+      text = "A" // Audio
+      contentDescription = "Selecionar Áudio"
+      
+      // Estilo similar ao botão de legendas
+      val shadowLayer = GradientDrawable().apply {
+        setColor(Color.argb(180, 0, 0, 0))
+        cornerRadius = 12f
+      }
+      val mainLayer = GradientDrawable().apply {
+        setColor(Color.argb(255, 0, 212, 255))
+        cornerRadius = 12f
+        setStroke(2, Color.argb(255, 255, 255, 255))
+      }
+      val highlightLayer = GradientDrawable().apply {
+        setColor(Color.argb(100, 255, 255, 255))
+        cornerRadius = 12f
+      }
+      background = LayerDrawable(arrayOf(shadowLayer, mainLayer, highlightLayer)).apply {
+        setLayerInset(0, 4, 4, 0, 0)
+        setLayerInset(1, 0, 0, 4, 4)
+        setLayerInset(2, 2, 2, 6, 6)
+      }
+      
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      textSize = if (MaxiApp.isTv) 18f else 16f
+      
+      // Tamanho e posição (ao lado do botão CC, mais à esquerda)
+      val overscanPaddingDp = when {
+        MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding.coerceAtLeast(20)
+        MaxiApp.isNativeTv -> 24
+        MaxiApp.isTvBox -> 16
+        else -> 0
+      }
+      val density = resources.displayMetrics.density
+      val buttonSizeDp = if (MaxiApp.isTv) 56 else 48
+      val buttonSize = (buttonSizeDp * density).toInt()
+      val bottomMarginDp = if (MaxiApp.isTv) 100 + overscanPaddingDp else 80
+      val endMarginDp = if (MaxiApp.isTv) 260 + overscanPaddingDp else 200 // Mais à esquerda que CC
+      val bottomMargin = (bottomMarginDp * density).toInt()
+      val endMargin = (endMarginDp * density).toInt()
+      layoutParams = FrameLayout.LayoutParams(
+        buttonSize,
+        buttonSize,
+        Gravity.BOTTOM or Gravity.END
+      ).apply {
+        setMargins(0, 0, endMargin, bottomMargin)
+      }
+      
+      setPadding(0, 0, 0, 0)
+      
+      // ✅ Foco com zoom e borda vermelha neon
+      setOnFocusChangeListener { view, hasFocus ->
+        isAudioButtonFocused = hasFocus
+        if (hasFocus) {
+          view.animate()
+            .scaleX(1.2f)
+            .scaleY(1.2f)
+            .setDuration(200)
+            .start()
+          
+          val borderDrawable = GradientDrawable().apply {
+            setColor(Color.argb(255, 0, 212, 255))
+            cornerRadius = 12f
+            setStroke(4, Color.argb(255, 255, 0, 0))
+          }
+          view.background = borderDrawable
+        } else {
+          view.animate()
+            .scaleX(1.0f)
+            .scaleY(1.0f)
+            .setDuration(200)
+            .start()
+          
+          val shadowLayer = GradientDrawable().apply {
+            setColor(Color.argb(180, 0, 0, 0))
+            cornerRadius = 12f
+          }
+          val mainLayer = GradientDrawable().apply {
+            setColor(Color.argb(255, 0, 212, 255))
+            cornerRadius = 12f
+            setStroke(2, Color.argb(255, 255, 255, 255))
+          }
+          val highlightLayer = GradientDrawable().apply {
+            setColor(Color.argb(100, 255, 255, 255))
+            cornerRadius = 12f
+          }
+          view.background = LayerDrawable(arrayOf(shadowLayer, mainLayer, highlightLayer)).apply {
+            setLayerInset(0, 4, 4, 0, 0)
+            setLayerInset(1, 0, 0, 4, 4)
+            setLayerInset(2, 2, 2, 6, 6)
+          }
+        }
+      }
+      
+      setOnClickListener {
+        showAudioDialog()
+      }
+      
+      isFocusable = true
+      isFocusableInTouchMode = false
+      
+      // ✅ Definir ID único para navegação de foco
+      id = android.view.View.generateViewId()
+      
+      visibility = android.view.View.GONE
+    }
+    
+    rootLayout.addView(audioButton)
+    
+    // ✅ Configurar ordem de navegação de foco entre botões (D-PAD LEFT/RIGHT)
+    // A (esquerda) -> CC (meio) -> H (direita)
+    audioButton?.let { aButton ->
+      subtitleButton?.let { ccButton ->
+        qualityButton?.let { hButton ->
+          // A -> CC
+          aButton.nextFocusRightId = ccButton.id
+          ccButton.nextFocusLeftId = aButton.id
+          // CC -> H
+          ccButton.nextFocusRightId = hButton.id
+          hButton.nextFocusLeftId = ccButton.id
+          
+          android.util.Log.d("PlayerActivity", "✅ Navegação de foco configurada: A <-> CC <-> H")
+        }
+      }
+    }
     
     // ✅ Configurar estilização de legendas do PlayerView
     setupSubtitleStyle()
@@ -434,6 +662,7 @@ class PlayerActivity : ComponentActivity() {
       // Mostrar/esconder botões junto com controles (engrenagem nativa já aparece automaticamente)
       qualityButton?.visibility = if (visibility == android.view.View.VISIBLE) android.view.View.VISIBLE else android.view.View.GONE
       subtitleButton?.visibility = if (visibility == android.view.View.VISIBLE) android.view.View.VISIBLE else android.view.View.GONE
+      audioButton?.visibility = if (visibility == android.view.View.VISIBLE) android.view.View.VISIBLE else android.view.View.GONE // ✅ MELHORIA 7
     })
     
     // ✅ API MODERNA - GestureDetector (substitui GestureDetectorCompat depreciado)
@@ -469,6 +698,10 @@ class PlayerActivity : ComponentActivity() {
     setContentView(rootLayout) // Usar rootLayout em vez de pv diretamente
     val url = intent.getStringExtra("url") ?: return
     contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
+    
+    // ✅ MELHORIA 2: Mostrar/ocultar overlay de tempo restante baseado no tipo de conteúdo
+    val isVodOrSeries = contentType == "vod" || contentType == "series"
+    remainingTimeOverlay?.visibility = if (isVodOrSeries) android.view.View.VISIBLE else android.view.View.GONE
     
     // Log da URL para debug
     android.util.Log.i("PlayerActivity", "=== REPRODUZINDO URL ===")
@@ -676,6 +909,14 @@ class PlayerActivity : ComponentActivity() {
                   // ✅ FASE 1: Indicador visual de qualidade atual (pode ser expandido depois)
                   // Por enquanto apenas log, mas pode adicionar overlay visual
                 }
+                
+                // ✅ MELHORIA 2: Iniciar atualização de tempo restante para VOD/Series
+                if (contentType == "vod" || contentType == "series") {
+                  startRemainingTimeUpdates()
+                }
+                
+                // ✅ MELHORIA 3: Iniciar atualização de indicador de buffer
+                startBufferIndicatorUpdates()
               }
               Player.STATE_ENDED -> {
                 android.util.Log.i("PlayerActivity", "🏁 Reprodução finalizada")
@@ -685,6 +926,14 @@ class PlayerActivity : ComponentActivity() {
           
           override fun onVideoSizeChanged(videoSize: VideoSize) {
             android.util.Log.i("PlayerActivity", "📺 Tamanho do vídeo: ${videoSize.width}x${videoSize.height}")
+            
+            // ✅ MELHORIA 1: Mostrar indicador de qualidade quando tamanho mudar
+            val format = exo.videoFormat
+            if (format != null) {
+              val resolution = "${format.width}x${format.height}"
+              val bitrate = format.bitrate
+              showQualityIndicator(resolution, bitrate)
+            }
           }
           
           override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
@@ -798,6 +1047,10 @@ class PlayerActivity : ComponentActivity() {
   
   override fun onPause() {
     super.onPause()
+    // ✅ MELHORIA 2: Pausar atualização de tempo restante
+    stopRemainingTimeUpdates()
+    // ✅ MELHORIA 3: Pausar atualização de indicador de buffer
+    stopBufferIndicatorUpdates()
     // ✅ Pausar player quando Activity perde foco
     player?.let { exo ->
       if (exo.isPlaying) {
@@ -809,10 +1062,32 @@ class PlayerActivity : ComponentActivity() {
   
   override fun onStop() {
     super.onStop()
+    // ✅ MELHORIA 2: Parar atualização de tempo restante
+    stopRemainingTimeUpdates()
+    // ✅ MELHORIA 3: Parar atualização de indicador de buffer
+    stopBufferIndicatorUpdates()
     // ✅ Parar player quando Activity para
     player?.let { exo ->
       exo.stop()
       android.util.Log.d("PlayerActivity", "⏹️ Player parado em onStop")
+    }
+  }
+  
+  override fun onResume() {
+    super.onResume()
+    // ✅ MELHORIA 2: Retomar atualização de tempo restante se for VOD/Series
+    if (contentType == "vod" || contentType == "series") {
+      player?.let {
+        if (it.playbackState == Player.STATE_READY) {
+          startRemainingTimeUpdates()
+        }
+      }
+    }
+    // ✅ MELHORIA 3: Retomar atualização de indicador de buffer
+    player?.let {
+      if (it.playbackState == Player.STATE_READY || it.playbackState == Player.STATE_BUFFERING) {
+        startBufferIndicatorUpdates()
+      }
     }
   }
   
@@ -842,6 +1117,12 @@ class PlayerActivity : ComponentActivity() {
   
   override fun onDestroy() {
     super.onDestroy()
+    
+    // ✅ MELHORIA 2: Parar atualização de tempo restante
+    stopRemainingTimeUpdates()
+    // ✅ MELHORIA 3: Parar atualização de indicador de buffer
+    stopBufferIndicatorUpdates()
+    
     // ✅ Liberar player completamente quando Activity é destruída
     android.util.Log.i("PlayerActivity", "🧹 Liberando player em onDestroy...")
     player?.let { exo ->
@@ -1017,6 +1298,10 @@ class PlayerActivity : ComponentActivity() {
           .build()
         
         android.util.Log.i("PlayerActivity", "✅ Qualidade manual aplicada: ${quality.displayName}")
+        
+        // ✅ MELHORIA 1: Mostrar indicador de qualidade após mudança manual
+        val resolution = "${width}x${height}"
+        showQualityIndicator(resolution, quality.maxBitrate)
       } catch (e: Exception) {
         android.util.Log.e("PlayerActivity", "❌ Erro ao aplicar qualidade: ${e.message}")
       }
@@ -1035,6 +1320,149 @@ class PlayerActivity : ComponentActivity() {
       .build()
     
     android.util.Log.i("PlayerActivity", "✅ Formato aplicado: ${format.width}x${format.height} @ ${format.bitrate / 1000}Kbps")
+  }
+  
+  // ✅ MELHORIA 2: Atualizar tempo restante (VOD/Series)
+  private fun updateRemainingTime() {
+    val exo = player ?: return
+    
+    // Apenas para VOD e Series
+    if (contentType != "vod" && contentType != "series") {
+      stopRemainingTimeUpdates()
+      return
+    }
+    
+    val duration = exo.duration
+    val currentPosition = exo.currentPosition
+    
+    if (duration != androidx.media3.common.C.TIME_UNSET && duration > 0) {
+      val remaining = duration - currentPosition
+      val minutes = (remaining / 60000).toInt()
+      val seconds = ((remaining % 60000) / 1000).toInt()
+      
+      remainingTimeOverlay?.text = "Tempo restante: ${String.format("%02d:%02d", minutes, seconds)}"
+      remainingTimeOverlay?.visibility = android.view.View.VISIBLE
+    } else {
+      remainingTimeOverlay?.visibility = android.view.View.GONE
+    }
+  }
+  
+  // ✅ MELHORIA 2: Iniciar atualização de tempo restante
+  private fun startRemainingTimeUpdates() {
+    stopRemainingTimeUpdates() // Parar qualquer atualização anterior
+    
+    remainingTimeHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    remainingTimeHandler?.post(remainingTimeRunnable)
+    android.util.Log.d("PlayerActivity", "⏱️ Iniciando atualização de tempo restante")
+  }
+  
+  // ✅ MELHORIA 2: Parar atualização de tempo restante
+  private fun stopRemainingTimeUpdates() {
+    remainingTimeHandler?.removeCallbacks(remainingTimeRunnable)
+    remainingTimeHandler = null
+  }
+  
+  // ✅ MELHORIA 3: Atualizar indicador visual de buffer
+  private fun updateBufferIndicator() {
+    val exo = player ?: return
+    
+    // Calcular percentual de buffer disponível
+    val bufferedPosition = exo.bufferedPosition
+    val currentPosition = exo.currentPosition
+    val duration = exo.duration
+    
+    if (duration != androidx.media3.common.C.TIME_UNSET && duration > 0) {
+      // Para VOD/Series: calcular percentual de buffer restante
+      val bufferedAhead = bufferedPosition - currentPosition
+      val totalRemaining = duration - currentPosition
+      val bufferPercent = if (totalRemaining > 0) {
+        ((bufferedAhead.toFloat() / totalRemaining.toFloat()) * 100f).toInt()
+      } else {
+        100
+      }
+      
+      // Determinar cor e texto baseado no nível de buffer
+      val (color, text) = when {
+        bufferPercent >= 50 -> {
+          android.graphics.Color.argb(255, 76, 175, 80) to "Buffer: OK" // Verde
+        }
+        bufferPercent >= 20 -> {
+          android.graphics.Color.argb(255, 255, 193, 7) to "Buffer: Médio" // Amarelo
+        }
+        else -> {
+          android.graphics.Color.argb(255, 244, 67, 54) to "Buffer: Baixo" // Vermelho
+        }
+      }
+      
+      bufferIndicatorOverlay?.let { overlay ->
+        overlay.text = text
+        overlay.setTextColor(color)
+        overlay.background = GradientDrawable().apply {
+          setColor(android.graphics.Color.argb(200, 0, 0, 0)) // Fundo preto semi-transparente
+          cornerRadius = 6f
+          setStroke(2, color) // Borda com cor do status
+        }
+        overlay.visibility = android.view.View.VISIBLE
+      }
+    } else {
+      // Para Live: verificar se está buffering
+      if (exo.playbackState == Player.STATE_BUFFERING) {
+        bufferIndicatorOverlay?.let { overlay ->
+          overlay.text = "Carregando..."
+          overlay.setTextColor(android.graphics.Color.argb(255, 255, 193, 7)) // Amarelo
+          overlay.background = GradientDrawable().apply {
+            setColor(android.graphics.Color.argb(200, 0, 0, 0))
+            cornerRadius = 6f
+            setStroke(2, android.graphics.Color.argb(255, 255, 193, 7))
+          }
+          overlay.visibility = android.view.View.VISIBLE
+        }
+      } else {
+        bufferIndicatorOverlay?.visibility = android.view.View.GONE
+      }
+    }
+  }
+  
+  // ✅ MELHORIA 3: Iniciar atualização de indicador de buffer
+  private fun startBufferIndicatorUpdates() {
+    stopBufferIndicatorUpdates() // Parar qualquer atualização anterior
+    
+    bufferIndicatorHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    bufferIndicatorHandler?.post(bufferIndicatorRunnable)
+    android.util.Log.d("PlayerActivity", "📊 Iniciando atualização de indicador de buffer")
+  }
+  
+  // ✅ MELHORIA 3: Parar atualização de indicador de buffer
+  private fun stopBufferIndicatorUpdates() {
+    bufferIndicatorHandler?.removeCallbacks(bufferIndicatorRunnable)
+    bufferIndicatorHandler = null
+  }
+  
+  // ✅ MELHORIA 1: Mostrar indicador visual de qualidade atual
+  private fun showQualityIndicator(resolution: String, bitrate: Int?) {
+    qualityOverlay?.let { overlay ->
+      val bitrateText = bitrate?.let { " @ ${it / 1000}Kbps" } ?: ""
+      overlay.text = "$resolution$bitrateText"
+      
+      // Fade in
+      overlay.visibility = android.view.View.VISIBLE
+      overlay.animate()
+        .alpha(1f)
+        .setDuration(300)
+        .start()
+      
+      // Fade out após 2.5 segundos
+      overlay.animate()
+        .alpha(0f)
+        .setDuration(500)
+        .setStartDelay(2500)
+        .withEndAction {
+          overlay.visibility = android.view.View.GONE
+        }
+        .start()
+      
+      android.util.Log.d("PlayerActivity", "📺 Indicador de qualidade: $resolution$bitrateText")
+    }
   }
   
   // ✅ FASE 2: Configurar estilização de legendas
@@ -1156,6 +1584,95 @@ class PlayerActivity : ComponentActivity() {
                 .build()
               android.util.Log.i("PlayerActivity", "✅ Legenda selecionada: ${selectedTrack.language} (${selectedTrack.label})")
               pv.subtitleView?.visibility = android.view.View.VISIBLE
+            }
+          }
+        }
+        dialogInterface.dismiss()
+      }
+      .setNegativeButton("Cancelar", null)
+      .show()
+  }
+  
+  // ✅ MELHORIA 7: Dialog para seleção de tracks de áudio
+  private fun showAudioDialog() {
+    val exo = player ?: return
+    
+    // Buscar tracks de áudio disponíveis
+    val currentTracks = exo.currentTracks
+    val audioTracks = mutableListOf<Format>()
+    
+    currentTracks?.groups?.forEach { group ->
+      if (group.type == C.TRACK_TYPE_AUDIO) {
+        for (i in 0 until group.length) {
+          val format = group.getTrackFormat(i)
+          if (format.sampleMimeType?.startsWith("audio/") == true) {
+            audioTracks.add(format)
+          }
+        }
+      }
+    }
+    
+    // Criar lista de opções
+    val audioOptions = mutableListOf<String>()
+    
+    // Opção 1: Automático (usar primeira disponível)
+    audioOptions.add("Automático (Primeira Disponível)")
+    
+    // Opções 2+: Tracks de áudio específicas disponíveis
+    audioTracks.forEach { format ->
+      val language = format.language ?: "Desconhecido"
+      val label = format.label ?: ""
+      val channels = format.channelCount
+      val sampleRate = format.sampleRate
+      val bitrate = format.bitrate
+      
+      val displayName = buildString {
+        if (label.isNotEmpty()) {
+          append(label)
+          if (language != "Desconhecido") append(" ($language)")
+        } else {
+          append(language)
+        }
+        if (channels > 0) append(" - ${channels}ch")
+        if (sampleRate > 0) append(" @ ${sampleRate / 1000}kHz")
+        if (bitrate > 0) append(" ${bitrate / 1000}kbps")
+      }
+      audioOptions.add(displayName)
+    }
+    
+    if (audioOptions.size <= 1 && audioTracks.isEmpty()) {
+      // Nenhum track de áudio disponível
+      AlertDialog.Builder(this)
+        .setTitle("Áudio")
+        .setMessage("Nenhum track de áudio alternativo disponível para este conteúdo.")
+        .setPositiveButton("OK", null)
+        .show()
+      return
+    }
+    
+    AlertDialog.Builder(this)
+      .setTitle("Selecionar Track de Áudio")
+      .setItems(audioOptions.toTypedArray()) { dialogInterface, which ->
+        when (which) {
+          0 -> {
+            // Automático (primeira disponível)
+            if (audioTracks.isNotEmpty()) {
+              val firstTrack = audioTracks[0]
+              exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
+                .setPreferredAudioLanguage(firstTrack.language)
+                .build()
+              android.util.Log.i("PlayerActivity", "✅ Áudio automático ativado: ${firstTrack.language}")
+            }
+          }
+          else -> {
+            // Selecionar track específico
+            val selectedIndex = which - 1
+            if (selectedIndex >= 0 && selectedIndex < audioTracks.size) {
+              val selectedTrack = audioTracks[selectedIndex]
+              exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
+                .setPreferredAudioLanguage(selectedTrack.language)
+                .build()
+              android.util.Log.i("PlayerActivity", "✅ Track de áudio selecionado: ${selectedTrack.language} (${selectedTrack.label})")
             }
           }
         }
