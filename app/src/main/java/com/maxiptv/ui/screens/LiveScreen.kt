@@ -37,6 +37,11 @@ import com.maxiptv.data.LiveStream
 import com.maxiptv.data.EpgProgramme
 import com.maxiptv.data.EpgParser
 import com.maxiptv.ui.player.PlayerActivity
+import com.maxiptv.ui.player.ConnectionQuality
+import com.maxiptv.ui.player.PlayerState
+import com.maxiptv.ui.player.createAdaptiveLoadControl
+import com.maxiptv.ui.player.detectQualityDegradation
+import com.maxiptv.ui.player.estimateConnectionQuality
 import coil.compose.AsyncImage
 import android.content.Intent
 import kotlinx.coroutines.launch
@@ -70,7 +75,96 @@ fun LiveScreen(nav: NavHostController) {
   val isFireStick = MaxiApp.isFireStick
   val isPhone = MaxiApp.isPhone
   
-  // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer com RETRY AUTOMÁTICO E BUFFERS OTIMIZADOS
+  // ✅ Estado para rastrear qualidade de conexão e failover (usando classe compartilhada)
+  val playerState = remember { PlayerState() }
+  
+  // ✅ Função para retry stream com delay e Low Latency HLS (definida primeiro para ser usada em retryWithFailover)
+  fun retryStream(player: androidx.media3.exoplayer.ExoPlayer, url: String) {
+    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+      try {
+        player.stop()
+        player.clearMediaItems()
+        
+        // ✅ FASE 2: Modo Low Latency HLS para canais live
+        val mediaItem = androidx.media3.common.MediaItem.Builder()
+          .setUri(url)
+          .setLiveConfiguration(
+            androidx.media3.common.MediaItem.LiveConfiguration.Builder()
+              .setTargetOffsetMs(0) // Tentar pegar segmento mais recente
+              .setMinOffsetMs(0)
+              .setMaxOffsetMs(5000)
+              .setMinPlaybackSpeed(0.98f)
+              .setMaxPlaybackSpeed(1.02f)
+              .build()
+          )
+          .build()
+        
+        player.setMediaItem(mediaItem)
+        player.prepare()
+        player.playWhenReady = true
+        
+        android.util.Log.i("SharedPlayer", "✅ Stream reiniciado após failover")
+      } catch (e: Exception) {
+        android.util.Log.e("SharedPlayer", "❌ Erro ao reiniciar stream: ${e.message}", e)
+      }
+    }, 2000) // Aguardar 2 segundos antes de tentar novamente
+  }
+  
+  // ✅ Função para retry com failover adaptado para Xtream Code API
+  fun retryWithFailover(
+    state: PlayerState,
+    player: androidx.media3.exoplayer.ExoPlayer,
+    context: android.content.Context,
+    originalUrl: String,
+    attempt: Int
+  ) {
+    state.failoverAttempts = attempt
+    
+    when (attempt) {
+      1 -> {
+        // Tentativa 1: Adicionar timestamp para evitar cache
+        val urlWithTimestamp = if (originalUrl.contains("?")) {
+          "$originalUrl&t=${System.currentTimeMillis()}"
+        } else {
+          "$originalUrl?t=${System.currentTimeMillis()}"
+        }
+        android.util.Log.i("SharedPlayer", "🔄 Failover tentativa 1: Adicionando timestamp")
+        retryStream(player, urlWithTimestamp)
+      }
+      2 -> {
+        // Tentativa 2: Reduzir qualidade e tentar novamente
+        android.util.Log.i("SharedPlayer", "🔄 Failover tentativa 2: Reduzindo qualidade")
+        if (state.currentMaxBitrate > 1_000_000) {
+          state.currentMaxBitrate = (state.currentMaxBitrate * 0.7).toInt() // Reduzir 30%
+          player.trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
+            .setMaxVideoBitrate(state.currentMaxBitrate)
+            .setMinVideoBitrate((state.currentMaxBitrate * 0.3).toInt())
+            .build()
+        }
+        retryStream(player, originalUrl)
+      }
+      3 -> {
+        // Tentativa 3: Limpar buffer e tentar novamente com timestamp
+        android.util.Log.i("SharedPlayer", "🔄 Failover tentativa 3: Limpando buffer")
+        player.stop()
+        player.clearMediaItems()
+        val urlWithTimestamp = if (originalUrl.contains("?")) {
+          "$originalUrl&t=${System.currentTimeMillis()}"
+        } else {
+          "$originalUrl?t=${System.currentTimeMillis()}"
+        }
+        retryStream(player, urlWithTimestamp)
+      }
+      else -> {
+        // Tentativa final: URL original sem modificações
+        android.util.Log.i("SharedPlayer", "🔄 Failover tentativa final: URL original")
+        retryStream(player, originalUrl)
+      }
+    }
+  }
+  
+  
+  // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer com MELHORIAS PROFISSIONAIS (Fase 1 e 2)
   val sharedPlayer = remember {
     val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
@@ -82,21 +176,12 @@ fun LiveScreen(nav: NavHostController) {
     val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
       .setDataSourceFactory(dataSourceFactory)
     
-    // ⚡ BUFFERS BALANCEADOS PARA LIVE (igual ao PlayerActivity - aumentados para estabilidade)
-    val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
-      .setBufferDurationsMs(
-        5000,   // minBufferMs: 5 segundos (buffer inicial adequado para estabilidade)
-        12000,  // maxBufferMs: 12 segundos (buffer máximo para evitar travamentos)
-        1500,   // bufferForPlaybackMs: 1.5 segundos (start rápido mas estável)
-        3000    // bufferForPlaybackAfterRebufferMs: 3 segundos (buffer após reconexão)
-      )
-      .setPrioritizeTimeOverSizeThresholds(true)
-      .setBackBuffer(5000, true) // 5s de back buffer (mais buffer para estabilidade)
-      .build()
+    // ✅ FASE 1: Buffer adaptativo inicial (será atualizado dinamicamente)
+    val initialLoadControl = createAdaptiveLoadControl(ConnectionQuality.GOOD)
     
     androidx.media3.exoplayer.ExoPlayer.Builder(context)
       .setMediaSourceFactory(mediaSourceFactory)
-      .setLoadControl(loadControl)
+      .setLoadControl(initialLoadControl)
       .build().apply {
         volume = 0.3f // Começa baixo no mini player
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
@@ -109,18 +194,30 @@ fun LiveScreen(nav: NavHostController) {
           .setMinVideoBitrate(500_000)  // Bitrate mínimo
           .build()
         
-        // 🔄 RETRY AUTOMÁTICO - Reconectar quando travar
+        // 🔄 RETRY AUTOMÁTICO MELHORADO - Sistema de failover profissional
         addListener(object : androidx.media3.common.Player.Listener {
           override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
             android.util.Log.w("SharedPlayer", "⚠️ Erro no player: ${error.message}")
-            android.util.Log.i("SharedPlayer", "🔄 Tentando reconectar em 2 segundos...")
             
-            // Aguardar 2 segundos e tentar novamente
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-              android.util.Log.i("SharedPlayer", "🔄 Reconectando...")
-              prepare()
-              playWhenReady = true
-            }, 2000)
+            // Obter URL original do MediaItem atual
+            val currentMediaItem = currentMediaItem
+            val currentUrl = currentMediaItem?.localConfiguration?.uri?.toString() 
+              ?: playerState.originalStreamUrl 
+              ?: return
+            
+            if (playerState.originalStreamUrl == null) {
+              playerState.originalStreamUrl = currentUrl
+            }
+            
+            // Sistema de failover profissional
+            if (playerState.failoverAttempts < playerState.maxFailoverAttempts) {
+              android.util.Log.i("SharedPlayer", "🔄 Failover tentativa ${playerState.failoverAttempts + 1}/${playerState.maxFailoverAttempts}")
+              retryWithFailover(playerState, this@apply, context, playerState.originalStreamUrl!!, playerState.failoverAttempts + 1)
+            } else {
+              android.util.Log.e("SharedPlayer", "❌ Todas as tentativas de failover falharam")
+              playerState.failoverAttempts = 0 // Resetar para próxima vez
+              playerState.originalStreamUrl = null
+            }
           }
           
           override fun onPlaybackStateChanged(playbackState: Int) {
@@ -129,15 +226,60 @@ fun LiveScreen(nav: NavHostController) {
                 android.util.Log.i("SharedPlayer", "⏸️ Player IDLE")
               androidx.media3.common.Player.STATE_BUFFERING -> 
                 android.util.Log.i("SharedPlayer", "⏳ Buffering...")
-              androidx.media3.common.Player.STATE_READY -> 
+              androidx.media3.common.Player.STATE_READY -> {
                 android.util.Log.i("SharedPlayer", "✅ Player pronto!")
+                // Resetar contador de failover quando player estiver pronto
+                playerState.failoverAttempts = 0
+                playerState.originalStreamUrl = null
+              }
               androidx.media3.common.Player.STATE_ENDED -> 
                 android.util.Log.i("SharedPlayer", "🏁 Fim da stream")
             }
           }
+          
+          override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
+            // Detectar mudanças de qualidade
+            val tracks = currentTracks
+            tracks?.groups?.forEach { group ->
+              if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO && group.length > 0) {
+                val format = group.getTrackFormat(0)
+                detectQualityDegradation(playerState, format)
+                
+                // Estimar qualidade de conexão e atualizar buffer dinamicamente
+                val bufferedPosition = bufferedPosition
+                val currentPosition = currentPosition
+                val bufferAhead = bufferedPosition - currentPosition
+                val latencyMs = (bufferedPosition - currentPosition).coerceAtLeast(0)
+                val estimatedQuality = estimateConnectionQuality(
+                  this@apply,
+                  latencyMs,
+                  bufferAhead,
+                  format.bitrate
+                )
+                
+                // Atualizar qualidade de conexão
+                if (playerState.connectionQuality != estimatedQuality) {
+                  playerState.connectionQuality = estimatedQuality
+                  android.util.Log.i("SharedPlayer", "📊 Qualidade de conexão: $estimatedQuality")
+                  
+                  // ✅ FASE 1: Atualizar LoadControl dinamicamente baseado na qualidade
+                  // Nota: ExoPlayer não permite trocar LoadControl em runtime, mas podemos
+                  // ajustar parâmetros de track selection para compensar
+                  if (estimatedQuality == ConnectionQuality.POOR && playerState.currentMaxBitrate > 1_000_000) {
+                    playerState.currentMaxBitrate = (playerState.currentMaxBitrate * 0.8).toInt()
+                    trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
+                      .setMaxVideoBitrate(playerState.currentMaxBitrate)
+                      .setMinVideoBitrate((playerState.currentMaxBitrate * 0.3).toInt())
+                      .build()
+                    android.util.Log.i("SharedPlayer", "📉 Bitrate reduzido para ${playerState.currentMaxBitrate / 1000}Kbps devido à conexão ruim")
+                  }
+                }
+              }
+            }
+          }
         })
         
-        android.util.Log.i("SharedPlayer", "🎯 Player compartilhado criado com retry automático")
+        android.util.Log.i("SharedPlayer", "🎯 Player compartilhado criado com melhorias profissionais (Fase 1 e 2)")
       }
   }
   
@@ -599,11 +741,25 @@ fun MiniPlayer(
   epgData: Map<String, List<EpgProgramme>>,
   onFullscreen: () -> Unit
 ) {
-  // Atualizar canal quando mudar - MUDAR MÍDIA NO MESMO PLAYER
+  // Atualizar canal quando mudar - MUDAR MÍDIA NO MESMO PLAYER com Low Latency HLS
   LaunchedEffect(channel.stream_id) {
     android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
     player.stop() // Parar player atual
-    val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
+    
+    // ✅ FASE 2: Modo Low Latency HLS para canais live
+    val mediaItem = androidx.media3.common.MediaItem.Builder()
+      .setUri(channel.toLiveUrl())
+      .setLiveConfiguration(
+        androidx.media3.common.MediaItem.LiveConfiguration.Builder()
+          .setTargetOffsetMs(0) // Tentar pegar segmento mais recente (Low Latency)
+          .setMinOffsetMs(0)
+          .setMaxOffsetMs(5000)
+          .setMinPlaybackSpeed(0.98f)
+          .setMaxPlaybackSpeed(1.02f)
+          .build()
+      )
+      .build()
+    
     player.setMediaItem(mediaItem)
     player.prepare()
     player.playWhenReady = true

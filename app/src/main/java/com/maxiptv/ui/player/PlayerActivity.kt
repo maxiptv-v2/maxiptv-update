@@ -43,11 +43,11 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.Typeface
-
-// ✅ FASE 1: Enum para qualidade de conexão
-private enum class ConnectionQuality {
-  EXCELLENT, GOOD, POOR
-}
+import com.maxiptv.ui.player.ConnectionQuality
+import com.maxiptv.ui.player.PlayerState
+import com.maxiptv.ui.player.createAdaptiveLoadControl
+import com.maxiptv.ui.player.detectQualityDegradation
+import com.maxiptv.ui.player.estimateConnectionQuality
 
 class PlayerActivity : ComponentActivity() {
   private var player: ExoPlayer? = null
@@ -89,6 +89,11 @@ class PlayerActivity : ComponentActivity() {
   private var latencyHandler: android.os.Handler? = null // Handler para atualizar latência
   private var statsHandler: android.os.Handler? = null // Handler para atualizar estatísticas
   private var connectionQuality: ConnectionQuality = ConnectionQuality.GOOD // Qualidade de conexão estimada
+  // ✅ LIVE PROFESSIONAL: Overlay profissional para canais live
+  private var liveChannelInfoOverlay: android.widget.TextView? = null // Overlay com informações do canal (Live)
+  private var liveChannelInfoHandler: android.os.Handler? = null // Handler para atualizar informações do canal
+  private var currentChannelName: String? = null // Nome do canal atual (Live)
+  private var currentChannelLogo: String? = null // Logo do canal atual (Live)
   private var lastBufferSize = 0L // Último tamanho de buffer para calcular velocidade
   private var lastBufferTime = 0L // Último tempo de buffer
   private val bufferIndicatorRunnable = object : Runnable {
@@ -110,10 +115,6 @@ class PlayerActivity : ComponentActivity() {
     }
   }
   
-  // ✅ FASE 1: Enum para qualidade de conexão
-  private enum class ConnectionQuality {
-    EXCELLENT, GOOD, POOR
-  }
   private val remainingTimeRunnable = object : Runnable {
     override fun run() {
       updateRemainingTime()
@@ -352,6 +353,31 @@ class PlayerActivity : ComponentActivity() {
       }
     }
     rootLayout.addView(statsOverlay)
+    
+    // ✅ LIVE PROFESSIONAL: Criar overlay profissional com informações do canal (apenas para Live)
+    liveChannelInfoOverlay = android.widget.TextView(this).apply {
+      text = ""
+      textSize = if (MaxiApp.isTv) 14f else 11f
+      setTextColor(android.graphics.Color.WHITE)
+      setTypeface(null, android.graphics.Typeface.BOLD)
+      setPadding(16, 12, 16, 12)
+      maxLines = 4
+      gravity = android.view.Gravity.START
+      visibility = android.view.View.GONE
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        android.view.Gravity.TOP or android.view.Gravity.END
+      ).apply {
+        setMargins(0, if (MaxiApp.isTv) 40 else 20, if (MaxiApp.isTv) 40 else 20, 0)
+      }
+      background = GradientDrawable().apply {
+        setColor(android.graphics.Color.argb(220, 0, 0, 0)) // Fundo preto semi-transparente
+        cornerRadius = 8f
+        setStroke(2, android.graphics.Color.argb(255, 0, 212, 255)) // Borda azul ciano
+      }
+    }
+    rootLayout.addView(liveChannelInfoOverlay)
     
     // ✅ FASE 1: Adicionar long press listener ao buffer indicator para mostrar/esconder stats
     bufferIndicatorOverlay?.setOnLongClickListener {
@@ -735,7 +761,13 @@ class PlayerActivity : ComponentActivity() {
           ccButton.nextFocusRightId = hButton.id
           hButton.nextFocusLeftId = ccButton.id
           
-          android.util.Log.d("PlayerActivity", "✅ Navegação de foco configurada: A <-> CC <-> H")
+          // ✅ Garantir que todos os botões são focáveis (os listeners já estão configurados individualmente)
+          listOf(aButton, ccButton, hButton).forEach { button ->
+            button.isFocusable = true
+            button.isFocusableInTouchMode = false
+          }
+          
+          android.util.Log.d("PlayerActivity", "✅ Navegação de foco configurada: A <-> CC <-> H com zoom")
         }
       }
     }
@@ -1007,6 +1039,7 @@ class PlayerActivity : ComponentActivity() {
                 if (contentType == "live") {
                   startLatencyUpdates()
                   startStatsUpdates()
+                  startLiveChannelInfoUpdates() // ✅ LIVE PROFESSIONAL: Iniciar atualização de informações do canal
                 }
               }
               Player.STATE_ENDED -> {
@@ -1156,6 +1189,7 @@ class PlayerActivity : ComponentActivity() {
     // ✅ FASE 1: Pausar atualização de latência e estatísticas
     stopLatencyUpdates()
     stopStatsUpdates()
+    stopLiveChannelInfoUpdates() // ✅ LIVE PROFESSIONAL
     // ✅ Pausar player quando Activity perde foco
     player?.let { exo ->
       if (exo.isPlaying) {
@@ -1199,6 +1233,7 @@ class PlayerActivity : ComponentActivity() {
         if (contentType == "live") {
           startLatencyUpdates()
           startStatsUpdates()
+          startLiveChannelInfoUpdates() // ✅ LIVE PROFESSIONAL
         }
       }
     }
@@ -1657,12 +1692,8 @@ class PlayerActivity : ComponentActivity() {
     val currentPosition = exo.currentPosition
     val bufferAhead = bufferedPosition - currentPosition
     
-    // Estimar qualidade de conexão
-    val estimatedQuality = when {
-      latencySeconds < 3 && bufferAhead > 5000 && stats.bitrate > 1500000 -> ConnectionQuality.EXCELLENT
-      latencySeconds < 5 && bufferAhead > 3000 && stats.bitrate > 800000 -> ConnectionQuality.GOOD
-      else -> ConnectionQuality.POOR
-    }
+    // Estimar qualidade de conexão (usando função compartilhada)
+    val estimatedQuality = estimateConnectionQuality(exo, latencyMs, bufferAhead, stats.bitrate)
     connectionQuality = estimatedQuality
     
     val statsText = buildString {
@@ -1683,6 +1714,7 @@ class PlayerActivity : ComponentActivity() {
         ConnectionQuality.EXCELLENT -> "Excelente"
         ConnectionQuality.GOOD -> "Boa"
         ConnectionQuality.POOR -> "Ruim"
+        else -> "Desconhecida"
       }}\n")
     }
     
@@ -1711,49 +1743,98 @@ class PlayerActivity : ComponentActivity() {
     statsHandler = null
   }
   
-  // ✅ FASE 1: Criar LoadControl adaptativo baseado em qualidade de conexão
-  private fun createAdaptiveLoadControl(isLive: Boolean): LoadControl {
-    return when (connectionQuality) {
-      ConnectionQuality.EXCELLENT -> {
-        // Buffer maior para conexão excelente
-        DefaultLoadControl.Builder()
-          .setBufferDurationsMs(
-            8000,   // minBufferMs: 8 segundos
-            15000,  // maxBufferMs: 15 segundos
-            2000,   // bufferForPlaybackMs: 2 segundos
-            4000    // bufferForPlaybackAfterRebufferMs: 4 segundos
-          )
-          .setPrioritizeTimeOverSizeThresholds(true)
-          .setBackBuffer(6000, true) // 6s de back buffer
-          .build()
-      }
-      ConnectionQuality.GOOD -> {
-        // Buffer padrão
-        DefaultLoadControl.Builder()
-          .setBufferDurationsMs(
-            5000,   // minBufferMs: 5 segundos
-            12000,  // maxBufferMs: 12 segundos
-            1500,   // bufferForPlaybackMs: 1.5 segundos
-            3000    // bufferForPlaybackAfterRebufferMs: 3 segundos
-          )
-          .setPrioritizeTimeOverSizeThresholds(true)
-          .setBackBuffer(5000, true) // 5s de back buffer
-          .build()
-      }
-      ConnectionQuality.POOR -> {
-        // Buffer menor para conexão ruim
-        DefaultLoadControl.Builder()
-          .setBufferDurationsMs(
-            3000,   // minBufferMs: 3 segundos
-            8000,   // maxBufferMs: 8 segundos
-            1000,   // bufferForPlaybackMs: 1 segundo
-            2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
-          )
-          .setPrioritizeTimeOverSizeThresholds(true)
-          .setBackBuffer(3000, true) // 3s de back buffer
-          .build()
+  // ✅ LIVE PROFESSIONAL: Atualizar informações do canal usando EPG
+  private fun updateLiveChannelInfo() {
+    if (contentType != "live") {
+      liveChannelInfoOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
+    val channelName = currentChannelName ?: return
+    
+    // Buscar informações do EPG em background
+    lifecycleScope.launch {
+      try {
+        // Carregar EPG se ainda não estiver carregado
+        com.maxiptv.data.XRepo.loadEpg()
+        val epgData = com.maxiptv.data.XRepo.epgData.value
+        
+        // Buscar programa atual do canal
+        val currentProgramme = com.maxiptv.data.EpgParser.getCurrentProgramme(channelName, epgData)
+        val nextProgramme = com.maxiptv.data.EpgParser.getNextProgramme(channelName, epgData)
+        
+        // Construir texto com informações do canal
+        val infoText = buildString {
+          append("📺 $channelName\n")
+          if (currentProgramme != null) {
+            append("━━━━━━━━━━━━━━━━\n")
+            append("▶ ${currentProgramme.title}\n")
+            if (currentProgramme.subTitle != null) {
+              append("   ${currentProgramme.subTitle}\n")
+            }
+            append("   ${currentProgramme.startTime()} - ${currentProgramme.stopTime()}\n")
+            if (nextProgramme != null) {
+              append("━━━━━━━━━━━━━━━━\n")
+              append("⏭ ${nextProgramme.title}\n")
+              append("   ${nextProgramme.startTime()}\n")
+            }
+          } else {
+            append("━━━━━━━━━━━━━━━━\n")
+            append("Programação não disponível\n")
+          }
+        }
+        
+        // Atualizar overlay na UI thread
+        runOnUiThread {
+          liveChannelInfoOverlay?.text = infoText
+          liveChannelInfoOverlay?.visibility = android.view.View.VISIBLE
+          
+          // Fade in
+          liveChannelInfoOverlay?.animate()
+            ?.alpha(1f)
+            ?.setDuration(300)
+            ?.start()
+        }
+      } catch (e: Exception) {
+        android.util.Log.e("PlayerActivity", "❌ Erro ao atualizar informações do canal: ${e.message}")
+        // Mostrar apenas nome do canal se EPG falhar
+        runOnUiThread {
+          liveChannelInfoOverlay?.text = "📺 $channelName"
+          liveChannelInfoOverlay?.visibility = android.view.View.VISIBLE
+        }
       }
     }
+  }
+  
+  // ✅ LIVE PROFESSIONAL: Iniciar atualização de informações do canal
+  private fun startLiveChannelInfoUpdates() {
+    stopLiveChannelInfoUpdates() // Parar qualquer atualização anterior
+    
+    // Atualizar imediatamente
+    updateLiveChannelInfo()
+    
+    // Atualizar a cada 30 segundos (EPG pode mudar)
+    liveChannelInfoHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    liveChannelInfoHandler?.postDelayed(object : Runnable {
+      override fun run() {
+        updateLiveChannelInfo()
+        liveChannelInfoHandler?.postDelayed(this, 30000) // 30 segundos
+      }
+    }, 30000)
+    
+    android.util.Log.d("PlayerActivity", "📺 Iniciando atualização de informações do canal")
+  }
+  
+  // ✅ LIVE PROFESSIONAL: Parar atualização de informações do canal
+  private fun stopLiveChannelInfoUpdates() {
+    liveChannelInfoHandler?.removeCallbacksAndMessages(null)
+    liveChannelInfoHandler = null
+  }
+  
+  // ✅ FASE 1: Criar LoadControl adaptativo baseado em qualidade de conexão
+  // Nota: Usa função compartilhada, mas mantém compatibilidade com isLive
+  private fun createAdaptiveLoadControl(isLive: Boolean): LoadControl {
+    return createAdaptiveLoadControl(connectionQuality)
   }
   
   // ✅ FASE 1: Data class para estatísticas do stream
@@ -2011,49 +2092,49 @@ class PlayerActivity : ComponentActivity() {
       .show()
   }
   
-  // ✅ FASE 2: Detectar degradação de qualidade
+  // ✅ FASE 2: Detectar degradação de qualidade (versão com Toast para PlayerActivity)
   private fun detectQualityDegradation(currentFormat: Format) {
     val exo = player ?: return
     if (contentType != "live") return // Apenas para live
     
-    lastVideoFormat?.let { previousFormat ->
-      val currentBitrate = currentFormat.bitrate
-      val previousBitrate = previousFormat.bitrate
-      val currentWidth = currentFormat.width
-      val previousWidth = previousFormat.width
+    // Usar função compartilhada para detecção básica
+    val playerState = PlayerState().apply {
+      lastVideoFormat = lastVideoFormat
+      qualityDegradedWarningShown = qualityDegradedWarningShown
+    }
+    
+    detectQualityDegradation(playerState, currentFormat)
+    
+    // Atualizar estado local
+    lastVideoFormat = playerState.lastVideoFormat
+    
+    // Se degradação foi detectada, mostrar Toast (comportamento específico do PlayerActivity)
+    if (playerState.qualityDegradedWarningShown && !qualityDegradedWarningShown) {
+      qualityDegradedWarningShown = true
       
-      // Detectar se qualidade caiu drasticamente
-      val bitrateDrop = previousBitrate > 0 && currentBitrate < previousBitrate * 0.7 // Redução de mais de 30%
-      val resolutionDrop = previousWidth > 0 && currentWidth < previousWidth * 0.8 // Redução de mais de 20%
-      
-      if ((bitrateDrop || resolutionDrop) && !qualityDegradedWarningShown) {
-        qualityDegradedWarningShown = true
-        
-        val message = when {
-          bitrateDrop && resolutionDrop -> "Qualidade reduzida devido à conexão (bitrate e resolução)"
-          bitrateDrop -> "Bitrate reduzido devido à conexão"
-          resolutionDrop -> "Resolução reduzida devido à conexão"
-          else -> "Qualidade reduzida devido à conexão"
-        }
-        
-        android.util.Log.w("PlayerActivity", "⚠️ $message")
-        
-        // Mostrar toast não intrusivo
-        qualityDegradedToast?.cancel()
-        qualityDegradedToast = android.widget.Toast.makeText(
-          this,
-          message,
-          android.widget.Toast.LENGTH_SHORT
-        ).apply {
-          setGravity(android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL, 0, 100)
-          show()
-        }
-        
-        // Resetar flag após 30 segundos para permitir novo aviso se qualidade melhorar e depois piorar novamente
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-          qualityDegradedWarningShown = false
-        }, 30000)
+      val message = when {
+        lastVideoFormat != null && currentFormat.bitrate < (lastVideoFormat!!.bitrate * 0.7) && 
+        currentFormat.width < (lastVideoFormat!!.width * 0.8) -> "Qualidade reduzida devido à conexão (bitrate e resolução)"
+        lastVideoFormat != null && currentFormat.bitrate < (lastVideoFormat!!.bitrate * 0.7) -> "Bitrate reduzido devido à conexão"
+        lastVideoFormat != null && currentFormat.width < (lastVideoFormat!!.width * 0.8) -> "Resolução reduzida devido à conexão"
+        else -> "Qualidade reduzida devido à conexão"
       }
+      
+      // Mostrar toast não intrusivo
+      qualityDegradedToast?.cancel()
+      qualityDegradedToast = android.widget.Toast.makeText(
+        this,
+        message,
+        android.widget.Toast.LENGTH_SHORT
+      ).apply {
+        setGravity(android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL, 0, 100)
+        show()
+      }
+      
+      // Resetar flag após 30 segundos
+      android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+        qualityDegradedWarningShown = false
+      }, 30000)
     }
   }
   
