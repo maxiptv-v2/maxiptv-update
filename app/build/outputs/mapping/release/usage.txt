@@ -27912,7 +27912,6 @@ androidx.media3.ui.SubtitleView:
     public static final int VIEW_TYPE_CANVAS
     public static final int VIEW_TYPE_WEB
     public void <init>(android.content.Context)
-    public void setFixedTextSize(int,float)
 androidx.media3.ui.SubtitleViewUtils:
     private void <init>()
 androidx.media3.ui.TimeBar:
@@ -66563,8 +66562,9 @@ androidx.media3.ui.SubtitlePainter:
     public static void setupTextLayout()
 androidx.media3.ui.SubtitleView:
     public static androidx.media3.common.text.Cue removeEmbeddedStyling()
+    public final void setFixedTextSize(float)
     public static void setFractionalTextSize()
-    public static void setTextSize()
+    public final void setTextSize(float,int)
 androidx.media3.ui.SubtitleViewUtils$$InternalSyntheticLambda$1$c3856aebf9e16b74395fb4d45f6d6dbe376cfee65351f339bb8689c9f670db61$0
 androidx.media3.ui.SubtitleViewUtils$$InternalSyntheticLambda$1$d0242c53e3aa12d7205039fa6a88e633e99447898f5dea0295451e9c429949ce$0
 androidx.media3.ui.SubtitleViewUtils
@@ -69469,24 +69469,29 @@ com.maxiptv.data.VodInfo:
 com.maxiptv.data.VodInfoResponse:
     static void <clinit>()
 com.maxiptv.ui.components.SafeLayoutKt
-com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$0
-com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$1:
+com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$2
+com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$3
+com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$1$417c46d040ce5ac0f06447b544e4555eddc3cce004a36530ca09aa9f3cc9f6a1$4:
     public final void onVisibilityChanged()
+com.maxiptv.ui.player.PlayerActivity$$InternalSyntheticLambda$2$0701b4a6027b32877c299edaf53a306f87c13e0e79a670e44e16c7acbcaa80f1$0
 com.maxiptv.ui.player.PlayerActivity$applyQuality$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.player.PlayerActivity$onCreate$2
-com.maxiptv.ui.player.PlayerActivity$onCreate$7$1:
+com.maxiptv.ui.player.PlayerActivity$onCreate$8$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
-com.maxiptv.ui.player.PlayerActivity$onCreate$7$2$$InternalSyntheticLambda$3$812423fe7d18f5acf0248d235be3981dbc6272054ac13245968ca16af8858781$0
-com.maxiptv.ui.player.PlayerActivity$onCreate$7$2$$InternalSyntheticLambda$3$d49530c3b2aa2bd228cf5542d29d7e3fa2848d7a11a50931e1dbb9fe1e5f6013$0
-com.maxiptv.ui.player.PlayerActivity$onCreate$7$2:
+com.maxiptv.ui.player.PlayerActivity$onCreate$8$2$$InternalSyntheticLambda$3$380d6142fe64829989e9513b3cc9f1335db36294bb3985059a079a398a2f77d9$0
+com.maxiptv.ui.player.PlayerActivity$onCreate$8$2$$InternalSyntheticLambda$3$76ad1afcd7f188825d8fc06e36703a54c665fc0e6c602e68770422bf104847e3$0
+com.maxiptv.ui.player.PlayerActivity$onCreate$8$2:
     public final synthetic void onDeviceVolumeChanged(int,boolean)
 com.maxiptv.ui.player.PlayerActivity$onCreate$customDns$1$lookup$$inlined$sortedBy$1
 com.maxiptv.ui.player.PlayerActivity:
     public static final int $stable
+    public boolean isSubtitleButtonFocused
+    public boolean subtitlesEnabled
     static void <clinit>()
     public static void applyQuality()
     public static int getStatusBarHeight()
+    public static void setupSubtitleStyle()
     public static void toggleFullscreen()
 com.maxiptv.ui.screens.AdminActivity$onCreate$1$1$1$1
 com.maxiptv.ui.screens.AdminActivity$onCreate$1
