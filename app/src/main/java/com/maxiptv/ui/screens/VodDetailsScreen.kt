@@ -118,18 +118,24 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     }
   }
   
-  LaunchedEffect(vodId) { XRepo.loadVodInfo(vodId) }
-  
-  // ✅ Buscar o filme clicado na lista para usar o banner imediatamente
+  // ✅ Buscar o filme clicado na lista para usar o banner imediatamente (ANTES de carregar info)
   val clickedVod = remember(vodId, allVods) {
     allVods.find { it.stream_id == vodId }
   }
   
+  // ✅ Carregar info da API (pode demorar)
+  LaunchedEffect(vodId) { XRepo.loadVodInfo(vodId) }
+  
   // ✅ Banner de fundo estilo Netflix
   Box(modifier = Modifier.fillMaxSize()) {
     // ✅ Prioridade: usar cover da API se disponível, senão usar stream_icon do filme clicado
-    val coverUrl = info?.info?.cover?.takeIf { it.isNotBlank() } 
-      ?: clickedVod?.stream_icon?.takeIf { it.isNotBlank() }
+    // ✅ IMPORTANTE: Usar clickedVod IMEDIATAMENTE na primeira renderização para garantir que o banner apareça
+    val coverUrl = remember(vodId, clickedVod?.stream_icon, info?.info?.cover) {
+      // ✅ Prioridade 1: cover da API (mais detalhado)
+      // ✅ Prioridade 2: stream_icon do filme clicado (disponível imediatamente)
+      info?.info?.cover?.takeIf { it.isNotBlank() } 
+        ?: clickedVod?.stream_icon?.takeIf { it.isNotBlank() }
+    }
     
     android.util.Log.d("VodDetails", "🔍 Banner URL (cover): ${info?.info?.cover}")
     android.util.Log.d("VodDetails", "🔍 Banner URL (stream_icon): ${clickedVod?.stream_icon}")
@@ -145,6 +151,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       android.util.Log.d("VodDetails", "🔄 URL do banner mudou, resetando estado de erro")
     }
     
+    // ✅ Renderizar banner IMEDIATAMENTE se tiver URL (mesmo antes de info estar carregado)
     if (coverUrl != null && coverUrl.isNotBlank() && !bannerLoadError) {
       android.util.Log.d("VodDetails", "✅ Renderizando banner de fundo: $coverUrl")
       AsyncImage(
@@ -511,11 +518,12 @@ fun Neon3DButton(
   icon: ImageVector? = null, // ✅ Ícone opcional
   focusRequester: FocusRequester? = null // ✅ FocusRequester para navegação D-PAD
 ) {
+  // ✅ Mesma lógica de zoom dos botões de categoria na home
   val scale by animateFloatAsState(
-    targetValue = if (isFocused) 1.12f else 1.0f, // ⚡ Zoom otimizado (reduzido de 1.15f para melhor performance)
+    targetValue = if (isFocused) 1.15f else 1.0f, // ✅ Mesmo zoom dos botões de categoria
     animationSpec = spring(
       dampingRatio = Spring.DampingRatioMediumBouncy,
-      stiffness = Spring.StiffnessMedium // ⚡ Animação mais rápida e responsiva
+      stiffness = Spring.StiffnessLow // ✅ Mesma animação suave dos botões de categoria
     ),
     label = "neonButtonScale"
   )
@@ -542,33 +550,34 @@ fun Neon3DButton(
       modifier = Modifier
         .size(buttonSize)
         .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier) // ✅ Aplicar focusRequester se fornecido
-        .focusable() // ✅ Habilitar foco para D-PAD (deve estar antes de outros modificadores)
+        .graphicsLayer {
+          scaleX = scale // ✅ Zoom aplicado aqui (1.15x quando focado) - mesma lógica dos botões de categoria
+          scaleY = scale
+          transformOrigin = TransformOrigin.Center
+        }
         .onFocusChanged { focusState ->
           val focused = focusState.isFocused
           android.util.Log.d("Neon3DButton", "🔍 Botão '$text' foco: $focused")
           onFocusChanged(focused) // ✅ Atualizar estado do foco
         }
-        .graphicsLayer {
-          scaleX = scale // ✅ Zoom aplicado aqui (1.15x quando focado)
-          scaleY = scale
-          transformOrigin = TransformOrigin.Center
-          // ✅ Borda vermelha quando focado
-          if (isFocused) {
-            shadowElevation = 40f
-          } else {
-            shadowElevation = 0f
-          }
-        }
+        .focusable() // ✅ Habilitar foco para D-PAD (mesma ordem dos botões de categoria)
         .clip(CircleShape)
         .background(Color.Transparent)
         .then(
           if (isFocused) {
-            // ✅ Borda vermelha neon quando focado
-            Modifier.border(
-              width = 4.dp,
-              color = Color(0xFFFF1744), // Vermelho neon
-              shape = CircleShape
-            )
+            // ✅ Borda vermelha neon quando focado (mesma lógica dos botões de categoria)
+            Modifier
+              .border(
+                width = 4.dp,
+                color = Color(0xFFFF1744), // Vermelho neon
+                shape = CircleShape
+              )
+              .shadow(
+                elevation = 12.dp,
+                spotColor = Color(0xFFFF1744).copy(alpha = 0.9f),
+                ambientColor = Color(0xFFFF1744).copy(alpha = 0.7f),
+                shape = CircleShape
+              )
           } else {
             Modifier
           }
