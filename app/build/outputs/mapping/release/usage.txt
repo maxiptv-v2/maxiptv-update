@@ -51306,9 +51306,11 @@ androidx.compose.runtime.ComposerImpl:
     public static void dispose$runtime_release()
     public static void endGroup()
     public final void endMovableGroup()
+    public final void endNode()
     public final void endProvider()
     public final void endProviders()
     public final void endReplaceGroup()
+    public final void endReplaceableGroup()
     public static void endReuseFromRoot()
     public final void ensureWriter()
     public static void exitGroup()
@@ -51321,6 +51323,7 @@ androidx.compose.runtime.ComposerImpl:
     public final int getCompoundKeyHash()
     public final androidx.compose.runtime.PersistentCompositionLocalMap getCurrentCompositionLocalMap()
     public static androidx.compose.runtime.changelist.ChangeList getDeferredChanges$runtime_release()
+    public final boolean getInserting()
     public static java.lang.Object getNode()
     public static androidx.compose.runtime.SlotReader getReader$runtime_release()
     public final androidx.compose.runtime.RecomposeScope getRecomposeScope()
@@ -51747,6 +51750,7 @@ androidx.compose.runtime.RecomposeScopeImpl:
     public final void setSkipped(boolean)
     public final void setUsed()
     public final void start(int)
+    public final void updateScope(kotlin.jvm.functions.Function2)
 androidx.compose.runtime.RecomposeScopeImplKt:
     public static final java.lang.Object callbackLock
     static void <clinit>()
@@ -55797,7 +55801,9 @@ androidx.compose.ui.node.ComposeUiNode$Companion:
     public static final kotlin.jvm.functions.Function2 SetLayoutDirection
     public static final kotlin.jvm.functions.Function2 SetViewConfiguration
     public static androidx.compose.ui.node.ComposeUiNode$Companion$VirtualConstructor$1 getConstructor()
+    public static androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 getSetCompositeKeyHash()
     public static androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 getSetMeasurePolicy()
+    public static androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 getSetModifier()
     public static androidx.compose.ui.node.ComposeUiNode$Companion$SetCompositeKeyHash$1 getSetResolvedCompositionLocals()
     public static kotlin.jvm.functions.Function0 getVirtualConstructor()
 androidx.compose.ui.node.ComposeUiNode:

@@ -32,6 +32,7 @@ import com.maxiptv.MaxiApp
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
@@ -125,16 +126,15 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
           .data(coverUrl)
-          .size(600, 900) // ⚡ Redimensionar antes do blur para melhor performance (qualidade reduzida)
+          .size(800, 1200) // ⚡ Tamanho maior para melhor qualidade após blur
           .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
           .diskCachePolicy(coil.request.CachePolicy.ENABLED)
           .build(),
         contentDescription = null,
         modifier = Modifier
           .fillMaxSize()
-          .blur(radius = 15.dp) // ⚡ Blur reduzido para melhor performance
+          .blur(radius = 30.dp) // ✅ Blur estilo Netflix (20-40dp)
           .graphicsLayer {
-            alpha = 0.4f // ✅ Transparência aumentada para ser mais visível
             // Efeito de escala para criar profundidade
             scaleX = 1.1f
             scaleY = 1.1f
@@ -158,33 +158,17 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       )
     }
     
-    // ✅ Overlay escuro ajustado para melhor contraste e legibilidade (mais transparente)
+    // ✅ Overlay preto com 40-60% de opacidade (estilo Netflix)
     Box(
       modifier = Modifier
         .fillMaxSize()
         .background(
           Brush.verticalGradient(
             colors = listOf(
-              Color.Black.copy(alpha = 0.5f),  // Topo menos escuro
-              Color.Black.copy(alpha = 0.4f), // Meio mais transparente
-              Color.Black.copy(alpha = 0.6f)   // Embaixo menos escuro para os botões
+              Color.Black.copy(alpha = 0.4f),  // Topo: 40% de opacidade
+              Color.Black.copy(alpha = 0.5f),  // Meio: 50% de opacidade
+              Color.Black.copy(alpha = 0.6f)   // Fundo: 60% de opacidade
             )
-          )
-        )
-    )
-    
-    // ✅ Overlay adicional com gradiente radial para efeito de blur suave nas bordas (mais sutil)
-    Box(
-      modifier = Modifier
-        .fillMaxSize()
-        .background(
-          Brush.radialGradient(
-            colors = listOf(
-              Color.Transparent,
-              Color.Black.copy(alpha = 0.2f), // Mais transparente
-              Color.Black.copy(alpha = 0.35f)  // Menos escuro
-            ),
-            radius = 900f
           )
         )
     )
@@ -475,9 +459,9 @@ fun Neon3DButton(
     label = "neonButtonScale"
   )
   
-  val buttonSize = if (MaxiApp.isTv) 120.dp else 100.dp
+  val buttonSize = if (MaxiApp.isTv) 100.dp else 85.dp // ⚡ Tamanho reduzido
   val textSize = if (MaxiApp.isTv) 14.sp else 12.sp
-  val iconSize = if (MaxiApp.isTv) 42.dp else 35.dp
+  val iconSize = if (MaxiApp.isTv) 36.dp else 30.dp // ⚡ Ícone proporcionalmente menor
   
   // ✅ Determinar ícone baseado no texto se não fornecido
   val buttonIcon = icon ?: when (text.lowercase()) {
@@ -492,13 +476,16 @@ fun Neon3DButton(
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(8.dp)
   ) {
-    // ✅ Botão 3D Circular estilo moderno
+    // ✅ Botão 3D Circular estilo moderno com zoom no foco
     Box(
       modifier = Modifier
         .size(buttonSize)
+        .focusable()
+        .onFocusChanged { onFocusChanged(it.isFocused) }
         .graphicsLayer {
-          scaleX = scale
+          scaleX = scale // ✅ Zoom aplicado aqui (1.15x quando focado)
           scaleY = scale
+          transformOrigin = TransformOrigin.Center
           // ✅ Borda vermelha quando focado
           if (isFocused) {
             shadowElevation = 40f
@@ -520,9 +507,7 @@ fun Neon3DButton(
             Modifier
           }
         )
-        .clickable { onClick() }
-        .focusable()
-        .onFocusChanged { onFocusChanged(it.isFocused) },
+        .clickable { onClick() },
       contentAlignment = Alignment.Center
     ) {
       // ✅ CAMADA 1 — Brilho externo azul (mais intenso quando focado)
