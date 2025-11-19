@@ -78,7 +78,6 @@ fun LiveScreen(nav: NavHostController) {
   val context = LocalContext.current
   val isTv = MaxiApp.isTv
   val isFireStick = MaxiApp.isFireStick
-  val isPhone = MaxiApp.isPhone
   
   // ✅ Estado para rastrear qualidade de conexão e failover (usando classe compartilhada)
   val playerState = remember { PlayerState() }
@@ -247,7 +246,7 @@ fun LiveScreen(nav: NavHostController) {
           override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
             // Detectar mudanças de qualidade
             val tracks = currentTracks
-            tracks?.groups?.forEach { group ->
+            tracks.groups.forEach { group ->
               if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO && group.length > 0) {
                 val format = group.getTrackFormat(0)
                 detectQualityDegradation(playerState, format)
@@ -338,9 +337,9 @@ fun LiveScreen(nav: NavHostController) {
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         
         // Configurar flags adicionais para garantir fullscreen completo
+        // ✅ FLAG_FULLSCREEN removido (deprecated em API 30+) - WindowInsetsController já faz isso
         window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
-        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         
         // Tornar barras transparentes
         window.statusBarColor = android.graphics.Color.TRANSPARENT
@@ -358,7 +357,6 @@ fun LiveScreen(nav: NavHostController) {
         // Remover flags de fullscreen
         window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         
         // Restaurar decorFitsSystemWindows
         WindowCompat.setDecorFitsSystemWindows(window, true)
@@ -367,13 +365,14 @@ fun LiveScreen(nav: NavHostController) {
     
     onDispose {
       // ✅ Garantir que as barras sejam restauradas quando sair do composable
-      val activity = view.context as? Activity
-      if (activity != null && isFullscreen) {
-        val window = activity.window
-        val windowInsetsController = WindowCompat.getInsetsController(window, view)
-        windowInsetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
+      val disposeActivity = view.context as? Activity
+      if (disposeActivity != null && isFullscreen) {
+        val disposeWindow = disposeActivity.window
+        val disposeWindowInsetsController = WindowCompat.getInsetsController(disposeWindow, view)
+        disposeWindowInsetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        disposeWindow.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        disposeWindow.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+        WindowCompat.setDecorFitsSystemWindows(disposeWindow, true)
       }
     }
   }
