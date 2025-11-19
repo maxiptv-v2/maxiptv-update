@@ -122,7 +122,10 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   Box(modifier = Modifier.fillMaxSize()) {
     // Banner de fundo com blur e transparência estilo Netflix
     val coverUrl = info?.info?.cover
+    android.util.Log.d("VodDetails", "🔍 Banner URL: $coverUrl")
+    
     if (coverUrl != null && coverUrl.isNotBlank()) {
+      android.util.Log.d("VodDetails", "✅ Renderizando banner de fundo")
       AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
           .data(coverUrl)
@@ -139,9 +142,16 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
             scaleX = 1.1f
             scaleY = 1.1f
           },
-        contentScale = ContentScale.Crop // Não distorce, corta mantendo proporção
+        contentScale = ContentScale.Crop, // Não distorce, corta mantendo proporção
+        onError = {
+          android.util.Log.e("VodDetails", "❌ Erro ao carregar banner: ${it.result.throwable.message}")
+        },
+        onSuccess = {
+          android.util.Log.d("VodDetails", "✅ Banner carregado com sucesso")
+        }
       )
     } else {
+      android.util.Log.w("VodDetails", "⚠️ Banner URL vazio ou null, usando fallback")
       // ✅ Fallback: fundo gradiente se não houver imagem
       Box(
         modifier = Modifier
@@ -275,8 +285,8 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         
         Row(
           modifier = Modifier
-            .then(if (MaxiApp.isTv) Modifier.widthIn(max = 600.dp) else Modifier.fillMaxWidth()),
-          horizontalArrangement = Arrangement.spacedBy(16.dp),
+            .then(if (MaxiApp.isTv) Modifier.widthIn(max = 500.dp) else Modifier.fillMaxWidth()), // ⚡ Largura reduzida para botões menores
+          horizontalArrangement = Arrangement.spacedBy(12.dp), // ⚡ Espaçamento reduzido
           verticalAlignment = Alignment.CenterVertically
         ) {
           // Botão 3D Assistir
@@ -451,17 +461,17 @@ fun Neon3DButton(
   icon: ImageVector? = null // ✅ Ícone opcional
 ) {
   val scale by animateFloatAsState(
-    targetValue = if (isFocused) 1.15f else 1.0f,
+    targetValue = if (isFocused) 1.12f else 1.0f, // ⚡ Zoom otimizado (reduzido de 1.15f para melhor performance)
     animationSpec = spring(
       dampingRatio = Spring.DampingRatioMediumBouncy,
-      stiffness = Spring.StiffnessLow
+      stiffness = Spring.StiffnessMedium // ⚡ Animação mais rápida e responsiva
     ),
     label = "neonButtonScale"
   )
   
-  val buttonSize = if (MaxiApp.isTv) 100.dp else 85.dp // ⚡ Tamanho reduzido
-  val textSize = if (MaxiApp.isTv) 14.sp else 12.sp
-  val iconSize = if (MaxiApp.isTv) 36.dp else 30.dp // ⚡ Ícone proporcionalmente menor
+  val buttonSize = if (MaxiApp.isTv) 90.dp else 75.dp // ⚡ Tamanho otimizado e reduzido
+  val textSize = if (MaxiApp.isTv) 13.sp else 11.sp // ⚡ Texto proporcionalmente menor
+  val iconSize = if (MaxiApp.isTv) 32.dp else 26.dp // ⚡ Ícone proporcionalmente menor
   
   // ✅ Determinar ícone baseado no texto se não fornecido
   val buttonIcon = icon ?: when (text.lowercase()) {
@@ -480,8 +490,12 @@ fun Neon3DButton(
     Box(
       modifier = Modifier
         .size(buttonSize)
-        .focusable()
-        .onFocusChanged { onFocusChanged(it.isFocused) }
+        .focusable() // ✅ Habilitar foco para D-PAD (deve estar antes de outros modificadores)
+        .onFocusChanged { focusState ->
+          val focused = focusState.isFocused
+          android.util.Log.d("Neon3DButton", "🔍 Botão '$text' foco: $focused")
+          onFocusChanged(focused) // ✅ Atualizar estado do foco
+        }
         .graphicsLayer {
           scaleX = scale // ✅ Zoom aplicado aqui (1.15x quando focado)
           scaleY = scale
@@ -507,7 +521,10 @@ fun Neon3DButton(
             Modifier
           }
         )
-        .clickable { onClick() },
+        .clickable { 
+          android.util.Log.d("Neon3DButton", "🖱️ Botão '$text' clicado")
+          onClick() 
+        },
       contentAlignment = Alignment.Center
     ) {
       // ✅ CAMADA 1 — Brilho externo azul (mais intenso quando focado)

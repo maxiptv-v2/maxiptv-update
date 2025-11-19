@@ -33,16 +33,16 @@ class PlayerState {
 fun createAdaptiveLoadControl(quality: ConnectionQuality): LoadControl {
   return when (quality) {
     ConnectionQuality.EXCELLENT -> {
-      // Buffer maior para conexão excelente
+      // Buffer padrão para conexão excelente (não precisa buffer excessivo)
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          8000,   // minBufferMs: 8 segundos
-          15000,  // maxBufferMs: 15 segundos
-          2000,   // bufferForPlaybackMs: 2 segundos
-          4000    // bufferForPlaybackAfterRebufferMs: 4 segundos
+          5000,   // minBufferMs: 5 segundos
+          12000,  // maxBufferMs: 12 segundos
+          1500,   // bufferForPlaybackMs: 1.5 segundos
+          3000    // bufferForPlaybackAfterRebufferMs: 3 segundos
         )
         .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(6000, true) // 6s de back buffer
+        .setBackBuffer(5000, true) // 5s de back buffer
         .build()
     }
     ConnectionQuality.GOOD -> {
@@ -59,16 +59,17 @@ fun createAdaptiveLoadControl(quality: ConnectionQuality): LoadControl {
         .build()
     }
     ConnectionQuality.POOR -> {
-      // Buffer menor para conexão ruim
+      // ✅ AUTO-BUFFER INTELIGENTE: AUMENTAR buffer quando conexão é ruim para evitar travamentos
+      // Buffer MAIOR para conexão ruim (evita travamentos no Fire Stick e dispositivos com internet lenta)
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          3000,   // minBufferMs: 3 segundos
-          8000,   // maxBufferMs: 8 segundos
-          1000,   // bufferForPlaybackMs: 1 segundo
-          2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
+          10000,  // minBufferMs: 10 segundos (AUMENTADO - era 3s)
+          20000,  // maxBufferMs: 20 segundos (AUMENTADO - era 8s)
+          3000,   // bufferForPlaybackMs: 3 segundos (AUMENTADO - era 1s)
+          5000    // bufferForPlaybackAfterRebufferMs: 5 segundos (AUMENTADO - era 2s)
         )
         .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(3000, true) // 3s de back buffer
+        .setBackBuffer(10000, true) // 10s de back buffer (AUMENTADO - era 3s)
         .build()
     }
   }

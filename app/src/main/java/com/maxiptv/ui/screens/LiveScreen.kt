@@ -90,11 +90,11 @@ fun LiveScreen(nav: NavHostController) {
           .setUri(url)
           .setLiveConfiguration(
             androidx.media3.common.MediaItem.LiveConfiguration.Builder()
-              .setTargetOffsetMs(0) // Tentar pegar segmento mais recente
-              .setMinOffsetMs(0)
-              .setMaxOffsetMs(5000)
-              .setMinPlaybackSpeed(0.98f)
-              .setMaxPlaybackSpeed(1.02f)
+              .setTargetOffsetMs(0) // ✅ Low Latency: Tentar pegar segmento mais recente
+              .setMinOffsetMs(0) // ✅ Low Latency: Offset mínimo zero
+              .setMaxOffsetMs(3000) // ✅ Low Latency OTIMIZADO: Máximo 3s de atraso (era 5s) - mais agressivo para esportes/notícias
+              .setMinPlaybackSpeed(0.98f) // ✅ Low Latency: Velocidade mínima ajustada
+              .setMaxPlaybackSpeed(1.02f) // ✅ Low Latency: Velocidade máxima ajustada
               .build()
           )
           .build()
@@ -182,6 +182,8 @@ fun LiveScreen(nav: NavHostController) {
     androidx.media3.exoplayer.ExoPlayer.Builder(context)
       .setMediaSourceFactory(mediaSourceFactory)
       .setLoadControl(initialLoadControl)
+      // ✅ MATCH-FRAME VIDEO: Frame pacing e FPS matching para evitar stutter em TVs 120Hz
+      .setVideoChangeFrameRateStrategy(androidx.media3.common.C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_ONLY_IF_SEAMLESS)
       .build().apply {
         volume = 0.3f // Começa baixo no mini player
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE

@@ -936,11 +936,11 @@ class PlayerActivity : ComponentActivity() {
             .setUri(url)
             .setLiveConfiguration(
               MediaItem.LiveConfiguration.Builder()
-                .setTargetOffsetMs(0) // ✅ FASE 2: Tentar pegar segmento mais recente (Low Latency)
-                .setMinOffsetMs(0) // ✅ FASE 2: Offset mínimo zero
-                .setMaxOffsetMs(5000) // ✅ FASE 2: Máximo 5s de atraso (Low Latency)
-                .setMinPlaybackSpeed(0.98f) // ✅ FASE 2: Velocidade mínima ajustada para Low Latency
-                .setMaxPlaybackSpeed(1.02f) // ✅ FASE 2: Velocidade máxima ajustada para Low Latency
+                .setTargetOffsetMs(0) // ✅ Low Latency: Tentar pegar segmento mais recente
+                .setMinOffsetMs(0) // ✅ Low Latency: Offset mínimo zero
+                .setMaxOffsetMs(3000) // ✅ Low Latency OTIMIZADO: Máximo 3s de atraso (era 5s) - mais agressivo para esportes/notícias
+                .setMinPlaybackSpeed(0.98f) // ✅ Low Latency: Velocidade mínima ajustada
+                .setMaxPlaybackSpeed(1.02f) // ✅ Low Latency: Velocidade máxima ajustada
                 .build()
             )
             .build()
@@ -997,6 +997,16 @@ class PlayerActivity : ComponentActivity() {
               .setMinVideoBitrate(if (isLive) 500_000 else 400_000)
               .build()
           }
+        }
+        
+        // ✅ MATCH-FRAME VIDEO: Frame pacing e FPS matching para evitar stutter em TVs 120Hz
+        // Sincronizar FPS do vídeo com refresh rate da TV (Samsung, Philco, etc.)
+        try {
+          // Usar API do ExoPlayer para sincronizar frame rate
+          exo.videoChangeFrameRateStrategy = C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_ONLY_IF_SEAMLESS
+          android.util.Log.i("PlayerActivity", "✅ Match-Frame Video habilitado: FPS sincronizado com refresh rate da TV")
+        } catch (e: Exception) {
+          android.util.Log.w("PlayerActivity", "⚠️ Match-Frame Video não disponível nesta versão do ExoPlayer: ${e.message}")
         }
         
         exo.prepare()
@@ -2239,11 +2249,11 @@ class PlayerActivity : ComponentActivity() {
             .setUri(url)
             .setLiveConfiguration(
               MediaItem.LiveConfiguration.Builder()
-                .setTargetOffsetMs(0)
-                .setMinOffsetMs(0)
-                .setMaxOffsetMs(5000)
-                .setMinPlaybackSpeed(0.98f)
-                .setMaxPlaybackSpeed(1.02f)
+                .setTargetOffsetMs(0) // ✅ Low Latency: Tentar pegar segmento mais recente
+                .setMinOffsetMs(0) // ✅ Low Latency: Offset mínimo zero
+                .setMaxOffsetMs(3000) // ✅ Low Latency OTIMIZADO: Máximo 3s de atraso (era 5s)
+                .setMinPlaybackSpeed(0.98f) // ✅ Low Latency: Velocidade mínima ajustada
+                .setMaxPlaybackSpeed(1.02f) // ✅ Low Latency: Velocidade máxima ajustada
                 .build()
             )
             .build()
