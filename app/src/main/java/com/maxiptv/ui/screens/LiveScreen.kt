@@ -85,16 +85,16 @@ fun LiveScreen(nav: NavHostController) {
         player.stop()
         player.clearMediaItems()
         
-        // ✅ FASE 2: Modo Low Latency HLS para canais live
+        // ✅ FASE 2: Modo Low Latency HLS para canais live (AJUSTADO para mais estabilidade)
         val mediaItem = androidx.media3.common.MediaItem.Builder()
           .setUri(url)
           .setLiveConfiguration(
             androidx.media3.common.MediaItem.LiveConfiguration.Builder()
-              .setTargetOffsetMs(0) // ✅ Low Latency: Tentar pegar segmento mais recente
-              .setMinOffsetMs(0) // ✅ Low Latency: Offset mínimo zero
-              .setMaxOffsetMs(3000) // ✅ Low Latency OTIMIZADO: Máximo 3s de atraso (era 5s) - mais agressivo para esportes/notícias
-              .setMinPlaybackSpeed(0.98f) // ✅ Low Latency: Velocidade mínima ajustada
-              .setMaxPlaybackSpeed(1.02f) // ✅ Low Latency: Velocidade máxima ajustada
+              .setTargetOffsetMs(2000) // ✅ Low Latency AJUSTADO: 2s de offset (era 0) - mais estável
+              .setMinOffsetMs(1000) // ✅ Low Latency AJUSTADO: Offset mínimo 1s (era 0) - evitar travamentos
+              .setMaxOffsetMs(5000) // ✅ Low Latency AJUSTADO: Máximo 5s de atraso (era 3s) - mais estabilidade
+              .setMinPlaybackSpeed(0.95f) // ✅ Low Latency AJUSTADO: Velocidade mínima 0.95 (era 0.98) - mais tolerante
+              .setMaxPlaybackSpeed(1.05f) // ✅ Low Latency AJUSTADO: Velocidade máxima 1.05 (era 1.02) - mais tolerante
               .build()
           )
           .build()
@@ -748,16 +748,16 @@ fun MiniPlayer(
     android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
     player.stop() // Parar player atual
     
-    // ✅ FASE 2: Modo Low Latency HLS para canais live
+    // ✅ FASE 2: Modo Low Latency HLS para canais live (AJUSTADO para mais estabilidade)
     val mediaItem = androidx.media3.common.MediaItem.Builder()
       .setUri(channel.toLiveUrl())
       .setLiveConfiguration(
         androidx.media3.common.MediaItem.LiveConfiguration.Builder()
-          .setTargetOffsetMs(0) // Tentar pegar segmento mais recente (Low Latency)
-          .setMinOffsetMs(0)
-          .setMaxOffsetMs(5000)
-          .setMinPlaybackSpeed(0.98f)
-          .setMaxPlaybackSpeed(1.02f)
+          .setTargetOffsetMs(2000) // ✅ Low Latency AJUSTADO: 2s de offset (era 0) - mais estável
+          .setMinOffsetMs(1000) // ✅ Low Latency AJUSTADO: Offset mínimo 1s (era 0) - evitar travamentos
+          .setMaxOffsetMs(5000) // ✅ Low Latency AJUSTADO: Máximo 5s de atraso (mantido)
+          .setMinPlaybackSpeed(0.95f) // ✅ Low Latency AJUSTADO: Velocidade mínima 0.95 (era 0.98) - mais tolerante
+          .setMaxPlaybackSpeed(1.05f) // ✅ Low Latency AJUSTADO: Velocidade máxima 1.05 (era 1.02) - mais tolerante
           .build()
       )
       .build()

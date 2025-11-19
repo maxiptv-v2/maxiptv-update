@@ -868,8 +868,8 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚡ Configurar DataSource com timeouts diferentes para LIVE vs VOD/SERIES
     val isLive = contentType == "live"
-    val connectTimeout = if (isLive) 8000 else 8000    // LIVE: 8s (aumentado para melhor estabilidade)
-    val readTimeout = if (isLive) 10000 else 10000     // LIVE: 10s (aumentado para melhor estabilidade)
+    val connectTimeout = if (isLive) 12000 else 8000    // ✅ LIVE: 12s (AUMENTADO de 8s - mais tempo para conexão)
+    val readTimeout = if (isLive) 15000 else 10000       // ✅ LIVE: 15s (AUMENTADO de 10s - mais tempo para leitura)
     
     // 🌐 DNS OTIMIZADO: Priorizar IPv4 para melhor compatibilidade
     val customDns = object : Dns {
@@ -936,11 +936,11 @@ class PlayerActivity : ComponentActivity() {
             .setUri(url)
             .setLiveConfiguration(
               MediaItem.LiveConfiguration.Builder()
-                .setTargetOffsetMs(0) // ✅ Low Latency: Tentar pegar segmento mais recente
-                .setMinOffsetMs(0) // ✅ Low Latency: Offset mínimo zero
-                .setMaxOffsetMs(3000) // ✅ Low Latency OTIMIZADO: Máximo 3s de atraso (era 5s) - mais agressivo para esportes/notícias
-                .setMinPlaybackSpeed(0.98f) // ✅ Low Latency: Velocidade mínima ajustada
-                .setMaxPlaybackSpeed(1.02f) // ✅ Low Latency: Velocidade máxima ajustada
+                .setTargetOffsetMs(2000) // ✅ Low Latency AJUSTADO: 2s de offset (era 0) - mais estável
+                .setMinOffsetMs(1000) // ✅ Low Latency AJUSTADO: Offset mínimo 1s (era 0) - evitar travamentos
+                .setMaxOffsetMs(5000) // ✅ Low Latency AJUSTADO: Máximo 5s de atraso (era 3s) - mais estabilidade
+                .setMinPlaybackSpeed(0.95f) // ✅ Low Latency AJUSTADO: Velocidade mínima 0.95 (era 0.98) - mais tolerante
+                .setMaxPlaybackSpeed(1.05f) // ✅ Low Latency AJUSTADO: Velocidade máxima 1.05 (era 1.02) - mais tolerante
                 .build()
             )
             .build()
@@ -2249,11 +2249,11 @@ class PlayerActivity : ComponentActivity() {
             .setUri(url)
             .setLiveConfiguration(
               MediaItem.LiveConfiguration.Builder()
-                .setTargetOffsetMs(0) // ✅ Low Latency: Tentar pegar segmento mais recente
-                .setMinOffsetMs(0) // ✅ Low Latency: Offset mínimo zero
-                .setMaxOffsetMs(3000) // ✅ Low Latency OTIMIZADO: Máximo 3s de atraso (era 5s)
-                .setMinPlaybackSpeed(0.98f) // ✅ Low Latency: Velocidade mínima ajustada
-                .setMaxPlaybackSpeed(1.02f) // ✅ Low Latency: Velocidade máxima ajustada
+                .setTargetOffsetMs(2000) // ✅ Low Latency AJUSTADO: 2s de offset (era 0) - mais estável
+                .setMinOffsetMs(1000) // ✅ Low Latency AJUSTADO: Offset mínimo 1s (era 0) - evitar travamentos
+                .setMaxOffsetMs(5000) // ✅ Low Latency AJUSTADO: Máximo 5s de atraso (era 3s) - mais estabilidade
+                .setMinPlaybackSpeed(0.95f) // ✅ Low Latency AJUSTADO: Velocidade mínima 0.95 (era 0.98) - mais tolerante
+                .setMaxPlaybackSpeed(1.05f) // ✅ Low Latency AJUSTADO: Velocidade máxima 1.05 (era 1.02) - mais tolerante
                 .build()
             )
             .build()
