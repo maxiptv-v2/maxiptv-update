@@ -258,7 +258,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         contentDescription = null,
         modifier = Modifier
           .fillMaxSize()
-          .blur(radius = 15.dp) // ✅ Blur reduzido para imagem mais nítida
+          .blur(radius = 8.dp) // ✅ Blur mínimo para imagem mais nítida e visível
           .graphicsLayer {
             // Efeito de escala para criar profundidade
             scaleX = 1.1f
@@ -292,7 +292,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       )
     }
     
-    // ✅ Overlay preto com 50-70% de opacidade (aumentado para melhor contraste do texto)
+    // ✅ Overlay preto com 30-50% de opacidade (reduzido para banner mais visível)
     // IMPORTANTE: Overlay deve ser SEMPRE renderizado para garantir contraste do texto
     Box(
       modifier = Modifier
@@ -300,9 +300,9 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         .background(
           Brush.verticalGradient(
             colors = listOf(
-              Color.Black.copy(alpha = 0.5f),  // Topo: 50% de opacidade (aumentado para melhor contraste)
-              Color.Black.copy(alpha = 0.6f),  // Meio: 60% de opacidade (aumentado)
-              Color.Black.copy(alpha = 0.7f)   // Fundo: 70% de opacidade (aumentado para garantir contraste)
+              Color.Black.copy(alpha = 0.3f),  // Topo: 30% de opacidade (mais transparente)
+              Color.Black.copy(alpha = 0.4f),  // Meio: 40% de opacidade
+              Color.Black.copy(alpha = 0.5f)   // Fundo: 50% de opacidade
             )
           )
         )
@@ -468,20 +468,30 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
               android.util.Log.i("VodDetails", "Stream ID: $streamId (${targetVersion?.name ?: "padrão"})")
               
               // ✅ Aplicar qualidade selecionada ANTES de iniciar
+              // IMPORTANTE: Aguardar a conclusão para garantir que a qualidade seja salva antes do player iniciar
               scope.launch {
                 PlayerSettingsManager.setVideoQuality(currentVideoQuality)
+                android.util.Log.i("VodDetails", "✅ Qualidade salva antes de iniciar player: ${currentVideoQuality.displayName}")
+                
+                // ✅ Aguardar um pouco para garantir que PlayerSettingsManager salve completamente
+                kotlinx.coroutines.delay(150)
+                
+                val playerIntent = Intent(ctx, PlayerActivity::class.java)
+                  .putExtra("url", url)
+                  .putExtra("contentType", "vod")
+                  .putExtra("returnToCategory", "vod")
+                  .putExtra("categoryId", vodId.toString())
+                  // ✅ Passar configurações selecionadas
+                  .putExtra("selectedSubtitleTrack", selectedSubtitleTrack?.let { "${it.id}" } ?: "")
+                  .putExtra("selectedAudioTrack", selectedAudioTrack?.let { "${it.id}" } ?: "")
+                
+                android.util.Log.i("VodDetails", "🔍 Configurações passadas para o Intent:")
+                android.util.Log.i("VodDetails", "  - Qualidade: ${currentVideoQuality.displayName}")
+                android.util.Log.i("VodDetails", "  - Legenda: ${selectedSubtitleTrack?.let { "${it.id} (${it.language})" } ?: "Desativada"}")
+                android.util.Log.i("VodDetails", "  - Áudio: ${selectedAudioTrack?.let { "${it.id} (${it.language})" } ?: "Automático"}")
+                
+                ctx.startActivity(playerIntent)
               }
-              
-              val playerIntent = Intent(ctx, PlayerActivity::class.java)
-                .putExtra("url", url)
-                .putExtra("contentType", "vod")
-                .putExtra("returnToCategory", "vod")
-                .putExtra("categoryId", vodId.toString())
-                // ✅ Passar configurações selecionadas
-                .putExtra("selectedSubtitleTrack", selectedSubtitleTrack?.let { "${it.id}" } ?: "")
-                .putExtra("selectedAudioTrack", selectedAudioTrack?.let { "${it.id}" } ?: "")
-              
-              ctx.startActivity(playerIntent)
             },
             isFocused = isAssistirFocused,
             onFocusChanged = { 

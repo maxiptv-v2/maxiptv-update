@@ -461,11 +461,8 @@ class PlayerActivity : ComponentActivity() {
     contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
     
     // ✅ LER CONFIGURAÇÕES DO INTENT (legendas e áudio selecionados na tela de detalhes)
-    val selectedSubtitleTrackId = intent.getStringExtra("selectedSubtitleTrack")?.toIntOrNull()
-    val selectedAudioTrackId = intent.getStringExtra("selectedAudioTrack")?.toIntOrNull()
-    android.util.Log.d("PlayerActivity", "🔍 Configurações recebidas do Intent:")
-    android.util.Log.d("PlayerActivity", "  - Legenda selecionada: $selectedSubtitleTrackId")
-    android.util.Log.d("PlayerActivity", "  - Áudio selecionado: $selectedAudioTrackId")
+    // ✅ Configurações serão lidas diretamente em onTracksChanged quando os tracks estiverem disponíveis
+    android.util.Log.d("PlayerActivity", "🔍 PlayerActivity iniciado - configurações serão aplicadas quando tracks estiverem disponíveis")
     
     // ✅ MELHORIA 2: Mostrar/ocultar overlay de tempo restante baseado no tipo de conteúdo
     val isVodOrSeries = contentType == "vod" || contentType == "series"
@@ -569,8 +566,13 @@ class PlayerActivity : ComponentActivity() {
             exo.playbackParameters = PlaybackParameters(playbackSpeed.multiplier)
             android.util.Log.i("PlayerActivity", "✅ Velocidade aplicada: ${playbackSpeed.displayName} (${playbackSpeed.multiplier}x)")
             
+            // ✅ IMPORTANTE: Aguardar um pouco para garantir que PlayerSettingsManager tenha salvo a qualidade
+            kotlinx.coroutines.delay(100)
+            
             // Aplicar qualidade de vídeo configurada
             val videoQuality = PlayerSettingsManager.getVideoQuality()
+            android.util.Log.i("PlayerActivity", "🔍 Qualidade lida do PlayerSettingsManager: ${videoQuality.displayName}")
+            
             if (videoQuality != PlayerSettingsManager.VideoQuality.AUTO) {
               currentMaxBitrate = videoQuality.maxBitrate
               val (width, height) = when (videoQuality) {
@@ -585,7 +587,7 @@ class PlayerActivity : ComponentActivity() {
                 .setMinVideoBitrate(videoQuality.minBitrate)
                 .setMaxVideoSize(width, height)
                 .build()
-              android.util.Log.i("PlayerActivity", "✅ Qualidade aplicada: ${videoQuality.displayName} (${videoQuality.maxBitrate / 1000}Kbps)")
+              android.util.Log.i("PlayerActivity", "✅ Qualidade aplicada: ${videoQuality.displayName} (${videoQuality.maxBitrate / 1000}Kbps, ${width}x${height})")
             } else {
               // Qualidade automática: usar valores padrão
               currentMaxBitrate = if (isLive) 2_200_000 else 2_500_000
@@ -598,7 +600,7 @@ class PlayerActivity : ComponentActivity() {
               android.util.Log.i("PlayerActivity", "✅ Qualidade automática aplicada")
             }
           } catch (e: Exception) {
-            android.util.Log.e("PlayerActivity", "❌ Erro ao aplicar configurações: ${e.message}")
+            android.util.Log.e("PlayerActivity", "❌ Erro ao aplicar configurações: ${e.message}", e)
             // Usar valores padrão em caso de erro
             currentMaxBitrate = if (isLive) 2_200_000 else 2_500_000
             exo.trackSelectionParameters = TrackSelectionParameters.Builder(this@PlayerActivity)
@@ -633,15 +635,15 @@ class PlayerActivity : ComponentActivity() {
               
               // ✅ Aplicar legenda selecionada
               val subtitleTrackIdStr = intent.getStringExtra("selectedSubtitleTrack")
+              android.util.Log.d("PlayerActivity", "🔍 Legenda recebida do Intent: '$subtitleTrackIdStr'")
               if (subtitleTrackIdStr != null && subtitleTrackIdStr.isNotBlank()) {
-                val subtitleTrackId = subtitleTrackIdStr.toIntOrNull()
-                if (subtitleTrackId != null) {
-                  var subtitleApplied = false
-                  tracks.groups.forEach { group ->
-                    if (group.type == C.TRACK_TYPE_TEXT) {
-                      for (i in 0 until group.length) {
-                        val trackFormat = group.getTrackFormat(i)
-                        if (trackFormat.id.toString() == subtitleTrackIdStr) {
+                var subtitleApplied = false
+                tracks.groups.forEach { group ->
+                  if (group.type == C.TRACK_TYPE_TEXT) {
+                    for (i in 0 until group.length) {
+                      val trackFormat = group.getTrackFormat(i)
+                      // ✅ Comparar IDs como String para garantir compatibilidade
+                      if (trackFormat.id.toString() == subtitleTrackIdStr) {
                         val currentParams = exo.trackSelectionParameters
                         val params = TrackSelectionParameters.Builder(this@PlayerActivity)
                           .setMaxVideoBitrate(currentParams.maxVideoBitrate)
@@ -650,19 +652,18 @@ class PlayerActivity : ComponentActivity() {
                           .setPreferredTextLanguage(trackFormat.language)
                           .setPreferredAudioLanguage(currentParams.preferredAudioLanguages.firstOrNull())
                           .build()
-                          exo.trackSelectionParameters = params
-                          subtitlesEnabled = true
-                          pv.subtitleView?.visibility = android.view.View.VISIBLE
-                          android.util.Log.i("PlayerActivity", "✅ Legenda aplicada do Intent: ${trackFormat.language} (ID: $subtitleTrackId)")
-                          subtitleApplied = true
-                          break
-                        }
+                        exo.trackSelectionParameters = params
+                        subtitlesEnabled = true
+                        pv.subtitleView?.visibility = android.view.View.VISIBLE
+                        android.util.Log.i("PlayerActivity", "✅ Legenda aplicada do Intent: ${trackFormat.language} (ID: $subtitleTrackIdStr)")
+                        subtitleApplied = true
+                        return@forEach
                       }
                     }
                   }
-                  if (!subtitleApplied) {
-                    android.util.Log.w("PlayerActivity", "⚠️ Legenda selecionada (ID: $subtitleTrackId) não encontrada nos tracks disponíveis")
-                  }
+                }
+                if (!subtitleApplied) {
+                  android.util.Log.w("PlayerActivity", "⚠️ Legenda selecionada (ID: $subtitleTrackIdStr) não encontrada nos tracks disponíveis")
                 }
               } else {
                 // ✅ Desativar legendas (quando selectedSubtitleTrack é vazio/null)
@@ -682,12 +683,14 @@ class PlayerActivity : ComponentActivity() {
               
               // ✅ Aplicar áudio selecionado
               val audioTrackIdStr = intent.getStringExtra("selectedAudioTrack")
+              android.util.Log.d("PlayerActivity", "🔍 Áudio recebido do Intent: '$audioTrackIdStr'")
               if (audioTrackIdStr != null && audioTrackIdStr.isNotBlank()) {
                 var audioApplied = false
                 tracks.groups.forEach { group ->
                   if (group.type == C.TRACK_TYPE_AUDIO) {
                     for (i in 0 until group.length) {
                       val trackFormat = group.getTrackFormat(i)
+                      // ✅ Comparar IDs como String para garantir compatibilidade
                       if (trackFormat.id.toString() == audioTrackIdStr) {
                         val currentParams = exo.trackSelectionParameters
                         val params = TrackSelectionParameters.Builder(this@PlayerActivity)
@@ -700,7 +703,7 @@ class PlayerActivity : ComponentActivity() {
                         exo.trackSelectionParameters = params
                         android.util.Log.i("PlayerActivity", "✅ Áudio aplicado do Intent: ${trackFormat.language} (ID: $audioTrackIdStr)")
                         audioApplied = true
-                        break
+                        return@forEach
                       }
                     }
                   }
@@ -977,7 +980,11 @@ class PlayerActivity : ComponentActivity() {
           }
         })
       }
+    
+    // ✅ Configurar estilização de legendas do PlayerView
+    setupSubtitleStyle()
   }
+  
   private fun toggleFullscreen() {
     isFullscreen = !isFullscreen
     if (isFullscreen) {
