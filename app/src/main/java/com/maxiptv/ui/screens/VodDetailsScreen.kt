@@ -10,6 +10,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -124,8 +126,18 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     val coverUrl = info?.info?.cover
     android.util.Log.d("VodDetails", "🔍 Banner URL: $coverUrl")
     
-    if (coverUrl != null && coverUrl.isNotBlank()) {
-      android.util.Log.d("VodDetails", "✅ Renderizando banner de fundo")
+    // ✅ SEMPRE renderizar o banner de fundo (mesmo que seja fallback)
+    // Camada 1: Banner de fundo ou fallback gradiente
+    var bannerLoadError by remember { mutableStateOf(false) }
+    
+    // ✅ Resetar erro quando o URL mudar (usuário navegou para outro filme)
+    LaunchedEffect(coverUrl) {
+      bannerLoadError = false
+      android.util.Log.d("VodDetails", "🔄 URL do banner mudou, resetando estado de erro")
+    }
+    
+    if (coverUrl != null && coverUrl.isNotBlank() && !bannerLoadError) {
+      android.util.Log.d("VodDetails", "✅ Renderizando banner de fundo: $coverUrl")
       AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
           .data(coverUrl)
@@ -145,14 +157,16 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         contentScale = ContentScale.Crop, // Não distorce, corta mantendo proporção
         onError = {
           android.util.Log.e("VodDetails", "❌ Erro ao carregar banner: ${it.result.throwable.message}")
+          bannerLoadError = true // ✅ Marcar erro para mostrar fallback
         },
         onSuccess = {
-          android.util.Log.d("VodDetails", "✅ Banner carregado com sucesso")
+          android.util.Log.d("VodDetails", "✅ Banner carregado com sucesso - URL: $coverUrl")
+          bannerLoadError = false // ✅ Resetar erro se carregar com sucesso
         }
       )
     } else {
-      android.util.Log.w("VodDetails", "⚠️ Banner URL vazio ou null, usando fallback")
-      // ✅ Fallback: fundo gradiente se não houver imagem
+      // ✅ Fallback: fundo gradiente se não houver imagem ou se houver erro
+      android.util.Log.w("VodDetails", "⚠️ Banner URL vazio ou erro, usando fallback")
       Box(
         modifier = Modifier
           .fillMaxSize()
@@ -169,15 +183,16 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     }
     
     // ✅ Overlay preto com 40-60% de opacidade (estilo Netflix)
+    // IMPORTANTE: Overlay deve ser SEMPRE renderizado para garantir contraste do texto
     Box(
       modifier = Modifier
         .fillMaxSize()
         .background(
           Brush.verticalGradient(
             colors = listOf(
-              Color.Black.copy(alpha = 0.4f),  // Topo: 40% de opacidade
+              Color.Black.copy(alpha = 0.4f),  // Topo: 40% de opacidade (mais claro para mostrar banner)
               Color.Black.copy(alpha = 0.5f),  // Meio: 50% de opacidade
-              Color.Black.copy(alpha = 0.6f)   // Fundo: 60% de opacidade
+              Color.Black.copy(alpha = 0.6f)   // Fundo: 60% de opacidade (mais escuro para contraste)
             )
           )
         )
@@ -283,6 +298,11 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         var isFavoritarFocused by remember { mutableStateOf(false) }
         var isConfigFocused by remember { mutableStateOf(false) }
         
+        // ✅ FocusRequesters para navegação D-PAD explícita
+        val assistirFocusRequester = remember { FocusRequester() }
+        val favoritarFocusRequester = remember { FocusRequester() }
+        val configFocusRequester = remember { FocusRequester() }
+        
         Row(
           modifier = Modifier
             .then(if (MaxiApp.isTv) Modifier.widthIn(max = 500.dp) else Modifier.fillMaxWidth()), // ⚡ Largura reduzida para botões menores
@@ -327,8 +347,12 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
               ctx.startActivity(playerIntent)
             },
             isFocused = isAssistirFocused,
-            onFocusChanged = { isAssistirFocused = it },
-            modifier = Modifier.weight(1f)
+            onFocusChanged = { 
+              isAssistirFocused = it
+              android.util.Log.d("VodDetails", "🔍 Botão Assistir foco: $it")
+            },
+            modifier = Modifier.weight(1f),
+            focusRequester = assistirFocusRequester // ✅ Passar focusRequester como parâmetro
           )
           
           // Botão 3D Favoritar
@@ -348,8 +372,12 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
               }
             },
             isFocused = isFavoritarFocused,
-            onFocusChanged = { isFavoritarFocused = it },
+            onFocusChanged = { 
+              isFavoritarFocused = it
+              android.util.Log.d("VodDetails", "🔍 Botão Favoritar foco: $it")
+            },
             modifier = Modifier.weight(1f),
+            focusRequester = favoritarFocusRequester, // ✅ Passar focusRequester como parâmetro
             isActive = isFavorite // ✅ Mostrar estado ativo quando favoritado
           )
           
@@ -358,9 +386,22 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
             text = "Configurações",
             onClick = { showOptionsDialog = true },
             isFocused = isConfigFocused,
-            onFocusChanged = { isConfigFocused = it },
-            modifier = Modifier.weight(1f)
+            onFocusChanged = { 
+              isConfigFocused = it
+              android.util.Log.d("VodDetails", "🔍 Botão Configurações foco: $it")
+            },
+            modifier = Modifier.weight(1f),
+            focusRequester = configFocusRequester // ✅ Passar focusRequester como parâmetro
           )
+        }
+        
+        // ✅ Focar no primeiro botão quando a tela carregar (apenas em TV)
+        LaunchedEffect(Unit) {
+          if (MaxiApp.isTv) {
+            kotlinx.coroutines.delay(300) // Pequeno delay para garantir que a tela está pronta
+            assistirFocusRequester.requestFocus()
+            android.util.Log.d("VodDetails", "✅ Foco inicial solicitado no botão Assistir")
+          }
         }
       }
     }
@@ -458,7 +499,8 @@ fun Neon3DButton(
   onFocusChanged: (Boolean) -> Unit,
   modifier: Modifier = Modifier,
   isActive: Boolean = false, // ✅ Estado ativo (para Favoritar quando favoritado)
-  icon: ImageVector? = null // ✅ Ícone opcional
+  icon: ImageVector? = null, // ✅ Ícone opcional
+  focusRequester: FocusRequester? = null // ✅ FocusRequester para navegação D-PAD
 ) {
   val scale by animateFloatAsState(
     targetValue = if (isFocused) 1.12f else 1.0f, // ⚡ Zoom otimizado (reduzido de 1.15f para melhor performance)
@@ -490,6 +532,7 @@ fun Neon3DButton(
     Box(
       modifier = Modifier
         .size(buttonSize)
+        .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier) // ✅ Aplicar focusRequester se fornecido
         .focusable() // ✅ Habilitar foco para D-PAD (deve estar antes de outros modificadores)
         .onFocusChanged { focusState ->
           val focused = focusState.isFocused
