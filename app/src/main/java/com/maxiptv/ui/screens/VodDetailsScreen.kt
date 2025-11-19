@@ -120,11 +120,20 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   
   LaunchedEffect(vodId) { XRepo.loadVodInfo(vodId) }
   
+  // ✅ Buscar o filme clicado na lista para usar o banner imediatamente
+  val clickedVod = remember(vodId, allVods) {
+    allVods.find { it.stream_id == vodId }
+  }
+  
   // ✅ Banner de fundo estilo Netflix
   Box(modifier = Modifier.fillMaxSize()) {
-    // Banner de fundo com blur e transparência estilo Netflix
-    val coverUrl = info?.info?.cover
-    android.util.Log.d("VodDetails", "🔍 Banner URL: $coverUrl")
+    // ✅ Prioridade: usar cover da API se disponível, senão usar stream_icon do filme clicado
+    val coverUrl = info?.info?.cover?.takeIf { it.isNotBlank() } 
+      ?: clickedVod?.stream_icon?.takeIf { it.isNotBlank() }
+    
+    android.util.Log.d("VodDetails", "🔍 Banner URL (cover): ${info?.info?.cover}")
+    android.util.Log.d("VodDetails", "🔍 Banner URL (stream_icon): ${clickedVod?.stream_icon}")
+    android.util.Log.d("VodDetails", "🔍 Banner URL (final): $coverUrl")
     
     // ✅ SEMPRE renderizar o banner de fundo (mesmo que seja fallback)
     // Camada 1: Banner de fundo ou fallback gradiente
