@@ -29,7 +29,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
+import android.view.WindowManager
+import android.app.Activity
 import com.maxiptv.MaxiApp
 import com.maxiptv.data.XRepo
 import com.maxiptv.ui.components.fillMaxWidthAdjusted
@@ -313,6 +318,63 @@ fun LiveScreen(nav: NavHostController) {
     onDispose {
       android.util.Log.i("LiveScreen", "🧹 Parando player compartilhado - saindo da tela")
       sharedPlayer.stop()
+    }
+  }
+  
+  // ✅ APLICAR FULLSCREEN DO SISTEMA quando isFullscreen mudar (especialmente para Fire Stick)
+  val view = LocalView.current
+  DisposableEffect(isFullscreen) {
+    val activity = view.context as? Activity
+    if (activity != null) {
+      val window = activity.window
+      val windowInsetsController = WindowCompat.getInsetsController(window, view)
+      
+      if (isFullscreen) {
+        // ✅ ENTRAR EM FULLSCREEN - Esconder todas as barras do sistema
+        android.util.Log.i("LiveScreen", "🔲 Entrando em fullscreen - escondendo barras do sistema")
+        
+        // Esconder status bar e navigation bar
+        windowInsetsController.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        
+        // Configurar flags adicionais para garantir fullscreen completo
+        window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        
+        // Tornar barras transparentes
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        
+        // Configurar decorFitsSystemWindows para false (permite conteúdo atrás das barras)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+      } else {
+        // ✅ SAIR DO FULLSCREEN - Mostrar barras do sistema novamente
+        android.util.Log.i("LiveScreen", "🔳 Saindo do fullscreen - mostrando barras do sistema")
+        
+        // Mostrar status bar e navigation bar
+        windowInsetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        
+        // Remover flags de fullscreen
+        window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        
+        // Restaurar decorFitsSystemWindows
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+      }
+    }
+    
+    onDispose {
+      // ✅ Garantir que as barras sejam restauradas quando sair do composable
+      val activity = view.context as? Activity
+      if (activity != null && isFullscreen) {
+        val window = activity.window
+        val windowInsetsController = WindowCompat.getInsetsController(window, view)
+        windowInsetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+      }
     }
   }
   
