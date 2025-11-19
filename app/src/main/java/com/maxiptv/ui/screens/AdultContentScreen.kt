@@ -23,6 +23,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.maxiptv.data.XRepo
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun AdultContentScreen(nav: NavHostController) {
@@ -217,7 +219,16 @@ fun AdultContentScreen(nav: NavHostController) {
                 else Modifier
               )
             ) {
-              AsyncImage(model = v.stream_icon, contentDescription = v.name, modifier = Modifier.height(220.dp).fillMaxWidth())
+              AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                  .data(v.stream_icon)
+                  .size(150, 225) // ⚡ Qualidade reduzida
+                  .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                  .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                  .build(),
+                contentDescription = v.name, 
+                modifier = Modifier.height(220.dp).fillMaxWidth()
+              )
               Text(v.name, modifier = Modifier.padding(8.dp), maxLines = 2)
             }
           }

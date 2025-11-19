@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 import com.maxiptv.MaxiApp
 import com.maxiptv.data.FavoritesManager
 import com.maxiptv.data.XRepo
@@ -350,7 +352,13 @@ fun FavoriteChannelCard(
   ) {
     Column {
       AsyncImage(
-        model = channel.stream_icon,
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(channel.stream_icon)
+          .size(if (deviceType == "tv") 240 else if (deviceType == "phone") 160 else 200, 
+                if (deviceType == "tv") 180 else if (deviceType == "phone") 120 else 150) // ⚡ Qualidade reduzida
+          .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+          .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+          .build(),
         contentDescription = null,
         modifier = Modifier
           .fillMaxWidth()
@@ -442,7 +450,12 @@ fun FavoriteMovieCard(
   ) {
     Column {
       AsyncImage(
-        model = movie.stream_icon,
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(movie.stream_icon)
+          .size(150, 225) // ⚡ Qualidade reduzida
+          .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+          .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+          .build(),
         contentDescription = null,
         modifier = Modifier
           .fillMaxWidth()
@@ -534,7 +547,12 @@ fun FavoriteSeriesCard(
   ) {
     Column {
       AsyncImage(
-        model = series.cover,
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(series.cover)
+          .size(150, 225) // ⚡ Qualidade reduzida
+          .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+          .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+          .build(),
         contentDescription = null,
         modifier = Modifier
           .fillMaxWidth()

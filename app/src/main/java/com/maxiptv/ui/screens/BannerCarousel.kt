@@ -14,6 +14,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 import com.maxiptv.data.FeaturedItem
 
 @Composable
@@ -45,7 +47,12 @@ fun BannerCarousel(items: List<FeaturedItem>, onClickVod: (Int) -> Unit) {
         shape = RoundedCornerShape(8.dp)
       ) {
         AsyncImage(
-          model = item.imageUrl, 
+          model = ImageRequest.Builder(LocalContext.current)
+            .data(item.imageUrl)
+            .size(330, 495) // ⚡ Qualidade reduzida (baseado em 220dp altura)
+            .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+            .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+            .build(),
           contentDescription = item.title, 
           modifier = Modifier.fillMaxSize()
         )

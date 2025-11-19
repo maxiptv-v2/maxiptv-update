@@ -96,11 +96,13 @@ fun SeriesScreen(nav: NavHostController) {
     }
     
     CategoryChips(categories = cats.map { it.category_name to it.category_id }, selectedId = selectedCat, onSelect = { selectedCat = it })
-    LazyVerticalGrid(columns = GridCells.Adaptive(160.dp), contentPadding = PaddingValues(12.dp), modifier = Modifier.weight(1f)) {
+    
+    // ⚡ OTIMIZAÇÃO: Cachear agrupamento pesado fora do LazyVerticalGrid
+    val grouped = remember(selectedCat, series) {
       val filtered = series.filter { selectedCat == null || it.category_id == selectedCat }
       
       // Agrupar por título base e priorizar SEM TAG (dublado) > DUAL > LEGENDADO
-      val grouped = filtered.groupBy { 
+      filtered.groupBy { 
         it.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
       }.mapValues { (_, versions) ->
         // Prioridade: SEM TAG (0) > [DUB] (1) > [DUAL] (2) > [LEG] (3)
@@ -113,6 +115,9 @@ fun SeriesScreen(nav: NavHostController) {
           }
         }.first()
       }.values.toList()
+    }
+    
+    LazyVerticalGrid(columns = GridCells.Adaptive(160.dp), contentPadding = PaddingValues(12.dp), modifier = Modifier.weight(1f)) {
       
       items(grouped, key = { it.series_id }) { s ->
         var isFocused by remember { mutableStateOf(false) }
@@ -146,7 +151,7 @@ fun SeriesScreen(nav: NavHostController) {
           AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
               .data(s.cover)
-              .size(400, 600) // ⚡ Redimensionar para economizar memória (largura x altura em pixels)
+              .size(150, 225) // ⚡ Redimensionar para economizar memória (qualidade reduzida)
               .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
               .diskCachePolicy(coil.request.CachePolicy.ENABLED)
               .crossfade(200) // Transição suave

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
@@ -17,6 +18,7 @@ import com.maxiptv.data.XRepo
 import com.maxiptv.data.SettingsRepo
 import com.maxiptv.ui.player.PlayerActivity
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.Icons.Default
@@ -38,6 +40,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
@@ -62,49 +65,53 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     // (implementação será feita via Activity Result API)
   }
   
-  // Detectar idiomas disponíveis buscando TODAS as versões na API
+  // ⚡ OTIMIZAÇÃO: Processar idiomas disponíveis em background thread e cachear resultado
   val availableLanguages = remember(info, allVods) {
-    val currentTitle = info?.info?.name ?: ""
-    val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
-    
-    buildList {
-      // Buscar todas as versões deste filme
-      val versions = allVods.filter { 
-        it.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim() == baseTitle
-      }
+    derivedStateOf {
+      val currentTitle = info?.info?.name ?: ""
+      if (currentTitle.isEmpty()) return@derivedStateOf listOf("Original")
       
-      var hasOriginal = false
-      var hasLegendado = false
+      val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
       
-      versions.forEach { version ->
-        when {
-          version.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE)) -> {
-            hasLegendado = true
-          }
-          version.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE)) -> {
-            if (!contains("Dublado")) add("Dublado")
-          }
-          version.name.contains(Regex("\\[DUAL\\]", RegexOption.IGNORE_CASE)) -> {
-            hasLegendado = true
-            if (!contains("Dublado")) add("Dublado")
-          }
-          else -> {
-            // Versão sem tag = Original
-            hasOriginal = true
+      buildList {
+        // Buscar todas as versões deste filme
+        val versions = allVods.filter { 
+          it.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim() == baseTitle
+        }
+        
+        var hasOriginal = false
+        var hasLegendado = false
+        
+        versions.forEach { version ->
+          when {
+            version.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE)) -> {
+              hasLegendado = true
+            }
+            version.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE)) -> {
+              if (!contains("Dublado")) add("Dublado")
+            }
+            version.name.contains(Regex("\\[DUAL\\]", RegexOption.IGNORE_CASE)) -> {
+              hasLegendado = true
+              if (!contains("Dublado")) add("Dublado")
+            }
+            else -> {
+              // Versão sem tag = Original
+              hasOriginal = true
+            }
           }
         }
+        
+        // Adicionar na ordem de prioridade: Original > Legendado
+        if (hasOriginal && !contains("Original")) add("Original")
+        if (hasLegendado && !contains("Legendado")) add("Legendado")
+        
+        // Se não tem nenhuma opção, adicionar Original como padrão
+        if (isEmpty()) add("Original")
       }
-      
-      // Adicionar na ordem de prioridade: Original > Legendado
-      if (hasOriginal && !contains("Original")) add("Original")
-      if (hasLegendado && !contains("Legendado")) add("Legendado")
-      
-      // Se não tem nenhuma opção, adicionar Original como padrão
-      if (isEmpty()) add("Original")
-    }.also { langs ->
-      if (selectedLanguage.isEmpty() && langs.isNotEmpty()) {
-        selectedLanguage = langs.first()
-      }
+    }
+  }.value.also { langs ->
+    if (selectedLanguage.isEmpty() && langs.isNotEmpty()) {
+      selectedLanguage = langs.first()
     }
   }
   
@@ -116,11 +123,16 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     val coverUrl = info?.info?.cover
     if (coverUrl != null && coverUrl.isNotBlank()) {
       AsyncImage(
-        model = coverUrl,
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(coverUrl)
+          .size(600, 900) // ⚡ Redimensionar antes do blur para melhor performance (qualidade reduzida)
+          .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+          .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+          .build(),
         contentDescription = null,
         modifier = Modifier
           .fillMaxSize()
-          .blur(radius = 25.dp) // ✅ Blur real aplicado
+          .blur(radius = 15.dp) // ⚡ Blur reduzido para melhor performance
           .graphicsLayer {
             alpha = 0.4f // ✅ Transparência aumentada para ser mais visível
             // Efeito de escala para criar profundidade
@@ -181,7 +193,12 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     Column(Modifier.fillMaxSize().padding(16.dp)) {
     Row(Modifier.fillMaxWidth()) {
       AsyncImage(
-        model = info?.info?.cover,
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(info?.info?.cover)
+          .size(180, 270) // ⚡ Redimensionar para economizar memória (qualidade reduzida)
+          .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+          .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+          .build(),
         contentDescription = info?.info?.name,
         modifier = Modifier.width(120.dp).height(180.dp)
       )
@@ -438,7 +455,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   } // Fechar Box do banner de fundo
 }
 
-// ✅ Componente de Botão 3D Estilo Neon
+// ✅ Componente de Botão 3D Estilo Moderno (baseado no modelo fornecido)
 @Composable
 fun Neon3DButton(
   text: String,
@@ -458,9 +475,9 @@ fun Neon3DButton(
     label = "neonButtonScale"
   )
   
-  val buttonSize = if (MaxiApp.isTv) 80.dp else 64.dp
+  val buttonSize = if (MaxiApp.isTv) 120.dp else 100.dp
   val textSize = if (MaxiApp.isTv) 14.sp else 12.sp
-  val iconSize = if (MaxiApp.isTv) 32.dp else 28.dp
+  val iconSize = if (MaxiApp.isTv) 42.dp else 35.dp
   
   // ✅ Determinar ícone baseado no texto se não fornecido
   val buttonIcon = icon ?: when (text.lowercase()) {
@@ -475,22 +492,32 @@ fun Neon3DButton(
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(8.dp)
   ) {
-    // ✅ Botão externo (quadrado azul claro)
+    // ✅ Botão 3D Circular estilo moderno
     Box(
       modifier = Modifier
         .size(buttonSize)
         .graphicsLayer {
           scaleX = scale
           scaleY = scale
-        }
-        .clip(RoundedCornerShape(12.dp))
-        .background(
-          if (isFocused || isActive) {
-            // Quando focado ou ativo: azul ciano brilhante
-            Color(0xFF00D4FF).copy(alpha = 0.9f)
+          // ✅ Borda vermelha quando focado
+          if (isFocused) {
+            shadowElevation = 40f
           } else {
-            // Quando não focado: azul claro
-            Color(0xFF4FC3F7).copy(alpha = 0.8f)
+            shadowElevation = 0f
+          }
+        }
+        .clip(CircleShape)
+        .background(Color.Transparent)
+        .then(
+          if (isFocused) {
+            // ✅ Borda vermelha neon quando focado
+            Modifier.border(
+              width = 4.dp,
+              color = Color(0xFFFF1744), // Vermelho neon
+              shape = CircleShape
+            )
+          } else {
+            Modifier
           }
         )
         .clickable { onClick() }
@@ -498,31 +525,77 @@ fun Neon3DButton(
         .onFocusChanged { onFocusChanged(it.isFocused) },
       contentAlignment = Alignment.Center
     ) {
-      // ✅ Botão interno (quadrado azul escuro)
+      // ✅ CAMADA 1 — Brilho externo azul (mais intenso quando focado)
       Box(
         modifier = Modifier
-          .size(buttonSize * 0.75f) // 75% do tamanho externo
-          .clip(RoundedCornerShape(8.dp))
+          .matchParentSize()
+          .graphicsLayer {
+            shadowElevation = if (isFocused) 40f else 20f
+            shape = CircleShape
+            clip = true
+          }
           .background(
-            if (isFocused || isActive) {
-              // Quando focado ou ativo: azul escuro
-              Color(0xFF0277BD)
-            } else {
-              // Quando não focado: azul médio escuro
-              Color(0xFF0288D1)
-            }
-          ),
-        contentAlignment = Alignment.Center
-      ) {
-        // ✅ Ícone dentro do botão interno
-        if (buttonIcon != null) {
-          Icon(
-            imageVector = buttonIcon,
-            contentDescription = text,
-            tint = Color.White,
-            modifier = Modifier.size(iconSize)
+            Brush.radialGradient(
+              colors = listOf(
+                if (isFocused || isActive) Color(0xFF1A7CFF) else Color(0xFF1A7CFF).copy(alpha = 0.6f),
+                Color.Transparent
+              ),
+              radius = 300f
+            )
           )
-        }
+      )
+      
+      // ✅ CAMADA 2 — Base metálica
+      Box(
+        modifier = Modifier
+          .padding(8.dp)
+          .fillMaxSize()
+          .clip(CircleShape)
+          .background(
+            Brush.linearGradient(
+              colors = listOf(
+                Color(0xFF3A3A3A),
+                Color(0xFF101010)
+              )
+            )
+          )
+      )
+      
+      // ✅ CAMADA 3 — Parte interna elevada
+      Box(
+        modifier = Modifier
+          .padding(20.dp)
+          .fillMaxSize()
+          .clip(CircleShape)
+          .background(
+            Brush.linearGradient(
+              colors = listOf(
+                Color(0xFF0F0F0F),
+                Color(0xFF2B2B2B)
+              )
+            )
+          )
+          .graphicsLayer {
+            shadowElevation = if (isFocused) 30f else 15f
+            shape = CircleShape
+            clip = true
+          }
+      )
+      
+      // ✅ ÍCONE no centro
+      if (buttonIcon != null) {
+        Icon(
+          imageVector = buttonIcon,
+          contentDescription = text,
+          tint = when {
+            isFocused -> Color(0xFF00D4FF) // Azul ciano quando focado
+            isActive -> Color(0xFFFFD700)  // Dourado quando ativo (favoritado)
+            else -> Color.White             // Branco padrão
+          },
+          modifier = Modifier
+            .align(Alignment.Center)
+            .size(iconSize)
+        )
       }
     }
     

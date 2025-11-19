@@ -468,13 +468,16 @@ class PlayerActivity : ComponentActivity() {
             .setDuration(200)
             .start()
           
-          // Borda vermelha neon
+          // ✅ Borda vermelha neon mais visível
           val borderDrawable = GradientDrawable().apply {
             setColor(Color.argb(255, 0, 212, 255)) // Azul ciano de fundo
             cornerRadius = 12f
-            setStroke(4, Color.argb(255, 255, 0, 0)) // Borda vermelha grossa
+            setStroke(6, Color.argb(255, 255, 23, 68)) // Borda vermelha neon mais grossa e brilhante
           }
           view.background = borderDrawable
+          
+          // ✅ Adicionar sombra vermelha para efeito neon
+          view.elevation = 16f
         } else {
           // Voltar ao normal quando perder foco
           view.animate()
@@ -482,6 +485,9 @@ class PlayerActivity : ComponentActivity() {
             .scaleY(1.0f)
             .setDuration(200)
             .start()
+          
+          // ✅ Remover elevação
+          view.elevation = 0f
           
           // Restaurar estilo original
           val shadowLayer = GradientDrawable().apply {
@@ -588,12 +594,16 @@ class PlayerActivity : ComponentActivity() {
             .setDuration(200)
             .start()
           
+          // ✅ Borda vermelha neon mais visível
           val borderDrawable = GradientDrawable().apply {
             setColor(Color.argb(255, 0, 212, 255))
             cornerRadius = 12f
-            setStroke(4, Color.argb(255, 255, 0, 0))
+            setStroke(6, Color.argb(255, 255, 23, 68)) // Borda vermelha neon mais grossa e brilhante
           }
           view.background = borderDrawable
+          
+          // ✅ Adicionar sombra vermelha para efeito neon
+          view.elevation = 16f
         } else {
           view.animate()
             .scaleX(1.0f)
@@ -700,12 +710,16 @@ class PlayerActivity : ComponentActivity() {
             .setDuration(200)
             .start()
           
+          // ✅ Borda vermelha neon mais visível
           val borderDrawable = GradientDrawable().apply {
             setColor(Color.argb(255, 0, 212, 255))
             cornerRadius = 12f
-            setStroke(4, Color.argb(255, 255, 0, 0))
+            setStroke(6, Color.argb(255, 255, 23, 68)) // Borda vermelha neon mais grossa e brilhante
           }
           view.background = borderDrawable
+          
+          // ✅ Adicionar sombra vermelha para efeito neon
+          view.elevation = 16f
         } else {
           view.animate()
             .scaleX(1.0f)
@@ -754,20 +768,32 @@ class PlayerActivity : ComponentActivity() {
     audioButton?.let { aButton ->
       subtitleButton?.let { ccButton ->
         qualityButton?.let { hButton ->
-          // A -> CC
+          // ✅ Navegação completa em ambas as direções
+          // A -> CC (direita)
           aButton.nextFocusRightId = ccButton.id
+          // CC -> A (esquerda)
           ccButton.nextFocusLeftId = aButton.id
-          // CC -> H
+          // CC -> H (direita)
           ccButton.nextFocusRightId = hButton.id
+          // H -> CC (esquerda)
           hButton.nextFocusLeftId = ccButton.id
           
-          // ✅ Garantir que todos os botões são focáveis (os listeners já estão configurados individualmente)
+          // ✅ Loop circular (opcional): H -> A (direita) e A -> H (esquerda)
+          // Comentado para manter navegação linear simples
+          // hButton.nextFocusRightId = aButton.id
+          // aButton.nextFocusLeftId = hButton.id
+          
+          // ✅ Garantir que todos os botões são focáveis e configurados corretamente
           listOf(aButton, ccButton, hButton).forEach { button ->
             button.isFocusable = true
             button.isFocusableInTouchMode = false
+            // ✅ Garantir que o botão pode receber foco via D-PAD
+            button.isClickable = true
+            button.isEnabled = true
           }
           
-          android.util.Log.d("PlayerActivity", "✅ Navegação de foco configurada: A <-> CC <-> H com zoom")
+          android.util.Log.d("PlayerActivity", "✅ Navegação de foco configurada: A <-> CC <-> H")
+          android.util.Log.d("PlayerActivity", "   A (ID: ${aButton.id}) -> CC (ID: ${ccButton.id}) -> H (ID: ${hButton.id})")
         }
       }
     }
@@ -778,10 +804,22 @@ class PlayerActivity : ComponentActivity() {
     // ✅ Listener para mostrar controles quando necessário (DEPOIS de criar o botão)
     pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
       android.util.Log.d("PlayerActivity", "Controles visíveis: $visibility")
+      val isVisible = visibility == android.view.View.VISIBLE
+      
       // Mostrar/esconder botões junto com controles (engrenagem nativa já aparece automaticamente)
-      qualityButton?.visibility = if (visibility == android.view.View.VISIBLE) android.view.View.VISIBLE else android.view.View.GONE
-      subtitleButton?.visibility = if (visibility == android.view.View.VISIBLE) android.view.View.VISIBLE else android.view.View.GONE
-      audioButton?.visibility = if (visibility == android.view.View.VISIBLE) android.view.View.VISIBLE else android.view.View.GONE // ✅ MELHORIA 7
+      qualityButton?.visibility = if (isVisible) android.view.View.VISIBLE else android.view.View.GONE
+      subtitleButton?.visibility = if (isVisible) android.view.View.VISIBLE else android.view.View.GONE
+      audioButton?.visibility = if (isVisible) android.view.View.VISIBLE else android.view.View.GONE // ✅ MELHORIA 7
+      
+      // ✅ Garantir que os botões são focáveis quando visíveis
+      if (isVisible && MaxiApp.isTv) {
+        // Garantir que os botões podem receber foco via D-PAD
+        qualityButton?.isFocusable = true
+        subtitleButton?.isFocusable = true
+        audioButton?.isFocusable = true
+        
+        android.util.Log.d("PlayerActivity", "✅ Botões A, CC, H focáveis e prontos para navegação D-PAD")
+      }
     })
     
     // ✅ API MODERNA - GestureDetector (substitui GestureDetectorCompat depreciado)

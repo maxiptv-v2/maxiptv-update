@@ -116,14 +116,15 @@ fun VodScreen(nav: NavHostController) {
         }
       }
     )
-    LazyVerticalGrid(columns = GridCells.Adaptive(160.dp), contentPadding = PaddingValues(12.dp), modifier = Modifier.weight(1f)) {
+    // ⚡ OTIMIZAÇÃO: Cachear agrupamento pesado fora do LazyVerticalGrid
+    val grouped = remember(selectedCat, vod) {
       // Filtrar conteúdo adulto da lista normal
       val filtered = vod
         .filter { it.category_id !in adultCategoryIds }
         .filter { selectedCat == null || it.category_id == selectedCat }
       
       // Agrupar por título base e priorizar SEM TAG (dublado) > DUAL > LEGENDADO
-      val grouped = filtered.groupBy { 
+      filtered.groupBy { 
         it.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
       }.mapValues { (_, versions) ->
         // Prioridade: SEM TAG (0) > [DUB] (1) > [DUAL] (2) > [LEG] (3)
@@ -136,6 +137,9 @@ fun VodScreen(nav: NavHostController) {
           }
         }.first()
       }.values.toList()
+    }
+    
+    LazyVerticalGrid(columns = GridCells.Adaptive(160.dp), contentPadding = PaddingValues(12.dp), modifier = Modifier.weight(1f)) {
       
       items(grouped, key = { it.stream_id }) { v ->
         var isFocused by remember { mutableStateOf(false) }
@@ -169,7 +173,7 @@ fun VodScreen(nav: NavHostController) {
           AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
               .data(v.stream_icon)
-              .size(400, 600) // ⚡ Redimensionar para economizar memória (largura x altura em pixels)
+              .size(150, 225) // ⚡ Redimensionar para economizar memória (qualidade reduzida)
               .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
               .diskCachePolicy(coil.request.CachePolicy.ENABLED)
               .crossfade(200) // Transição suave
