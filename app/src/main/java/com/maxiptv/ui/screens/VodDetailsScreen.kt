@@ -27,8 +27,11 @@ import androidx.compose.material.icons.Icons.Default
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.TextStyle
 import com.maxiptv.data.FavoritesManager
 import com.maxiptv.MaxiApp
 import kotlinx.coroutines.launch
@@ -44,6 +47,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.shape.CircleShape
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.MediaItem
+import androidx.media3.common.C
+import androidx.media3.common.Format
+import androidx.media3.common.Tracks
+import com.maxiptv.data.PlayerSettingsManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
@@ -55,7 +66,90 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   var selectedQuality by remember { mutableStateOf("FHD") }
   var isFavorite by remember { mutableStateOf(false) }
   
+  // ✅ Estados para botões A, CC, H
+  var showQualityDialog by remember { mutableStateOf(false) }
+  var showSubtitleDialog by remember { mutableStateOf(false) }
+  var showAudioDialog by remember { mutableStateOf(false) }
+  var availableSubtitleTracks by remember { mutableStateOf<List<Format>>(emptyList()) }
+  var availableAudioTracks by remember { mutableStateOf<List<Format>>(emptyList()) }
+  var selectedSubtitleTrack by remember { mutableStateOf<Format?>(null) }
+  var selectedAudioTrack by remember { mutableStateOf<Format?>(null) }
+  var currentVideoQuality by remember { mutableStateOf(PlayerSettingsManager.VideoQuality.AUTO) }
+  
   val scope = rememberCoroutineScope()
+  
+  // ✅ Carregar qualidade atual
+  LaunchedEffect(Unit) {
+    currentVideoQuality = PlayerSettingsManager.getVideoQuality()
+  }
+  
+  // ✅ Pré-carregar tracks disponíveis quando o filme for selecionado
+  LaunchedEffect(vodId, selectedLanguage) {
+    scope.launch {
+      // Buscar URL do stream
+      val currentTitle = info?.info?.name ?: ""
+      val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
+      
+      val targetVersion = allVods.find { vod ->
+        val vodBase = vod.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
+        val matchesTitle = vodBase == baseTitle
+        val matchesLanguage = when (selectedLanguage) {
+          "Legendado" -> vod.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
+          "Dublado" -> vod.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
+          "Original" -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+          else -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+        }
+        matchesTitle && matchesLanguage
+      }
+      
+      val streamId = targetVersion?.stream_id ?: vodId
+      val (base, user, pass) = SettingsRepo.loadBlocking()
+      val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
+      val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+      val url = "${baseUrl}movie/$user/$pass/$streamId.mp4"
+      
+      // ✅ Criar player temporário apenas para detectar tracks
+      withContext(Dispatchers.IO) {
+        try {
+          val tempPlayer = ExoPlayer.Builder(ctx).build()
+          val mediaItem = MediaItem.fromUri(url)
+          tempPlayer.setMediaItem(mediaItem)
+          tempPlayer.prepare()
+          
+          // Aguardar tracks serem carregados
+          var attempts = 0
+          while (tempPlayer.currentTracks.groups.isEmpty() && attempts < 50) {
+            kotlinx.coroutines.delay(100)
+            attempts++
+          }
+          
+          // Extrair tracks de legendas e áudio
+          val subtitleTracks = mutableListOf<Format>()
+          val audioTracks = mutableListOf<Format>()
+          
+          tempPlayer.currentTracks.groups.forEach { group ->
+            if (group.type == C.TRACK_TYPE_TEXT) {
+              for (i in 0 until group.length) {
+                subtitleTracks.add(group.getTrackFormat(i))
+              }
+            } else if (group.type == C.TRACK_TYPE_AUDIO) {
+              for (i in 0 until group.length) {
+                audioTracks.add(group.getTrackFormat(i))
+              }
+            }
+          }
+          
+          availableSubtitleTracks = subtitleTracks
+          availableAudioTracks = audioTracks
+          
+          tempPlayer.release()
+          android.util.Log.d("VodDetails", "✅ Tracks detectados: ${subtitleTracks.size} legendas, ${audioTracks.size} áudios")
+        } catch (e: Exception) {
+          android.util.Log.e("VodDetails", "❌ Erro ao detectar tracks: ${e.message}")
+        }
+      }
+    }
+  }
   
   // Verificar se é favorito
   LaunchedEffect(vodId) {
@@ -164,7 +258,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         contentDescription = null,
         modifier = Modifier
           .fillMaxSize()
-          .blur(radius = 30.dp) // ✅ Blur estilo Netflix (20-40dp)
+          .blur(radius = 15.dp) // ✅ Blur reduzido para imagem mais nítida
           .graphicsLayer {
             // Efeito de escala para criar profundidade
             scaleX = 1.1f
@@ -198,7 +292,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       )
     }
     
-    // ✅ Overlay preto com 40-60% de opacidade (estilo Netflix)
+    // ✅ Overlay preto com 50-70% de opacidade (aumentado para melhor contraste do texto)
     // IMPORTANTE: Overlay deve ser SEMPRE renderizado para garantir contraste do texto
     Box(
       modifier = Modifier
@@ -206,9 +300,9 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         .background(
           Brush.verticalGradient(
             colors = listOf(
-              Color.Black.copy(alpha = 0.4f),  // Topo: 40% de opacidade (mais claro para mostrar banner)
-              Color.Black.copy(alpha = 0.5f),  // Meio: 50% de opacidade
-              Color.Black.copy(alpha = 0.6f)   // Fundo: 60% de opacidade (mais escuro para contraste)
+              Color.Black.copy(alpha = 0.5f),  // Topo: 50% de opacidade (aumentado para melhor contraste)
+              Color.Black.copy(alpha = 0.6f),  // Meio: 60% de opacidade (aumentado)
+              Color.Black.copy(alpha = 0.7f)   // Fundo: 70% de opacidade (aumentado para garantir contraste)
             )
           )
         )
@@ -295,11 +389,22 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         }
         
         Text(
-          info?.info?.plot ?: "Sem descrição", 
-          style = MaterialTheme.typography.bodyMedium,
-          maxLines = 4,
+          text = info?.info?.plot ?: "Sem descrição",
+          style = TextStyle(
+            fontSize = if (MaxiApp.isTv) 20.sp else 16.sp, // ✅ Fonte maior e profissional
+            fontWeight = FontWeight.Normal, // ✅ Peso adequado para legibilidade
+            fontFamily = FontFamily.SansSerif, // ✅ Fonte sans-serif moderna
+            lineHeight = if (MaxiApp.isTv) 28.sp else 24.sp, // ✅ Espaçamento entre linhas profissional (1.4x do fontSize)
+            letterSpacing = if (MaxiApp.isTv) 0.3.sp else 0.2.sp // ✅ Espaçamento entre letras sutil
+          ),
+          maxLines = if (MaxiApp.isTv) 6 else 4, // ✅ Mais linhas para TV
           overflow = TextOverflow.Ellipsis,
-          color = Color.White.copy(alpha = 0.9f)
+          color = if (MaxiApp.isTv) {
+            // ✅ Cor escura profissional para TV (melhor contraste com banner claro)
+            Color(0xFF1A1A1A) // Cinza muito escuro quase preto
+          } else {
+            Color.White.copy(alpha = 0.95f) // Branco com alta opacidade para smartphone
+          }
         )
         Spacer(Modifier.height(8.dp))
         Button(onClick = { showOptionsDialog = true }) {
@@ -314,10 +419,18 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         var isFavoritarFocused by remember { mutableStateOf(false) }
         var isConfigFocused by remember { mutableStateOf(false) }
         
+        // ✅ Estados para botões A, CC, H
+        var isAudioFocused by remember { mutableStateOf(false) }
+        var isSubtitleFocused by remember { mutableStateOf(false) }
+        var isQualityFocused by remember { mutableStateOf(false) }
+        
         // ✅ FocusRequesters para navegação D-PAD explícita
         val assistirFocusRequester = remember { FocusRequester() }
         val favoritarFocusRequester = remember { FocusRequester() }
         val configFocusRequester = remember { FocusRequester() }
+        val audioFocusRequester = remember { FocusRequester() }
+        val subtitleFocusRequester = remember { FocusRequester() }
+        val qualityFocusRequester = remember { FocusRequester() }
         
         Row(
           modifier = Modifier
@@ -354,11 +467,19 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
               android.util.Log.i("VodDetails", "Idioma escolhido: $selectedLanguage")
               android.util.Log.i("VodDetails", "Stream ID: $streamId (${targetVersion?.name ?: "padrão"})")
               
+              // ✅ Aplicar qualidade selecionada ANTES de iniciar
+              scope.launch {
+                PlayerSettingsManager.setVideoQuality(currentVideoQuality)
+              }
+              
               val playerIntent = Intent(ctx, PlayerActivity::class.java)
                 .putExtra("url", url)
                 .putExtra("contentType", "vod")
                 .putExtra("returnToCategory", "vod")
                 .putExtra("categoryId", vodId.toString())
+                // ✅ Passar configurações selecionadas
+                .putExtra("selectedSubtitleTrack", selectedSubtitleTrack?.let { "${it.id}" } ?: "")
+                .putExtra("selectedAudioTrack", selectedAudioTrack?.let { "${it.id}" } ?: "")
               
               ctx.startActivity(playerIntent)
             },
@@ -408,6 +529,49 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
             },
             modifier = Modifier.weight(1f),
             focusRequester = configFocusRequester // ✅ Passar focusRequester como parâmetro
+          )
+        }
+        
+        Spacer(Modifier.height(12.dp))
+        
+        // ✅ BOTÕES PROFISSIONAIS: Seleção de Qualidade, Legendas/Subtítulos e Track de Áudio
+        Row(
+          modifier = Modifier
+            .then(if (MaxiApp.isTv) Modifier.widthIn(max = 500.dp) else Modifier.fillMaxWidth()),
+          horizontalArrangement = Arrangement.spacedBy(12.dp),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          // Botão 3D Seleção de Qualidade
+          Neon3DButton(
+            text = "Seleção de Qualidade",
+            onClick = { showQualityDialog = true },
+            isFocused = isQualityFocused,
+            onFocusChanged = { isQualityFocused = it },
+            modifier = Modifier.weight(1f),
+            focusRequester = qualityFocusRequester,
+            icon = Icons.Filled.Settings
+          )
+          
+          // Botão 3D Legendas/Subtítulos
+          Neon3DButton(
+            text = "Legendas/Subtítulos",
+            onClick = { showSubtitleDialog = true },
+            isFocused = isSubtitleFocused,
+            onFocusChanged = { isSubtitleFocused = it },
+            modifier = Modifier.weight(1f),
+            focusRequester = subtitleFocusRequester,
+            icon = Icons.Filled.Settings
+          )
+          
+          // Botão 3D Track de Áudio
+          Neon3DButton(
+            text = "Track de Áudio",
+            onClick = { showAudioDialog = true },
+            isFocused = isAudioFocused,
+            onFocusChanged = { isAudioFocused = it },
+            modifier = Modifier.weight(1f),
+            focusRequester = audioFocusRequester,
+            icon = Icons.Filled.Settings
           )
         }
         
@@ -497,6 +661,246 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
             Spacer(Modifier.height(16.dp))
             Button(onClick = { showOptionsDialog = false }, modifier = Modifier.fillMaxWidth()) {
               Text("Confirmar")
+            }
+          }
+        }
+      }
+    }
+    
+    // ✅ Dialog de Qualidade (H)
+    if (showQualityDialog) {
+      androidx.compose.ui.window.Dialog(onDismissRequest = { showQualityDialog = false }) {
+        Surface(shape = MaterialTheme.shapes.medium) {
+          Column(Modifier.padding(24.dp)) {
+            Text("Selecionar Qualidade", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(16.dp))
+            
+            PlayerSettingsManager.VideoQuality.values().forEach { quality ->
+              var isFocused by remember { mutableStateOf(false) }
+              Button(
+                onClick = {
+                  scope.launch {
+                    PlayerSettingsManager.setVideoQuality(quality)
+                    currentVideoQuality = quality
+                    showQualityDialog = false
+                  }
+                },
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .onFocusChanged { isFocused = it.isFocused }
+                  .focusable()
+                  .then(
+                    if (isFocused) 
+                      Modifier
+                        .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp))
+                    else 
+                      Modifier
+                  ),
+                colors = ButtonDefaults.buttonColors(
+                  containerColor = if (currentVideoQuality == quality) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+                )
+              ) {
+                Text(quality.displayName)
+              }
+              Spacer(Modifier.height(8.dp))
+            }
+            
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { showQualityDialog = false }, modifier = Modifier.fillMaxWidth()) {
+              Text("Fechar")
+            }
+          }
+        }
+      }
+    }
+    
+    // ✅ Dialog de Legendas (CC)
+    if (showSubtitleDialog) {
+      androidx.compose.ui.window.Dialog(onDismissRequest = { showSubtitleDialog = false }) {
+        Surface(shape = MaterialTheme.shapes.medium) {
+          Column(Modifier.padding(24.dp)) {
+            Text("Selecionar Legendas", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(16.dp))
+            
+            // ✅ Opção 1: Desativar Legendas
+            var isDisableFocused by remember { mutableStateOf(false) }
+            Button(
+              onClick = {
+                selectedSubtitleTrack = null // null = desativar
+                showSubtitleDialog = false
+              },
+              modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { isDisableFocused = it.isFocused }
+                .focusable()
+                .then(
+                  if (isDisableFocused) 
+                    Modifier
+                      .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp))
+                  else 
+                    Modifier
+                ),
+              colors = ButtonDefaults.buttonColors(
+                containerColor = if (selectedSubtitleTrack == null) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+              )
+            ) {
+              Text("Desativar Legendas")
+            }
+            Spacer(Modifier.height(8.dp))
+            
+            // ✅ Opção 2: Automático (usar primeira disponível)
+            if (availableSubtitleTracks.isNotEmpty()) {
+              var isAutoFocused by remember { mutableStateOf(false) }
+              Button(
+                onClick = {
+                  selectedSubtitleTrack = availableSubtitleTracks.first() // Primeira disponível
+                  showSubtitleDialog = false
+                },
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .onFocusChanged { isAutoFocused = it.isFocused }
+                  .focusable()
+                  .then(
+                    if (isAutoFocused) 
+                      Modifier
+                        .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp))
+                    else 
+                      Modifier
+                  ),
+                colors = ButtonDefaults.buttonColors(
+                  containerColor = if (selectedSubtitleTrack?.id == availableSubtitleTracks.firstOrNull()?.id) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+                )
+              ) {
+                Text("Automático (Primeira Disponível)")
+              }
+              Spacer(Modifier.height(8.dp))
+            }
+            
+            // ✅ Opções 3+: Legendas específicas disponíveis
+            if (availableSubtitleTracks.isEmpty()) {
+              Text("Nenhuma legenda disponível", style = MaterialTheme.typography.bodyMedium)
+            } else {
+              availableSubtitleTracks.forEach { track ->
+                var isFocused by remember { mutableStateOf(false) }
+                Button(
+                  onClick = {
+                    selectedSubtitleTrack = track
+                    showSubtitleDialog = false
+                  },
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { isFocused = it.isFocused }
+                    .focusable()
+                    .then(
+                      if (isFocused) 
+                        Modifier
+                          .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp))
+                      else 
+                        Modifier
+                    ),
+                  colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedSubtitleTrack?.id == track.id) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+                  )
+                ) {
+                  Text("${track.language ?: "Desconhecido"}${track.label?.let { " ($it)" } ?: ""}")
+                }
+                Spacer(Modifier.height(8.dp))
+              }
+            }
+            
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { showSubtitleDialog = false }, modifier = Modifier.fillMaxWidth()) {
+              Text("Fechar")
+            }
+          }
+        }
+      }
+    }
+    
+    // ✅ Dialog de Áudio (A)
+    if (showAudioDialog) {
+      androidx.compose.ui.window.Dialog(onDismissRequest = { showAudioDialog = false }) {
+        Surface(shape = MaterialTheme.shapes.medium) {
+          Column(Modifier.padding(24.dp)) {
+            Text("Selecionar Áudio", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(16.dp))
+            
+            // ✅ Opção 1: Automático (usar primeira disponível)
+            if (availableAudioTracks.isNotEmpty()) {
+              var isAutoFocused by remember { mutableStateOf(false) }
+              Button(
+                onClick = {
+                  selectedAudioTrack = availableAudioTracks.first() // Primeira disponível
+                  showAudioDialog = false
+                },
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .onFocusChanged { isAutoFocused = it.isFocused }
+                  .focusable()
+                  .then(
+                    if (isAutoFocused) 
+                      Modifier
+                        .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp))
+                    else 
+                      Modifier
+                  ),
+                colors = ButtonDefaults.buttonColors(
+                  containerColor = if (selectedAudioTrack?.id == availableAudioTracks.firstOrNull()?.id) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+                )
+              ) {
+                Text("Automático (Primeira Disponível)")
+              }
+              Spacer(Modifier.height(8.dp))
+            }
+            
+            // ✅ Opções 2+: Tracks de áudio específicas disponíveis
+            if (availableAudioTracks.isEmpty()) {
+              Text("Nenhum track de áudio disponível", style = MaterialTheme.typography.bodyMedium)
+            } else {
+              availableAudioTracks.forEach { track ->
+                var isFocused by remember { mutableStateOf(false) }
+                val language = track.language ?: "Desconhecido"
+                val label = track.label ?: ""
+                val channels = track.channelCount
+                val sampleRate = track.sampleRate
+                val bitrate = track.bitrate
+                val displayText = buildString {
+                  append(language)
+                  if (label.isNotBlank()) append(" ($label)")
+                  if (channels > 0) append(" - ${channels} canais")
+                  if (sampleRate > 0) append(" - ${sampleRate / 1000}kHz")
+                  if (bitrate > 0) append(" - ${bitrate / 1000}Kbps")
+                }
+                
+                Button(
+                  onClick = {
+                    selectedAudioTrack = track
+                    showAudioDialog = false
+                  },
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { isFocused = it.isFocused }
+                    .focusable()
+                    .then(
+                      if (isFocused) 
+                        Modifier
+                          .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp))
+                      else 
+                        Modifier
+                    ),
+                  colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedAudioTrack?.id == track.id) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+                  )
+                ) {
+                  Text(displayText, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+                Spacer(Modifier.height(8.dp))
+              }
+            }
+            
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { showAudioDialog = false }, modifier = Modifier.fillMaxWidth()) {
+              Text("Fechar")
             }
           }
         }
@@ -672,7 +1076,11 @@ fun Neon3DButton(
         isActive -> Color(0xFFFFD700)  // Dourado quando ativo (favoritado)
         else -> Color.White             // Branco padrão
       },
+      maxLines = 2, // ✅ Permitir quebra de linha para textos longos
+      overflow = TextOverflow.Ellipsis, // ✅ Truncar se ainda for muito longo
+      textAlign = TextAlign.Center, // ✅ Centralizar texto
       modifier = Modifier
+        .widthIn(max = if (MaxiApp.isTv) 120.dp else 100.dp) // ✅ Limitar largura para textos longos
         .graphicsLayer {
           scaleX = scale
           scaleY = scale

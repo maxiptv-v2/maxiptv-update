@@ -73,12 +73,6 @@ class PlayerActivity : ComponentActivity() {
   private var qualityDegradedToast: android.widget.Toast? = null // Toast para aviso de qualidade degradada
   private lateinit var pv: PlayerView // PlayerView para acesso em outros métodos
   private var contentType: String = "live" // Tipo de conteúdo (live, vod, series)
-  private var qualityButton: Button? = null // Botão de qualidade (mudado para Button para suportar texto "H")
-  private var subtitleButton: Button? = null // Botão de legendas
-  private var audioButton: Button? = null // ✅ MELHORIA 7: Botão de áudio
-  private var isQualityButtonFocused = false
-  private var isSubtitleButtonFocused = false
-  private var isAudioButtonFocused = false // ✅ MELHORIA 7: Foco do botão de áudio
   private var subtitlesEnabled = true // Legendas habilitadas por padrão
   private var qualityOverlay: android.widget.TextView? = null // Overlay de qualidade atual
   private var remainingTimeOverlay: android.widget.TextView? = null // Overlay de tempo restante (VOD/Series)
@@ -270,6 +264,8 @@ class PlayerActivity : ComponentActivity() {
     // Adicionar overlay ao rootLayout (canto superior direito)
     rootLayout.addView(qualityOverlay)
     
+    // ✅ BOTÕES A, CC, H REMOVIDOS - Agora estão na tela de detalhes (VodDetailsScreen)
+    
     // ✅ MELHORIA 2: Criar overlay de tempo restante (VOD/Series apenas)
     remainingTimeOverlay = android.widget.TextView(this).apply {
       text = ""
@@ -391,436 +387,43 @@ class PlayerActivity : ComponentActivity() {
       true
     }
     
-    // Criar botão de qualidade 3D com "H" dentro
-    qualityButton = Button(this).apply {
-      text = "H" // Texto "H" para HD
-      contentDescription = "Selecionar Qualidade"
-      
-      // Estilo 3D do botão (efeito de profundidade)
-      val shadowLayer = GradientDrawable().apply {
-        setColor(Color.argb(180, 0, 0, 0)) // Sombra escura
-        cornerRadius = 12f
+    // ✅ BOTÕES A, CC, H REMOVIDOS - Agora estão na tela de detalhes (VodDetailsScreen)
+    // Código removido: criação dos botões qualityButton, subtitleButton e audioButton
+    
+    // ✅ MELHORIA 2: Criar overlay de tempo restante (VOD/Series apenas)
+    remainingTimeOverlay = android.widget.TextView(this).apply {
+      text = ""
+      textSize = if (MaxiApp.isTv) 16f else 12f
+      setTextColor(android.graphics.Color.WHITE)
+      setTypeface(null, android.graphics.Typeface.BOLD)
+      setPadding(12, 8, 12, 8)
+      background = GradientDrawable().apply {
+        setColor(android.graphics.Color.argb(180, 0, 0, 0)) // Fundo preto semi-transparente
+        cornerRadius = 6f
       }
-      
-      val mainLayer = GradientDrawable().apply {
-        setColor(Color.argb(255, 0, 212, 255)) // Azul ciano brilhante
-        cornerRadius = 12f
-        setStroke(2, Color.argb(255, 255, 255, 255)) // Borda branca
-      }
-      
-      val highlightLayer = GradientDrawable().apply {
-        setColor(Color.argb(100, 255, 255, 255)) // Destaque branco no topo (efeito 3D)
-        cornerRadius = 12f
-      }
-      
-      // Criar LayerDrawable para efeito 3D (sombra + botão + destaque)
-      val layers = arrayOf(
-        shadowLayer,
-        mainLayer,
-        highlightLayer
-      )
-      background = LayerDrawable(layers).apply {
-        setLayerInset(0, 4, 4, 0, 0) // Sombra deslocada
-        setLayerInset(1, 0, 0, 4, 4) // Botão principal
-        setLayerInset(2, 2, 2, 6, 6) // Destaque no topo
-      }
-      
-      // Estilo do texto
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      textSize = if (MaxiApp.isTv) 20f else 18f // Tamanho do texto
-      
-      // Tamanho do botão
-      val buttonSizeDp = if (MaxiApp.isTv) 56 else 48 // TV: maior, smartphone: menor
-      // ✅ Posicionar na mesma linha da engrenagem nativa (que fica no canto inferior direito dos controles)
-      // ✅ Considerar overscan: adicionar padding extra para evitar que botões fiquem para fora
-      val overscanPaddingDp = when {
-        MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding.coerceAtLeast(20) // Fire Stick: mínimo 20dp
-        MaxiApp.isNativeTv -> 24 // Native TV: 24dp
-        MaxiApp.isTvBox -> 16 // TV Box: 16dp
-        else -> 0 // Smartphone: sem overscan
-      }
-      // Converter dp para pixels
-      val density = resources.displayMetrics.density
-      val buttonSize = (buttonSizeDp * density).toInt() // Converter para pixels
-      val bottomMarginDp = if (MaxiApp.isTv) 100 + overscanPaddingDp else 80
-      val endMarginDp = if (MaxiApp.isTv) 100 + overscanPaddingDp else 80
-      val bottomMargin = (bottomMarginDp * density).toInt() // Converter para pixels
-      val endMargin = (endMarginDp * density).toInt() // Converter para pixels
-      layoutParams = FrameLayout.LayoutParams(
-        buttonSize,
-        buttonSize,
-        Gravity.BOTTOM or Gravity.END // Canto inferior direito (ao lado dos controles)
-      ).apply {
-        setMargins(0, 0, endMargin, bottomMargin) // left, top, right, bottom
-      }
-      
-      // Padding interno mínimo
-      setPadding(0, 0, 0, 0)
-      
-      // ✅ Foco com zoom e borda vermelha neon
-      setOnFocusChangeListener { view, hasFocus ->
-        isQualityButtonFocused = hasFocus
-        if (hasFocus) {
-          // Zoom quando focado
-          view.animate()
-            .scaleX(1.2f)
-            .scaleY(1.2f)
-            .setDuration(200)
-            .start()
-          
-          // ✅ Borda vermelha neon mais visível
-          val borderDrawable = GradientDrawable().apply {
-            setColor(Color.argb(255, 0, 212, 255)) // Azul ciano de fundo
-            cornerRadius = 12f
-            setStroke(6, Color.argb(255, 255, 23, 68)) // Borda vermelha neon mais grossa e brilhante
-          }
-          view.background = borderDrawable
-          
-          // ✅ Adicionar sombra vermelha para efeito neon
-          view.elevation = 16f
-        } else {
-          // Voltar ao normal quando perder foco
-          view.animate()
-            .scaleX(1.0f)
-            .scaleY(1.0f)
-            .setDuration(200)
-            .start()
-          
-          // ✅ Remover elevação
-          view.elevation = 0f
-          
-          // Restaurar estilo original
-          val shadowLayer = GradientDrawable().apply {
-            setColor(Color.argb(180, 0, 0, 0))
-            cornerRadius = 12f
-          }
-          val mainLayer = GradientDrawable().apply {
-            setColor(Color.argb(255, 0, 212, 255))
-            cornerRadius = 12f
-            setStroke(2, Color.argb(255, 255, 255, 255))
-          }
-          val highlightLayer = GradientDrawable().apply {
-            setColor(Color.argb(100, 255, 255, 255))
-            cornerRadius = 12f
-          }
-          view.background = LayerDrawable(arrayOf(shadowLayer, mainLayer, highlightLayer)).apply {
-            setLayerInset(0, 4, 4, 0, 0)
-            setLayerInset(1, 0, 0, 4, 4)
-            setLayerInset(2, 2, 2, 6, 6)
-          }
-        }
-      }
-      
-      // Click listener
-      setOnClickListener {
-        showQualityDialog()
-      }
-      
-      // Focável para TV
-      isFocusable = true
-      isFocusableInTouchMode = false
-      
-      // ✅ Definir ID único para navegação de foco
-      id = android.view.View.generateViewId()
-      
-      // Inicialmente escondido (só aparece quando controles estão visíveis)
+      gravity = android.view.Gravity.CENTER
       visibility = android.view.View.GONE
-    }
-    
-    rootLayout.addView(qualityButton)
-    
-    // ✅ FASE 2: BOTÃO DE LEGENDAS/SUBTÍTULOS
-    subtitleButton = Button(this).apply {
-      text = "CC" // Closed Captions
-      contentDescription = "Legendas/Subtítulos"
-      
-      // Estilo similar ao botão de qualidade
-      val shadowLayer = GradientDrawable().apply {
-        setColor(Color.argb(180, 0, 0, 0))
-        cornerRadius = 12f
-      }
-      val mainLayer = GradientDrawable().apply {
-        setColor(Color.argb(255, 0, 212, 255))
-        cornerRadius = 12f
-        setStroke(2, Color.argb(255, 255, 255, 255))
-      }
-      val highlightLayer = GradientDrawable().apply {
-        setColor(Color.argb(100, 255, 255, 255))
-        cornerRadius = 12f
-      }
-      background = LayerDrawable(arrayOf(shadowLayer, mainLayer, highlightLayer)).apply {
-        setLayerInset(0, 4, 4, 0, 0)
-        setLayerInset(1, 0, 0, 4, 4)
-        setLayerInset(2, 2, 2, 6, 6)
-      }
-      
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      textSize = if (MaxiApp.isTv) 18f else 16f
-      
-      // Tamanho e posição (ao lado do botão H, mais à esquerda)
-      // ✅ Considerar overscan: adicionar padding extra para evitar que botões fiquem para fora
-      val overscanPaddingDp = when {
-        MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding.coerceAtLeast(20) // Fire Stick: mínimo 20dp
-        MaxiApp.isNativeTv -> 24 // Native TV: 24dp
-        MaxiApp.isTvBox -> 16 // TV Box: 16dp
-        else -> 0 // Smartphone: sem overscan
-      }
-      // Converter dp para pixels
-      val density = resources.displayMetrics.density
-      val buttonSizeDp = if (MaxiApp.isTv) 56 else 48
-      val buttonSize = (buttonSizeDp * density).toInt() // Converter para pixels
-      val bottomMarginDp = if (MaxiApp.isTv) 100 + overscanPaddingDp else 80
-      val endMarginDp = if (MaxiApp.isTv) 180 + overscanPaddingDp else 140
-      val bottomMargin = (bottomMarginDp * density).toInt() // Converter para pixels
-      val endMargin = (endMarginDp * density).toInt() // Converter para pixels
       layoutParams = FrameLayout.LayoutParams(
-        buttonSize,
-        buttonSize,
-        Gravity.BOTTOM or Gravity.END
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        android.view.Gravity.BOTTOM or android.view.Gravity.START
       ).apply {
-        setMargins(0, 0, endMargin, bottomMargin)
-      }
-      
-      setPadding(0, 0, 0, 0)
-      
-      // ✅ Foco com zoom e borda vermelha neon
-      setOnFocusChangeListener { view, hasFocus ->
-        isSubtitleButtonFocused = hasFocus
-        if (hasFocus) {
-          view.animate()
-            .scaleX(1.2f)
-            .scaleY(1.2f)
-            .setDuration(200)
-            .start()
-          
-          // ✅ Borda vermelha neon mais visível
-          val borderDrawable = GradientDrawable().apply {
-            setColor(Color.argb(255, 0, 212, 255))
-            cornerRadius = 12f
-            setStroke(6, Color.argb(255, 255, 23, 68)) // Borda vermelha neon mais grossa e brilhante
-          }
-          view.background = borderDrawable
-          
-          // ✅ Adicionar sombra vermelha para efeito neon
-          view.elevation = 16f
-        } else {
-          view.animate()
-            .scaleX(1.0f)
-            .scaleY(1.0f)
-            .setDuration(200)
-            .start()
-          
-          val shadowLayer = GradientDrawable().apply {
-            setColor(Color.argb(180, 0, 0, 0))
-            cornerRadius = 12f
-          }
-          val mainLayer = GradientDrawable().apply {
-            setColor(Color.argb(255, 0, 212, 255))
-            cornerRadius = 12f
-            setStroke(2, Color.argb(255, 255, 255, 255))
-          }
-          val highlightLayer = GradientDrawable().apply {
-            setColor(Color.argb(100, 255, 255, 255))
-            cornerRadius = 12f
-          }
-          view.background = LayerDrawable(arrayOf(shadowLayer, mainLayer, highlightLayer)).apply {
-            setLayerInset(0, 4, 4, 0, 0)
-            setLayerInset(1, 0, 0, 4, 4)
-            setLayerInset(2, 2, 2, 6, 6)
-          }
-        }
-      }
-      
-      setOnClickListener {
-        showSubtitleDialog()
-      }
-      
-      isFocusable = true
-      isFocusableInTouchMode = false
-      
-      // ✅ Definir ID único para navegação de foco
-      id = android.view.View.generateViewId()
-      
-      visibility = android.view.View.GONE
-    }
-    
-    rootLayout.addView(subtitleButton)
-    
-    // ✅ MELHORIA 7: BOTÃO DE ÁUDIO
-    audioButton = Button(this).apply {
-      text = "A" // Audio
-      contentDescription = "Selecionar Áudio"
-      
-      // Estilo similar ao botão de legendas
-      val shadowLayer = GradientDrawable().apply {
-        setColor(Color.argb(180, 0, 0, 0))
-        cornerRadius = 12f
-      }
-      val mainLayer = GradientDrawable().apply {
-        setColor(Color.argb(255, 0, 212, 255))
-        cornerRadius = 12f
-        setStroke(2, Color.argb(255, 255, 255, 255))
-      }
-      val highlightLayer = GradientDrawable().apply {
-        setColor(Color.argb(100, 255, 255, 255))
-        cornerRadius = 12f
-      }
-      background = LayerDrawable(arrayOf(shadowLayer, mainLayer, highlightLayer)).apply {
-        setLayerInset(0, 4, 4, 0, 0)
-        setLayerInset(1, 0, 0, 4, 4)
-        setLayerInset(2, 2, 2, 6, 6)
-      }
-      
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      textSize = if (MaxiApp.isTv) 18f else 16f
-      
-      // Tamanho e posição (ao lado do botão CC, mais à esquerda)
-      val overscanPaddingDp = when {
-        MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding.coerceAtLeast(20)
-        MaxiApp.isNativeTv -> 24
-        MaxiApp.isTvBox -> 16
-        else -> 0
-      }
-      val density = resources.displayMetrics.density
-      val buttonSizeDp = if (MaxiApp.isTv) 56 else 48
-      val buttonSize = (buttonSizeDp * density).toInt()
-      val bottomMarginDp = if (MaxiApp.isTv) 100 + overscanPaddingDp else 80
-      val endMarginDp = if (MaxiApp.isTv) 260 + overscanPaddingDp else 200 // Mais à esquerda que CC
-      val bottomMargin = (bottomMarginDp * density).toInt()
-      val endMargin = (endMarginDp * density).toInt()
-      layoutParams = FrameLayout.LayoutParams(
-        buttonSize,
-        buttonSize,
-        Gravity.BOTTOM or Gravity.END
-      ).apply {
-        setMargins(0, 0, endMargin, bottomMargin)
-      }
-      
-      setPadding(0, 0, 0, 0)
-      
-      // ✅ Foco com zoom e borda vermelha neon
-      setOnFocusChangeListener { view, hasFocus ->
-        isAudioButtonFocused = hasFocus
-        if (hasFocus) {
-          view.animate()
-            .scaleX(1.2f)
-            .scaleY(1.2f)
-            .setDuration(200)
-            .start()
-          
-          // ✅ Borda vermelha neon mais visível
-          val borderDrawable = GradientDrawable().apply {
-            setColor(Color.argb(255, 0, 212, 255))
-            cornerRadius = 12f
-            setStroke(6, Color.argb(255, 255, 23, 68)) // Borda vermelha neon mais grossa e brilhante
-          }
-          view.background = borderDrawable
-          
-          // ✅ Adicionar sombra vermelha para efeito neon
-          view.elevation = 16f
-        } else {
-          view.animate()
-            .scaleX(1.0f)
-            .scaleY(1.0f)
-            .setDuration(200)
-            .start()
-          
-          val shadowLayer = GradientDrawable().apply {
-            setColor(Color.argb(180, 0, 0, 0))
-            cornerRadius = 12f
-          }
-          val mainLayer = GradientDrawable().apply {
-            setColor(Color.argb(255, 0, 212, 255))
-            cornerRadius = 12f
-            setStroke(2, Color.argb(255, 255, 255, 255))
-          }
-          val highlightLayer = GradientDrawable().apply {
-            setColor(Color.argb(100, 255, 255, 255))
-            cornerRadius = 12f
-          }
-          view.background = LayerDrawable(arrayOf(shadowLayer, mainLayer, highlightLayer)).apply {
-            setLayerInset(0, 4, 4, 0, 0)
-            setLayerInset(1, 0, 0, 4, 4)
-            setLayerInset(2, 2, 2, 6, 6)
-          }
-        }
-      }
-      
-      setOnClickListener {
-        showAudioDialog()
-      }
-      
-      isFocusable = true
-      isFocusableInTouchMode = false
-      
-      // ✅ Definir ID único para navegação de foco
-      id = android.view.View.generateViewId()
-      
-      visibility = android.view.View.GONE
-    }
-    
-    rootLayout.addView(audioButton)
-    
-    // ✅ Configurar ordem de navegação de foco entre botões (D-PAD LEFT/RIGHT)
-    // A (esquerda) -> CC (meio) -> H (direita)
-    audioButton?.let { aButton ->
-      subtitleButton?.let { ccButton ->
-        qualityButton?.let { hButton ->
-          // ✅ Navegação completa em ambas as direções
-          // A -> CC (direita)
-          aButton.nextFocusRightId = ccButton.id
-          // CC -> A (esquerda)
-          ccButton.nextFocusLeftId = aButton.id
-          // CC -> H (direita)
-          ccButton.nextFocusRightId = hButton.id
-          // H -> CC (esquerda)
-          hButton.nextFocusLeftId = ccButton.id
-          
-          // ✅ Loop circular (opcional): H -> A (direita) e A -> H (esquerda)
-          // Comentado para manter navegação linear simples
-          // hButton.nextFocusRightId = aButton.id
-          // aButton.nextFocusLeftId = hButton.id
-          
-          // ✅ Garantir que todos os botões são focáveis e configurados corretamente
-          listOf(aButton, ccButton, hButton).forEach { button ->
-            button.isFocusable = true
-            button.isFocusableInTouchMode = false
-            // ✅ Garantir que o botão pode receber foco via D-PAD
-            button.isClickable = true
-            button.isEnabled = true
-          }
-          
-          android.util.Log.d("PlayerActivity", "✅ Navegação de foco configurada: A <-> CC <-> H")
-          android.util.Log.d("PlayerActivity", "   A (ID: ${aButton.id}) -> CC (ID: ${ccButton.id}) -> H (ID: ${hButton.id})")
-        }
+        setMargins(if (MaxiApp.isTv) 40 else 20, 0, 0, if (MaxiApp.isTv) 120 else 80)
       }
     }
+    
+    rootLayout.addView(remainingTimeOverlay)
+    
+    // ✅ REMOVIDO: Todo o código de criação dos botões A, CC, H foi removido
+    // Os botões agora estão na tela de detalhes (VodDetailsScreen)
     
     // ✅ Configurar estilização de legendas do PlayerView
     setupSubtitleStyle()
     
-    // ✅ Listener para mostrar controles quando necessário (DEPOIS de criar o botão)
+    // ✅ Listener para mostrar controles quando necessário
     pv.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
       android.util.Log.d("PlayerActivity", "Controles visíveis: $visibility")
-      val isVisible = visibility == android.view.View.VISIBLE
-      
-      // Mostrar/esconder botões junto com controles (engrenagem nativa já aparece automaticamente)
-      qualityButton?.visibility = if (isVisible) android.view.View.VISIBLE else android.view.View.GONE
-      subtitleButton?.visibility = if (isVisible) android.view.View.VISIBLE else android.view.View.GONE
-      audioButton?.visibility = if (isVisible) android.view.View.VISIBLE else android.view.View.GONE // ✅ MELHORIA 7
-      
-      // ✅ Garantir que os botões são focáveis quando visíveis
-      if (isVisible && MaxiApp.isTv) {
-        // Garantir que os botões podem receber foco via D-PAD
-        qualityButton?.isFocusable = true
-        subtitleButton?.isFocusable = true
-        audioButton?.isFocusable = true
-        
-        android.util.Log.d("PlayerActivity", "✅ Botões A, CC, H focáveis e prontos para navegação D-PAD")
-      }
+      // ✅ BOTÕES A, CC, H REMOVIDOS - Não há mais botões para mostrar/esconder
     })
     
     // ✅ API MODERNA - GestureDetector (substitui GestureDetectorCompat depreciado)
@@ -856,6 +459,13 @@ class PlayerActivity : ComponentActivity() {
     setContentView(rootLayout) // Usar rootLayout em vez de pv diretamente
     val url = intent.getStringExtra("url") ?: return
     contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
+    
+    // ✅ LER CONFIGURAÇÕES DO INTENT (legendas e áudio selecionados na tela de detalhes)
+    val selectedSubtitleTrackId = intent.getStringExtra("selectedSubtitleTrack")?.toIntOrNull()
+    val selectedAudioTrackId = intent.getStringExtra("selectedAudioTrack")?.toIntOrNull()
+    android.util.Log.d("PlayerActivity", "🔍 Configurações recebidas do Intent:")
+    android.util.Log.d("PlayerActivity", "  - Legenda selecionada: $selectedSubtitleTrackId")
+    android.util.Log.d("PlayerActivity", "  - Áudio selecionado: $selectedAudioTrackId")
     
     // ✅ MELHORIA 2: Mostrar/ocultar overlay de tempo restante baseado no tipo de conteúdo
     val isVodOrSeries = contentType == "vod" || contentType == "series"
@@ -1013,8 +623,95 @@ class PlayerActivity : ComponentActivity() {
         exo.prepare()
         exo.playWhenReady = true
         
-        // ✅ RECONEXÃO AUTOMÁTICA quando canal trava
+        // ✅ APLICAR CONFIGURAÇÕES DE LEGENDAS E ÁUDIO DO INTENT
+        // Aguardar tracks serem carregados antes de aplicar configurações
         exo.addListener(object : Player.Listener {
+          override fun onTracksChanged(tracks: Tracks) {
+            // ✅ Aplicar configurações quando tracks estiverem disponíveis
+            if (tracks.groups.isNotEmpty()) {
+              android.util.Log.d("PlayerActivity", "✅ Tracks carregados, aplicando configurações do Intent...")
+              
+              // ✅ Aplicar legenda selecionada
+              val subtitleTrackIdStr = intent.getStringExtra("selectedSubtitleTrack")
+              if (subtitleTrackIdStr != null && subtitleTrackIdStr.isNotBlank()) {
+                val subtitleTrackId = subtitleTrackIdStr.toIntOrNull()
+                if (subtitleTrackId != null) {
+                  var subtitleApplied = false
+                  tracks.groups.forEach { group ->
+                    if (group.type == C.TRACK_TYPE_TEXT) {
+                      for (i in 0 until group.length) {
+                        val trackFormat = group.getTrackFormat(i)
+                        if (trackFormat.id.toString() == subtitleTrackIdStr) {
+                        val currentParams = exo.trackSelectionParameters
+                        val params = TrackSelectionParameters.Builder(this@PlayerActivity)
+                          .setMaxVideoBitrate(currentParams.maxVideoBitrate)
+                          .setMinVideoBitrate(currentParams.minVideoBitrate)
+                          .setMaxVideoSize(1280, 720) // Valor padrão SD
+                          .setPreferredTextLanguage(trackFormat.language)
+                          .setPreferredAudioLanguage(currentParams.preferredAudioLanguages.firstOrNull())
+                          .build()
+                          exo.trackSelectionParameters = params
+                          subtitlesEnabled = true
+                          pv.subtitleView?.visibility = android.view.View.VISIBLE
+                          android.util.Log.i("PlayerActivity", "✅ Legenda aplicada do Intent: ${trackFormat.language} (ID: $subtitleTrackId)")
+                          subtitleApplied = true
+                          break
+                        }
+                      }
+                    }
+                  }
+                  if (!subtitleApplied) {
+                    android.util.Log.w("PlayerActivity", "⚠️ Legenda selecionada (ID: $subtitleTrackId) não encontrada nos tracks disponíveis")
+                  }
+                }
+              } else {
+                // ✅ Desativar legendas (quando selectedSubtitleTrack é vazio/null)
+                val currentParams = exo.trackSelectionParameters
+                val params = TrackSelectionParameters.Builder(this@PlayerActivity)
+                  .setMaxVideoBitrate(currentParams.maxVideoBitrate)
+                  .setMinVideoBitrate(currentParams.minVideoBitrate)
+                  .setMaxVideoSize(1280, 720) // Valor padrão SD
+                  .setPreferredTextLanguage(null) // null = desativar legendas
+                  .setPreferredAudioLanguage(currentParams.preferredAudioLanguages.firstOrNull())
+                  .build()
+                exo.trackSelectionParameters = params
+                subtitlesEnabled = false
+                pv.subtitleView?.visibility = android.view.View.GONE
+                android.util.Log.i("PlayerActivity", "✅ Legendas desativadas do Intent")
+              }
+              
+              // ✅ Aplicar áudio selecionado
+              val audioTrackIdStr = intent.getStringExtra("selectedAudioTrack")
+              if (audioTrackIdStr != null && audioTrackIdStr.isNotBlank()) {
+                var audioApplied = false
+                tracks.groups.forEach { group ->
+                  if (group.type == C.TRACK_TYPE_AUDIO) {
+                    for (i in 0 until group.length) {
+                      val trackFormat = group.getTrackFormat(i)
+                      if (trackFormat.id.toString() == audioTrackIdStr) {
+                        val currentParams = exo.trackSelectionParameters
+                        val params = TrackSelectionParameters.Builder(this@PlayerActivity)
+                          .setMaxVideoBitrate(currentParams.maxVideoBitrate)
+                          .setMinVideoBitrate(currentParams.minVideoBitrate)
+                          .setMaxVideoSize(1280, 720) // Valor padrão SD
+                          .setPreferredTextLanguage(currentParams.preferredTextLanguages.firstOrNull())
+                          .setPreferredAudioLanguage(trackFormat.language)
+                          .build()
+                        exo.trackSelectionParameters = params
+                        android.util.Log.i("PlayerActivity", "✅ Áudio aplicado do Intent: ${trackFormat.language} (ID: $audioTrackIdStr)")
+                        audioApplied = true
+                        break
+                      }
+                    }
+                  }
+                }
+                if (!audioApplied) {
+                  android.util.Log.w("PlayerActivity", "⚠️ Áudio selecionado (ID: $audioTrackIdStr) não encontrado nos tracks disponíveis")
+                }
+              }
+            }
+          }
+          
           override fun onPlaybackStateChanged(playbackState: Int) {
             when (playbackState) {
               Player.STATE_IDLE -> {
@@ -1431,16 +1128,7 @@ class PlayerActivity : ComponentActivity() {
           }
           return true
         }
-        KeyEvent.KEYCODE_MENU -> {
-          // Mostrar menu de qualidade
-          showQualityDialog()
-          return true
-        }
-        KeyEvent.KEYCODE_DPAD_UP -> {
-          // Mostrar menu de legendas
-          showSubtitleDialog()
-          return true
-        }
+        // ✅ BOTÕES A, CC, H REMOVIDOS - Agora estão na tela de detalhes (VodDetailsScreen)
       }
     }
     return super.onKeyDown(keyCode, event)
@@ -1450,96 +1138,6 @@ class PlayerActivity : ComponentActivity() {
   private fun showSeekIndicator(seconds: Int) {
     // Por enquanto apenas log, mas pode adicionar overlay visual depois
     android.util.Log.i("PlayerActivity", "⏩ Seek: ${if (seconds > 0) "+" else ""}$seconds segundos")
-  }
-  
-  // ✅ FASE 1: Dialog para seleção manual de qualidade
-  private fun showQualityDialog() {
-    val exo = player ?: return
-    
-    // ✅ SEMPRE mostrar opções de qualidade pré-definidas (mais confiável)
-    val qualityOptions = mutableListOf<String>()
-    
-    // Adicionar opções pré-definidas (sempre disponíveis)
-    PlayerSettingsManager.VideoQuality.values().forEach { quality ->
-      qualityOptions.add("${quality.displayName} (${quality.maxBitrate / 1000}Kbps)")
-    }
-    
-    // Buscar tracks disponíveis do stream (opcional)
-    val currentTracks = exo.currentTracks
-    val videoTracks = mutableListOf<Format>()
-    
-    currentTracks?.groups?.forEach { group ->
-      if (group.type == C.TRACK_TYPE_VIDEO) {
-        for (i in 0 until group.length) {
-          val format = group.getTrackFormat(i)
-          if (format.sampleMimeType?.startsWith("video/") == true) {
-            videoTracks.add(format)
-          }
-        }
-      }
-    }
-    
-    val dialog = AlertDialog.Builder(this)
-      .setTitle("Selecionar Qualidade")
-      .setItems(qualityOptions.toTypedArray()) { dialogInterface, which ->
-        // ✅ Manter zoom e overlay quando selecionar qualidade
-        qualityButton?.let { button ->
-          // Manter foco visual (zoom e borda vermelha)
-          button.animate()
-            .scaleX(1.2f)
-            .scaleY(1.2f)
-            .setDuration(200)
-            .start()
-          
-          val borderDrawable = GradientDrawable().apply {
-            setColor(Color.argb(255, 0, 212, 255))
-            cornerRadius = 12f
-            setStroke(4, Color.argb(255, 255, 0, 0)) // Borda vermelha neon
-          }
-          button.background = borderDrawable
-          
-          // Manter foco por mais tempo (zoom e overlay permanecem)
-          button.postDelayed({
-            if (!isQualityButtonFocused) {
-              // Voltar ao normal após 2 segundos se não estiver focado
-              button.animate()
-                .scaleX(1.0f)
-                .scaleY(1.0f)
-                .setDuration(200)
-                .start()
-              
-              val shadowLayer = GradientDrawable().apply {
-                setColor(Color.argb(180, 0, 0, 0))
-                cornerRadius = 12f
-              }
-              val mainLayer = GradientDrawable().apply {
-                setColor(Color.argb(255, 0, 212, 255))
-                cornerRadius = 12f
-                setStroke(2, Color.argb(255, 255, 255, 255))
-              }
-              val highlightLayer = GradientDrawable().apply {
-                setColor(Color.argb(100, 255, 255, 255))
-                cornerRadius = 12f
-              }
-              button.background = LayerDrawable(arrayOf(shadowLayer, mainLayer, highlightLayer)).apply {
-                setLayerInset(0, 4, 4, 0, 0)
-                setLayerInset(1, 0, 0, 4, 4)
-                setLayerInset(2, 2, 2, 6, 6)
-              }
-            }
-          }, 2000)
-        }
-        
-        // Aplicar qualidade selecionada
-        val selectedQuality = PlayerSettingsManager.VideoQuality.values()[which]
-        applyQuality(selectedQuality)
-        
-        dialogInterface.dismiss()
-      }
-      .setNegativeButton("Cancelar", null)
-      .create()
-    
-    dialog.show()
   }
   
   // ✅ FASE 1: Aplicar qualidade selecionada manualmente
@@ -2022,188 +1620,7 @@ class PlayerActivity : ComponentActivity() {
     }
   }
   
-  // ✅ FASE 2: Dialog para seleção de legendas/subtítulos
-  private fun showSubtitleDialog() {
-    val exo = player ?: return
-    
-    // Buscar tracks de texto (legendas) disponíveis
-    val currentTracks = exo.currentTracks
-    val textTracks = mutableListOf<Format>()
-    
-    currentTracks?.groups?.forEach { group ->
-      if (group.type == C.TRACK_TYPE_TEXT) {
-        for (i in 0 until group.length) {
-          val format = group.getTrackFormat(i)
-          if (format.sampleMimeType?.startsWith("text/") == true || 
-              format.sampleMimeType?.startsWith("application/") == true) {
-            textTracks.add(format)
-          }
-        }
-      }
-    }
-    
-    // Criar lista de opções
-    val subtitleOptions = mutableListOf<String>()
-    
-    // Opção 1: Desativar legendas
-    subtitleOptions.add("Desativar Legendas")
-    
-    // Opção 2: Automático (usar primeira disponível)
-    if (textTracks.isNotEmpty()) {
-      subtitleOptions.add("Automático (Primeira Disponível)")
-    }
-    
-    // Opções 3+: Legendas específicas disponíveis
-    textTracks.forEach { format ->
-      val language = format.language ?: "Desconhecido"
-      val label = format.label ?: ""
-      val displayName = if (label.isNotEmpty()) "$label ($language)" else language
-      subtitleOptions.add(displayName)
-    }
-    
-    if (subtitleOptions.size <= 1) {
-      // Nenhuma legenda disponível (só tem "Desativar")
-      AlertDialog.Builder(this)
-        .setTitle("Legendas/Subtítulos")
-        .setMessage("Nenhuma legenda disponível para este conteúdo.")
-        .setPositiveButton("OK", null)
-        .show()
-      return
-    }
-    
-    AlertDialog.Builder(this)
-      .setTitle("Selecionar Legendas/Subtítulos")
-      .setItems(subtitleOptions.toTypedArray()) { dialogInterface, which ->
-        when (which) {
-          0 -> {
-            // Desativar legendas
-            subtitlesEnabled = false
-            exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
-              .setPreferredTextLanguage(null)
-              .build()
-            android.util.Log.i("PlayerActivity", "✅ Legendas desativadas")
-            pv.subtitleView?.visibility = android.view.View.GONE
-          }
-          1 -> {
-            // Automático (primeira disponível)
-            if (textTracks.isNotEmpty()) {
-              subtitlesEnabled = true
-              val firstTrack = textTracks[0]
-              exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
-                .setPreferredTextLanguage(firstTrack.language)
-                .build()
-              android.util.Log.i("PlayerActivity", "✅ Legendas automáticas ativadas: ${firstTrack.language}")
-              pv.subtitleView?.visibility = android.view.View.VISIBLE
-            }
-          }
-          else -> {
-            // Selecionar legenda específica
-            val selectedIndex = which - 2
-            if (selectedIndex >= 0 && selectedIndex < textTracks.size) {
-              subtitlesEnabled = true
-              val selectedTrack = textTracks[selectedIndex]
-              exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
-                .setPreferredTextLanguage(selectedTrack.language)
-                .build()
-              android.util.Log.i("PlayerActivity", "✅ Legenda selecionada: ${selectedTrack.language} (${selectedTrack.label})")
-              pv.subtitleView?.visibility = android.view.View.VISIBLE
-            }
-          }
-        }
-        dialogInterface.dismiss()
-      }
-      .setNegativeButton("Cancelar", null)
-      .show()
-  }
-  
-  // ✅ MELHORIA 7: Dialog para seleção de tracks de áudio
-  private fun showAudioDialog() {
-    val exo = player ?: return
-    
-    // Buscar tracks de áudio disponíveis
-    val currentTracks = exo.currentTracks
-    val audioTracks = mutableListOf<Format>()
-    
-    currentTracks?.groups?.forEach { group ->
-      if (group.type == C.TRACK_TYPE_AUDIO) {
-        for (i in 0 until group.length) {
-          val format = group.getTrackFormat(i)
-          if (format.sampleMimeType?.startsWith("audio/") == true) {
-            audioTracks.add(format)
-          }
-        }
-      }
-    }
-    
-    // Criar lista de opções
-    val audioOptions = mutableListOf<String>()
-    
-    // Opção 1: Automático (usar primeira disponível)
-    audioOptions.add("Automático (Primeira Disponível)")
-    
-    // Opções 2+: Tracks de áudio específicas disponíveis
-    audioTracks.forEach { format ->
-      val language = format.language ?: "Desconhecido"
-      val label = format.label ?: ""
-      val channels = format.channelCount
-      val sampleRate = format.sampleRate
-      val bitrate = format.bitrate
-      
-      val displayName = buildString {
-        if (label.isNotEmpty()) {
-          append(label)
-          if (language != "Desconhecido") append(" ($language)")
-        } else {
-          append(language)
-        }
-        if (channels > 0) append(" - ${channels}ch")
-        if (sampleRate > 0) append(" @ ${sampleRate / 1000}kHz")
-        if (bitrate > 0) append(" ${bitrate / 1000}kbps")
-      }
-      audioOptions.add(displayName)
-    }
-    
-    if (audioOptions.size <= 1 && audioTracks.isEmpty()) {
-      // Nenhum track de áudio disponível
-      AlertDialog.Builder(this)
-        .setTitle("Áudio")
-        .setMessage("Nenhum track de áudio alternativo disponível para este conteúdo.")
-        .setPositiveButton("OK", null)
-        .show()
-      return
-    }
-    
-    AlertDialog.Builder(this)
-      .setTitle("Selecionar Track de Áudio")
-      .setItems(audioOptions.toTypedArray()) { dialogInterface, which ->
-        when (which) {
-          0 -> {
-            // Automático (primeira disponível)
-            if (audioTracks.isNotEmpty()) {
-              val firstTrack = audioTracks[0]
-              exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
-                .setPreferredAudioLanguage(firstTrack.language)
-                .build()
-              android.util.Log.i("PlayerActivity", "✅ Áudio automático ativado: ${firstTrack.language}")
-            }
-          }
-          else -> {
-            // Selecionar track específico
-            val selectedIndex = which - 1
-            if (selectedIndex >= 0 && selectedIndex < audioTracks.size) {
-              val selectedTrack = audioTracks[selectedIndex]
-              exo.trackSelectionParameters = TrackSelectionParameters.Builder(this)
-                .setPreferredAudioLanguage(selectedTrack.language)
-                .build()
-              android.util.Log.i("PlayerActivity", "✅ Track de áudio selecionado: ${selectedTrack.language} (${selectedTrack.label})")
-            }
-          }
-        }
-        dialogInterface.dismiss()
-      }
-      .setNegativeButton("Cancelar", null)
-      .show()
-  }
+  // ✅ BOTÕES A, CC, H REMOVIDOS - Agora estão na tela de detalhes (VodDetailsScreen)
   
   // ✅ FASE 2: Detectar degradação de qualidade (versão com Toast para PlayerActivity)
   private fun detectQualityDegradation(currentFormat: Format) {
