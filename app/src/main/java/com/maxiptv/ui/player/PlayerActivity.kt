@@ -60,6 +60,8 @@ class PlayerActivity : ComponentActivity() {
   private var lastBufferingTime = 0L // Último tempo de buffering
   private var currentMaxBitrate = 2_200_000 // Bitrate máximo atual (começa em 2.2Mbps)
   private var qualityReduced = false // Flag para saber se qualidade já foi reduzida
+  private var qualityReductionLevel = 0 // Nível de redução de qualidade (0 = nenhuma, 1 = leve, 2 = média, 3 = alta)
+  private var lastBufferSize = 0L // Último tamanho de buffer para detectar queda rápida
   private var lastPosition = 0L // Última posição do player (para detectar travamento)
   private var lastPositionTime = 0L // Último tempo que a posição mudou
   // ✅ FASE 2: Variáveis para failover e detecção de qualidade
@@ -94,7 +96,6 @@ class PlayerActivity : ComponentActivity() {
   private var liveChannelInfoHandler: android.os.Handler? = null // Handler para atualizar informações do canal
   private var currentChannelName: String? = null // Nome do canal atual (Live)
   private var currentChannelLogo: String? = null // Logo do canal atual (Live)
-  private var lastBufferSize = 0L // Último tamanho de buffer para calcular velocidade
   private var lastBufferTime = 0L // Último tempo de buffer
   private val bufferIndicatorRunnable = object : Runnable {
     override fun run() {
@@ -1022,45 +1023,96 @@ class PlayerActivity : ComponentActivity() {
               Player.STATE_BUFFERING -> {
                 val now = System.currentTimeMillis()
                 
-                // ⚡ DETECÇÃO DE WI-FI LENTO: Se buffering muito frequente, reduzir qualidade
-                if (lastBufferingTime > 0 && now - lastBufferingTime < 5000) { 
-                  // Buffering a cada 5 segundos ou menos = Wi-Fi lento
+                // ✅ DETECÇÃO MELHORADA DE WI-FI LENTO: Múltiplos fatores de detecção
+                val bufferAhead = exo.bufferedPosition - exo.currentPosition
+                val timeSinceLastBuffering = if (lastBufferingTime > 0) now - lastBufferingTime else Long.MAX_VALUE
+                
+                // Fator 1: Buffering frequente (mais sensível - 2 eventos em 5s)
+                if (lastBufferingTime > 0 && timeSinceLastBuffering < 5000) {
                   bufferingCount++
-                  android.util.Log.w("PlayerActivity", "⚠️ Buffering frequente detectado ($bufferingCount eventos em ${(now - lastBufferingTime) / 1000}s)")
+                  android.util.Log.w("PlayerActivity", "⚠️ Buffering frequente detectado ($bufferingCount eventos em ${timeSinceLastBuffering / 1000}s)")
+                } else if (timeSinceLastBuffering > 10000) {
+                  // Reset contador se buffering espaçado (rede normal)
+                  bufferingCount = 0
+                  android.util.Log.d("PlayerActivity", "✅ Rede estável, resetando contador de buffering")
+                }
+                
+                // Fator 2: Buffer muito baixo (< 2 segundos)
+                val bufferLow = bufferAhead < 2000
+                if (bufferLow) {
+                  android.util.Log.w("PlayerActivity", "⚠️ Buffer muito baixo: ${bufferAhead}ms")
+                }
+                
+                // Fator 3: Detecção usando ConnectionQuality
+                val estimatedQuality = estimateConnectionQuality(
+                  exo,
+                  latencyMs = 0, // Será calculado pelo updateLatency
+                  bufferAhead = bufferAhead,
+                  bitrate = exo.videoFormat?.bitrate ?: 0
+                )
+                connectionQuality = estimatedQuality
+                
+                // ✅ REDUÇÃO GRADUAL DE QUALIDADE baseada em múltiplos fatores
+                val shouldReduceQuality = when {
+                  // Redução imediata: buffering muito frequente OU buffer muito baixo + qualidade ruim
+                  bufferingCount >= 2 && (estimatedQuality == ConnectionQuality.POOR || bufferLow) -> {
+                    android.util.Log.w("PlayerActivity", "🚨 Redução IMEDIATA: buffering frequente + conexão ruim")
+                    true
+                  }
+                  // Redução leve: buffering frequente OU buffer baixo
+                  bufferingCount >= 2 || (bufferLow && estimatedQuality == ConnectionQuality.POOR) -> {
+                    android.util.Log.w("PlayerActivity", "⚠️ Redução LEVE: buffering ou buffer baixo detectado")
+                    true
+                  }
+                  // Redução preventiva: qualidade ruim detectada
+                  estimatedQuality == ConnectionQuality.POOR && qualityReductionLevel == 0 -> {
+                    android.util.Log.w("PlayerActivity", "📉 Redução PREVENTIVA: qualidade de conexão ruim")
+                    true
+                  }
+                  else -> false
+                }
+                
+                if (shouldReduceQuality && currentMaxBitrate > 800_000) {
+                  // ✅ Redução gradual baseada no nível atual
+                  val newBitrate = when (qualityReductionLevel) {
+                    0 -> if (isLive) 1_800_000 else 2_000_000  // Nível 1: Redução leve (2.2Mbps → 1.8Mbps)
+                    1 -> if (isLive) 1_200_000 else 1_500_000  // Nível 2: Redução média (1.8Mbps → 1.2Mbps)
+                    2 -> if (isLive) 800_000 else 1_000_000     // Nível 3: Redução alta (1.2Mbps → 800kbps)
+                    else -> currentMaxBitrate // Não reduzir mais
+                  }
                   
-                  // Se mais de 3 buffering em pouco tempo, reduzir qualidade
-                  if (bufferingCount >= 3 && !qualityReduced && currentMaxBitrate > 1_000_000) {
+                  if (newBitrate < currentMaxBitrate) {
+                    qualityReductionLevel++
                     qualityReduced = true
-                    currentMaxBitrate = if (isLive) 1_200_000 else 1_500_000 // Reduzir para 1.2Mbps (LIVE) ou 1.5Mbps (VOD)
+                    currentMaxBitrate = newBitrate
                     
-                    android.util.Log.i("PlayerActivity", "📉 Wi-Fi lento detectado! Reduzindo qualidade para ${currentMaxBitrate / 1000}kbps")
+                    val newResolution = when (qualityReductionLevel) {
+                      1 -> Pair(1280, 720)  // 720p
+                      2 -> Pair(854, 480)   // 480p
+                      else -> Pair(640, 360) // 360p
+                    }
+                    
+                    android.util.Log.i("PlayerActivity", "📉 Wi-Fi lento detectado! Reduzindo qualidade (nível $qualityReductionLevel)")
+                    android.util.Log.i("PlayerActivity", "   Bitrate: ${currentMaxBitrate / 1000}kbps")
+                    android.util.Log.i("PlayerActivity", "   Resolução: ${newResolution.first}x${newResolution.second}")
+                    android.util.Log.i("PlayerActivity", "   Qualidade conexão: $estimatedQuality")
                     
                     // ✅ Aplicar novo bitrate e forçar re-seleção de tracks
                     val newParams = TrackSelectionParameters.Builder(this@PlayerActivity)
                       .setPreferredTextLanguage(null)
                       .setMaxVideoBitrate(currentMaxBitrate)
-                      .setMaxVideoSize(854, 480) // Reduzir resolução para 480p
-                      .setMinVideoBitrate(if (isLive) 300_000 else 250_000) // Bitrate mínimo ainda menor
+                      .setMaxVideoSize(newResolution.first, newResolution.second)
+                      .setMinVideoBitrate(if (isLive) (currentMaxBitrate * 0.3).toInt() else (currentMaxBitrate * 0.25).toInt())
                       .build()
                     
                     exo.trackSelectionParameters = newParams
-                    
-                    // ✅ Forçar re-seleção de tracks para aplicar nova qualidade imediatamente
-                    // O ExoPlayer aplica automaticamente quando em buffering, mas garantimos aqui
                     android.util.Log.i("PlayerActivity", "✅ Qualidade reduzida automaticamente para evitar travamentos")
-                    android.util.Log.i("PlayerActivity", "   Novo bitrate: ${currentMaxBitrate / 1000}kbps, Resolução: 854x480")
-                  }
-                } else {
-                  // Reset contador se buffering espaçado (rede normal)
-                  if (lastBufferingTime > 0 && now - lastBufferingTime > 10000) {
-                    bufferingCount = 0
-                    qualityReduced = false
-                    android.util.Log.d("PlayerActivity", "✅ Rede estável, resetando contador de buffering")
                   }
                 }
                 
                 lastBufferingTime = now
-                android.util.Log.i("PlayerActivity", "⏳ Bufferizando... (contador: $bufferingCount)")
+                lastBufferSize = bufferAhead
+                android.util.Log.i("PlayerActivity", "⏳ Bufferizando... (contador: $bufferingCount, buffer: ${bufferAhead}ms, qualidade: $estimatedQuality)")
               }
               Player.STATE_READY -> {
                 android.util.Log.i("PlayerActivity", "✅ Player pronto")
@@ -1196,11 +1248,24 @@ class PlayerActivity : ComponentActivity() {
                 handler.postDelayed(checkProgress, 2000) // Começar verificação após 2 segundos
               }
               
-              // Se está tocando bem por mais de 30 segundos, resetar contador de buffering
+              // ✅ Se está tocando bem por mais de 30 segundos, resetar contador de buffering e qualidade
               android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                if (exo.isPlaying && bufferingCount > 0) {
-                  bufferingCount = 0
-                  qualityReduced = false
+                if (exo.isPlaying && bufferingCount == 0 && connectionQuality != ConnectionQuality.POOR) {
+                  // Rede melhorou - resetar redução de qualidade gradualmente
+                  if (qualityReductionLevel > 0) {
+                    qualityReductionLevel = 0
+                    qualityReduced = false
+                    // Restaurar bitrate original
+                    currentMaxBitrate = if (isLive) 2_200_000 else 2_500_000
+                    val restoreParams = TrackSelectionParameters.Builder(this@PlayerActivity)
+                      .setPreferredTextLanguage(null)
+                      .setMaxVideoBitrate(currentMaxBitrate)
+                      .setMaxVideoSize(1280, 720) // Restaurar para 720p
+                      .setMinVideoBitrate(if (isLive) 500_000 else 400_000)
+                      .build()
+                    exo.trackSelectionParameters = restoreParams
+                    android.util.Log.i("PlayerActivity", "✅ Rede melhorou! Restaurando qualidade original (${currentMaxBitrate / 1000}kbps)")
+                  }
                   android.util.Log.d("PlayerActivity", "✅ Reprodução estável, resetando detecção de Wi-Fi lento")
                 }
               }, 30000) // 30 segundos

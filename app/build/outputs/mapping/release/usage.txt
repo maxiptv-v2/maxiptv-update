@@ -34078,7 +34078,6 @@ com.maxiptv.ui.player.PlayerActivity$StreamStats:
     public static synthetic com.maxiptv.ui.player.PlayerActivity$StreamStats copy$default(com.maxiptv.ui.player.PlayerActivity$StreamStats,int,java.lang.String,float,java.lang.String,int,java.lang.String,int,int,java.lang.Object)
 com.maxiptv.ui.player.PlayerActivity:
     private java.lang.String currentChannelLogo
-    private long lastBufferSize
     private long lastBufferTime
     private final void applyFormatQuality(androidx.media3.common.Format)
 com.maxiptv.ui.screens.AdminActivity:
@@ -69471,7 +69470,6 @@ com.maxiptv.ui.player.PlayerActivity$latencyRunnable$1
 com.maxiptv.ui.player.PlayerActivity$onCreate$17$1:
     public final java.lang.Object invoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation)
 com.maxiptv.ui.player.PlayerActivity$onCreate$17$2$$InternalSyntheticLambda$3$861782c12456cd5fb3c3dc30653d3d4e02ba459b0eadc57f227d5774c56010c3$0
-com.maxiptv.ui.player.PlayerActivity$onCreate$17$2$$InternalSyntheticLambda$3$c46d58c3bf5ea66bc4af737b4bf70458cb88a247fd2cc2f48452051344f416b3$0
 com.maxiptv.ui.player.PlayerActivity$onCreate$17$2:
     public final synthetic void onDeviceVolumeChanged(int,boolean)
 com.maxiptv.ui.player.PlayerActivity$onCreate$2
@@ -69487,6 +69485,8 @@ com.maxiptv.ui.player.PlayerActivity:
     public java.lang.String currentChannelName
     public boolean isAudioButtonFocused
     public boolean isSubtitleButtonFocused
+    public long lastBufferSize
+    public boolean qualityReduced
     public boolean subtitlesEnabled
     static void <clinit>()
     public static void applyQuality()
