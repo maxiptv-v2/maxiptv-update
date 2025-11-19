@@ -19,6 +19,8 @@ import com.maxiptv.ui.player.PlayerActivity
 import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.Icons.Default
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -111,37 +113,55 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   // ✅ Banner de fundo estilo Netflix
   Box(modifier = Modifier.fillMaxSize()) {
     // Banner de fundo com blur e transparência estilo Netflix
-    AsyncImage(
-      model = info?.info?.cover,
-      contentDescription = null,
-      modifier = Modifier
-        .fillMaxSize()
-        .blur(radius = 25.dp) // ✅ Blur real aplicado
-        .graphicsLayer {
-          alpha = 0.3f // ✅ Transparência ajustada (suave, não interfere nos botões)
-          // Efeito de escala para criar profundidade
-          scaleX = 1.1f
-          scaleY = 1.1f
-        },
-      contentScale = ContentScale.Crop // Não distorce, corta mantendo proporção
-    )
+    val coverUrl = info?.info?.cover
+    if (coverUrl != null && coverUrl.isNotBlank()) {
+      AsyncImage(
+        model = coverUrl,
+        contentDescription = null,
+        modifier = Modifier
+          .fillMaxSize()
+          .blur(radius = 25.dp) // ✅ Blur real aplicado
+          .graphicsLayer {
+            alpha = 0.4f // ✅ Transparência aumentada para ser mais visível
+            // Efeito de escala para criar profundidade
+            scaleX = 1.1f
+            scaleY = 1.1f
+          },
+        contentScale = ContentScale.Crop // Não distorce, corta mantendo proporção
+      )
+    } else {
+      // ✅ Fallback: fundo gradiente se não houver imagem
+      Box(
+        modifier = Modifier
+          .fillMaxSize()
+          .background(
+            Brush.verticalGradient(
+              colors = listOf(
+                Color(0xFF1A1A2E), // Azul escuro
+                Color(0xFF16213E), // Azul mais escuro
+                Color(0xFF0F3460)  // Azul muito escuro
+              )
+            )
+          )
+      )
+    }
     
-    // ✅ Overlay escuro ajustado para melhor contraste e legibilidade
+    // ✅ Overlay escuro ajustado para melhor contraste e legibilidade (mais transparente)
     Box(
       modifier = Modifier
         .fillMaxSize()
         .background(
           Brush.verticalGradient(
             colors = listOf(
-              Color.Black.copy(alpha = 0.7f),  // Topo mais escuro
-              Color.Black.copy(alpha = 0.55f), // Meio
-              Color.Black.copy(alpha = 0.8f)   // Embaixo mais escuro para os botões
+              Color.Black.copy(alpha = 0.5f),  // Topo menos escuro
+              Color.Black.copy(alpha = 0.4f), // Meio mais transparente
+              Color.Black.copy(alpha = 0.6f)   // Embaixo menos escuro para os botões
             )
           )
         )
     )
     
-    // ✅ Overlay adicional com gradiente radial para efeito de blur suave nas bordas
+    // ✅ Overlay adicional com gradiente radial para efeito de blur suave nas bordas (mais sutil)
     Box(
       modifier = Modifier
         .fillMaxSize()
@@ -149,8 +169,8 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
           Brush.radialGradient(
             colors = listOf(
               Color.Transparent,
-              Color.Black.copy(alpha = 0.3f),
-              Color.Black.copy(alpha = 0.5f)
+              Color.Black.copy(alpha = 0.2f), // Mais transparente
+              Color.Black.copy(alpha = 0.35f)  // Menos escuro
             ),
             radius = 900f
           )
@@ -426,7 +446,8 @@ fun Neon3DButton(
   isFocused: Boolean,
   onFocusChanged: (Boolean) -> Unit,
   modifier: Modifier = Modifier,
-  isActive: Boolean = false // ✅ Estado ativo (para Favoritar quando favoritado)
+  isActive: Boolean = false, // ✅ Estado ativo (para Favoritar quando favoritado)
+  icon: ImageVector? = null // ✅ Ícone opcional
 ) {
   val scale by animateFloatAsState(
     targetValue = if (isFocused) 1.15f else 1.0f,
@@ -439,12 +460,22 @@ fun Neon3DButton(
   
   val buttonSize = if (MaxiApp.isTv) 80.dp else 64.dp
   val textSize = if (MaxiApp.isTv) 14.sp else 12.sp
+  val iconSize = if (MaxiApp.isTv) 32.dp else 28.dp
+  
+  // ✅ Determinar ícone baseado no texto se não fornecido
+  val buttonIcon = icon ?: when (text.lowercase()) {
+    "assistir" -> Icons.Filled.PlayArrow
+    "favoritar" -> if (isActive) Icons.Filled.Star else Icons.Default.FavoriteBorder
+    "configurações", "configuracoes" -> Icons.Filled.Settings
+    else -> null
+  }
   
   Column(
     modifier = modifier,
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(8.dp)
   ) {
+    // ✅ Botão externo (quadrado azul claro)
     Box(
       modifier = Modifier
         .size(buttonSize)
@@ -452,65 +483,14 @@ fun Neon3DButton(
           scaleX = scale
           scaleY = scale
         }
-        .clip(RoundedCornerShape(20.dp))
+        .clip(RoundedCornerShape(12.dp))
         .background(
-          Brush.radialGradient(
-            colors = listOf(
-              Color(0xFF1A1A1A), // Preto profundo
-              Color(0xFF0A0A0A)  // Preto mais escuro
-            )
-          )
-        )
-        .then(
           if (isFocused || isActive) {
-            Modifier
-              .border(
-                width = 4.dp,
-                brush = Brush.linearGradient(
-                  colors = if (isActive && !isFocused) {
-                    // Quando favoritado mas sem foco: dourado
-                    listOf(
-                      Color(0xFFFFD700), // Dourado
-                      Color(0xFFFFA500), // Laranja dourado
-                      Color(0xFFFFD700), // Dourado
-                      Color(0xFFFFC107)  // Âmbar
-                    )
-                  } else {
-                    // Quando focado: neon colorido
-                    listOf(
-                      Color(0xFFFF1744), // Vermelho neon
-                      Color(0xFFE91E63), // Rosa neon
-                      Color(0xFF00D4FF), // Azul ciano
-                      Color(0xFF2196F3)  // Azul neon
-                    )
-                  }
-                ),
-                shape = RoundedCornerShape(20.dp)
-              )
-              .shadow(
-                elevation = 24.dp,
-                spotColor = if (isActive && !isFocused) Color(0xFFFFD700).copy(alpha = 0.8f) else Color(0xFF00D4FF).copy(alpha = 0.8f),
-                ambientColor = if (isActive && !isFocused) Color(0xFFFFD700).copy(alpha = 0.6f) else Color(0xFFFF1744).copy(alpha = 0.6f),
-                shape = RoundedCornerShape(20.dp)
-              )
+            // Quando focado ou ativo: azul ciano brilhante
+            Color(0xFF00D4FF).copy(alpha = 0.9f)
           } else {
-            Modifier
-              .border(
-                width = 2.dp,
-                brush = Brush.linearGradient(
-                  colors = listOf(
-                    Color(0xFFFF1744).copy(alpha = 0.5f),
-                    Color(0xFF00D4FF).copy(alpha = 0.5f)
-                  )
-                ),
-                shape = RoundedCornerShape(20.dp)
-              )
-              .shadow(
-                elevation = 8.dp,
-                spotColor = Color(0xFF00D4FF).copy(alpha = 0.4f),
-                ambientColor = Color(0xFFFF1744).copy(alpha = 0.3f),
-                shape = RoundedCornerShape(20.dp)
-              )
+            // Quando não focado: azul claro
+            Color(0xFF4FC3F7).copy(alpha = 0.8f)
           }
         )
         .clickable { onClick() }
@@ -518,21 +498,32 @@ fun Neon3DButton(
         .onFocusChanged { onFocusChanged(it.isFocused) },
       contentAlignment = Alignment.Center
     ) {
-      // Efeito de brilho interno
+      // ✅ Botão interno (quadrado azul escuro)
       Box(
         modifier = Modifier
-          .fillMaxSize()
+          .size(buttonSize * 0.75f) // 75% do tamanho externo
+          .clip(RoundedCornerShape(8.dp))
           .background(
-            Brush.radialGradient(
-              colors = listOf(
-                Color.White.copy(alpha = if (isFocused) 0.15f else 0.05f),
-                Color.Transparent
-              ),
-              radius = 200f
-            ),
-            shape = RoundedCornerShape(20.dp)
+            if (isFocused || isActive) {
+              // Quando focado ou ativo: azul escuro
+              Color(0xFF0277BD)
+            } else {
+              // Quando não focado: azul médio escuro
+              Color(0xFF0288D1)
+            }
+          ),
+        contentAlignment = Alignment.Center
+      ) {
+        // ✅ Ícone dentro do botão interno
+        if (buttonIcon != null) {
+          Icon(
+            imageVector = buttonIcon,
+            contentDescription = text,
+            tint = Color.White,
+            modifier = Modifier.size(iconSize)
           )
-      )
+        }
+      }
     }
     
     // Texto abaixo do botão

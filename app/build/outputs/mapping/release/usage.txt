@@ -47206,7 +47206,6 @@ androidx.compose.foundation.layout.Arrangement:
     public static androidx.compose.foundation.layout.Arrangement$HorizontalOrVertical getSpaceBetween()
     public static androidx.compose.foundation.layout.Arrangement$Horizontal getStart()
     public static androidx.compose.foundation.layout.Arrangement$Vertical getTop()
-    public static androidx.compose.foundation.layout.Arrangement$SpacedAligned spacedBy-0680j_4(float)
 androidx.compose.foundation.layout.BoxChildDataElement$$InternalSyntheticBackport$1$a8629f3b6ac8282aa5200891f36011ca341ec84722a274fd13816632f2f9a0e4$0
 androidx.compose.foundation.layout.BoxChildDataElement:
     public final kotlin.jvm.functions.Function1 inspectorInfo
@@ -47411,7 +47410,6 @@ androidx.compose.foundation.layout.SizeKt$widthIn-VpY3zN4$$inlined$debugInspecto
 androidx.compose.foundation.layout.SizeKt:
     public static synthetic androidx.compose.ui.Modifier fillMaxHeight$default(androidx.compose.ui.Modifier)
     public static androidx.compose.ui.Modifier fillMaxSize$default(androidx.compose.ui.Modifier)
-    public static synthetic androidx.compose.ui.Modifier fillMaxWidth$default(androidx.compose.ui.Modifier)
     public static synthetic androidx.compose.ui.Modifier heightIn-VpY3zN4$default(androidx.compose.ui.Modifier,float)
 androidx.compose.foundation.layout.SizeNode$measure$1
 androidx.compose.foundation.layout.SizeNode:
@@ -49945,7 +49943,6 @@ androidx.compose.material3.DividerKt:
     public static final java.lang.String getString-2EP1pXo(int,androidx.compose.runtime.Composer)
     public static final boolean hasCollectionInfo(androidx.compose.ui.semantics.SemanticsNode)
     public static final androidx.compose.ui.modifier.ModifierLocalMap modifierLocalMapOf()
-    public static synthetic androidx.compose.runtime.ParcelableSnapshotMutableState mutableStateOf$default(java.lang.Object)
     public static final androidx.compose.runtime.SnapshotMutationPolicy neverEqualPolicy()
     public static final androidx.compose.runtime.SnapshotMutationPolicy neverEqualPolicy$1()
     public static final boolean positionChangedIgnoreConsumed(androidx.compose.ui.input.pointer.PointerInputChange)
@@ -50113,7 +50110,6 @@ androidx.compose.material3.RadioButtonColors:
     public static androidx.compose.runtime.State radioColor$material3_release()
 androidx.compose.material3.RadioButtonDefaults
 androidx.compose.material3.RadioButtonKt$RadioButton$1$1
-androidx.compose.material3.RadioButtonKt$RadioButton$2
 androidx.compose.material3.RadioButtonKt:
     public static final synthetic float access$getRadioStrokeWidth$p()
 androidx.compose.material3.RippleConfiguration:
@@ -50277,8 +50273,6 @@ androidx.compose.material3.SwitchColors:
     public static long thumbColor-WaAFU9c$material3_release()
     public static long trackColor-WaAFU9c$material3_release()
 androidx.compose.material3.SwitchDefaults
-androidx.compose.material3.SwitchKt$Switch$1:
-    public final void invoke(androidx.compose.runtime.Composer,int)
 androidx.compose.material3.SwitchKt$SwitchImpl$2:
     public final void invoke(androidx.compose.runtime.Composer,int)
 androidx.compose.material3.TextFieldColors$copy$11
@@ -50338,7 +50332,6 @@ androidx.compose.material3.ThumbNode:
 androidx.compose.material3.Typography:
     static void <clinit>()
     public final androidx.compose.ui.text.TextStyle getBodyLarge()
-    public final androidx.compose.ui.text.TextStyle getBodyMedium()
     public final androidx.compose.ui.text.TextStyle getBodySmall()
     public static androidx.compose.ui.text.TextStyle getDisplayLarge()
     public static androidx.compose.ui.text.TextStyle getDisplayMedium()
@@ -50349,8 +50342,6 @@ androidx.compose.material3.Typography:
     public static androidx.compose.ui.text.TextStyle getLabelLarge()
     public static androidx.compose.ui.text.TextStyle getLabelMedium()
     public static androidx.compose.ui.text.TextStyle getLabelSmall()
-    public final androidx.compose.ui.text.TextStyle getTitleLarge()
-    public final androidx.compose.ui.text.TextStyle getTitleMedium()
     public static androidx.compose.ui.text.TextStyle getTitleSmall()
 androidx.compose.material3.TypographyKt$LocalTypography$1
 androidx.compose.material3.TypographyKt$WhenMappings
@@ -51222,7 +51213,6 @@ androidx.compose.runtime.ComposablesKt:
     public static final androidx.compose.ui.geometry.RoundRect RoundRect-gG7oq9Y(float,float,float,float,long)
     public static final boolean access$isVisible(androidx.compose.ui.semantics.SemanticsNode)
     public static synthetic androidx.compose.ui.Modifier composed$default(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function3)
-    public static final int getCurrentCompositeKeyHash(androidx.compose.runtime.Composer)
     public static final kotlin.jvm.functions.Function2 getScrollCaptureScrollByAction(androidx.compose.ui.semantics.SemanticsNode)
     public static androidx.compose.ui.Modifier pointerHoverIcon$default(androidx.compose.ui.Modifier)
     public static final androidx.compose.ui.geometry.Rect toRect(androidx.compose.ui.geometry.MutableRect)
@@ -52612,7 +52602,6 @@ androidx.compose.runtime.external.kotlinx.collections.immutable.implementations.
     public static long getUnspecified-F1C5BW0()
     public static long getUnspecified-NH-jbRc()
     public static int getUp-dhqQ-8s()
-    public static long getWhite-0d7_KjU()
     public static int getXor-0nO6VwU()
     public static androidx.compose.ui.geometry.Rect getZero()
     public static long getZero-F1C5BW0()
@@ -57747,7 +57736,6 @@ androidx.compose.ui.text.PlatformSpanStyle$Companion:
     public static int getAuto-vmbZdU8()
     public static int getBalanced-fcGXIks()
     public static int getBlocking-PKNRLFQ()
-    public static androidx.compose.ui.text.font.FontWeight getBold()
     public static float getCenter-PIaL0Z0()
     public static int getCharacter-DRrd7Zo()
     public static int getCharacters-IUNYP9k()
@@ -69091,7 +69079,6 @@ com.google.common.collect.Collections2:
     public static final float LogoutButton$lambda$72(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
     public static final com.maxiptv.ui.theme.SafeAreaOverride MaxiSafeArea$lambda$1(androidx.compose.runtime.MutableState)
     public static final float NeonText_r9BaKPg$lambda$63(androidx.compose.animation.core.InfiniteTransition$TransitionAnimationState)
-    public static final com.maxiptv.data.VodInfoResponse VodDetailsScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List VodDetailsScreen$lambda$1(androidx.compose.runtime.MutableState)
     public static final boolean VodDetailsScreen$lambda$12(androidx.compose.runtime.MutableState)
     public static final void access$AdminPanelScreen$lambda$11(androidx.compose.runtime.MutableState,boolean)
@@ -69432,7 +69419,6 @@ com.maxiptv.MaxiApp$Companion:
     public static boolean isPhone()
     public static boolean isProjector()
     public static boolean isTablet()
-    public static boolean isTv()
     public static boolean isTvBox()
 com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76ef23425c78987b9f66f4863edf70dea637a2adb30518f$0
 com.maxiptv.data.ActiveSession$$InternalSyntheticBackport$1$facadac50bab8403c76ef23425c78987b9f66f4863edf70dea637a2adb30518f$1
@@ -70058,6 +70044,7 @@ com.maxiptv.ui.screens.HomeScreenKt$HomeScreen$9
 com.maxiptv.ui.screens.HomeScreenKt$LogoutButton$1$1
 com.maxiptv.ui.screens.HomeScreenKt$LogoutButton$2:
     public final void invoke(androidx.compose.foundation.layout.RowScope,androidx.compose.runtime.Composer,int)
+com.maxiptv.ui.screens.HomeScreenKt$LogoutButton$3
 com.maxiptv.ui.screens.HomeScreenKt$NeonText$2
 com.maxiptv.ui.screens.HomeScreenKt
 com.maxiptv.ui.screens.LiveScreenKt$$InternalSyntheticLambda$3$8aeac67c1eea26e5a3af23a1720fcf10134a21889be04bbc8ad091ed869148bc$0
