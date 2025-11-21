@@ -1,8 +1,6 @@
 package com.maxiptv.data
 
 import com.maxiptv.data.SettingsRepo
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 data class AuthResponse(val user_info: UserInfo?)
 data class UserInfo(val auth: Int?, val status: String?)
 
@@ -32,10 +30,9 @@ data class VodItem(val stream_id: Int, val name: String, val stream_icon: String
 @kotlinx.serialization.Serializable
 data class SeriesItem(val series_id: Int, val name: String, val cover: String?, val category_id: String?)
 
-@JsonClass(generateAdapter = true)
 data class VodInfoResponse(
-    @Json(name = "info") val info: VodInfo?, 
-    @Json(name = "movie_data") val movie_data: Map<String,Any>?
+    val info: VodInfo?, 
+    val movie_data: Map<String,Any>?
 ) {
   val streamUrl: String?
     get() {
@@ -69,17 +66,16 @@ data class VodInfoResponse(
       return null
     }
 }
-@JsonClass(generateAdapter = true)
 data class VodInfo(
-  @Json(name = "name") val name: String?, 
-  @Json(name = "plot") val plot: String?, 
-  @Json(name = "cover") val cover: String?,
-  @Json(name = "cover_big") val cover_big: String?,
-  @Json(name = "movie_image") val movie_image: String?,
-  @Json(name = "rating") val rating: Int?,
-  @Json(name = "rating_5based") val rating_5based: Int?,
-  @Json(name = "genre") val genre: String?,
-  @Json(name = "releasedate") val releasedate: String?
+  val name: String?, 
+  val plot: String?, 
+  val cover: String?,
+  val cover_big: String?,
+  val movie_image: String?,
+  val rating: Int?,
+  val rating_5based: Int?,
+  val genre: String?,
+  val releasedate: String?
 ) {
   // ✅ Propriedade computada para obter a melhor capa disponível
   val bestCover: String? get() = cover_big ?: movie_image ?: cover 

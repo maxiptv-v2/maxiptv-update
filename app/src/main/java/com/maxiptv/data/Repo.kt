@@ -211,11 +211,26 @@ object XRepo {
     try {
       val response = a.vodInfo(user, pass, vodId = id)
       android.util.Log.i("XRepo", "📺 VOD Info carregado para ID $id")
+      android.util.Log.i("XRepo", "   info: ${if (response.info != null) "existe" else "NULL"}")
       android.util.Log.i("XRepo", "   info.name: ${response.info?.name}")
       android.util.Log.i("XRepo", "   info.plot: ${response.info?.plot?.take(50) ?: "NULL"}...")
+      android.util.Log.i("XRepo", "   info.plot.isNullOrBlank(): ${response.info?.plot.isNullOrBlank()}")
       android.util.Log.i("XRepo", "   synopsis (combinado): ${response.synopsis?.take(50) ?: "NULL"}...")
       android.util.Log.i("XRepo", "   info.rating: ${response.info?.rating}")
+      android.util.Log.i("XRepo", "   info.genre: ${response.info?.genre}")
       android.util.Log.i("XRepo", "   movie_data: ${if (response.movie_data != null) "existe" else "null"}")
+      
+      // ✅ Debug detalhado da sinopse
+      val synopsisValue = response.synopsis
+      if (synopsisValue.isNullOrBlank()) {
+        android.util.Log.w("XRepo", "⚠️ SINOPSE VAZIA! Verificando...")
+        android.util.Log.w("XRepo", "   info.plot direto: '${response.info?.plot}'")
+        android.util.Log.w("XRepo", "   info.plot length: ${response.info?.plot?.length ?: 0}")
+        android.util.Log.w("XRepo", "   movie_data.plot: ${response.movie_data?.get("plot")}")
+        android.util.Log.w("XRepo", "   movie_data.description: ${response.movie_data?.get("description")}")
+      } else {
+        android.util.Log.i("XRepo", "✅ SINOPSE ENCONTRADA: ${synopsisValue.take(100)}...")
+      }
       
       // ✅ Verificar se plot está em movie_data
       if (response.info?.plot.isNullOrBlank() && response.movie_data != null) {

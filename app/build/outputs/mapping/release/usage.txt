@@ -70493,8 +70493,8 @@ com.maxiptv.ui.screens.VodDetailsScreenKt$VodDetailsScreen$7
 com.maxiptv.ui.screens.VodDetailsScreenKt$VodDetailsScreen$availableLanguages$1$1
 com.maxiptv.ui.screens.VodDetailsScreenKt:
     public static final boolean VodDetailsScreen$lambda$12(androidx.compose.runtime.MutableState)
-    public static final float access$Neon3DButton$lambda$109(androidx.compose.runtime.State)
-    public static final void access$VodDetailsScreen$lambda$108$lambda$50(androidx.compose.runtime.MutableState,boolean)
+    public static final float access$Neon3DButton$lambda$112(androidx.compose.runtime.State)
+    public static final void access$VodDetailsScreen$lambda$111$lambda$50(androidx.compose.runtime.MutableState,boolean)
     public static final void access$VodDetailsScreen$lambda$13(androidx.compose.runtime.MutableState,boolean)
     public static final void access$VodDetailsScreen$lambda$16(androidx.compose.runtime.MutableState,boolean)
     public static final void access$VodDetailsScreen$lambda$22(androidx.compose.runtime.MutableState,boolean)
