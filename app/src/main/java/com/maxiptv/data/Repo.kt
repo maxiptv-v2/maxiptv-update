@@ -214,29 +214,14 @@ object XRepo {
       android.util.Log.i("XRepo", "   info: ${if (response.info != null) "existe" else "NULL"}")
       android.util.Log.i("XRepo", "   info.name: ${response.info?.name}")
       android.util.Log.i("XRepo", "   info.plot: ${response.info?.plot?.take(50) ?: "NULL"}...")
-      android.util.Log.i("XRepo", "   info.plot.isNullOrBlank(): ${response.info?.plot.isNullOrBlank()}")
-      android.util.Log.i("XRepo", "   synopsis (combinado): ${response.synopsis?.take(50) ?: "NULL"}...")
-      android.util.Log.i("XRepo", "   info.rating: ${response.info?.rating}")
-      android.util.Log.i("XRepo", "   info.genre: ${response.info?.genre}")
       android.util.Log.i("XRepo", "   movie_data: ${if (response.movie_data != null) "existe" else "null"}")
       
-      // ✅ Debug detalhado da sinopse
-      val synopsisValue = response.synopsis
-      if (synopsisValue.isNullOrBlank()) {
-        android.util.Log.w("XRepo", "⚠️ SINOPSE VAZIA! Verificando...")
-        android.util.Log.w("XRepo", "   info.plot direto: '${response.info?.plot}'")
-        android.util.Log.w("XRepo", "   info.plot length: ${response.info?.plot?.length ?: 0}")
-        android.util.Log.w("XRepo", "   movie_data.plot: ${response.movie_data?.get("plot")}")
-        android.util.Log.w("XRepo", "   movie_data.description: ${response.movie_data?.get("description")}")
+      // ✅ Debug da sinopse (igual versão 270)
+      if (response.info?.plot.isNullOrBlank()) {
+        android.util.Log.w("XRepo", "⚠️ SINOPSE VAZIA!")
+        android.util.Log.w("XRepo", "   info.plot: '${response.info?.plot}'")
       } else {
-        android.util.Log.i("XRepo", "✅ SINOPSE ENCONTRADA: ${synopsisValue.take(100)}...")
-      }
-      
-      // ✅ Verificar se plot está em movie_data
-      if (response.info?.plot.isNullOrBlank() && response.movie_data != null) {
-        android.util.Log.w("XRepo", "⚠️ Plot não encontrado em info, verificando movie_data...")
-        val plotInMovieData = response.movie_data["plot"] ?: response.movie_data["description"] ?: response.movie_data["synopsis"]
-        android.util.Log.i("XRepo", "   plot em movie_data: ${plotInMovieData?.toString()?.take(50)}")
+        android.util.Log.i("XRepo", "✅ SINOPSE ENCONTRADA: ${response.info?.plot?.take(100)}...")
       }
       
       vodInfo.emit(response)

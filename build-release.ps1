@@ -1,143 +1,118 @@
-# MaxiPTV Release Build Script
-# Uso: .\build-release.ps1 [debug|release]
+# Script para compilar o app em Release e enviar atualização para GitHub
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  COMPILANDO E ENVIANDO ATUALIZACAO" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
 
-param(
-    [Parameter(Mandatory=$true)]
-    [ValidateSet("debug", "release")]
-    [string]$BuildType
-)
+$ErrorActionPreference = "Stop"
 
-# Configuracoes
-$GitHubToken = $env:GITHUB_TOKEN
-$GitHubRepo = "maxiptv-v2/maxiptv-update"
-$GitHubUrl = "https://github.com/$GitHubRepo.git"
+# Configurações do GitHub (token já configurado no remote)
 
-if (-not $GitHubToken) {
-    Write-Host "ERRO: Token do GitHub nao configurado!" -ForegroundColor Red
-    Write-Host "Configure a variavel de ambiente GITHUB_TOKEN antes de executar." -ForegroundColor Yellow
-    Write-Host 'Exemplo: $env:GITHUB_TOKEN = "seu_token_aqui"' -ForegroundColor Cyan
-    exit 1
-}
-
-Write-Host "MaxiPTV Build Script - Tipo: $BuildType" -ForegroundColor Cyan
-
-if ($BuildType -eq "debug") {
-    Write-Host "Modo DEBUG - Compilando para testes..." -ForegroundColor Yellow
-    Write-Host "NAO sera enviado para GitHub" -ForegroundColor Red
-    
-    .\gradlew.bat assembleDebug
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "APK Debug compilado com sucesso!" -ForegroundColor Green
-        Write-Host "Local: app/build/outputs/apk/debug/app-debug.apk" -ForegroundColor Blue
-    } else {
-        Write-Host "Erro na compilacao debug!" -ForegroundColor Red
-        exit 1
+try {
+    # 1. Limpar build anterior (com tratamento de erro)
+    Write-Host "1. Limpando build anterior..." -ForegroundColor Yellow
+    try {
+        .\gradlew.bat clean --console=plain 2>&1 | Out-Null
+    } catch {
+        Write-Host "   ⚠️ Não foi possível limpar completamente (arquivos podem estar em uso)" -ForegroundColor Yellow
     }
     
-} elseif ($BuildType -eq "release") {
-    Write-Host "Modo RELEASE - Compilando versao oficial..." -ForegroundColor Green
-    
-    # 1. Ler versao atual
-    $versionJson = Get-Content "version.json" | ConvertFrom-Json
-    $currentVersion = $versionJson.version
-    $currentVersionCode = $versionJson.versionCode
-    
-    # 2. Incrementar versao
-    $newVersionCode = $currentVersionCode + 1
-    $versionParts = $currentVersion -split '\.'
-    $major = [int]$versionParts[0].Substring(1)
-    $minor = [int]$versionParts[1]
-    $patch = [int]$versionParts[2]
-    
-    $patch++
-    $newVersion = "v$major.$minor.$patch"
-    
-    Write-Host "Versao atual: $currentVersion" -ForegroundColor Blue
-    Write-Host "Nova versao: $newVersion" -ForegroundColor Green
-    
-    # 3. Atualizar version.json
-    $versionJson.version = $newVersion
-    $versionJson.versionCode = $newVersionCode
-    $versionJson.buildNumber = $newVersionCode
-    $versionJson.lastUpdated = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
-    
-    $versionJson | ConvertTo-Json -Depth 10 | Set-Content "version.json"
-    Write-Host "version.json atualizado" -ForegroundColor Green
-    
-    # 3.5. Atualizar build.gradle.kts
-    $buildGradlePath = "app/build.gradle.kts"
-    $buildGradleContent = Get-Content $buildGradlePath -Raw
-    $buildGradleContent = $buildGradleContent -replace 'versionCode = \d+', "versionCode = $newVersionCode"
-    $buildGradleContent = $buildGradleContent -replace 'versionName = "[\d\.]+"', "versionName = `"$($newVersion.Substring(1))`""
-    $buildGradleContent | Set-Content $buildGradlePath -NoNewline
-    Write-Host "build.gradle.kts atualizado" -ForegroundColor Green
-    
-    # 4. Atualizar update.json
-    $updateJson = Get-Content "update.json" | ConvertFrom-Json
-    $updateJson.version = $newVersion
-    $updateJson.versionCode = $newVersionCode
-    $updateJson.buildNumber = $newVersionCode
-    # Usar raw.githubusercontent para download direto do APK
-    $updateJson.downloadUrl = "https://raw.githubusercontent.com/$GitHubRepo/main/maxiptv-release.apk"
-    $updateJson.lastUpdated = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
-    
-    $updateJson | ConvertTo-Json -Depth 10 | Set-Content "update.json"
-    Write-Host "update.json atualizado" -ForegroundColor Green
-    
-    # 5. Compilar release
-    Write-Host "Compilando APK Release..." -ForegroundColor Yellow
-    .\gradlew.bat assembleRelease
+    # 2. Compilar em Release
+    Write-Host ""
+    Write-Host "2. Compilando em Release..." -ForegroundColor Yellow
+    .\gradlew.bat assembleRelease --console=plain
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Erro na compilacao release!" -ForegroundColor Red
-        exit 1
+        throw "Erro na compilação"
     }
     
-    # 6. Copiar APK (já vem com nome correto: maxiptv-release.apk)
-    $releaseApk = "app/build/outputs/apk/release/maxiptv-release.apk"
-    $finalApk = "maxiptv-release.apk"
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Green
+    Write-Host "  COMPILACAO CONCLUIDA!" -ForegroundColor Green
+    Write-Host "========================================" -ForegroundColor Green
+    Write-Host ""
     
-    if (Test-Path $releaseApk) {
-        Copy-Item $releaseApk $finalApk -Force
-        Write-Host "APK copiado: $finalApk" -ForegroundColor Green
-    } else {
-        # Fallback para nome antigo (caso ainda use app-release.apk)
-        $fallbackApk = "app/build/outputs/apk/release/app-release.apk"
-        if (Test-Path $fallbackApk) {
-            Copy-Item $fallbackApk $finalApk -Force
-            Write-Host "APK renomeado para: $finalApk" -ForegroundColor Green
-        } else {
-            Write-Host "APK release nao encontrado!" -ForegroundColor Red
-            exit 1
+    # Listar APKs gerados
+    $apkFiles = Get-ChildItem -Path "app\build\outputs\apk\release\" -Filter "*.apk" -ErrorAction SilentlyContinue
+    if ($apkFiles) {
+        Write-Host "APKs encontrados:" -ForegroundColor Yellow
+        foreach ($apk in $apkFiles) {
+            Write-Host "  - $($apk.Name) ($([math]::Round($apk.Length / 1MB, 2)) MB)" -ForegroundColor White
         }
     }
     
-    # 7. Configurar Git
-    Write-Host "Configurando Git..." -ForegroundColor Yellow
-    git config user.email "maiptv1987@gmail.com"
-    git config user.name "MaxiPTV Update System"
-    
-    # 8. Commit e Push
-    Write-Host "Enviando para GitHub..." -ForegroundColor Yellow
-    git add .
-    # ✅ Sempre incluir "Build X" na mensagem de commit
-    git commit -m "Release $newVersion - Build $newVersionCode"
-    
-    $remoteUrl = "https://$GitHubToken@github.com/$GitHubRepo.git"
-    git remote set-url origin $remoteUrl
-    git push origin main
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "RELEASE $newVersion ENVIADO COM SUCESSO!" -ForegroundColor Green
-        Write-Host "APK: maxiptv-release.apk" -ForegroundColor Blue
-        Write-Host "GitHub: https://github.com/$GitHubRepo" -ForegroundColor Blue
-        Write-Host "Versao: $newVersion (Build $newVersionCode)" -ForegroundColor Blue
-    } else {
-        Write-Host "Erro ao enviar para GitHub!" -ForegroundColor Red
-        exit 1
+    # 3. Obter versão do build.gradle.kts
+    Write-Host ""
+    Write-Host "3. Obtendo versão do app..." -ForegroundColor Yellow
+    $buildGradle = Get-Content "app\build.gradle.kts" -Raw
+    if ($buildGradle -match 'versionCode\s*=\s*(\d+)') {
+        $versionCode = $matches[1]
     }
+    if ($buildGradle -match 'versionName\s*=\s*"([^"]+)"') {
+        $versionName = $matches[1]
+    }
+    
+    Write-Host "   Versão: $versionName (Build $versionCode)" -ForegroundColor Cyan
+    
+    # 4. Verificar se há mudanças para commitar
+    Write-Host ""
+    Write-Host "4. Verificando mudanças..." -ForegroundColor Yellow
+    $status = git status --porcelain
+    if ($status) {
+        Write-Host "   Mudanças encontradas, preparando commit..." -ForegroundColor Cyan
+        
+        # Adicionar apenas arquivos de código (não build)
+        git add app/src/
+        git add build-release.ps1
+        
+        # Commit
+        $commitMessage = "Release v$versionName - Build $versionCode - Fix: Restaurado VodInfo para versão 270 (sinopse funcionando)"
+        git commit -m $commitMessage
+        
+        Write-Host "   Commit criado: $commitMessage" -ForegroundColor Green
+    } else {
+        Write-Host "   Nenhuma mudança para commitar" -ForegroundColor Yellow
+    }
+    
+    # 5. Criar tag se não existir
+    Write-Host ""
+    Write-Host "5. Criando tag de versão..." -ForegroundColor Yellow
+    $tagName = "v$versionName"
+    $tagExists = git tag -l $tagName
+    if (-not $tagExists) {
+        git tag -a $tagName -m "Release v$versionName - Build $versionCode"
+        Write-Host "   Tag criada: $tagName" -ForegroundColor Green
+    } else {
+        Write-Host "   Tag já existe: $tagName" -ForegroundColor Yellow
+    }
+    
+    # 6. Push para GitHub
+    Write-Host ""
+    Write-Host "6. Enviando para GitHub..." -ForegroundColor Yellow
+    
+    # Push commits (o remote já tem a chave configurada)
+    git push origin HEAD
+    
+    # Push tags
+    git push origin --tags
+    
+    Write-Host "   Push concluído com sucesso!" -ForegroundColor Green
+    
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Green
+    Write-Host "  PROCESSO CONCLUIDO!" -ForegroundColor Green
+    Write-Host "========================================" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Versão: $versionName (Build $versionCode)" -ForegroundColor Cyan
+    Write-Host "APK: app\build\outputs\apk\release\" -ForegroundColor Cyan
+    Write-Host ""
+    
+} catch {
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host "  ERRO" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Erro: $_" -ForegroundColor Red
+    exit 1
 }
-
-Write-Host "Build concluido!" -ForegroundColor Cyan
-

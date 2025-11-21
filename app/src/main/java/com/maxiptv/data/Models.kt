@@ -44,41 +44,9 @@ data class VodInfoResponse(
       return "${baseUrl}movie/$user/$pass/$id.mp4"
     }
   
-  // ✅ Buscar sinopse em múltiplos lugares (info.plot, movie_data.plot, movie_data.description, etc.)
-  val synopsis: String?
-    get() {
-      // Prioridade 1: info.plot
-      val plotFromInfo = info?.plot?.takeIf { it.isNotBlank() }
-      if (plotFromInfo != null) return plotFromInfo
-      
-      // Prioridade 2: movie_data (vários campos possíveis)
-      movie_data?.let { data ->
-        return (data["plot"] as? String)?.takeIf { it.isNotBlank() }
-          ?: (data["Plot"] as? String)?.takeIf { it.isNotBlank() }
-          ?: (data["description"] as? String)?.takeIf { it.isNotBlank() }
-          ?: (data["Description"] as? String)?.takeIf { it.isNotBlank() }
-          ?: (data["synopsis"] as? String)?.takeIf { it.isNotBlank() }
-          ?: (data["Synopsis"] as? String)?.takeIf { it.isNotBlank() }
-          ?: (data["overview"] as? String)?.takeIf { it.isNotBlank() }
-          ?: (data["Overview"] as? String)?.takeIf { it.isNotBlank() }
-      }
-      
-      return null
-    }
 }
-data class VodInfo(
-  val name: String?, 
-  val plot: String?, 
-  val cover: String?,
-  val cover_big: String?,
-  val movie_image: String?,
-  val rating: Int?,
-  val rating_5based: Int?,
-  val genre: String?,
-  val releasedate: String?
-) {
-  // ✅ Propriedade computada para obter a melhor capa disponível
-  val bestCover: String? get() = cover_big ?: movie_image ?: cover 
+// ✅ Modelo EXATAMENTE igual à versão 270 que funcionava (apenas 3 campos)
+data class VodInfo(val name: String?, val plot: String?, val cover: String?) { 
   val isValid: Boolean get() = !name.isNullOrBlank() 
 }
 
