@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maxiptv"
-    android:versionCode="275"
-    android:versionName="1.0.275" >
+    android:versionCode="276"
+    android:versionName="1.0.276" >
 
     <uses-sdk
         android:minSdkVersion="21"

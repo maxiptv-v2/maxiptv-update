@@ -520,13 +520,8 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
             }
           }
           
-          // ✅ Sinopse (usar propriedade synopsis do modelo que busca em múltiplos lugares)
-          // ✅ Fallback direto para garantir que funcione
-          val synopsisText = info?.synopsis 
-            ?: info?.info?.plot?.takeIf { it.isNotBlank() }
-            ?: (info?.movie_data?.get("plot") as? String)?.takeIf { it.isNotBlank() }
-            ?: (info?.movie_data?.get("description") as? String)?.takeIf { it.isNotBlank() }
-            ?: "Sem descrição"
+          // ✅ Sinopse (mesma lógica das séries que funciona!)
+          val synopsisText = info?.info?.plot ?: "Sem descrição"
           
           Text(
             text = synopsisText,
