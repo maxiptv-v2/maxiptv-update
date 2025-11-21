@@ -75,9 +75,45 @@ try {
             Write-Host "  - $($apk.Name) ($([math]::Round($apk.Length / 1MB, 2)) MB)" -ForegroundColor White
         }
         
+        # Copiar APK para raiz como binário
+        Write-Host ""
+        Write-Host "2. Copiando APK para raiz (como binario)..." -ForegroundColor Yellow
+        $sourceApk = $apkFiles[0].FullName
+        $destApk = "maxiptv-release.apk"
+        
+        # Garantir que .gitattributes trata APK como binário
+        if (-not (Test-Path ".gitattributes")) {
+            Write-Host "   Criando .gitattributes..." -ForegroundColor Gray
+            "*.apk binary" | Out-File -FilePath ".gitattributes" -Encoding utf8 -NoNewline
+        } else {
+            $gitattrs = Get-Content ".gitattributes" -Raw
+            if ($gitattrs -notmatch "\.apk.*binary") {
+                Write-Host "   Adicionando regra para APK em .gitattributes..." -ForegroundColor Gray
+                Add-Content -Path ".gitattributes" -Value "*.apk binary"
+            }
+        }
+        
+        # Copiar APK preservando como binário
+        Copy-Item $sourceApk $destApk -Force
+        Write-Host "   [OK] APK copiado para: $destApk" -ForegroundColor Green
+        
+        # Verificar se arquivo foi copiado corretamente
+        if (Test-Path $destApk) {
+            $destSize = (Get-Item $destApk).Length
+            $sourceSize = $apkFiles[0].Length
+            if ($destSize -eq $sourceSize) {
+                Write-Host "   [OK] Tamanho verificado: $([math]::Round($destSize / 1MB, 2)) MB" -ForegroundColor Green
+            } else {
+                Write-Host "   [ERRO] Tamanhos diferentes! Origem: $sourceSize, Destino: $destSize" -ForegroundColor Red
+                throw "Erro ao copiar APK"
+            }
+        } else {
+            throw "APK nao foi copiado corretamente"
+        }
+        
         # Atualizar update.json com nova versão e tamanho do APK
         Write-Host ""
-        Write-Host "2. Atualizando update.json..." -ForegroundColor Yellow
+        Write-Host "3. Atualizando update.json..." -ForegroundColor Yellow
         $apkSizeMB = [math]::Round($apkFiles[0].Length / 1MB, 1)
         $updateJson = Get-Content "update.json" -Raw | ConvertFrom-Json
         $updateJson.version = "v$versionName"
@@ -92,20 +128,45 @@ try {
     }
     
     Write-Host ""
-    Write-Host "3. Versao do app: v$versionName (Build $versionCode)" -ForegroundColor Yellow
+    Write-Host "4. Versao do app: v$versionName (Build $versionCode)" -ForegroundColor Yellow
     
-    # 4. Verificar se há mudanças para commitar
+    # 5. Verificar se há mudanças para commitar
     Write-Host ""
-    Write-Host "4. Verificando mudanças..." -ForegroundColor Yellow
+    Write-Host "5. Verificando mudanças..." -ForegroundColor Yellow
     $status = git status --porcelain
     if ($status) {
         Write-Host "   Mudanças encontradas, preparando commit..." -ForegroundColor Cyan
         
-        # Adicionar apenas arquivos de código (não build)
+        # Garantir que APK seja tratado como binário no Git
+        Write-Host "   Configurando APK como binario no Git..." -ForegroundColor Gray
+        git add .gitattributes 2>&1 | Out-Null
+        
+        # Adicionar arquivos de código
         git add app/src/
         git add app/build.gradle.kts
         git add build-release.ps1
         git add update.json
+        
+        # Adicionar APK como binário (se existir)
+        if (Test-Path "maxiptv-release.apk") {
+            Write-Host "   Adicionando APK como binario..." -ForegroundColor Gray
+            
+            # Garantir que Git reconhece como binário
+            git rm --cached maxiptv-release.apk 2>&1 | Out-Null
+            git add --renormalize maxiptv-release.apk 2>&1 | Out-Null
+            
+            # Verificar se Git reconheceu como binário
+            $gitCheck = git check-attr -a maxiptv-release.apk 2>&1
+            if ($gitCheck -match "binary.*set") {
+                Write-Host "   [OK] Git reconheceu APK como binario" -ForegroundColor Green
+            } else {
+                Write-Host "   [AVISO] Verificando configuracao do Git..." -ForegroundColor Yellow
+            }
+            
+            # Adicionar forçadamente
+            git add -f maxiptv-release.apk
+            Write-Host "   [OK] APK adicionado ao Git como binario" -ForegroundColor Green
+        }
         
         # Commit
         $commitMessage = "Release v$versionName - Build $versionCode"
@@ -116,9 +177,9 @@ try {
         Write-Host "   Nenhuma mudança para commitar" -ForegroundColor Yellow
     }
     
-    # 5. Criar tag se não existir
+    # 6. Criar tag se não existir
     Write-Host ""
-    Write-Host "5. Criando tag de versão..." -ForegroundColor Yellow
+    Write-Host "6. Criando tag de versão..." -ForegroundColor Yellow
     $tagName = "v$versionName"
     $tagExists = git tag -l $tagName
     if (-not $tagExists) {
@@ -128,9 +189,9 @@ try {
         Write-Host "   Tag já existe: $tagName" -ForegroundColor Yellow
     }
     
-    # 6. Push para GitHub
+    # 7. Push para GitHub
     Write-Host ""
-    Write-Host "6. Enviando para GitHub..." -ForegroundColor Yellow
+    Write-Host "7. Enviando para GitHub..." -ForegroundColor Yellow
     
     # Push commits (o remote já tem a chave configurada)
     git push origin HEAD
