@@ -45,8 +45,8 @@ data class VodInfo(
   val name: String?, 
   val plot: String?, 
   val cover: String?,
-  val rating: Int? = null,
-  val rating_5based: Int? = null
+  val rating: Int?,
+  val rating_5based: Int?
 ) { 
   val isValid: Boolean get() = !name.isNullOrBlank() 
 }

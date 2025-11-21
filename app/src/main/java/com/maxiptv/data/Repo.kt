@@ -209,8 +209,15 @@ object XRepo {
   suspend fun loadVodInfo(id: Int) {
     val a = api ?: return
     try {
-      vodInfo.emit(a.vodInfo(user, pass, vodId = id))
+      val response = a.vodInfo(user, pass, vodId = id)
+      android.util.Log.i("XRepo", "📺 VOD Info carregado para ID $id")
+      android.util.Log.i("XRepo", "   info.name: ${response.info?.name}")
+      android.util.Log.i("XRepo", "   info.plot: ${response.info?.plot?.take(50)}...")
+      android.util.Log.i("XRepo", "   info.rating: ${response.info?.rating}")
+      android.util.Log.i("XRepo", "   movie_data: ${if (response.movie_data != null) "existe" else "null"}")
+      vodInfo.emit(response)
     } catch (e: Exception) {
+      android.util.Log.e("XRepo", "❌ Erro ao carregar VOD Info: ${e.message}")
       e.printStackTrace()
     }
   }
