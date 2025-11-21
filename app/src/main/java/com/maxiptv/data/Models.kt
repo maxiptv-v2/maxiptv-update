@@ -1,6 +1,8 @@
 package com.maxiptv.data
 
 import com.maxiptv.data.SettingsRepo
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 data class AuthResponse(val user_info: UserInfo?)
 data class UserInfo(val auth: Int?, val status: String?)
 
@@ -30,7 +32,11 @@ data class VodItem(val stream_id: Int, val name: String, val stream_icon: String
 @kotlinx.serialization.Serializable
 data class SeriesItem(val series_id: Int, val name: String, val cover: String?, val category_id: String?)
 
-data class VodInfoResponse(val info: VodInfo?, val movie_data: Map<String,Any>?) {
+@JsonClass(generateAdapter = true)
+data class VodInfoResponse(
+    @Json(name = "info") val info: VodInfo?, 
+    @Json(name = "movie_data") val movie_data: Map<String,Any>?
+) {
   val streamUrl: String?
     get() {
       val id = (movie_data?.get("stream_id") as? Number)?.toInt() ?: return null
@@ -40,14 +46,43 @@ data class VodInfoResponse(val info: VodInfo?, val movie_data: Map<String,Any>?)
       // ✅ Xtream Code API: Formato padrão é MP4, mas ExoPlayer suporta outros formatos automaticamente
       return "${baseUrl}movie/$user/$pass/$id.mp4"
     }
+  
+  // ✅ Buscar sinopse em múltiplos lugares (info.plot, movie_data.plot, movie_data.description, etc.)
+  val synopsis: String?
+    get() {
+      // Prioridade 1: info.plot
+      val plotFromInfo = info?.plot?.takeIf { it.isNotBlank() }
+      if (plotFromInfo != null) return plotFromInfo
+      
+      // Prioridade 2: movie_data (vários campos possíveis)
+      movie_data?.let { data ->
+        return (data["plot"] as? String)?.takeIf { it.isNotBlank() }
+          ?: (data["Plot"] as? String)?.takeIf { it.isNotBlank() }
+          ?: (data["description"] as? String)?.takeIf { it.isNotBlank() }
+          ?: (data["Description"] as? String)?.takeIf { it.isNotBlank() }
+          ?: (data["synopsis"] as? String)?.takeIf { it.isNotBlank() }
+          ?: (data["Synopsis"] as? String)?.takeIf { it.isNotBlank() }
+          ?: (data["overview"] as? String)?.takeIf { it.isNotBlank() }
+          ?: (data["Overview"] as? String)?.takeIf { it.isNotBlank() }
+      }
+      
+      return null
+    }
 }
+@JsonClass(generateAdapter = true)
 data class VodInfo(
-  val name: String?, 
-  val plot: String?, 
-  val cover: String?,
-  val rating: Int?,
-  val rating_5based: Int?
-) { 
+  @Json(name = "name") val name: String?, 
+  @Json(name = "plot") val plot: String?, 
+  @Json(name = "cover") val cover: String?,
+  @Json(name = "cover_big") val cover_big: String?,
+  @Json(name = "movie_image") val movie_image: String?,
+  @Json(name = "rating") val rating: Int?,
+  @Json(name = "rating_5based") val rating_5based: Int?,
+  @Json(name = "genre") val genre: String?,
+  @Json(name = "releasedate") val releasedate: String?
+) {
+  // ✅ Propriedade computada para obter a melhor capa disponível
+  val bestCover: String? get() = cover_big ?: movie_image ?: cover 
   val isValid: Boolean get() = !name.isNullOrBlank() 
 }
 

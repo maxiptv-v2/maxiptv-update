@@ -430,50 +430,102 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
           null
         }
         
-        // Mostrar rating se disponível (formato: ⭐ 8.5/10 ou ⭐ 8.5)
-        if (rating != null) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-          ) {
-            Icon(
-              imageVector = Icons.Default.Star,
-              contentDescription = "Avaliação",
-              tint = Color(0xFFFFD700), // Dourado
-              modifier = Modifier.size(if (MaxiApp.isTv) 24.dp else 20.dp)
-            )
-            Text(
-              text = rating,
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.Bold,
-              color = Color(0xFFFFD700), // Dourado
-              fontSize = if (MaxiApp.isTv) 18.sp else 16.sp
-            )
-            // Se não tiver "/10", adicionar "/10" para padronizar (se for numérico)
-            if (!rating.contains("/") && rating.toDoubleOrNull() != null) {
-              Text(
-                text = "/10",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFFFFD700).copy(alpha = 0.7f),
-                fontSize = if (MaxiApp.isTv) 14.sp else 12.sp
-              )
-            }
-          }
-          Spacer(Modifier.height(8.dp))
-        }
-        
-        Text(
-          text = info?.info?.plot ?: "Sem descrição",
+        // ✅ Seção combinada: Rating + Sinopse
+        Column(
           modifier = Modifier
-            .fillMaxWidth() // ✅ Garantir que use toda largura disponível
+            .fillMaxWidth()
             .then(
               if (MaxiApp.isTv) {
-                // ✅ TV: limitar largura máxima para evitar overflow em TVs grandes
                 Modifier.widthIn(max = 800.dp)
               } else {
-                Modifier // Smartphone: sem limite
+                Modifier
               }
-            ),
+            )
+        ) {
+          // Rating e informações adicionais (se disponível) - exibido junto com a sinopse
+          val genre = info?.info?.genre?.takeIf { it.isNotBlank() }
+          val releaseDate = info?.info?.releasedate?.takeIf { it.isNotBlank() }
+          
+          if (rating != null || genre != null || releaseDate != null) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
+              modifier = Modifier.padding(bottom = 12.dp)
+            ) {
+              // Rating
+              if (rating != null) {
+                Icon(
+                  imageVector = Icons.Default.Star,
+                  contentDescription = "Avaliação",
+                  tint = Color(0xFFFFD700), // Dourado
+                  modifier = Modifier.size(if (MaxiApp.isTv) 26.dp else 22.dp)
+                )
+                Text(
+                  text = rating,
+                  style = MaterialTheme.typography.titleLarge,
+                  fontWeight = FontWeight.Bold,
+                  color = Color(0xFFFFD700), // Dourado
+                  fontSize = if (MaxiApp.isTv) 20.sp else 18.sp
+                )
+                // Se não tiver "/10", adicionar "/10" para padronizar (se for numérico)
+                if (!rating.contains("/") && rating.toDoubleOrNull() != null) {
+                  Text(
+                    text = "/10",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color(0xFFFFD700).copy(alpha = 0.8f),
+                    fontSize = if (MaxiApp.isTv) 16.sp else 14.sp
+                  )
+                }
+              }
+              
+              // Separador visual se tiver rating e outras informações
+              if (rating != null && (genre != null || releaseDate != null)) {
+                Text(
+                  text = "•",
+                  color = Color.White.copy(alpha = 0.5f),
+                  fontSize = if (MaxiApp.isTv) 18.sp else 16.sp,
+                  modifier = Modifier.padding(horizontal = 4.dp)
+                )
+              }
+              
+              // Gênero
+              if (genre != null) {
+                Text(
+                  text = genre,
+                  style = MaterialTheme.typography.titleMedium,
+                  color = Color.White.copy(alpha = 0.9f),
+                  fontSize = if (MaxiApp.isTv) 16.sp else 14.sp
+                )
+              }
+              
+              // Separador visual se tiver gênero e data
+              if (genre != null && releaseDate != null) {
+                Text(
+                  text = "•",
+                  color = Color.White.copy(alpha = 0.5f),
+                  fontSize = if (MaxiApp.isTv) 18.sp else 16.sp,
+                  modifier = Modifier.padding(horizontal = 4.dp)
+                )
+              }
+              
+              // Data de lançamento
+              if (releaseDate != null) {
+                Text(
+                  text = releaseDate.substring(0, 4), // Mostrar apenas o ano
+                  style = MaterialTheme.typography.titleMedium,
+                  color = Color.White.copy(alpha = 0.9f),
+                  fontSize = if (MaxiApp.isTv) 16.sp else 14.sp
+                )
+              }
+            }
+          }
+          
+          // ✅ Sinopse (usar propriedade synopsis do modelo que busca em múltiplos lugares)
+          val synopsisText = info?.synopsis ?: "Sem descrição"
+          
+          Text(
+            text = synopsisText,
+            modifier = Modifier.fillMaxWidth(),
           style = TextStyle(
             fontSize = if (MaxiApp.isTv) {
               // ✅ TV: tamanho adaptativo baseado no tipo de TV
@@ -508,6 +560,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
           overflow = TextOverflow.Ellipsis, // ✅ Sempre truncar se muito longo
           color = Color.White // ✅ Cor branca com sombra para funcionar sobre qualquer banner (claro ou escuro)
         )
+        } // Fechar Column de Rating + Sinopse
         Spacer(Modifier.height(8.dp))
         Button(onClick = { showOptionsDialog = true }) {
           Text("🎬 $selectedLanguage | $selectedQuality")

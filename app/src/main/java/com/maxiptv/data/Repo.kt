@@ -45,8 +45,8 @@ object XRepo {
       val request = chain.request()
       val response = chain.proceed(request)
       
-      // Log especial para get_series_info
-      if (request.url.toString().contains("get_series_info")) {
+      // Log especial para get_series_info e get_vod_info
+      if (request.url.toString().contains("get_series_info") || request.url.toString().contains("get_vod_info")) {
         val bodyString = response.peekBody(Long.MAX_VALUE).string()
         android.util.Log.i("XRepo", "========== RAW JSON ==========")
         android.util.Log.i("XRepo", "URL: ${request.url}")
@@ -212,9 +212,18 @@ object XRepo {
       val response = a.vodInfo(user, pass, vodId = id)
       android.util.Log.i("XRepo", "📺 VOD Info carregado para ID $id")
       android.util.Log.i("XRepo", "   info.name: ${response.info?.name}")
-      android.util.Log.i("XRepo", "   info.plot: ${response.info?.plot?.take(50)}...")
+      android.util.Log.i("XRepo", "   info.plot: ${response.info?.plot?.take(50) ?: "NULL"}...")
+      android.util.Log.i("XRepo", "   synopsis (combinado): ${response.synopsis?.take(50) ?: "NULL"}...")
       android.util.Log.i("XRepo", "   info.rating: ${response.info?.rating}")
       android.util.Log.i("XRepo", "   movie_data: ${if (response.movie_data != null) "existe" else "null"}")
+      
+      // ✅ Verificar se plot está em movie_data
+      if (response.info?.plot.isNullOrBlank() && response.movie_data != null) {
+        android.util.Log.w("XRepo", "⚠️ Plot não encontrado em info, verificando movie_data...")
+        val plotInMovieData = response.movie_data["plot"] ?: response.movie_data["description"] ?: response.movie_data["synopsis"]
+        android.util.Log.i("XRepo", "   plot em movie_data: ${plotInMovieData?.toString()?.take(50)}")
+      }
+      
       vodInfo.emit(response)
     } catch (e: Exception) {
       android.util.Log.e("XRepo", "❌ Erro ao carregar VOD Info: ${e.message}")
