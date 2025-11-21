@@ -72,14 +72,20 @@ object UpdateManager {
             val updateInfo = json.decodeFromString<UpdateInfo>(jsonString)
             val currentVersionCode = getCurrentVersionCode(context)
             
-            Log.d(TAG, "📊 Versão atual: $currentVersionCode")
-            Log.d(TAG, "📊 Versão disponível: ${updateInfo.versionCode}")
+            Log.d(TAG, "📊 Versão atual instalada: $currentVersionCode")
+            Log.d(TAG, "📊 Versão disponível no servidor: ${updateInfo.versionCode}")
+            
+            // Se não conseguiu obter versionCode, não mostrar atualização (evita loop)
+            if (currentVersionCode == -1) {
+                Log.w(TAG, "⚠️ Não foi possível obter versionCode atual - ignorando atualização")
+                return@withContext null
+            }
             
             if (updateInfo.versionCode > currentVersionCode) {
-                Log.i(TAG, "🆕 Nova versão disponível: ${updateInfo.version}")
+                Log.i(TAG, "🆕 Nova versão disponível: ${updateInfo.version} (${updateInfo.versionCode} > $currentVersionCode)")
                 return@withContext updateInfo
             } else {
-                Log.d(TAG, "✅ App está atualizado")
+                Log.d(TAG, "✅ App está atualizado (versão $currentVersionCode >= ${updateInfo.versionCode})")
                 return@withContext null
             }
             
@@ -91,19 +97,27 @@ object UpdateManager {
     
     /**
      * Obtém o versionCode atual do app
+     * CORRIGIDO: Usar ApplicationContext e garantir que obtém versão correta
      */
     private fun getCurrentVersionCode(context: Context): Int {
         return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            // Usar ApplicationContext para garantir consistência
+            val appContext = context.applicationContext
+            val packageInfo = appContext.packageManager.getPackageInfo(appContext.packageName, android.content.pm.PackageManager.GET_META_DATA)
+            
+            val versionCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                 packageInfo.longVersionCode.toInt()
             } else {
                 @Suppress("DEPRECATION")
                 packageInfo.versionCode
             }
+            
+            Log.d(TAG, "📦 VersionCode obtido: $versionCode (packageName: ${appContext.packageName})")
+            versionCode
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao obter versionCode: ${e.message}")
-            0
+            Log.e(TAG, "❌ Erro ao obter versionCode: ${e.message}", e)
+            // Retornar -1 em vez de 0 para indicar erro (0 pode ser uma versão válida)
+            -1
         }
     }
     

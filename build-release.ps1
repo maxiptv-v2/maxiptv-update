@@ -1,7 +1,4 @@
 # Script para compilar o app em Release e enviar atualização para GitHub
-param(
-    [switch]$SkipClean = $false  # Use -SkipClean para pular a limpeza
-)
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  COMPILANDO E ENVIANDO ATUALIZACAO" -ForegroundColor Cyan
@@ -13,22 +10,51 @@ $ErrorActionPreference = "Stop"
 # Configurações do GitHub (token já configurado no remote)
 
 try {
-    # 1. Limpar build anterior (opcional)
-    if (-not $SkipClean) {
-        Write-Host "1. Limpando build anterior..." -ForegroundColor Yellow
-        try {
-            .\gradlew.bat clean --console=plain 2>&1 | Out-Null
-            Write-Host "   [OK] Build limpo com sucesso" -ForegroundColor Green
-        } catch {
-            Write-Host "   [AVISO] Pulando limpeza (arquivos podem estar em uso) - continuando compilacao..." -ForegroundColor Yellow
-        }
-    } else {
-        Write-Host "1. Pulando limpeza (--SkipClean ativado)..." -ForegroundColor Yellow
+    # 0. Obter versão atual e aumentar automaticamente
+    Write-Host "0. Obtendo e aumentando versao..." -ForegroundColor Yellow
+    $buildGradlePath = "app\build.gradle.kts"
+    $buildGradle = Get-Content $buildGradlePath -Raw
+    
+    # Extrair versão atual
+    $oldVersionCode = 0
+    $oldVersionName = ""
+    if ($buildGradle -match 'versionCode\s*=\s*(\d+)') {
+        $oldVersionCode = [int]$matches[1]
+    }
+    if ($buildGradle -match 'versionName\s*=\s*"([^"]+)"') {
+        $oldVersionName = $matches[1]
     }
     
-    # 2. Compilar em Release
+    # Aumentar versão
+    $newVersionCode = $oldVersionCode + 1
+    $versionParts = $oldVersionName -split '\.'
+    if ($versionParts.Length -ge 3) {
+        $versionParts[2] = [int]$versionParts[2] + 1
+        $newVersionName = $versionParts -join '.'
+    } else {
+        $newVersionName = "1.0.$newVersionCode"
+    }
+    
     Write-Host ""
-    Write-Host "2. Compilando em Release..." -ForegroundColor Yellow
+    Write-Host "   Versao Anterior: v$oldVersionName (Build $oldVersionCode)" -ForegroundColor Gray
+    Write-Host "   Versao Nova:     v$newVersionName (Build $newVersionCode)" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Atualizar build.gradle.kts
+    $buildGradle = $buildGradle -replace 'versionCode\s*=\s*\d+', "versionCode = $newVersionCode"
+    $buildGradle = $buildGradle -replace 'versionName\s*=\s*"[^"]+"', "versionName = `"$newVersionName`""
+    
+    Set-Content -Path $buildGradlePath -Value $buildGradle -NoNewline
+    Write-Host "   [OK] Versao atualizada no build.gradle.kts" -ForegroundColor Green
+    Write-Host ""
+    
+    # Salvar versões para uso posterior
+    $versionCode = $newVersionCode
+    $versionName = $newVersionName
+    
+    # 1. Compilar em Release (sem limpar build anterior)
+    Write-Host ""
+    Write-Host "1. Compilando em Release..." -ForegroundColor Yellow
     .\gradlew.bat assembleRelease --console=plain
     
     if ($LASTEXITCODE -ne 0) {
@@ -48,46 +74,25 @@ try {
         foreach ($apk in $apkFiles) {
             Write-Host "  - $($apk.Name) ($([math]::Round($apk.Length / 1MB, 2)) MB)" -ForegroundColor White
         }
-    }
-    
-    # 3. Obter versão do build.gradle.kts e comparar com versão anterior
-    Write-Host ""
-    Write-Host "3. Obtendo versão do app..." -ForegroundColor Yellow
-    $buildGradle = Get-Content "app\build.gradle.kts" -Raw
-    if ($buildGradle -match 'versionCode\s*=\s*(\d+)') {
-        $versionCode = $matches[1]
-    }
-    if ($buildGradle -match 'versionName\s*=\s*"([^"]+)"') {
-        $versionName = $matches[1]
-    }
-    
-    # Buscar última tag/versão do Git
-    $lastTag = git describe --tags --abbrev=0 2>$null
-    $lastVersion = "N/A"
-    $lastBuild = "N/A"
-    if ($lastTag) {
-        # Extrair versão da tag (ex: v1.0.276 -> 1.0.276)
-        if ($lastTag -match 'v?(\d+\.\d+\.\d+)') {
-            $lastVersion = $matches[1]
-            # Tentar extrair build code da versão (assumindo que versionName = "1.0.XXX" corresponde ao build XXX)
-            if ($lastVersion -match '\.(\d+)$') {
-                $lastBuild = $matches[1]
-            }
-        }
-    }
-    
-    Write-Host ""
-    Write-Host "   Versão Anterior: v$lastVersion (Build $lastBuild)" -ForegroundColor Gray
-    Write-Host "   Versão Nova:     v$versionName (Build $versionCode)" -ForegroundColor Cyan
-    Write-Host ""
-    
-    if ($lastBuild -ne "N/A" -and [int]$versionCode -gt [int]$lastBuild) {
-        Write-Host "   [OK] Versao aumentada de $lastBuild para $versionCode" -ForegroundColor Green
-    } elseif ($lastBuild -eq "N/A") {
-        Write-Host "   [INFO] Primeira versao ou tag nao encontrada" -ForegroundColor Yellow
+        
+        # Atualizar update.json com nova versão e tamanho do APK
+        Write-Host ""
+        Write-Host "2. Atualizando update.json..." -ForegroundColor Yellow
+        $apkSizeMB = [math]::Round($apkFiles[0].Length / 1MB, 1)
+        $updateJson = Get-Content "update.json" -Raw | ConvertFrom-Json
+        $updateJson.version = "v$versionName"
+        $updateJson.versionCode = $versionCode
+        $updateJson.buildNumber = $versionCode
+        $updateJson.fileSize = "$apkSizeMB MB"
+        $updateJson.lastUpdated = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+        $updateJson | ConvertTo-Json -Depth 10 | Set-Content "update.json"
+        Write-Host "   [OK] update.json atualizado para v$versionName" -ForegroundColor Green
     } else {
-        Write-Host "   [AVISO] Versao nao aumentou!" -ForegroundColor Yellow
+        Write-Host "   [AVISO] Nenhum APK encontrado para atualizar update.json" -ForegroundColor Yellow
     }
+    
+    Write-Host ""
+    Write-Host "3. Versao do app: v$versionName (Build $versionCode)" -ForegroundColor Yellow
     
     # 4. Verificar se há mudanças para commitar
     Write-Host ""
@@ -98,10 +103,12 @@ try {
         
         # Adicionar apenas arquivos de código (não build)
         git add app/src/
+        git add app/build.gradle.kts
         git add build-release.ps1
+        git add update.json
         
         # Commit
-        $commitMessage = "Release v$versionName - Build $versionCode - Fix: Restaurado VodInfo para versão 270 (sinopse funcionando)"
+        $commitMessage = "Release v$versionName - Build $versionCode"
         git commit -m $commitMessage
         
         Write-Host "   Commit criado: $commitMessage" -ForegroundColor Green
