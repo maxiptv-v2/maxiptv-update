@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.navigation.NavHostController
 import android.view.WindowManager
 import android.app.Activity
@@ -393,6 +394,7 @@ fun LiveScreen(nav: NavHostController) {
     // Fullscreen limpo - só o player com controles nativos
     // BACK do controle remoto sai do fullscreen (BackHandler acima)
     // IMPORTANTE: Nenhuma TopBar é renderizada em fullscreen
+    // ✅ CORREÇÃO FIRE STICK: Usar systemBarsPadding() e RESIZE_MODE_FILL para garantir fullscreen completo
     androidx.compose.ui.viewinterop.AndroidView(
       factory = { ctx ->
         androidx.media3.ui.PlayerView(ctx).apply {
@@ -400,11 +402,15 @@ fun LiveScreen(nav: NavHostController) {
           useController = true // CONTROLES ATIVADOS EM FULLSCREEN
           controllerShowTimeoutMs = 3000
           controllerHideOnTouch = true
-          resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+          // ✅ RESIZE_MODE_FILL garante que o vídeo preencha toda a tela (importante para Fire Stick)
+          resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL
           setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
         }
       },
-      modifier = Modifier.fillMaxSize().background(Color.Black)
+      modifier = Modifier
+        .fillMaxSize()           // Garante que o Compose ocupe 100% da tela
+        .systemBarsPadding()      // Ajusta status/nav quando necessário (Android TV ignora, mas Fire Stick precisa)
+        .background(Color.Black)
     )
     return // IMPORTANTE: Sair da função ANTES de renderizar TopBar ou qualquer outro elemento
   }

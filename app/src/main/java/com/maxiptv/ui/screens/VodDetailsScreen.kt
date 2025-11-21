@@ -32,6 +32,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.geometry.Offset
 import com.maxiptv.data.FavoritesManager
 import com.maxiptv.MaxiApp
 import kotlinx.coroutines.launch
@@ -252,6 +254,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         model = ImageRequest.Builder(LocalContext.current)
           .data(coverUrl)
           .size(800, 1200) // ⚡ Tamanho maior para melhor qualidade após blur
+          .crossfade(true) // ✅ Força draw imediato - resolve problema de banner só aparecer quando entra, sai e volta
           .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
           .diskCachePolicy(coil.request.CachePolicy.ENABLED)
           .build(),
@@ -292,7 +295,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       )
     }
     
-    // ✅ Overlay preto com 30-50% de opacidade (reduzido para banner mais visível)
+    // ✅ Overlay preto com gradiente aumentado na área inferior (70-80%) para melhor contraste do texto
     // IMPORTANTE: Overlay deve ser SEMPRE renderizado para garantir contraste do texto
     Box(
       modifier = Modifier
@@ -300,16 +303,20 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         .background(
           Brush.verticalGradient(
             colors = listOf(
-              Color.Black.copy(alpha = 0.3f),  // Topo: 30% de opacidade (mais transparente)
-              Color.Black.copy(alpha = 0.4f),  // Meio: 40% de opacidade
-              Color.Black.copy(alpha = 0.5f)   // Fundo: 50% de opacidade
+              Color.Black.copy(alpha = 0.3f),  // Topo: 30% de opacidade (banner visível)
+              Color.Black.copy(alpha = 0.5f),  // Meio: 50% de opacidade
+              Color.Black.copy(alpha = 0.8f)   // Fundo: 80% de opacidade (área do texto - melhor contraste)
             )
           )
         )
     )
     
     // Conteúdo principal por cima do banner
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
+    // ✅ Padding adaptativo para evitar overflow em TVs grandes
+    val horizontalPadding = if (MaxiApp.isTv) 24.dp else 16.dp
+    val verticalPadding = if (MaxiApp.isTv) 20.dp else 16.dp
+    
+    Column(Modifier.fillMaxSize().padding(horizontal = horizontalPadding, vertical = verticalPadding)) {
     Row(Modifier.fillMaxWidth()) {
       AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
@@ -322,38 +329,97 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         modifier = Modifier.width(120.dp).height(180.dp)
       )
       Spacer(Modifier.width(16.dp))
-      Column(Modifier.weight(1f)) {
+      // ✅ Column com largura limitada para evitar overflow em TVs grandes
+      Column(
+        modifier = Modifier
+          .weight(1f)
+          .then(
+            if (MaxiApp.isTv) {
+              // TV: limitar largura máxima para evitar overflow (considerando imagem + espaçamento)
+              Modifier.widthIn(max = 800.dp)
+            } else {
+              Modifier
+            }
+          )
+      ) {
         Text(
-          info?.info?.name ?: "Filme", 
+          text = info?.info?.name ?: "Filme",
+          modifier = Modifier
+            .fillMaxWidth()
+            .then(
+              if (MaxiApp.isTv) {
+                // ✅ TV: limitar largura máxima para evitar overflow
+                Modifier.widthIn(max = 800.dp)
+              } else {
+                Modifier // Smartphone: sem limite
+              }
+            ),
           style = MaterialTheme.typography.titleLarge,
           maxLines = 2,
-          overflow = TextOverflow.Ellipsis,
+          overflow = TextOverflow.Ellipsis, // ✅ Sempre truncar se muito longo
           color = Color.White
         )
         Spacer(Modifier.height(8.dp))
         
         // ✅ Verificar se API retorna avaliação/rating (Xtream Code pode retornar em movie_data)
         val rating = info?.movie_data?.let { data ->
-          // Log para debug - ver quais campos estão disponíveis
-          android.util.Log.d("VodDetails", "📊 Campos disponíveis em movie_data: ${data.keys.joinToString()}")
+          // Log detalhado para debug - ver TODOS os campos disponíveis e seus valores
+          android.util.Log.i("VodDetails", "📊 ========== MOVIE_DATA DEBUG ==========")
+          android.util.Log.i("VodDetails", "📊 Campos disponíveis (${data.size}): ${data.keys.joinToString()}")
+          data.forEach { (key, value) ->
+            android.util.Log.d("VodDetails", "   $key = $value (tipo: ${value?.javaClass?.simpleName})")
+          }
+          android.util.Log.i("VodDetails", "📊 ======================================")
+          
+          // Função auxiliar para extrair rating de qualquer tipo
+          fun extractRating(key: String): String? {
+            val value = data[key] ?: return null
+            return when (value) {
+              is String -> value.takeIf { 
+                it.isNotBlank() && 
+                it != "0" && 
+                it != "0.0" && 
+                it.lowercase() != "null" && 
+                it.lowercase() != "n/a" &&
+                it.toDoubleOrNull() != null // Garantir que é um número válido
+              }
+              is Number -> {
+                val numValue = value.toDouble()
+                if (numValue > 0 && numValue <= 10) {
+                  numValue.toString()
+                } else null
+              }
+              else -> null
+            }
+          }
           
           // Tentar diferentes campos possíveis de rating da API Xtream Code
-          // Campos comuns: rating, imdb_rating, tmdb_rating, rate, score, vote_average
-          val foundRating = (data["rating"] as? String)?.takeIf { it.isNotBlank() && it != "0" && it != "0.0" }
-            ?: (data["imdb_rating"] as? String)?.takeIf { it.isNotBlank() && it != "0" && it != "0.0" }
-            ?: (data["tmdb_rating"] as? String)?.takeIf { it.isNotBlank() && it != "0" && it != "0.0" }
-            ?: (data["rate"] as? String)?.takeIf { it.isNotBlank() && it != "0" && it != "0.0" }
-            ?: (data["score"] as? Number)?.toString()?.takeIf { it.isNotBlank() && it != "0" && it != "0.0" }
-            ?: (data["vote_average"] as? Number)?.toString()?.takeIf { it.isNotBlank() && it != "0" && it != "0.0" }
-            ?: (data["rating"] as? Number)?.toString()?.takeIf { it.isNotBlank() && it != "0" && it != "0.0" }
+          // Ordem de prioridade: campos mais comuns primeiro
+          val foundRating = extractRating("rating")
+            ?: extractRating("imdb_rating")
+            ?: extractRating("imdbRating") // camelCase
+            ?: extractRating("tmdb_rating")
+            ?: extractRating("tmdbRating") // camelCase
+            ?: extractRating("rate")
+            ?: extractRating("score")
+            ?: extractRating("vote_average")
+            ?: extractRating("voteAverage") // camelCase
+            ?: extractRating("rotten_tomatoes")
+            ?: extractRating("metacritic_score")
+            ?: extractRating("rt_rating")
           
           if (foundRating != null) {
-            android.util.Log.i("VodDetails", "⭐ Avaliação encontrada: $foundRating")
+            android.util.Log.i("VodDetails", "✅ ⭐ Avaliação encontrada: $foundRating")
           } else {
-            android.util.Log.d("VodDetails", "⚠️ Nenhuma avaliação encontrada nos campos disponíveis")
+            android.util.Log.w("VodDetails", "⚠️ Nenhuma avaliação encontrada nos campos disponíveis")
+            android.util.Log.w("VodDetails", "   Campos verificados: rating, imdb_rating, tmdb_rating, rate, score, vote_average")
           }
           
           foundRating
+        } ?: run {
+          // Log se movie_data for null
+          android.util.Log.w("VodDetails", "⚠️ movie_data é null - não é possível buscar rating")
+          null
         }
         
         // Mostrar rating se disponível (formato: ⭐ 8.5/10 ou ⭐ 8.5)
@@ -390,21 +456,49 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         
         Text(
           text = info?.info?.plot ?: "Sem descrição",
+          modifier = Modifier
+            .fillMaxWidth() // ✅ Garantir que use toda largura disponível
+            .then(
+              if (MaxiApp.isTv) {
+                // ✅ TV: limitar largura máxima para evitar overflow em TVs grandes
+                Modifier.widthIn(max = 800.dp)
+              } else {
+                Modifier // Smartphone: sem limite
+              }
+            ),
           style = TextStyle(
-            fontSize = if (MaxiApp.isTv) 20.sp else 16.sp, // ✅ Fonte maior e profissional
-            fontWeight = FontWeight.Normal, // ✅ Peso adequado para legibilidade
+            fontSize = if (MaxiApp.isTv) {
+              // ✅ TV: tamanho adaptativo baseado no tipo de TV
+              when {
+                MaxiApp.isFireStick -> 18.sp  // Fire Stick: menor para evitar overflow
+                MaxiApp.isTvBox -> 20.sp      // TV Box: tamanho padrão
+                else -> 20.sp                  // Outras TVs: tamanho padrão
+              }
+            } else {
+              16.sp // Smartphone: tamanho padrão
+            },
+            fontWeight = FontWeight.Bold, // ✅ Roboto Condensed Bold para melhor legibilidade em TV
             fontFamily = FontFamily.SansSerif, // ✅ Fonte sans-serif moderna
-            lineHeight = if (MaxiApp.isTv) 28.sp else 24.sp, // ✅ Espaçamento entre linhas profissional (1.4x do fontSize)
-            letterSpacing = if (MaxiApp.isTv) 0.3.sp else 0.2.sp // ✅ Espaçamento entre letras sutil
+            lineHeight = if (MaxiApp.isTv) {
+              // ✅ LineHeight proporcional ao fontSize (1.4x)
+              when {
+                MaxiApp.isFireStick -> 25.sp
+                MaxiApp.isTvBox -> 28.sp
+                else -> 28.sp
+              }
+            } else {
+              24.sp
+            },
+            letterSpacing = if (MaxiApp.isTv) 0.3.sp else 0.2.sp, // ✅ Espaçamento entre letras sutil
+            shadow = Shadow( // ✅ Sombra preta para legibilidade sobre qualquer banner (padrão Netflix/Prime)
+              color = Color.Black.copy(alpha = 0.7f),
+              offset = Offset(2f, 2f),
+              blurRadius = 6f
+            )
           ),
           maxLines = if (MaxiApp.isTv) 6 else 4, // ✅ Mais linhas para TV
-          overflow = TextOverflow.Ellipsis,
-          color = if (MaxiApp.isTv) {
-            // ✅ Cor escura profissional para TV (melhor contraste com banner claro)
-            Color(0xFF1A1A1A) // Cinza muito escuro quase preto
-          } else {
-            Color.White.copy(alpha = 0.95f) // Branco com alta opacidade para smartphone
-          }
+          overflow = TextOverflow.Ellipsis, // ✅ Sempre truncar se muito longo
+          color = Color.White // ✅ Cor branca com sombra para funcionar sobre qualquer banner (claro ou escuro)
         )
         Spacer(Modifier.height(8.dp))
         Button(onClick = { showOptionsDialog = true }) {
