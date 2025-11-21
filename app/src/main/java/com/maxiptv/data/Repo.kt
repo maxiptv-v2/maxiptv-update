@@ -45,8 +45,8 @@ object XRepo {
       val request = chain.request()
       val response = chain.proceed(request)
       
-      // Log especial para get_series_info e get_vod_info
-      if (request.url.toString().contains("get_series_info") || request.url.toString().contains("get_vod_info")) {
+      // Log especial para get_series_info
+      if (request.url.toString().contains("get_series_info")) {
         val bodyString = response.peekBody(Long.MAX_VALUE).string()
         android.util.Log.i("XRepo", "========== RAW JSON ==========")
         android.util.Log.i("XRepo", "URL: ${request.url}")
@@ -209,24 +209,8 @@ object XRepo {
   suspend fun loadVodInfo(id: Int) {
     val a = api ?: return
     try {
-      val response = a.vodInfo(user, pass, vodId = id)
-      android.util.Log.i("XRepo", "📺 VOD Info carregado para ID $id")
-      android.util.Log.i("XRepo", "   info: ${if (response.info != null) "existe" else "NULL"}")
-      android.util.Log.i("XRepo", "   info.name: ${response.info?.name}")
-      android.util.Log.i("XRepo", "   info.plot: ${response.info?.plot?.take(50) ?: "NULL"}...")
-      android.util.Log.i("XRepo", "   movie_data: ${if (response.movie_data != null) "existe" else "null"}")
-      
-      // ✅ Debug da sinopse (igual versão 270)
-      if (response.info?.plot.isNullOrBlank()) {
-        android.util.Log.w("XRepo", "⚠️ SINOPSE VAZIA!")
-        android.util.Log.w("XRepo", "   info.plot: '${response.info?.plot}'")
-      } else {
-        android.util.Log.i("XRepo", "✅ SINOPSE ENCONTRADA: ${response.info?.plot?.take(100)}...")
-      }
-      
-      vodInfo.emit(response)
+      vodInfo.emit(a.vodInfo(user, pass, vodId = id))
     } catch (e: Exception) {
-      android.util.Log.e("XRepo", "❌ Erro ao carregar VOD Info: ${e.message}")
       e.printStackTrace()
     }
   }

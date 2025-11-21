@@ -30,10 +30,7 @@ data class VodItem(val stream_id: Int, val name: String, val stream_icon: String
 @kotlinx.serialization.Serializable
 data class SeriesItem(val series_id: Int, val name: String, val cover: String?, val category_id: String?)
 
-data class VodInfoResponse(
-    val info: VodInfo?, 
-    val movie_data: Map<String,Any>?
-) {
+data class VodInfoResponse(val info: VodInfo?, val movie_data: Map<String,Any>?) {
   val streamUrl: String?
     get() {
       val id = (movie_data?.get("stream_id") as? Number)?.toInt() ?: return null
@@ -43,12 +40,8 @@ data class VodInfoResponse(
       // ✅ Xtream Code API: Formato padrão é MP4, mas ExoPlayer suporta outros formatos automaticamente
       return "${baseUrl}movie/$user/$pass/$id.mp4"
     }
-  
 }
-// ✅ Modelo EXATAMENTE igual à versão 270 que funcionava (apenas 3 campos)
-data class VodInfo(val name: String?, val plot: String?, val cover: String?) { 
-  val isValid: Boolean get() = !name.isNullOrBlank() 
-}
+data class VodInfo(val name: String?, val plot: String?, val cover: String?) { val isValid: Boolean get() = !name.isNullOrBlank() }
 
 data class SeriesInfoResponse(
   val info: SeriesInfo?, 

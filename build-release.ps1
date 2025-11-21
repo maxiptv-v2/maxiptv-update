@@ -1,4 +1,8 @@
 # Script para compilar o app em Release e enviar atualização para GitHub
+param(
+    [switch]$SkipClean = $false  # Use -SkipClean para pular a limpeza
+)
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  COMPILANDO E ENVIANDO ATUALIZACAO" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
@@ -9,12 +13,17 @@ $ErrorActionPreference = "Stop"
 # Configurações do GitHub (token já configurado no remote)
 
 try {
-    # 1. Limpar build anterior (com tratamento de erro)
-    Write-Host "1. Limpando build anterior..." -ForegroundColor Yellow
-    try {
-        .\gradlew.bat clean --console=plain 2>&1 | Out-Null
-    } catch {
-        Write-Host "   ⚠️ Não foi possível limpar completamente (arquivos podem estar em uso)" -ForegroundColor Yellow
+    # 1. Limpar build anterior (opcional)
+    if (-not $SkipClean) {
+        Write-Host "1. Limpando build anterior..." -ForegroundColor Yellow
+        try {
+            .\gradlew.bat clean --console=plain 2>&1 | Out-Null
+            Write-Host "   [OK] Build limpo com sucesso" -ForegroundColor Green
+        } catch {
+            Write-Host "   [AVISO] Pulando limpeza (arquivos podem estar em uso) - continuando compilacao..." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "1. Pulando limpeza (--SkipClean ativado)..." -ForegroundColor Yellow
     }
     
     # 2. Compilar em Release
@@ -41,7 +50,7 @@ try {
         }
     }
     
-    # 3. Obter versão do build.gradle.kts
+    # 3. Obter versão do build.gradle.kts e comparar com versão anterior
     Write-Host ""
     Write-Host "3. Obtendo versão do app..." -ForegroundColor Yellow
     $buildGradle = Get-Content "app\build.gradle.kts" -Raw
@@ -52,7 +61,33 @@ try {
         $versionName = $matches[1]
     }
     
-    Write-Host "   Versão: $versionName (Build $versionCode)" -ForegroundColor Cyan
+    # Buscar última tag/versão do Git
+    $lastTag = git describe --tags --abbrev=0 2>$null
+    $lastVersion = "N/A"
+    $lastBuild = "N/A"
+    if ($lastTag) {
+        # Extrair versão da tag (ex: v1.0.276 -> 1.0.276)
+        if ($lastTag -match 'v?(\d+\.\d+\.\d+)') {
+            $lastVersion = $matches[1]
+            # Tentar extrair build code da versão (assumindo que versionName = "1.0.XXX" corresponde ao build XXX)
+            if ($lastVersion -match '\.(\d+)$') {
+                $lastBuild = $matches[1]
+            }
+        }
+    }
+    
+    Write-Host ""
+    Write-Host "   Versão Anterior: v$lastVersion (Build $lastBuild)" -ForegroundColor Gray
+    Write-Host "   Versão Nova:     v$versionName (Build $versionCode)" -ForegroundColor Cyan
+    Write-Host ""
+    
+    if ($lastBuild -ne "N/A" -and [int]$versionCode -gt [int]$lastBuild) {
+        Write-Host "   [OK] Versao aumentada de $lastBuild para $versionCode" -ForegroundColor Green
+    } elseif ($lastBuild -eq "N/A") {
+        Write-Host "   [INFO] Primeira versao ou tag nao encontrada" -ForegroundColor Yellow
+    } else {
+        Write-Host "   [AVISO] Versao nao aumentou!" -ForegroundColor Yellow
+    }
     
     # 4. Verificar se há mudanças para commitar
     Write-Host ""

@@ -361,13 +361,144 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         )
         Spacer(Modifier.height(8.dp))
         
-        // ✅ Sinopse (EXATAMENTE igual à versão 270 que funcionava)
+        // ✅ Verificar se API retorna avaliação/rating (Xtream Code pode retornar em movie_data)
+        val rating = info?.movie_data?.let { data ->
+          // Log detalhado para debug - ver TODOS os campos disponíveis e seus valores
+          android.util.Log.i("VodDetails", "📊 ========== MOVIE_DATA DEBUG ==========")
+          android.util.Log.i("VodDetails", "📊 Campos disponíveis (${data.size}): ${data.keys.joinToString()}")
+          data.forEach { (key, value) ->
+            android.util.Log.d("VodDetails", "   $key = $value (tipo: ${value?.javaClass?.simpleName})")
+          }
+          android.util.Log.i("VodDetails", "📊 ======================================")
+          
+          // Função auxiliar para extrair rating de qualquer tipo
+          fun extractRating(key: String): String? {
+            val value = data[key] ?: return null
+            return when (value) {
+              is String -> value.takeIf { 
+                it.isNotBlank() && 
+                it != "0" && 
+                it != "0.0" && 
+                it.lowercase() != "null" && 
+                it.lowercase() != "n/a" &&
+                it.toDoubleOrNull() != null // Garantir que é um número válido
+              }
+              is Number -> {
+                val numValue = value.toDouble()
+                if (numValue > 0 && numValue <= 10) {
+                  numValue.toString()
+                } else null
+              }
+              else -> null
+            }
+          }
+          
+          // Tentar diferentes campos possíveis de rating da API Xtream Code
+          // Ordem de prioridade: campos mais comuns primeiro
+          val foundRating = extractRating("rating")
+            ?: extractRating("imdb_rating")
+            ?: extractRating("imdbRating") // camelCase
+            ?: extractRating("tmdb_rating")
+            ?: extractRating("tmdbRating") // camelCase
+            ?: extractRating("rate")
+            ?: extractRating("score")
+            ?: extractRating("vote_average")
+            ?: extractRating("voteAverage") // camelCase
+            ?: extractRating("rotten_tomatoes")
+            ?: extractRating("metacritic_score")
+            ?: extractRating("rt_rating")
+          
+          if (foundRating != null) {
+            android.util.Log.i("VodDetails", "✅ ⭐ Avaliação encontrada: $foundRating")
+          } else {
+            android.util.Log.w("VodDetails", "⚠️ Nenhuma avaliação encontrada nos campos disponíveis")
+            android.util.Log.w("VodDetails", "   Campos verificados: rating, imdb_rating, tmdb_rating, rate, score, vote_average")
+          }
+          
+          foundRating
+        } ?: run {
+          // Log se movie_data for null
+          android.util.Log.w("VodDetails", "⚠️ movie_data é null - não é possível buscar rating")
+          null
+        }
+        
+        // Mostrar rating se disponível (formato: ⭐ 8.5/10 ou ⭐ 8.5)
+        if (rating != null) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            Icon(
+              imageVector = Icons.Default.Star,
+              contentDescription = "Avaliação",
+              tint = Color(0xFFFFD700), // Dourado
+              modifier = Modifier.size(if (MaxiApp.isTv) 24.dp else 20.dp)
+            )
+            Text(
+              text = rating,
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFFFFD700), // Dourado
+              fontSize = if (MaxiApp.isTv) 18.sp else 16.sp
+            )
+            // Se não tiver "/10", adicionar "/10" para padronizar (se for numérico)
+            if (!rating.contains("/") && rating.toDoubleOrNull() != null) {
+              Text(
+                text = "/10",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFFFFD700).copy(alpha = 0.7f),
+                fontSize = if (MaxiApp.isTv) 14.sp else 12.sp
+              )
+            }
+          }
+          Spacer(Modifier.height(8.dp))
+        }
+        
         Text(
           text = info?.info?.plot ?: "Sem descrição",
-          modifier = Modifier.fillMaxWidth(),
-          style = MaterialTheme.typography.bodyMedium,
-          maxLines = 4,
-          overflow = TextOverflow.Ellipsis
+          modifier = Modifier
+            .fillMaxWidth() // ✅ Garantir que use toda largura disponível
+            .then(
+              if (MaxiApp.isTv) {
+                // ✅ TV: limitar largura máxima para evitar overflow em TVs grandes
+                Modifier.widthIn(max = 800.dp)
+              } else {
+                Modifier // Smartphone: sem limite
+              }
+            ),
+          style = TextStyle(
+            fontSize = if (MaxiApp.isTv) {
+              // ✅ TV: tamanho adaptativo baseado no tipo de TV
+              when {
+                MaxiApp.isFireStick -> 18.sp  // Fire Stick: menor para evitar overflow
+                MaxiApp.isTvBox -> 20.sp      // TV Box: tamanho padrão
+                else -> 20.sp                  // Outras TVs: tamanho padrão
+              }
+            } else {
+              16.sp // Smartphone: tamanho padrão
+            },
+            fontWeight = FontWeight.Bold, // ✅ Roboto Condensed Bold para melhor legibilidade em TV
+            fontFamily = FontFamily.SansSerif, // ✅ Fonte sans-serif moderna
+            lineHeight = if (MaxiApp.isTv) {
+              // ✅ LineHeight proporcional ao fontSize (1.4x)
+              when {
+                MaxiApp.isFireStick -> 25.sp
+                MaxiApp.isTvBox -> 28.sp
+                else -> 28.sp
+              }
+            } else {
+              24.sp
+            },
+            letterSpacing = if (MaxiApp.isTv) 0.3.sp else 0.2.sp, // ✅ Espaçamento entre letras sutil
+            shadow = Shadow( // ✅ Sombra preta para legibilidade sobre qualquer banner (padrão Netflix/Prime)
+              color = Color.Black.copy(alpha = 0.7f),
+              offset = Offset(2f, 2f),
+              blurRadius = 6f
+            )
+          ),
+          maxLines = if (MaxiApp.isTv) 6 else 4, // ✅ Mais linhas para TV
+          overflow = TextOverflow.Ellipsis, // ✅ Sempre truncar se muito longo
+          color = Color.White // ✅ Cor branca com sombra para funcionar sobre qualquer banner (claro ou escuro)
         )
         Spacer(Modifier.height(8.dp))
         Button(onClick = { showOptionsDialog = true }) {
