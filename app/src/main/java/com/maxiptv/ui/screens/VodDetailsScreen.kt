@@ -361,19 +361,11 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
         )
         Spacer(Modifier.height(8.dp))
         
-        // ✅ Verificar se API retorna avaliação/rating (Xtream Code pode retornar em movie_data)
-        val rating = info?.movie_data?.let { data ->
-          // Log detalhado para debug - ver TODOS os campos disponíveis e seus valores
-          android.util.Log.i("VodDetails", "📊 ========== MOVIE_DATA DEBUG ==========")
-          android.util.Log.i("VodDetails", "📊 Campos disponíveis (${data.size}): ${data.keys.joinToString()}")
-          data.forEach { (key, value) ->
-            android.util.Log.d("VodDetails", "   $key = $value (tipo: ${value?.javaClass?.simpleName})")
-          }
-          android.util.Log.i("VodDetails", "📊 ======================================")
-          
+        // ✅ Verificar se API retorna avaliação/rating
+        // ✅ IMPORTANTE: Rating pode estar em info.info.rating OU em movie_data
+        val rating = run {
           // Função auxiliar para extrair rating de qualquer tipo
-          fun extractRating(key: String): String? {
-            val value = data[key] ?: return null
+          fun extractRatingValue(value: Any?): String? {
             return when (value) {
               is String -> value.takeIf { 
                 it.isNotBlank() && 
@@ -393,32 +385,48 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
             }
           }
           
-          // Tentar diferentes campos possíveis de rating da API Xtream Code
-          // Ordem de prioridade: campos mais comuns primeiro
-          val foundRating = extractRating("rating")
-            ?: extractRating("imdb_rating")
-            ?: extractRating("imdbRating") // camelCase
-            ?: extractRating("tmdb_rating")
-            ?: extractRating("tmdbRating") // camelCase
-            ?: extractRating("rate")
-            ?: extractRating("score")
-            ?: extractRating("vote_average")
-            ?: extractRating("voteAverage") // camelCase
-            ?: extractRating("rotten_tomatoes")
-            ?: extractRating("metacritic_score")
-            ?: extractRating("rt_rating")
-          
-          if (foundRating != null) {
-            android.util.Log.i("VodDetails", "✅ ⭐ Avaliação encontrada: $foundRating")
-          } else {
-            android.util.Log.w("VodDetails", "⚠️ Nenhuma avaliação encontrada nos campos disponíveis")
-            android.util.Log.w("VodDetails", "   Campos verificados: rating, imdb_rating, tmdb_rating, rate, score, vote_average")
+          // ✅ PRIORIDADE 1: Buscar em info.info (onde está o rating!)
+          val infoRating = info?.info?.let { vodInfo ->
+            // Buscar rating ou rating_5based
+            extractRatingValue(vodInfo.rating) ?: extractRatingValue(vodInfo.rating_5based)
           }
           
-          foundRating
+          if (infoRating != null) {
+            android.util.Log.i("VodDetails", "✅ ⭐ Avaliação encontrada em info.info.rating: $infoRating")
+            return@run infoRating
+          }
+          
+          // ✅ PRIORIDADE 2: Buscar em movie_data (fallback)
+          info?.movie_data?.let { data ->
+            android.util.Log.i("VodDetails", "📊 Buscando rating em movie_data...")
+            
+            fun extractRating(key: String): String? {
+              val value = data[key] ?: return null
+              return extractRatingValue(value)
+            }
+            
+            // Tentar diferentes campos possíveis de rating da API Xtream Code
+            val foundRating = extractRating("rating")
+              ?: extractRating("imdb_rating")
+              ?: extractRating("imdbRating")
+              ?: extractRating("tmdb_rating")
+              ?: extractRating("tmdbRating")
+              ?: extractRating("rate")
+              ?: extractRating("score")
+              ?: extractRating("vote_average")
+              ?: extractRating("voteAverage")
+              ?: extractRating("rotten_tomatoes")
+              ?: extractRating("metacritic_score")
+              ?: extractRating("rt_rating")
+            
+            if (foundRating != null) {
+              android.util.Log.i("VodDetails", "✅ ⭐ Avaliação encontrada em movie_data: $foundRating")
+            }
+            
+            foundRating
+          }
         } ?: run {
-          // Log se movie_data for null
-          android.util.Log.w("VodDetails", "⚠️ movie_data é null - não é possível buscar rating")
+          android.util.Log.w("VodDetails", "⚠️ Nenhuma avaliação encontrada")
           null
         }
         

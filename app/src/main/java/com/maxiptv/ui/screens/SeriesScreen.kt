@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -37,7 +38,8 @@ import androidx.compose.ui.platform.LocalContext
 fun SeriesScreen(nav: NavHostController) {
   val cats by XRepo.seriesCategories.collectAsState(emptyList())
   val series by XRepo.seriesItems.collectAsState(emptyList())
-  var selectedCat by remember { mutableStateOf<String?>(null) }
+  // ✅ Usar rememberSaveable para manter categoria selecionada ao voltar dos detalhes
+  var selectedCat by rememberSaveable { mutableStateOf<String?>(null) }
   LaunchedEffect(Unit) { XRepo.ensureSeriesLoaded() }
   
   val isFireStick = MaxiApp.isFireStick

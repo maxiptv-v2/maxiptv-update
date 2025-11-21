@@ -69006,10 +69006,10 @@ com.google.common.base.Suppliers$NonSerializableMemoizingSupplier:
     public final java.lang.String toString()
 com.google.common.base.Suppliers:
     public static final java.util.List LiveScreen$lambda$0(androidx.compose.runtime.MutableState)
-    public static final boolean LiveScreen$lambda$24(androidx.compose.runtime.MutableState)
-    public static final java.lang.String LiveScreen$lambda$3(androidx.compose.runtime.MutableState)
-    public static final java.util.Map LiveScreen$lambda$30(androidx.compose.runtime.MutableState)
-    public static final com.maxiptv.data.LiveStream LiveScreen$lambda$6(androidx.compose.runtime.MutableState)
+    public static final java.lang.String LiveScreen$lambda$2(androidx.compose.runtime.MutableState)
+    public static final boolean LiveScreen$lambda$23(androidx.compose.runtime.MutableState)
+    public static final java.util.Map LiveScreen$lambda$29(androidx.compose.runtime.MutableState)
+    public static final com.maxiptv.data.LiveStream LiveScreen$lambda$5(androidx.compose.runtime.MutableState)
     public static final com.maxiptv.data.SeriesInfoResponse SeriesDetailsScreen$lambda$0(androidx.compose.runtime.MutableState)
     public static final java.util.List SeriesDetailsScreen$lambda$1(androidx.compose.runtime.MutableState)
     public static final void SeriesDetailsScreen$lambda$10(androidx.compose.runtime.MutableState,java.lang.String)
@@ -69019,12 +69019,12 @@ com.google.common.base.Suppliers:
     public static final java.lang.String SeriesDetailsScreen$lambda$9(androidx.compose.runtime.MutableState)
     public static final boolean access$AdultContentScreen$lambda$8(androidx.compose.runtime.MutableState)
     public static final void access$AdultContentScreen$lambda$9(androidx.compose.runtime.MutableState,boolean)
-    public static final void access$LiveScreen$lambda$10(androidx.compose.runtime.MutableState,boolean)
-    public static final boolean access$LiveScreen$lambda$15(androidx.compose.runtime.MutableState)
-    public static final void access$LiveScreen$lambda$16(androidx.compose.runtime.MutableState,boolean)
-    public static final boolean access$LiveScreen$lambda$18(androidx.compose.runtime.MutableState)
-    public static final boolean access$LiveScreen$lambda$24(androidx.compose.runtime.MutableState)
-    public static final void access$LiveScreen$lambda$25(androidx.compose.runtime.MutableState,boolean)
+    public static final boolean access$LiveScreen$lambda$14(androidx.compose.runtime.MutableState)
+    public static final void access$LiveScreen$lambda$15(androidx.compose.runtime.MutableState,boolean)
+    public static final boolean access$LiveScreen$lambda$17(androidx.compose.runtime.MutableState)
+    public static final boolean access$LiveScreen$lambda$23(androidx.compose.runtime.MutableState)
+    public static final void access$LiveScreen$lambda$24(androidx.compose.runtime.MutableState,boolean)
+    public static final void access$LiveScreen$lambda$9(androidx.compose.runtime.MutableState,boolean)
     public static final boolean access$SeriesDetailsScreen$lambda$18(androidx.compose.runtime.MutableState)
     public static final void access$SeriesDetailsScreen$lambda$19(androidx.compose.runtime.MutableState,boolean)
     public static final void access$SeriesDetailsScreen$lambda$7(androidx.compose.runtime.MutableState,boolean)
@@ -70164,6 +70164,8 @@ com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$9$1$1$1$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$9$1$1$2$1$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$9$1$1$2$2$1
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$9
+com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$selectedCat$2:
+    public final androidx.compose.runtime.ParcelableSnapshotMutableState invoke()
 com.maxiptv.ui.screens.LiveScreenKt$LiveScreen$sharedPlayer$1$1$1:
     public final synthetic void onDeviceVolumeChanged(int,boolean)
 com.maxiptv.ui.screens.LiveScreenKt$MiniPlayer$1:
@@ -70390,7 +70392,8 @@ com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$def
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4$invoke$$inlined$items$default$5
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$2$4
 com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$3
-com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$lambda$14$lambda$13$lambda$12$$inlined$sortedBy$1
+com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$lambda$13$lambda$12$lambda$11$$inlined$sortedBy$1
+com.maxiptv.ui.screens.SeriesScreenKt$SeriesScreen$selectedCat$2
 com.maxiptv.ui.screens.SeriesScreenKt
 com.maxiptv.ui.screens.VodDetailsScreenKt$Neon3DButton$1$1$1
 com.maxiptv.ui.screens.VodDetailsScreenKt$Neon3DButton$1$2$1
@@ -70489,8 +70492,8 @@ com.maxiptv.ui.screens.VodDetailsScreenKt$VodDetailsScreen$7
 com.maxiptv.ui.screens.VodDetailsScreenKt$VodDetailsScreen$availableLanguages$1$1
 com.maxiptv.ui.screens.VodDetailsScreenKt:
     public static final boolean VodDetailsScreen$lambda$12(androidx.compose.runtime.MutableState)
-    public static final float access$Neon3DButton$lambda$105(androidx.compose.runtime.State)
-    public static final void access$VodDetailsScreen$lambda$104$lambda$50(androidx.compose.runtime.MutableState,boolean)
+    public static final float access$Neon3DButton$lambda$106(androidx.compose.runtime.State)
+    public static final void access$VodDetailsScreen$lambda$105$lambda$50(androidx.compose.runtime.MutableState,boolean)
     public static final void access$VodDetailsScreen$lambda$13(androidx.compose.runtime.MutableState,boolean)
     public static final void access$VodDetailsScreen$lambda$16(androidx.compose.runtime.MutableState,boolean)
     public static final void access$VodDetailsScreen$lambda$22(androidx.compose.runtime.MutableState,boolean)
@@ -70510,7 +70513,8 @@ com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$4
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3$invoke$$inlined$items$default$5
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$2$3
 com.maxiptv.ui.screens.VodScreenKt$VodScreen$3
-com.maxiptv.ui.screens.VodScreenKt$VodScreen$lambda$15$lambda$14$lambda$13$$inlined$sortedBy$1
+com.maxiptv.ui.screens.VodScreenKt$VodScreen$lambda$14$lambda$13$lambda$12$$inlined$sortedBy$1
+com.maxiptv.ui.screens.VodScreenKt$VodScreen$selectedCat$2
 com.maxiptv.ui.screens.VodScreenKt
 com.maxiptv.ui.theme.OverflowDetector
 com.maxiptv.ui.theme.SafeAreaAutoDetector:

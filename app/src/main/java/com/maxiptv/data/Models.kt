@@ -41,7 +41,15 @@ data class VodInfoResponse(val info: VodInfo?, val movie_data: Map<String,Any>?)
       return "${baseUrl}movie/$user/$pass/$id.mp4"
     }
 }
-data class VodInfo(val name: String?, val plot: String?, val cover: String?) { val isValid: Boolean get() = !name.isNullOrBlank() }
+data class VodInfo(
+  val name: String?, 
+  val plot: String?, 
+  val cover: String?,
+  val rating: Int? = null,
+  val rating_5based: Int? = null
+) { 
+  val isValid: Boolean get() = !name.isNullOrBlank() 
+}
 
 data class SeriesInfoResponse(
   val info: SeriesInfo?, 

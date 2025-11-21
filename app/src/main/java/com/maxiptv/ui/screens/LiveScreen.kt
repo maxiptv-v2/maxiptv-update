@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -62,7 +63,8 @@ import androidx.compose.ui.window.Dialog
 fun LiveScreen(nav: NavHostController) {
   val cats by XRepo.liveCategories.collectAsState(emptyList())
   val streams by XRepo.liveStreams.collectAsState(emptyList())
-  var selectedCat by remember { mutableStateOf<String?>(null) }
+  // ✅ Usar rememberSaveable para manter categoria selecionada ao voltar
+  var selectedCat by rememberSaveable { mutableStateOf<String?>(null) }
   var current by remember { mutableStateOf<LiveStream?>(null) }
   
   // ✅ Estados para PIN de categoria adulta
