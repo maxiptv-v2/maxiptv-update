@@ -795,13 +795,11 @@ class PlayerActivity : ComponentActivity() {
           positionSaveHandler = android.os.Handler(android.os.Looper.getMainLooper())
           val savePositionRunnable = object : Runnable {
             override fun run() {
-              exo?.let { player ->
-                if (player.isPlaying && player.duration > 0) {
-                  val position = player.currentPosition
-                  val duration = player.duration
-                  lifecycleScope.launch {
-                    PlaybackPositionManager.savePosition(contentId!!, contentType, position, duration)
-                  }
+              if (exo.isPlaying && exo.duration > 0) {
+                val position = exo.currentPosition
+                val duration = exo.duration
+                lifecycleScope.launch {
+                  PlaybackPositionManager.savePosition(contentId!!, contentType, position, duration)
                 }
               }
               positionSaveHandler?.postDelayed(this, 10000) // Salvar a cada 10 segundos
@@ -1701,7 +1699,7 @@ class PlayerActivity : ComponentActivity() {
   
   // ⚽ APLICAR ZOOM NO PLAYER
   private fun applyZoom(zoomLevel: Float) {
-    player?.let { exo ->
+    player?.let {
       // Usar scale do PlayerView para zoom
       pv.scaleX = zoomLevel
       pv.scaleY = zoomLevel
@@ -1949,8 +1947,7 @@ class PlayerActivity : ComponentActivity() {
   
   // ✅ FASE 1: Atualizar overlay de latência
   private fun updateLatency() {
-    val exo = player ?: return
-    if (contentType != "live") {
+    if (player == null || contentType != "live") {
       latencyOverlay?.visibility = android.view.View.GONE
       return
     }
@@ -1996,12 +1993,12 @@ class PlayerActivity : ComponentActivity() {
     val exo = player ?: return StreamStats()
     
     // Obter track de vídeo atual
-    val videoTrack = exo.currentTracks?.groups?.firstOrNull { 
+    val videoTrack = exo.currentTracks.groups.firstOrNull { 
       it.type == C.TRACK_TYPE_VIDEO && it.isSelected 
     }
     
     val format = videoTrack?.getTrackFormat(0)
-    val audioTrack = exo.currentTracks?.groups?.firstOrNull {
+    val audioTrack = exo.currentTracks.groups.firstOrNull {
       it.type == C.TRACK_TYPE_AUDIO && it.isSelected
     }
     val audioFormat = audioTrack?.getTrackFormat(0)
@@ -2056,7 +2053,6 @@ class PlayerActivity : ComponentActivity() {
         ConnectionQuality.EXCELLENT -> "Excelente"
         ConnectionQuality.GOOD -> "Boa"
         ConnectionQuality.POOR -> "Ruim"
-        else -> "Desconhecida"
       }}\n")
     }
     
@@ -2175,7 +2171,7 @@ class PlayerActivity : ComponentActivity() {
   
   // ✅ FASE 1: Criar LoadControl adaptativo baseado em qualidade de conexão
   // Nota: Usa função compartilhada, mas mantém compatibilidade com isLive
-  private fun createAdaptiveLoadControl(isLive: Boolean): LoadControl {
+  private fun createAdaptiveLoadControl(@Suppress("UNUSED_PARAMETER") isLive: Boolean): LoadControl {
     return createAdaptiveLoadControl(connectionQuality)
   }
   
@@ -2255,8 +2251,7 @@ class PlayerActivity : ComponentActivity() {
   
   // ✅ FASE 2: Detectar degradação de qualidade (versão com Toast para PlayerActivity)
   private fun detectQualityDegradation(currentFormat: Format) {
-    val exo = player ?: return
-    if (contentType != "live") return // Apenas para live
+    if (player == null || contentType != "live") return // Apenas para live
     
     // Usar função compartilhada para detecção básica
     val playerState = PlayerState().apply {
