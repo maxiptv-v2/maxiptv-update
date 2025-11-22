@@ -469,7 +469,8 @@ fun HomeNav(nav: NavHostController, activity: androidx.activity.ComponentActivit
     composable("player-settings") { PlayerSettingsScreen(nav) }
     composable("series/{seriesId}") { backStack ->
       val id = backStack.arguments?.getString("seriesId")?.toIntOrNull() ?: 0
-      SeriesDetailsScreen(nav, id)
+      val category = backStack.savedStateHandle.get<String>("category")
+      SeriesDetailsScreen(nav, id, category)
     }
     composable("vod/{vodId}") { backStack ->
       val id = backStack.arguments?.getString("vodId")?.toIntOrNull() ?: 0

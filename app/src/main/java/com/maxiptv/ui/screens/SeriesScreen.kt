@@ -40,6 +40,17 @@ fun SeriesScreen(nav: NavHostController) {
   val series by XRepo.seriesItems.collectAsState(emptyList())
   // ✅ Usar rememberSaveable para manter categoria selecionada ao voltar dos detalhes
   var selectedCat by rememberSaveable { mutableStateOf<String?>(null) }
+  
+  // ✅ Restaurar categoria quando voltar dos detalhes
+  LaunchedEffect(nav.currentBackStackEntry) {
+    val restoredCategory = nav.currentBackStackEntry?.savedStateHandle?.get<String>("restoreCategory")
+    if (restoredCategory != null) {
+      selectedCat = restoredCategory
+      // Limpar o valor para não restaurar novamente
+      nav.currentBackStackEntry?.savedStateHandle?.remove<String>("restoreCategory")
+    }
+  }
+  
   LaunchedEffect(Unit) { XRepo.ensureSeriesLoaded() }
   
   val isFireStick = MaxiApp.isFireStick
@@ -136,7 +147,11 @@ fun SeriesScreen(nav: NavHostController) {
         )
         
         Card(
-          onClick = { nav.navigate("series/${s.series_id}") }, 
+          onClick = { 
+            // Passar categoria selecionada via savedStateHandle
+            nav.currentBackStackEntry?.savedStateHandle?.set("category", selectedCat)
+            nav.navigate("series/${s.series_id}")
+          }, 
           modifier = Modifier
             .padding(8.dp)
             .graphicsLayer {

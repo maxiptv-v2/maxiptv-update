@@ -30,11 +30,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.maxiptv.data.FavoritesManager
+import com.maxiptv.data.PlaybackPositionManager
 import com.maxiptv.MaxiApp
 import kotlinx.coroutines.launch
+import androidx.activity.compose.BackHandler
 
 @Composable
-fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
+fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int, category: String? = null) {
+  // Restaurar categoria ao voltar
+  BackHandler {
+    // Passar categoria de volta para SeriesScreen via savedStateHandle
+    // previousBackStackEntry aponta para a rota anterior ("series")
+    nav.previousBackStackEntry?.savedStateHandle?.set("restoreCategory", category)
+    nav.popBackStack()
+  }
   val info by XRepo.seriesInfo.collectAsState(null)
   val allSeries by XRepo.seriesItems.collectAsState(emptyList())
   val ctx = LocalContext.current
@@ -44,8 +53,20 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
   var selectedQuality by remember { mutableStateOf("FHD") }
   var allSeasonsMerged by remember { mutableStateOf<List<com.maxiptv.data.Season>>(emptyList()) }
   var isFavorite by remember { mutableStateOf(false) }
+  var showContinueDialog by remember { mutableStateOf(false) }
+  var savedPosition by remember { mutableStateOf<com.maxiptv.data.PlaybackPosition?>(null) }
   
   val scope = rememberCoroutineScope()
+  
+  // ✅ Verificar se há posição salva quando a tela carrega
+  LaunchedEffect(seriesId) {
+    val position = PlaybackPositionManager.getPosition(seriesId, "series")
+    if (position != null) {
+      savedPosition = position
+      showContinueDialog = true
+      android.util.Log.i("SeriesDetails", "📌 Posição salva encontrada: ${PlaybackPositionManager.formatTime(position.position)}")
+    }
+  }
   
   // Verificar se é favorito
   LaunchedEffect(seriesId) {
@@ -480,16 +501,24 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int) {
                       
                       ep.streamUrl?.let { url ->
                         android.util.Log.i("SeriesDetails", "Idioma: $selectedLanguage, Série: ${targetSeries?.name ?: "padrão"}")
-                        // 🎯 Usar startActivityForResult para navegação inteligente
-                        val playerIntent = Intent(ctx, PlayerActivity::class.java)
-                          .putExtra("url", url)
-                          .putExtra("contentType", "series")
-                          .putExtra("returnToCategory", "series")
-                          .putExtra("categoryId", seriesId.toString())
-                        
-                        // Para Compose, vamos usar uma abordagem diferente
-                        // O PlayerActivity vai navegar de volta automaticamente
-                        ctx.startActivity(playerIntent)
+                        // ✅ Verificar se há posição salva para este episódio
+                        val episodeId = ep.id?.toIntOrNull() ?: 0
+                        scope.launch {
+                          val episodePosition = PlaybackPositionManager.getPosition(episodeId, "series")
+                          
+                          // 🎯 Usar startActivityForResult para navegação inteligente
+                          val playerIntent = Intent(ctx, PlayerActivity::class.java)
+                            .putExtra("url", url)
+                            .putExtra("contentType", "series")
+                            .putExtra("contentId", episodeId) // ✅ Passar ID do episódio para salvar posição
+                            .putExtra("returnToCategory", "series")
+                            .putExtra("categoryId", seriesId.toString())
+                            .putExtra("savedPosition", episodePosition?.position ?: -1L)
+                          
+                          // Para Compose, vamos usar uma abordagem diferente
+                          // O PlayerActivity vai navegar de volta automaticamente
+                          ctx.startActivity(playerIntent)
+                        }
                       }
                     },
                     modifier = Modifier

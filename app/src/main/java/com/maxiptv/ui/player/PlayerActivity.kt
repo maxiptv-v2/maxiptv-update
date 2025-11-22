@@ -48,6 +48,7 @@ import com.maxiptv.ui.player.PlayerState
 import com.maxiptv.ui.player.createAdaptiveLoadControl
 import com.maxiptv.ui.player.detectQualityDegradation
 import com.maxiptv.ui.player.estimateConnectionQuality
+import com.maxiptv.data.PlaybackPositionManager
 
 class PlayerActivity : ComponentActivity() {
   private var player: ExoPlayer? = null
@@ -55,7 +56,7 @@ class PlayerActivity : ComponentActivity() {
   private lateinit var gestureDetector: GestureDetector
   private lateinit var windowInsetsController: WindowInsetsControllerCompat
   private var reconnectAttempts = 0 // Contador de tentativas de reconexão
-  private val maxReconnectAttempts = 5 // Máximo de tentativas
+  private val maxReconnectAttempts: Int get() = if (isFootballMode) 8 else 5 // ⚽ FUTEBOL: mais tentativas (8 vs 5)
   private var bufferingCount = 0 // Contador de eventos de buffering
   private var lastBufferingTime = 0L // Último tempo de buffering
   private var currentMaxBitrate = 2_200_000 // Bitrate máximo atual (começa em 2.2Mbps)
@@ -67,7 +68,7 @@ class PlayerActivity : ComponentActivity() {
   // ✅ FASE 2: Variáveis para failover e detecção de qualidade
   private var originalStreamUrl: String = "" // URL original do stream para failover
   private var failoverAttempts = 0 // Contador de tentativas de failover
-  private val maxFailoverAttempts = 4 // Máximo de tentativas de failover
+  private val maxFailoverAttempts: Int get() = if (isFootballMode) 6 else 4 // ⚽ FUTEBOL: mais tentativas de failover (6 vs 4)
   private var lastVideoFormat: Format? = null // Último formato de vídeo para detectar degradação
   private var qualityDegradedWarningShown = false // Flag para não mostrar aviso repetidamente
   private var qualityDegradedToast: android.widget.Toast? = null // Toast para aviso de qualidade degradada
@@ -91,6 +92,10 @@ class PlayerActivity : ComponentActivity() {
   private var currentChannelName: String? = null // Nome do canal atual (Live)
   private var currentChannelLogo: String? = null // Logo do canal atual (Live)
   private var lastBufferTime = 0L // Último tempo de buffer
+  private var contentId: Int? = null // ID do conteúdo (vodId ou seriesId) para salvar posição
+  private var positionSaveHandler: android.os.Handler? = null // Handler para salvar posição periodicamente
+  private var isFootballMode: Boolean = false // Modo futebol ativado
+  private var footballOverlay: android.widget.ImageView? = null // Overlay de gramado para modo futebol
   private val bufferIndicatorRunnable = object : Runnable {
     override fun run() {
       updateBufferIndicator()
@@ -139,6 +144,8 @@ class PlayerActivity : ComponentActivity() {
     
     // Configurar fullscreen completo - sem nenhuma barra (TopBar, Status Bar, Navigation Bar)
     windowInsetsController.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+    // ✅ BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE permite que barras apareçam temporariamente
+    // quando necessário (ex: para exibir diálogos do sistema)
     windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     
     // Manter tela ligada durante reprodução
@@ -146,6 +153,13 @@ class PlayerActivity : ComponentActivity() {
     window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
     // ✅ FLAG_FULLSCREEN removido (deprecated em API 30+) - WindowInsetsController já faz isso
+    
+    // ✅ Fire Stick: Garantir que diálogos possam ser exibidos mesmo em fullscreen
+    if (MaxiApp.isFireStick) {
+      // FLAG_LAYOUT_IN_SCREEN e FLAG_LAYOUT_NO_LIMITS já permitem diálogos
+      // Mas garantir que não há flags que bloqueiem diálogos
+      android.util.Log.d("PlayerActivity", "📺 Fire Stick: Configuração inicial de fullscreen permite diálogos")
+    }
     
     // ✅ API MODERNA - OnBackPressedCallback (substitui onBackPressed depreciado)
     onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -175,6 +189,23 @@ class PlayerActivity : ComponentActivity() {
             }
             startActivity(returnIntent)
           }
+          
+          // ✅ Salvar posição antes de fechar (apenas VOD/Series)
+          if ((contentType == "vod" || contentType == "series") && contentId != null) {
+            player?.let { exo ->
+              if (exo.duration > 0) {
+                val position = exo.currentPosition
+                val duration = exo.duration
+                lifecycleScope.launch {
+                  PlaybackPositionManager.savePosition(contentId!!, contentType, position, duration)
+                  android.util.Log.i("PlayerActivity", "💾 Posição salva ao sair: ${PlaybackPositionManager.formatTime(position)}")
+                }
+              }
+            }
+          }
+          
+          // ✅ Parar handler de salvar posição
+          positionSaveHandler?.removeCallbacksAndMessages(null)
           
           // ✅ Liberar player ANTES de fechar
           android.util.Log.i("PlayerActivity", "🛑 Fechando player e liberando recursos...")
@@ -311,6 +342,9 @@ class PlayerActivity : ComponentActivity() {
     
     // Adicionar indicador de buffer ao rootLayout (canto superior esquerdo)
     rootLayout.addView(bufferIndicatorOverlay)
+    
+    // ⚽ OVERLAY DE GRAMADO PARA MODO FUTEBOL será adicionado depois, se necessário
+    // (será criado dinamicamente quando modo futebol for ativado)
     
     // ✅ FASE 1: Criar overlay de latência (Live apenas)
     latencyOverlay = android.widget.TextView(this).apply {
@@ -459,6 +493,45 @@ class PlayerActivity : ComponentActivity() {
     setContentView(rootLayout) // Usar rootLayout em vez de pv diretamente
     val url = intent.getStringExtra("url") ?: return
     contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
+    val channelName = intent.getStringExtra("channelName") ?: ""
+    
+    // ✅ Detectar se é canal de futebol pelo nome
+    val channelNameLower = channelName.lowercase().trim()
+    android.util.Log.d("PlayerActivity", "🔍 Verificando canal: '$channelName' (lowercase: '$channelNameLower')")
+    
+    val footballChannels = listOf(
+      "band sport", "premiere 1", "premiere 2", "premiere1", "premiere2",
+      "sportv", "espn 4", "espn4", "cazetv", "caze tv"
+    )
+    
+    // Termos mais específicos primeiro (maior prioridade)
+    val isSpecificFootballChannel = footballChannels.any { 
+      channelNameLower.contains(it.lowercase()) 
+    }
+    
+    // Termos genéricos (menor prioridade, apenas se não for muito genérico)
+    val genericTerms = listOf("premiere", "sport", "futebol", "futbol")
+    val hasGenericTerm = genericTerms.any { 
+      channelNameLower.contains(it.lowercase()) && 
+      !channelNameLower.contains("news") && // Excluir "sport news" etc
+      !channelNameLower.contains("noticias")
+    }
+    
+    isFootballMode = contentType == "live" && (isSpecificFootballChannel || hasGenericTerm)
+    
+    if (isFootballMode) {
+      android.util.Log.i("PlayerActivity", "⚽ MODO FUTEBOL ATIVADO para: '$channelName'")
+      android.util.Log.i("PlayerActivity", "   - Canal específico: $isSpecificFootballChannel")
+      android.util.Log.i("PlayerActivity", "   - Termo genérico: $hasGenericTerm")
+    } else {
+      android.util.Log.d("PlayerActivity", "📺 Modo normal (não é futebol): '$channelName'")
+    }
+    
+    // ✅ Obter ID do conteúdo para salvar posição (apenas VOD/Series)
+    if (contentType == "vod" || contentType == "series") {
+      contentId = intent.getIntExtra("contentId", -1).takeIf { it > 0 }
+      android.util.Log.d("PlayerActivity", "📌 ContentId para salvar posição: $contentId")
+    }
     
     // ✅ LER CONFIGURAÇÕES DO INTENT (legendas e áudio selecionados na tela de detalhes)
     // ✅ Configurações serão lidas diretamente em onTracksChanged quando os tracks estiverem disponíveis
@@ -468,16 +541,30 @@ class PlayerActivity : ComponentActivity() {
     val isVodOrSeries = contentType == "vod" || contentType == "series"
     remainingTimeOverlay?.visibility = if (isVodOrSeries) android.view.View.VISIBLE else android.view.View.GONE
     
+    // ⚽ CRIAR OVERLAY DE GRAMADO PARA MODO FUTEBOL (apenas se necessário)
+    if (isFootballMode) {
+      createFootballOverlay(rootLayout)
+      android.util.Log.i("PlayerActivity", "⚽ Overlay de gramado criado para modo futebol")
+    }
+    
     // Log da URL para debug
     android.util.Log.i("PlayerActivity", "=== REPRODUZINDO URL ===")
     android.util.Log.i("PlayerActivity", "URL: $url")
     android.util.Log.i("PlayerActivity", "TIPO: $contentType")
     android.util.Log.i("PlayerActivity", "=======================")
     
-    // ⚡ Configurar DataSource com timeouts diferentes para LIVE vs VOD/SERIES
+    // ⚡ Configurar DataSource com timeouts diferentes para LIVE vs VOD/SERIES vs FUTEBOL
     val isLive = contentType == "live"
-    val connectTimeout = if (isLive) 12000 else 8000    // ✅ LIVE: 12s (AUMENTADO de 8s - mais tempo para conexão)
-    val readTimeout = if (isLive) 15000 else 10000       // ✅ LIVE: 15s (AUMENTADO de 10s - mais tempo para leitura)
+    val connectTimeout = when {
+      isFootballMode -> 15000  // ⚽ FUTEBOL: 15s (mais tempo para conexão estável)
+      isLive -> 12000          // ✅ LIVE: 12s (AUMENTADO de 8s - mais tempo para conexão)
+      else -> 8000             // VOD/SERIES: 8s
+    }
+    val readTimeout = when {
+      isFootballMode -> 20000  // ⚽ FUTEBOL: 20s (mais tempo para leitura estável)
+      isLive -> 15000          // ✅ LIVE: 15s (AUMENTADO de 10s - mais tempo para leitura)
+      else -> 10000            // VOD/SERIES: 10s
+    }
     
     // 🌐 DNS OTIMIZADO: Priorizar IPv4 para melhor compatibilidade
     val customDns = object : Dns {
@@ -508,9 +595,22 @@ class PlayerActivity : ComponentActivity() {
     // Xtream Code usa: live/.../stream_id.m3u8 (HLS), movie/.../id.mp4 (Progressive), series/.../id.mp4 (Progressive)
     val mediaSourceFactory = DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
     
-    // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES
+    // ⚡ CACHE OTIMIZADO: Configurações diferentes para LIVE vs VOD/SERIES vs FUTEBOL
     // ✅ FASE 1: Buffer dinâmico baseado em qualidade de conexão estimada (inicia com GOOD)
-    val loadControl: LoadControl = if (isLive) {
+    val loadControl: LoadControl = if (isFootballMode) {
+      // ⚽ FUTEBOL: Buffer otimizado para evitar travamento em transmissões esportivas
+      // Buffer maior para estabilidade, mas ainda com baixa latência
+      DefaultLoadControl.Builder()
+        .setBufferDurationsMs(
+          5000,   // minBufferMs: 5 segundos (maior que live normal para estabilidade)
+          15000,  // maxBufferMs: 15 segundos (buffer maior para evitar travamentos)
+          2000,   // bufferForPlaybackMs: 2 segundos (start rápido mas estável)
+          4000    // bufferForPlaybackAfterRebufferMs: 4 segundos (reconexão mais estável)
+        )
+        .setPrioritizeTimeOverSizeThresholds(true)
+        .setBackBuffer(5000, true) // 5s de back buffer para futebol
+        .build()
+    } else if (isLive) {
       // 📺 LIVE: Buffer dinâmico baseado em qualidade de conexão
       // Inicia com qualidade GOOD, será ajustado dinamicamente conforme estatísticas
       createAdaptiveLoadControl(isLive = true)
@@ -539,7 +639,21 @@ class PlayerActivity : ComponentActivity() {
         
         // 🎬 CONFIGURAR MEDIAITEM COM LIVE CONFIGURATION
         // ✅ FASE 2: Modo Low Latency HLS para reduzir latência
-        val mediaItem = if (isLive) {
+        val mediaItem = if (isFootballMode) {
+          // ⚽ FUTEBOL: Configuração otimizada para evitar travamento
+          MediaItem.Builder()
+            .setUri(url)
+            .setLiveConfiguration(
+              MediaItem.LiveConfiguration.Builder()
+                .setTargetOffsetMs(3000) // ⚽ FUTEBOL: 3s de offset (mais estável que live normal)
+                .setMinOffsetMs(2000) // ⚽ FUTEBOL: Offset mínimo 2s (mais tolerante)
+                .setMaxOffsetMs(8000) // ⚽ FUTEBOL: Máximo 8s (mais margem para estabilidade)
+                .setMinPlaybackSpeed(0.92f) // ⚽ FUTEBOL: Velocidade mínima 0.92 (mais tolerante)
+                .setMaxPlaybackSpeed(1.08f) // ⚽ FUTEBOL: Velocidade máxima 1.08 (mais tolerante)
+                .build()
+            )
+            .build()
+        } else if (isLive) {
           MediaItem.Builder()
             .setUri(url)
             .setLiveConfiguration(
@@ -589,15 +703,23 @@ class PlayerActivity : ComponentActivity() {
                 .build()
               android.util.Log.i("PlayerActivity", "✅ Qualidade aplicada: ${videoQuality.displayName} (${videoQuality.maxBitrate / 1000}Kbps, ${width}x${height})")
             } else {
-              // Qualidade automática: usar valores padrão
-              currentMaxBitrate = if (isLive) 2_200_000 else 2_500_000
+              // Qualidade automática: usar valores padrão (otimizados para futebol)
+              currentMaxBitrate = when {
+                isFootballMode -> 3_000_000  // ⚽ FUTEBOL: 3Mbps (maior qualidade para ver detalhes)
+                isLive -> 2_200_000         // ✅ LIVE: 2.2Mbps
+                else -> 2_500_000           // VOD/SERIES: 2.5Mbps
+              }
               exo.trackSelectionParameters = TrackSelectionParameters.Builder(this@PlayerActivity)
                 .setPreferredTextLanguage(null)
                 .setMaxVideoBitrate(currentMaxBitrate)
-                .setMaxVideoSize(1280, 720)
-                .setMinVideoBitrate(if (isLive) 500_000 else 400_000)
+                .setMaxVideoSize(if (isFootballMode) 1920 else 1280, if (isFootballMode) 1080 else 720) // ⚽ FUTEBOL: até 1080p
+                .setMinVideoBitrate(when {
+                  isFootballMode -> 800_000  // ⚽ FUTEBOL: mínimo 800Kbps (mais estável)
+                  isLive -> 500_000
+                  else -> 400_000
+                })
                 .build()
-              android.util.Log.i("PlayerActivity", "✅ Qualidade automática aplicada")
+              android.util.Log.i("PlayerActivity", "✅ Qualidade automática aplicada${if (isFootballMode) " (MODO FUTEBOL)" else ""}")
             }
           } catch (e: Exception) {
             android.util.Log.e("PlayerActivity", "❌ Erro ao aplicar configurações: ${e.message}", e)
@@ -623,7 +745,37 @@ class PlayerActivity : ComponentActivity() {
         }
         
         exo.prepare()
+        
+        // ✅ Restaurar posição salva se fornecida (apenas VOD/Series)
+        if ((contentType == "vod" || contentType == "series") && contentId != null) {
+          val savedPosition = intent.getLongExtra("savedPosition", -1L)
+          if (savedPosition > 0) {
+            android.util.Log.i("PlayerActivity", "⏩ Restaurando posição salva: ${PlaybackPositionManager.formatTime(savedPosition)}")
+            exo.seekTo(savedPosition)
+          }
+        }
+        
         exo.playWhenReady = true
+        
+        // ✅ SALVAR POSIÇÃO PERIODICAMENTE (apenas VOD/Series)
+        if ((contentType == "vod" || contentType == "series") && contentId != null) {
+          positionSaveHandler = android.os.Handler(android.os.Looper.getMainLooper())
+          val savePositionRunnable = object : Runnable {
+            override fun run() {
+              exo?.let { player ->
+                if (player.isPlaying && player.duration > 0) {
+                  val position = player.currentPosition
+                  val duration = player.duration
+                  lifecycleScope.launch {
+                    PlaybackPositionManager.savePosition(contentId!!, contentType, position, duration)
+                  }
+                }
+              }
+              positionSaveHandler?.postDelayed(this, 10000) // Salvar a cada 10 segundos
+            }
+          }
+          positionSaveHandler?.postDelayed(savePositionRunnable, 10000)
+        }
         
         // ✅ APLICAR CONFIGURAÇÕES DE LEGENDAS E ÁUDIO DO INTENT
         // Aguardar tracks serem carregados antes de aplicar configurações
@@ -878,7 +1030,8 @@ class PlayerActivity : ComponentActivity() {
               // ⚡ RECONEXÃO AUTOMÁTICA MELHORADA (com limite de tentativas) - fallback
               if (reconnectAttempts < maxReconnectAttempts) {
                 reconnectAttempts++
-                android.util.Log.i("PlayerActivity", "🔄 Tentativa de reconexão $reconnectAttempts/$maxReconnectAttempts em 2 segundos...")
+                val retryDelay = if (isFootballMode) 1000L else 2000L // ⚽ FUTEBOL: reconexão mais rápida (1s vs 2s)
+                android.util.Log.i("PlayerActivity", "🔄 Tentativa de reconexão $reconnectAttempts/$maxReconnectAttempts em ${retryDelay}ms...")
                 
                 pv.postDelayed({
                   try {
@@ -893,7 +1046,7 @@ class PlayerActivity : ComponentActivity() {
                   } catch (e: Exception) {
                     android.util.Log.e("PlayerActivity", "❌ Falha na reconexão: ${e.message}")
                   }
-                }, 2000)
+                }, retryDelay)
               } else {
                 android.util.Log.e("PlayerActivity", "❌ Máximo de tentativas atingido. Verifique sua conexão.")
               }
@@ -989,11 +1142,35 @@ class PlayerActivity : ComponentActivity() {
     isFullscreen = !isFullscreen
     if (isFullscreen) {
       // ✅ API MODERNA - Entrar em fullscreen
+      // ✅ IMPORTANTE: No Fire Stick, garantir que diálogos ainda possam ser exibidos
       windowInsetsController.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+      // ✅ BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE permite que barras apareçam temporariamente
+      // quando necessário (ex: para exibir diálogos do sistema)
       windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+      
+      // ✅ Fire Stick: Garantir que a janela permite diálogos mesmo em fullscreen
+      if (MaxiApp.isFireStick) {
+        // Não bloquear diálogos em fullscreen no Fire Stick
+        window.setFlags(
+          android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+          android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+          android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+          android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        )
+        android.util.Log.d("PlayerActivity", "📺 Fire Stick: Fullscreen configurado para permitir diálogos")
+      }
     } else {
       // ✅ API MODERNA - Sair de fullscreen
       windowInsetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+      
+      // ✅ Fire Stick: Restaurar flags normais ao sair do fullscreen
+      if (MaxiApp.isFireStick) {
+        window.clearFlags(
+          android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+          android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        )
+        android.util.Log.d("PlayerActivity", "📺 Fire Stick: Saindo do fullscreen, flags restauradas")
+      }
     }
   }
   
@@ -1089,6 +1266,29 @@ class PlayerActivity : ComponentActivity() {
   override fun onDestroy() {
     super.onDestroy()
     
+    // ✅ Salvar posição antes de destruir (apenas VOD/Series)
+    if ((contentType == "vod" || contentType == "series") && contentId != null) {
+      player?.let { exo ->
+        if (exo.duration > 0) {
+          val position = exo.currentPosition
+          val duration = exo.duration
+          lifecycleScope.launch {
+            PlaybackPositionManager.savePosition(contentId!!, contentType, position, duration)
+            android.util.Log.i("PlayerActivity", "💾 Posição salva em onDestroy: ${PlaybackPositionManager.formatTime(position)}")
+          }
+        }
+      }
+    }
+    
+    // ✅ Parar handler de salvar posição
+    positionSaveHandler?.removeCallbacksAndMessages(null)
+    
+    // ⚽ Remover overlay de gramado se existir
+    footballOverlay?.let {
+      (it.parent as? android.view.ViewGroup)?.removeView(it)
+      footballOverlay = null
+    }
+    
     // ✅ MELHORIA 2: Parar atualização de tempo restante
     stopRemainingTimeUpdates()
     // ✅ MELHORIA 3: Parar atualização de indicador de buffer
@@ -1112,6 +1312,69 @@ class PlayerActivity : ComponentActivity() {
       result = resources.getDimensionPixelSize(resourceId)
     }
     return result
+  }
+  
+  // ⚽ CRIAR OVERLAY DE GRAMADO PARA MODO FUTEBOL
+  private fun createFootballOverlay(rootLayout: FrameLayout) {
+    // Criar overlay sutil de gramado usando gradiente verde (leve, não pesa o player)
+    footballOverlay = android.widget.ImageView(this).apply {
+      // Criar bitmap de gramado usando gradiente (muito leve)
+      val width = resources.displayMetrics.widthPixels
+      val height = resources.displayMetrics.heightPixels
+      
+      // Criar gradiente verde que simula gramado (bem sutil, 5% de opacidade)
+      val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+      val canvas = android.graphics.Canvas(bitmap)
+      
+      // Gradiente verde sutil para simular gramado
+      val paint = android.graphics.Paint().apply {
+        shader = android.graphics.LinearGradient(
+          0f, 0f, 0f, height.toFloat(),
+          intArrayOf(
+            android.graphics.Color.argb(5, 34, 139, 34), // Verde escuro muito transparente (topo)
+            android.graphics.Color.argb(8, 50, 205, 50), // Verde médio transparente (meio)
+            android.graphics.Color.argb(5, 34, 139, 34)  // Verde escuro muito transparente (fundo)
+          ),
+          null,
+          android.graphics.Shader.TileMode.CLAMP
+        )
+      }
+      
+      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+      
+      // Adicionar linhas sutis do campo (muito leves)
+      val linePaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.argb(3, 255, 255, 255) // Branco muito transparente
+        strokeWidth = 2f
+        style = android.graphics.Paint.Style.STROKE
+      }
+      
+      // Linha central (horizontal)
+      canvas.drawLine(0f, height / 2f, width.toFloat(), height / 2f, linePaint)
+      
+      // Círculo central (muito sutil)
+      val centerPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.argb(2, 255, 255, 255)
+        strokeWidth = 1f
+        style = android.graphics.Paint.Style.STROKE
+      }
+      canvas.drawCircle(width / 2f, height / 2f, (height * 0.15f).coerceAtMost(width * 0.15f), centerPaint)
+      
+      setImageBitmap(bitmap)
+      alpha = 0.15f // Opacidade muito baixa para não interferir no vídeo
+      scaleType = android.widget.ImageView.ScaleType.FIT_XY
+      
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT
+      )
+    }
+    
+    // Adicionar overlay ao rootLayout (logo após PlayerView, antes dos overlays de informação)
+    // Usar insert para colocar logo após o PlayerView (índice 0), mas antes dos overlays de informação
+    val insertIndex = 1 // Logo após PlayerView (índice 0)
+    rootLayout.addView(footballOverlay, insertIndex)
+    android.util.Log.i("PlayerActivity", "⚽ Overlay de gramado adicionado na posição $insertIndex (opacidade: 15%)")
   }
   
   // ✅ FASE 1: CONTROLES AVANÇADOS - Avançar/Retroceder 10 segundos

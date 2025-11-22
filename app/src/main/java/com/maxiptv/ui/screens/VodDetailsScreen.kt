@@ -536,23 +536,43 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
           Neon3DButton(
             text = "Assistir",
             onClick = { 
-              // Buscar o stream_id correto baseado no idioma escolhido
-              val currentTitle = info?.info?.name ?: ""
+              // ✅ Garantir que sempre use as informações corretas do filme atual
+              // Prioridade: info da API > clickedVod > vodId
+              val currentTitle = info?.info?.name 
+                ?: clickedVod?.name 
+                ?: ""
+              
+              android.util.Log.d("VodDetails", "🔍 Botão Assistir clicado:")
+              android.util.Log.d("VodDetails", "  - vodId: $vodId")
+              android.util.Log.d("VodDetails", "  - currentTitle: $currentTitle")
+              android.util.Log.d("VodDetails", "  - selectedLanguage: $selectedLanguage")
+              android.util.Log.d("VodDetails", "  - info disponível: ${info != null}")
+              android.util.Log.d("VodDetails", "  - clickedVod disponível: ${clickedVod != null}")
+              
               val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
               
-              val targetVersion = allVods.find { vod ->
-                val vodBase = vod.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
-                val matchesTitle = vodBase == baseTitle
-                val matchesLanguage = when (selectedLanguage) {
-                  "Legendado" -> vod.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
-                  "Dublado" -> vod.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
-                  "Original" -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
-                  else -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+              // ✅ Buscar versão correta baseada no idioma selecionado
+              val targetVersion = if (baseTitle.isNotEmpty()) {
+                allVods.find { vod ->
+                  val vodBase = vod.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
+                  val matchesTitle = vodBase == baseTitle
+                  val matchesLanguage = when (selectedLanguage) {
+                    "Legendado" -> vod.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
+                    "Dublado" -> vod.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
+                    "Original" -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+                    else -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+                  }
+                  matchesTitle && matchesLanguage
                 }
-                matchesTitle && matchesLanguage
+              } else {
+                null
               }
               
+              // ✅ Usar streamId da versão encontrada, ou vodId como fallback
               val streamId = targetVersion?.stream_id ?: vodId
+              
+              android.util.Log.d("VodDetails", "  - targetVersion encontrada: ${targetVersion?.name ?: "nenhuma"}")
+              android.util.Log.d("VodDetails", "  - streamId final: $streamId")
               val (base, user, pass) = SettingsRepo.loadBlocking()
               val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
               val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
@@ -573,6 +593,7 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
                 val playerIntent = Intent(ctx, PlayerActivity::class.java)
                   .putExtra("url", url)
                   .putExtra("contentType", "vod")
+                  .putExtra("contentId", streamId) // ✅ Passar streamId correto (não vodId)
                   .putExtra("returnToCategory", "vod")
                   .putExtra("categoryId", vodId.toString())
                   // ✅ Passar configurações selecionadas
@@ -580,6 +601,9 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
                   .putExtra("selectedAudioTrack", selectedAudioTrack?.let { "${it.id}" } ?: "")
                 
                 android.util.Log.i("VodDetails", "🔍 Configurações passadas para o Intent:")
+                android.util.Log.i("VodDetails", "  - URL: $url")
+                android.util.Log.i("VodDetails", "  - contentId (streamId): $streamId")
+                android.util.Log.i("VodDetails", "  - categoryId (vodId): $vodId")
                 android.util.Log.i("VodDetails", "  - Qualidade: ${currentVideoQuality.displayName}")
                 android.util.Log.i("VodDetails", "  - Legenda: ${selectedSubtitleTrack?.let { "${it.id} (${it.language})" } ?: "Desativada"}")
                 android.util.Log.i("VodDetails", "  - Áudio: ${selectedAudioTrack?.let { "${it.id} (${it.language})" } ?: "Automático"}")
@@ -692,7 +716,14 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     
     // Dialog de opções
     if (showOptionsDialog) {
-      androidx.compose.ui.window.Dialog(onDismissRequest = { showOptionsDialog = false }) {
+      // ✅ Fire Stick: Garantir que diálogo seja exibido corretamente mesmo em fullscreen
+      androidx.compose.ui.window.Dialog(
+        onDismissRequest = { showOptionsDialog = false },
+        properties = androidx.compose.ui.window.DialogProperties(
+          usePlatformDefaultWidth = false, // Permitir largura customizada
+          decorFitsSystemWindows = false // Não ajustar para system windows (importante para fullscreen)
+        )
+      ) {
         Surface(shape = MaterialTheme.shapes.medium) {
           Column(Modifier.padding(24.dp)) {
             Text("Opções de Reprodução", style = MaterialTheme.typography.titleMedium)
@@ -763,7 +794,23 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
             }
             
             Spacer(Modifier.height(16.dp))
-            Button(onClick = { showOptionsDialog = false }, modifier = Modifier.fillMaxWidth()) {
+            Button(
+              onClick = { 
+                // ✅ Aplicar qualidade selecionada quando confirmar
+                scope.launch {
+                  val quality = when (selectedQuality) {
+                    "FHD" -> PlayerSettingsManager.VideoQuality.HD
+                    "HD" -> PlayerSettingsManager.VideoQuality.SD
+                    else -> PlayerSettingsManager.VideoQuality.AUTO
+                  }
+                  PlayerSettingsManager.setVideoQuality(quality)
+                  currentVideoQuality = quality
+                  android.util.Log.d("VodDetails", "✅ Qualidade atualizada no diálogo: ${quality.displayName}")
+                }
+                showOptionsDialog = false 
+              }, 
+              modifier = Modifier.fillMaxWidth()
+            ) {
               Text("Confirmar")
             }
           }
@@ -773,7 +820,14 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     
     // ✅ Dialog de Qualidade (H)
     if (showQualityDialog) {
-      androidx.compose.ui.window.Dialog(onDismissRequest = { showQualityDialog = false }) {
+      // ✅ Fire Stick: Garantir que diálogo seja exibido corretamente mesmo em fullscreen
+      androidx.compose.ui.window.Dialog(
+        onDismissRequest = { showQualityDialog = false },
+        properties = androidx.compose.ui.window.DialogProperties(
+          usePlatformDefaultWidth = false,
+          decorFitsSystemWindows = false
+        )
+      ) {
         Surface(shape = MaterialTheme.shapes.medium) {
           Column(Modifier.padding(24.dp)) {
             Text("Selecionar Qualidade", style = MaterialTheme.typography.titleMedium)
@@ -820,7 +874,14 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     
     // ✅ Dialog de Legendas (CC)
     if (showSubtitleDialog) {
-      androidx.compose.ui.window.Dialog(onDismissRequest = { showSubtitleDialog = false }) {
+      // ✅ Fire Stick: Garantir que diálogo seja exibido corretamente mesmo em fullscreen
+      androidx.compose.ui.window.Dialog(
+        onDismissRequest = { showSubtitleDialog = false },
+        properties = androidx.compose.ui.window.DialogProperties(
+          usePlatformDefaultWidth = false,
+          decorFitsSystemWindows = false
+        )
+      ) {
         Surface(shape = MaterialTheme.shapes.medium) {
           Column(Modifier.padding(24.dp)) {
             Text("Selecionar Legendas", style = MaterialTheme.typography.titleMedium)
@@ -923,7 +984,14 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     
     // ✅ Dialog de Áudio (A)
     if (showAudioDialog) {
-      androidx.compose.ui.window.Dialog(onDismissRequest = { showAudioDialog = false }) {
+      // ✅ Fire Stick: Garantir que diálogo seja exibido corretamente mesmo em fullscreen
+      androidx.compose.ui.window.Dialog(
+        onDismissRequest = { showAudioDialog = false },
+        properties = androidx.compose.ui.window.DialogProperties(
+          usePlatformDefaultWidth = false,
+          decorFitsSystemWindows = false
+        )
+      ) {
         Surface(shape = MaterialTheme.shapes.medium) {
           Column(Modifier.padding(24.dp)) {
             Text("Selecionar Áudio", style = MaterialTheme.typography.titleMedium)

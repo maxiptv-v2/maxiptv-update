@@ -704,7 +704,7 @@ fun LiveScreen(nav: NavHostController) {
           }
         }
         Box(Modifier.weight(1f).fillMaxHeight().padding(8.dp)) {
-          PlayerSurface(currentUrl = current?.toLiveUrl())
+          PlayerSurface(currentUrl = current?.toLiveUrl(), channelName = current?.name)
         }
       }
     }

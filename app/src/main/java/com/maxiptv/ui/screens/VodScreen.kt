@@ -41,6 +41,16 @@ fun VodScreen(nav: NavHostController) {
   // ✅ Usar rememberSaveable para manter categoria selecionada ao voltar dos detalhes
   var selectedCat by rememberSaveable { mutableStateOf<String?>(null) }
   
+  // ✅ Restaurar categoria quando voltar dos detalhes
+  LaunchedEffect(nav.currentBackStackEntry) {
+    val restoredCategory = nav.currentBackStackEntry?.savedStateHandle?.get<String>("restoreCategory")
+    if (restoredCategory != null) {
+      selectedCat = restoredCategory
+      // Limpar o valor para não restaurar novamente
+      nav.currentBackStackEntry?.savedStateHandle?.remove<String>("restoreCategory")
+    }
+  }
+  
   // IDs das categorias adultas
   val adultCategoryIds = listOf("18", "82", "80", "79", "78", "81")
   
@@ -158,7 +168,11 @@ fun VodScreen(nav: NavHostController) {
         )
         
         Card(
-          onClick = { nav.navigate("vod/${v.stream_id}") }, 
+          onClick = { 
+            // Passar categoria selecionada via savedStateHandle
+            nav.currentBackStackEntry?.savedStateHandle?.set("category", selectedCat)
+            nav.navigate("vod/${v.stream_id}")
+          }, 
           modifier = Modifier
             .padding(8.dp)
             .graphicsLayer {
