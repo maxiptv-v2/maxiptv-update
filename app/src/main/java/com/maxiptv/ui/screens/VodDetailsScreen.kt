@@ -111,7 +111,8 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
       val url = "${baseUrl}movie/$user/$pass/$streamId.mp4"
       
       // ✅ Criar player temporário apenas para detectar tracks
-      withContext(Dispatchers.IO) {
+      // IMPORTANTE: ExoPlayer deve ser acessado apenas na main thread
+      withContext(Dispatchers.Main) {
         try {
           val tempPlayer = ExoPlayer.Builder(ctx).build()
           val mediaItem = MediaItem.fromUri(url)
