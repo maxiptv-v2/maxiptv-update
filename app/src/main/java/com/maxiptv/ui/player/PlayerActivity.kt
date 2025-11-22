@@ -96,6 +96,13 @@ class PlayerActivity : ComponentActivity() {
   private var positionSaveHandler: android.os.Handler? = null // Handler para salvar posição periodicamente
   private var isFootballMode: Boolean = false // Modo futebol ativado
   private var footballOverlay: android.widget.ImageView? = null // Overlay de gramado para modo futebol
+  private var footballStatsButton: android.widget.ImageButton? = null // Botão de estatísticas de futebol
+  private var footballStatsOverlay: android.view.ViewGroup? = null // Overlay de estatísticas
+  private var isStatsOverlayVisible: Boolean = false // Se overlay está visível
+  private var footballStatsButtonEnabled: Boolean = true // Se botão está habilitado
+  private var footballAutoZoomEnabled: Boolean = true // Se zoom automático está habilitado
+  private var rotationAnimator: android.animation.ObjectAnimator? = null // Animação de rotação do botão
+  private var currentZoomLevel: Float = 1.0f // Nível de zoom atual (1.0 = normal)
   private val bufferIndicatorRunnable = object : Runnable {
     override fun run() {
       updateBufferIndicator()
@@ -135,6 +142,16 @@ class PlayerActivity : ComponentActivity() {
       }
       player = null
     }
+    
+    // ⚽ Limpar recursos de futebol ao iniciar novo jogo
+    rotationAnimator?.cancel()
+    rotationAnimator = null
+    footballStatsButton = null
+    footballStatsOverlay = null
+    isStatsOverlayVisible = false
+    pv.scaleX = 1.0f
+    pv.scaleY = 1.0f
+    currentZoomLevel = 1.0f
     
     // ✅ API MODERNA - WindowInsetsController (substitui systemUiVisibility depreciado)
     windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
@@ -545,6 +562,17 @@ class PlayerActivity : ComponentActivity() {
     if (isFootballMode) {
       createFootballOverlay(rootLayout)
       android.util.Log.i("PlayerActivity", "⚽ Overlay de gramado criado para modo futebol")
+      
+      // ✅ Carregar preferências de futebol
+      lifecycleScope.launch {
+        // ⚽ Novo jogo: sempre reativar botão (mesmo que tenha sido desativado antes)
+        // O usuário pode desativar novamente se não quiser neste jogo específico
+        footballStatsButtonEnabled = true // Sempre ativado em novo jogo
+        footballAutoZoomEnabled = PlayerSettingsManager.isFootballAutoZoomEnabled()
+        
+        // Criar botão de estatísticas (sempre criado em novo jogo)
+        createFootballStatsButton(rootLayout)
+      }
     }
     
     // Log da URL para debug
@@ -756,6 +784,11 @@ class PlayerActivity : ComponentActivity() {
         }
         
         exo.playWhenReady = true
+        
+        // ⚽ Iniciar simulação de eventos de futebol (apenas para teste)
+        if (isFootballMode && footballAutoZoomEnabled) {
+          simulateFootballEvents()
+        }
         
         // ✅ SALVAR POSIÇÃO PERIODICAMENTE (apenas VOD/Series)
         if ((contentType == "vod" || contentType == "series") && contentId != null) {
@@ -1289,6 +1322,25 @@ class PlayerActivity : ComponentActivity() {
       footballOverlay = null
     }
     
+    // ⚽ Remover botão de estatísticas se existir
+    rotationAnimator?.cancel()
+    rotationAnimator = null
+    footballStatsButton?.let {
+      (it.parent as? android.view.ViewGroup)?.removeView(it)
+      footballStatsButton = null
+    }
+    
+    // ⚽ Remover overlay de estatísticas se existir
+    footballStatsOverlay?.let {
+      (it.parent as? android.view.ViewGroup)?.removeView(it)
+      footballStatsOverlay = null
+    }
+    
+    // ⚽ Resetar zoom
+    pv.scaleX = 1.0f
+    pv.scaleY = 1.0f
+    currentZoomLevel = 1.0f
+    
     // ✅ MELHORIA 2: Parar atualização de tempo restante
     stopRemainingTimeUpdates()
     // ✅ MELHORIA 3: Parar atualização de indicador de buffer
@@ -1375,6 +1427,315 @@ class PlayerActivity : ComponentActivity() {
     val insertIndex = 1 // Logo após PlayerView (índice 0)
     rootLayout.addView(footballOverlay, insertIndex)
     android.util.Log.i("PlayerActivity", "⚽ Overlay de gramado adicionado na posição $insertIndex (opacidade: 15%)")
+  }
+  
+  // ⚽ CRIAR BOTÃO DE ESTATÍSTICAS DE FUTEBOL (bola giratória)
+  private fun createFootballStatsButton(rootLayout: FrameLayout) {
+    if (!isFootballMode || !footballStatsButtonEnabled) return
+    
+    val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
+    val density = resources.displayMetrics.density
+    val sizePx = (buttonSize * density).toInt()
+    val margin = (16 * density).toInt() // 16dp de margem
+    
+    // Criar botão customizado (bola de futebol)
+    footballStatsButton = android.widget.ImageButton(this).apply {
+      // Criar drawable de bola de futebol usando Canvas
+      val bitmap = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
+      val canvas = android.graphics.Canvas(bitmap)
+      
+      // Desenhar bola de futebol (padrão hexágono/pentágono)
+      val paint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        style = android.graphics.Paint.Style.FILL
+        color = android.graphics.Color.WHITE
+      }
+      
+      val strokePaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = 4f
+        color = android.graphics.Color.BLACK
+      }
+      
+      val centerX = sizePx / 2f
+      val centerY = sizePx / 2f
+      val radius = (sizePx * 0.4f)
+      
+      // Desenhar círculo branco (bola)
+      canvas.drawCircle(centerX, centerY, radius, paint)
+      canvas.drawCircle(centerX, centerY, radius, strokePaint)
+      
+      // Desenhar linhas da bola de futebol (padrão simplificado)
+      val linePaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = 3f
+        color = android.graphics.Color.BLACK
+      }
+      
+      // Linhas horizontais e verticais
+      canvas.drawLine(centerX - radius, centerY, centerX + radius, centerY, linePaint)
+      canvas.drawLine(centerX, centerY - radius, centerX, centerY + radius, linePaint)
+      
+      // Linhas diagonais
+      val diagonalOffset = radius * 0.7f
+      canvas.drawLine(centerX - diagonalOffset, centerY - diagonalOffset, centerX + diagonalOffset, centerY + diagonalOffset, linePaint)
+      canvas.drawLine(centerX - diagonalOffset, centerY + diagonalOffset, centerX + diagonalOffset, centerY - diagonalOffset, linePaint)
+      
+      setImageBitmap(bitmap)
+      background = null // Sem background
+      scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+      alpha = 0.8f // 80% de opacidade
+      
+      // Configurar foco e clique
+      isFocusable = true
+      isFocusableInTouchMode = true
+      setOnClickListener {
+        showFootballStatsOverlay()
+      }
+      
+      setOnFocusChangeListener { _, hasFocus ->
+        if (hasFocus) {
+          // Zoom e borda vermelha quando focado
+          animate()
+            .scaleX(1.2f)
+            .scaleY(1.2f)
+            .setDuration(200)
+            .start()
+          
+          // Adicionar borda vermelha
+          val borderDrawable = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.OVAL
+            setStroke((6 * density).toInt(), android.graphics.Color.RED)
+            setColor(android.graphics.Color.TRANSPARENT)
+          }
+          background = borderDrawable
+          
+          // Glow vermelho
+          elevation = 8f
+        } else {
+          // Voltar ao normal quando perder foco
+          animate()
+            .scaleX(1.0f)
+            .scaleY(1.0f)
+            .setDuration(200)
+            .start()
+          background = null
+          elevation = 0f
+        }
+      }
+      
+      layoutParams = FrameLayout.LayoutParams(sizePx, sizePx).apply {
+        gravity = android.view.Gravity.TOP or android.view.Gravity.END
+        setMargins(0, margin, margin, 0)
+      }
+    }
+    
+    // Adicionar animação de rotação contínua
+    rotationAnimator = android.animation.ObjectAnimator.ofFloat(footballStatsButton, "rotation", 0f, 360f).apply {
+      duration = 3000 // 3 segundos para uma rotação completa
+      repeatCount = android.animation.ObjectAnimator.INFINITE
+      interpolator = android.view.animation.LinearInterpolator()
+      start()
+    }
+    
+    rootLayout.addView(footballStatsButton)
+    android.util.Log.i("PlayerActivity", "⚽ Botão de estatísticas de futebol criado")
+  }
+  
+  // ⚽ MOSTRAR OVERLAY DE ESTATÍSTICAS
+  private fun showFootballStatsOverlay() {
+    if (footballStatsOverlay != null) {
+      // Se já existe, apenas mostrar/esconder
+      footballStatsOverlay?.visibility = if (isStatsOverlayVisible) android.view.View.GONE else android.view.View.VISIBLE
+      isStatsOverlayVisible = !isStatsOverlayVisible
+      return
+    }
+    
+    val rootLayout = footballStatsButton?.parent as? FrameLayout ?: return
+    val channelName = intent.getStringExtra("channelName") ?: "Canal de Futebol"
+    
+    // Criar overlay
+    footballStatsOverlay = FrameLayout(this).apply {
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT
+      )
+      setBackgroundColor(android.graphics.Color.argb(200, 0, 0, 0)) // Fundo semi-transparente
+      
+      // Container principal
+      val container = android.widget.LinearLayout(this@PlayerActivity).apply {
+        orientation = android.widget.LinearLayout.VERTICAL
+        gravity = android.view.Gravity.CENTER
+        setPadding((32 * resources.displayMetrics.density).toInt(), 
+                   (32 * resources.displayMetrics.density).toInt(),
+                   (32 * resources.displayMetrics.density).toInt(),
+                   (32 * resources.displayMetrics.density).toInt())
+        
+        layoutParams = FrameLayout.LayoutParams(
+          FrameLayout.LayoutParams.WRAP_CONTENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+          gravity = android.view.Gravity.CENTER
+        }
+      }
+      
+      // Card de conteúdo
+      val card = android.widget.LinearLayout(this@PlayerActivity).apply {
+        orientation = android.widget.LinearLayout.VERTICAL
+        setBackgroundColor(android.graphics.Color.argb(240, 30, 30, 30))
+        setPadding((24 * resources.displayMetrics.density).toInt(),
+                   (24 * resources.displayMetrics.density).toInt(),
+                   (24 * resources.displayMetrics.density).toInt(),
+                   (24 * resources.displayMetrics.density).toInt())
+        
+        // Título
+        val title = android.widget.TextView(this@PlayerActivity).apply {
+          text = "⚽ Estatísticas do Jogo"
+          textSize = if (MaxiApp.isTv) 20f else 18f
+          setTextColor(android.graphics.Color.WHITE)
+          setTypeface(null, android.graphics.Typeface.BOLD)
+          gravity = android.view.Gravity.CENTER
+          setPadding(0, 0, 0, (16 * resources.displayMetrics.density).toInt())
+        }
+        addView(title)
+        
+        // Informações do jogo (simulado - sem API por enquanto)
+        val gameInfo = android.widget.TextView(this@PlayerActivity).apply {
+          text = "Jogo ao vivo\n$channelName\n\n" +
+                 "Placar: 0 - 0\n" +
+                 "Tempo: 45'\n" +
+                 "1º Tempo\n\n" +
+                 "📊 Estatísticas:\n" +
+                 "• Posse: 50% - 50%\n" +
+                 "• Chutes: 5 - 3\n" +
+                 "• Cartões: 1🟨 - 0\n" +
+                 "• Escanteios: 2 - 1"
+          textSize = if (MaxiApp.isTv) 16f else 14f
+          setTextColor(android.graphics.Color.WHITE)
+          gravity = android.view.Gravity.CENTER
+          setPadding(0, 0, 0, (16 * resources.displayMetrics.density).toInt())
+        }
+        addView(gameInfo)
+        
+        // Botão desativar botão
+        val disableButton = android.widget.Button(this@PlayerActivity).apply {
+          text = "Desativar Botão de Estatísticas"
+          textSize = if (MaxiApp.isTv) 14f else 12f
+          setOnClickListener {
+            // ⚽ Desativar apenas para este jogo (não salvar preferência global)
+            // O botão voltará automaticamente no próximo jogo
+            footballStatsButtonEnabled = false
+            footballStatsButton?.visibility = android.view.View.GONE
+            rotationAnimator?.cancel()
+            hideFootballStatsOverlay()
+            android.widget.Toast.makeText(this@PlayerActivity, "Botão desativado para este jogo. Reativará no próximo jogo.", android.widget.Toast.LENGTH_SHORT).show()
+          }
+        }
+        addView(disableButton)
+        
+        // Botão fechar
+        val closeButton = android.widget.Button(this@PlayerActivity).apply {
+          text = "Fechar"
+          textSize = if (MaxiApp.isTv) 14f else 12f
+          setOnClickListener {
+            hideFootballStatsOverlay()
+          }
+        }
+        addView(closeButton)
+      }
+      
+      container.addView(card)
+      addView(container)
+      
+      // Fechar ao tocar fora
+      setOnClickListener {
+        hideFootballStatsOverlay()
+      }
+    }
+    
+    rootLayout.addView(footballStatsOverlay)
+    isStatsOverlayVisible = true
+    android.util.Log.i("PlayerActivity", "⚽ Overlay de estatísticas exibido")
+  }
+  
+  // ⚽ OCULTAR OVERLAY DE ESTATÍSTICAS
+  private fun hideFootballStatsOverlay() {
+    footballStatsOverlay?.visibility = android.view.View.GONE
+    isStatsOverlayVisible = false
+  }
+  
+  // ⚽ ZOOM EM EVENTOS IMPORTANTES
+  private fun performEventZoom(eventType: String, askUser: Boolean = false) {
+    if (!isFootballMode || !footballAutoZoomEnabled) return
+    
+    val zoomLevel = 1.5f // Zoom de 1.5x
+    
+    if (askUser) {
+      // Perguntar ao usuário se quer zoom
+      android.app.AlertDialog.Builder(this)
+        .setTitle("⚽ Evento Importante")
+        .setMessage(when (eventType) {
+          "penalty" -> "Cobrança de pênalti detectada!\nDeseja dar zoom para ver melhor?"
+          "corner" -> "Cobrança de escanteio detectada!\nDeseja dar zoom para ver melhor?"
+          "goal" -> "Gol marcado!\nDeseja dar zoom para ver melhor?"
+          "card" -> "Cartão aplicado!\nDeseja dar zoom para ver melhor?"
+          else -> "Evento importante detectado!\nDeseja dar zoom para ver melhor?"
+        })
+        .setPositiveButton("Sim") { _, _ ->
+          applyZoom(zoomLevel)
+        }
+        .setNegativeButton("Não", null)
+        .show()
+    } else {
+      // Zoom automático
+      applyZoom(zoomLevel)
+    }
+    
+    // Voltar ao zoom normal após 10 segundos
+    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+      applyZoom(1.0f)
+    }, 10000)
+  }
+  
+  // ⚽ APLICAR ZOOM NO PLAYER
+  private fun applyZoom(zoomLevel: Float) {
+    player?.let { exo ->
+      // Usar scale do PlayerView para zoom
+      pv.scaleX = zoomLevel
+      pv.scaleY = zoomLevel
+      currentZoomLevel = zoomLevel
+      
+      android.util.Log.i("PlayerActivity", "⚽ Zoom aplicado: ${zoomLevel}x")
+    }
+  }
+  
+  // ⚽ SIMULAR DETECÇÃO DE EVENTOS (para teste - sem API)
+  private fun simulateFootballEvents() {
+    if (!isFootballMode) return
+    
+    // Simular eventos aleatórios a cada 30-60 segundos (apenas para teste)
+    val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    val runnable = object : Runnable {
+      override fun run() {
+        if (isFootballMode && player?.isPlaying == true) {
+          // Simular evento aleatório (apenas para teste)
+          val events = listOf("penalty", "corner", "goal", "card")
+          val randomEvent = events.random()
+          
+          // Apenas 10% de chance de simular evento (para não ser muito frequente)
+          if (kotlin.random.Random.nextInt(100) < 10) {
+            performEventZoom(randomEvent, askUser = true)
+          }
+        }
+        
+        // Agendar próximo evento (30-60 segundos)
+        handler.postDelayed(this, (30000 + kotlin.random.Random.nextInt(30000)).toLong())
+      }
+    }
+    
+    handler.postDelayed(runnable, 30000) // Primeiro evento após 30 segundos
   }
   
   // ✅ FASE 1: CONTROLES AVANÇADOS - Avançar/Retroceder 10 segundos

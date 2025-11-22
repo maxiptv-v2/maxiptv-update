@@ -18,6 +18,8 @@ object PlayerSettingsManager {
   private val K_PLAYBACK_SPEED = stringPreferencesKey("playback_speed")
   private val K_AUTO_PLAY = booleanPreferencesKey("auto_play")
   private val K_VOLUME_MAX = intPreferencesKey("volume_max")
+  private val K_FOOTBALL_STATS_BUTTON_ENABLED = booleanPreferencesKey("football_stats_button_enabled")
+  private val K_FOOTBALL_AUTO_ZOOM_ENABLED = booleanPreferencesKey("football_auto_zoom_enabled")
   
   // ============================================================================
   // QUALIDADE DE VÍDEO
@@ -134,6 +136,34 @@ object PlayerSettingsManager {
   // UTILITÁRIOS
   // ============================================================================
   
+  // ============================================================================
+  // CONFIGURAÇÕES DE FUTEBOL
+  // ============================================================================
+  
+  suspend fun setFootballStatsButtonEnabled(enabled: Boolean) {
+    AppCtx.ctx.dataStore.edit { prefs ->
+      prefs[K_FOOTBALL_STATS_BUTTON_ENABLED] = enabled
+    }
+    android.util.Log.i("PlayerSettings", "⚽ Botão de estatísticas de futebol: ${if (enabled) "Ativado" else "Desativado"}")
+  }
+  
+  suspend fun isFootballStatsButtonEnabled(): Boolean {
+    val prefs = AppCtx.ctx.dataStore.data.first()
+    return prefs[K_FOOTBALL_STATS_BUTTON_ENABLED] ?: true // Por padrão, ativado
+  }
+  
+  suspend fun setFootballAutoZoomEnabled(enabled: Boolean) {
+    AppCtx.ctx.dataStore.edit { prefs ->
+      prefs[K_FOOTBALL_AUTO_ZOOM_ENABLED] = enabled
+    }
+    android.util.Log.i("PlayerSettings", "⚽ Zoom automático em eventos: ${if (enabled) "Ativado" else "Desativado"}")
+  }
+  
+  suspend fun isFootballAutoZoomEnabled(): Boolean {
+    val prefs = AppCtx.ctx.dataStore.data.first()
+    return prefs[K_FOOTBALL_AUTO_ZOOM_ENABLED] ?: true // Por padrão, ativado
+  }
+  
   suspend fun resetToDefaults() {
     AppCtx.ctx.dataStore.edit { prefs ->
       prefs[K_VIDEO_QUALITY] = VideoQuality.AUTO.name
@@ -142,6 +172,8 @@ object PlayerSettingsManager {
       prefs[K_PLAYBACK_SPEED] = PlaybackSpeed.NORMAL.name
       prefs[K_AUTO_PLAY] = true
       prefs[K_VOLUME_MAX] = 100
+      prefs[K_FOOTBALL_STATS_BUTTON_ENABLED] = true
+      prefs[K_FOOTBALL_AUTO_ZOOM_ENABLED] = true
     }
     android.util.Log.i("PlayerSettings", "🔄 Configurações do player resetadas para padrão")
   }
