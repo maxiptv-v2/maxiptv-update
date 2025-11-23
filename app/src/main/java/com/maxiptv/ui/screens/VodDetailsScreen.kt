@@ -57,6 +57,10 @@ import androidx.media3.common.Tracks
 import com.maxiptv.data.PlayerSettingsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.maxiptv.data.PlaybackPositionManager
+import com.maxiptv.data.PlaybackPosition
+import com.maxiptv.data.getPercentageWatched
+import androidx.compose.runtime.mutableStateOf
 
 @Composable
 fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
@@ -77,6 +81,11 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   var selectedSubtitleTrack by remember { mutableStateOf<Format?>(null) }
   var selectedAudioTrack by remember { mutableStateOf<Format?>(null) }
   var currentVideoQuality by remember { mutableStateOf(PlayerSettingsManager.VideoQuality.AUTO) }
+  
+  // ✅ Estado para diálogo "Continuar ou Iniciar"
+  var showContinueDialog by remember { mutableStateOf(false) }
+  var savedPosition by remember { mutableStateOf<PlaybackPosition?>(null) }
+  var pendingPlayerIntent: Intent? by remember { mutableStateOf(null) }
   
   val scope = rememberCoroutineScope()
   
@@ -583,34 +592,34 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
               android.util.Log.i("VodDetails", "Idioma escolhido: $selectedLanguage")
               android.util.Log.i("VodDetails", "Stream ID: $streamId (${targetVersion?.name ?: "padrão"})")
               
-              // ✅ Aplicar qualidade selecionada ANTES de iniciar
-              // IMPORTANTE: Aguardar a conclusão para garantir que a qualidade seja salva antes do player iniciar
+              // ✅ Verificar se há posição salva antes de iniciar
               scope.launch {
                 PlayerSettingsManager.setVideoQuality(currentVideoQuality)
                 android.util.Log.i("VodDetails", "✅ Qualidade salva antes de iniciar player: ${currentVideoQuality.displayName}")
                 
-                // ✅ Aguardar um pouco para garantir que PlayerSettingsManager salve completamente
                 kotlinx.coroutines.delay(150)
                 
                 val playerIntent = Intent(ctx, PlayerActivity::class.java)
                   .putExtra("url", url)
                   .putExtra("contentType", "vod")
-                  .putExtra("contentId", streamId) // ✅ Passar streamId correto (não vodId)
+                  .putExtra("contentId", streamId)
                   .putExtra("returnToCategory", "vod")
                   .putExtra("categoryId", vodId.toString())
-                  // ✅ Passar configurações selecionadas
                   .putExtra("selectedSubtitleTrack", selectedSubtitleTrack?.let { "${it.id}" } ?: "")
                   .putExtra("selectedAudioTrack", selectedAudioTrack?.let { "${it.id}" } ?: "")
                 
-                android.util.Log.i("VodDetails", "🔍 Configurações passadas para o Intent:")
-                android.util.Log.i("VodDetails", "  - URL: $url")
-                android.util.Log.i("VodDetails", "  - contentId (streamId): $streamId")
-                android.util.Log.i("VodDetails", "  - categoryId (vodId): $vodId")
-                android.util.Log.i("VodDetails", "  - Qualidade: ${currentVideoQuality.displayName}")
-                android.util.Log.i("VodDetails", "  - Legenda: ${selectedSubtitleTrack?.let { "${it.id} (${it.language})" } ?: "Desativada"}")
-                android.util.Log.i("VodDetails", "  - Áudio: ${selectedAudioTrack?.let { "${it.id} (${it.language})" } ?: "Automático"}")
-                
-                ctx.startActivity(playerIntent)
+                // ✅ Verificar se há posição salva
+                val position = PlaybackPositionManager.getPosition(streamId, "vod")
+                if (position != null && position.getPercentageWatched() < 95) {
+                  // Mostrar diálogo "Continuar ou Iniciar"
+                  savedPosition = position
+                  pendingPlayerIntent = playerIntent
+                  showContinueDialog = true
+                } else {
+                  // Iniciar normalmente
+                  playerIntent.putExtra("savedPosition", -1L)
+                  ctx.startActivity(playerIntent)
+                }
               }
             },
             isFocused = isAssistirFocused,
@@ -1082,6 +1091,89 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
     }
     } // Fechar Column do conteúdo principal
   } // Fechar Box do banner de fundo
+  
+  // ✅ Diálogo "Continuar ou Iniciar"
+  if (showContinueDialog && savedPosition != null && pendingPlayerIntent != null) {
+    AlertDialog(
+      onDismissRequest = { 
+        showContinueDialog = false
+        savedPosition = null
+        pendingPlayerIntent = null
+      },
+      title = {
+        Text(
+          "Continuar assistindo?",
+          fontSize = if (MaxiApp.isTv) 22.sp else 18.sp,
+          fontWeight = FontWeight.Bold,
+          color = Color.White
+        )
+      },
+      text = {
+        Column {
+          Text(
+            "Você parou em: ${PlaybackPositionManager.formatTime(savedPosition!!.position)}",
+            fontSize = if (MaxiApp.isTv) 18.sp else 16.sp,
+            color = Color.White
+          )
+          Spacer(Modifier.height(8.dp))
+          Text(
+            "Tempo restante: ${PlaybackPositionManager.formatRemainingTime(savedPosition!!.position, savedPosition!!.duration)}",
+            fontSize = if (MaxiApp.isTv) 16.sp else 14.sp,
+            color = Color.Gray
+          )
+        }
+      },
+      confirmButton = {
+        var isContinuarFocused by remember { mutableStateOf(false) }
+        Button(
+          onClick = {
+            pendingPlayerIntent?.putExtra("savedPosition", savedPosition!!.position)
+            ctx.startActivity(pendingPlayerIntent)
+            showContinueDialog = false
+            savedPosition = null
+            pendingPlayerIntent = null
+          },
+          modifier = Modifier
+            .onFocusChanged { isContinuarFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isContinuarFocused)
+                Modifier.border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(8.dp))
+              else Modifier
+            ),
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D4FF))
+        ) {
+          Text("Continuar", fontWeight = FontWeight.Bold)
+        }
+      },
+      dismissButton = {
+        var isIniciarFocused by remember { mutableStateOf(false) }
+        OutlinedButton(
+          onClick = {
+            pendingPlayerIntent?.putExtra("savedPosition", -1L)
+            ctx.startActivity(pendingPlayerIntent)
+            showContinueDialog = false
+            savedPosition = null
+            pendingPlayerIntent = null
+          },
+          modifier = Modifier
+            .onFocusChanged { isIniciarFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isIniciarFocused)
+                Modifier.border(3.dp, Color(0xFFFF5722), RoundedCornerShape(8.dp))
+              else Modifier
+            ),
+          colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5722))
+        ) {
+          Text("Iniciar do início", fontWeight = FontWeight.Bold)
+        }
+      },
+      containerColor = Color(0xFF1A1A1A),
+      titleContentColor = Color.White,
+      textContentColor = Color.White
+    )
+  }
 }
 
 // ✅ Componente de Botão 3D Estilo Moderno (baseado no modelo fornecido)

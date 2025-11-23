@@ -31,6 +31,7 @@ import com.maxiptv.MaxiApp
 import com.maxiptv.data.PlayerSettingsManager
 import android.util.TypedValue
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import okhttp3.OkHttpClient
 import okhttp3.Dns
 import androidx.media3.datasource.okhttp.OkHttpDataSource
@@ -86,6 +87,8 @@ class PlayerActivity : ComponentActivity() {
   private var latencyHandler: android.os.Handler? = null // Handler para atualizar latência
   private var statsHandler: android.os.Handler? = null // Handler para atualizar estatísticas
   private var connectionQuality: ConnectionQuality = ConnectionQuality.GOOD // Qualidade de conexão estimada
+  private var showLatencyStats: Boolean = false // Controla se deve mostrar latência/stats (só quando usuário interagir)
+  private var lastUserInteraction: Long = 0L // Última interação do usuário
   // ✅ LIVE PROFESSIONAL: Overlay profissional para canais live
   private var liveChannelInfoOverlay: android.widget.TextView? = null // Overlay com informações do canal (Live)
   private var liveChannelInfoHandler: android.os.Handler? = null // Handler para atualizar informações do canal
@@ -103,6 +106,8 @@ class PlayerActivity : ComponentActivity() {
   private var footballAutoZoomEnabled: Boolean = true // Se zoom automático está habilitado
   private var rotationAnimator: android.animation.ObjectAnimator? = null // Animação de rotação do botão
   private var currentZoomLevel: Float = 1.0f // Nível de zoom atual (1.0 = normal)
+  private var pauseControlsOverlay: android.view.ViewGroup? = null // Overlay com botões modernos quando pausa
+  private var isPausedControlsVisible: Boolean = false // Se controles de pausa estão visíveis
   private val bufferIndicatorRunnable = object : Runnable {
     override fun run() {
       updateBufferIndicator()
@@ -276,6 +281,11 @@ class PlayerActivity : ComponentActivity() {
     // ✅ CONTROLES AVANÇADOS: Configurar botões de avançar/retroceder 10s
     pv.setCustomErrorMessage("")
     pv.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+    
+    // ✅ COR MODERNA DO BUFFERING: Customizar cor do buffering nativo do ExoPlayer
+    // O ExoPlayer usa um ProgressBar interno, vamos criar um overlay customizado com cor azul/ciano
+    // Nota: O buffering nativo do ExoPlayer não pode ser facilmente customizado, então vamos
+    // criar um indicador visual customizado que aparece quando está buffering
     
     // ✅ FASE 1: BOTÃO VISUAL DE QUALIDADE
     // Criar FrameLayout para adicionar botão sobre o PlayerView
@@ -481,7 +491,20 @@ class PlayerActivity : ComponentActivity() {
     
     // ✅ API MODERNA - GestureDetector (substitui GestureDetectorCompat depreciado)
     gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+      override fun onSingleTapUp(e: MotionEvent): Boolean {
+        // ✅ Detectar interação do usuário para mostrar latência/stats
+        lastUserInteraction = System.currentTimeMillis()
+        showLatencyStats = true
+        updateLatency()
+        updateStreamStats()
+        return false
+      }
+      
       override fun onDoubleTap(e: MotionEvent): Boolean {
+        // ✅ Detectar interação do usuário
+        lastUserInteraction = System.currentTimeMillis()
+        showLatencyStats = true
+        
         // Duplo clique: play/pause
         player?.let {
           if (it.isPlaying) {
@@ -1114,12 +1137,18 @@ class PlayerActivity : ComponentActivity() {
           }
           
           override fun onIsPlayingChanged(isPlaying: Boolean) {
+            // ✅ Mostrar/esconder botões modernos quando pausa
             if (isPlaying) {
+              hidePauseControls()
               // Reset contador quando voltar a tocar normalmente
               reconnectAttempts = 0
               
               // Player tocando: timeout normal para controles
               pv.controllerShowTimeoutMs = 5000
+            } else {
+              // Player pausado: mostrar botões modernos
+              showPauseControls()
+            }
               
               // ✅ DETECÇÃO DE TRAVAMENTO: Verificar se player não está progredindo
               if (isLive) {
@@ -1182,14 +1211,6 @@ class PlayerActivity : ComponentActivity() {
                   android.util.Log.d("PlayerActivity", "✅ Reprodução estável, resetando detecção de Wi-Fi lento")
                 }
               }, 30000) // 30 segundos
-            } else {
-              // ✅ Player pausado: sempre mostrar controles para exibir minutos
-              if (exo.playbackState == Player.STATE_READY) {
-                pv.showController()
-                pv.controllerShowTimeoutMs = 0 // Nunca esconder quando pausado
-                android.util.Log.d("PlayerActivity", "⏸️ Player pausado - controles sempre visíveis para mostrar minutos")
-              }
-            }
           }
         })
       }
@@ -1363,9 +1384,11 @@ class PlayerActivity : ComponentActivity() {
       footballStatsOverlay = null
     }
     
-    // ⚽ Resetar zoom
-    pv.scaleX = 1.0f
-    pv.scaleY = 1.0f
+    // ⚽ Resetar zoom (se pv estiver inicializado)
+    if (::pv.isInitialized) {
+      pv.scaleX = 1.0f
+      pv.scaleY = 1.0f
+    }
     currentZoomLevel = 1.0f
     
     // ✅ MELHORIA 2: Parar atualização de tempo restante
@@ -1458,6 +1481,14 @@ class PlayerActivity : ComponentActivity() {
   
   // ⚽ CRIAR BOTÃO DE ESTATÍSTICAS DE FUTEBOL (bola giratória)
   private fun createFootballStatsButton(rootLayout: FrameLayout) {
+    android.util.Log.i("PlayerActivity", "⚽ createFootballStatsButton chamado")
+    android.util.Log.i("PlayerActivity", "   - isFootballMode: $isFootballMode")
+    android.util.Log.i("PlayerActivity", "   - footballStatsButtonEnabled: $footballStatsButtonEnabled")
+    android.util.Log.i("PlayerActivity", "   - footballStatsButton já existe: ${footballStatsButton != null}")
+    android.util.Log.i("PlayerActivity", "   - rootLayout: ${rootLayout != null}")
+    android.util.Log.i("PlayerActivity", "   - Dispositivo: ${MaxiApp.deviceCategory}")
+    android.util.Log.i("PlayerActivity", "   - isTv: ${MaxiApp.isTv}, isTvBox: ${MaxiApp.isTvBox}")
+    
     // ✅ Verificar condições antes de criar
     if (!isFootballMode) {
       android.util.Log.w("PlayerActivity", "⚽ Modo futebol não está ativado - botão não será criado")
@@ -1471,6 +1502,9 @@ class PlayerActivity : ComponentActivity() {
     // ✅ Verificar se já existe (evitar duplicação)
     if (footballStatsButton != null) {
       android.util.Log.w("PlayerActivity", "⚽ Botão de estatísticas já existe - não criando duplicado")
+      // ✅ Mas garantir que está visível
+      footballStatsButton?.visibility = android.view.View.VISIBLE
+      footballStatsButton?.bringToFront()
       return
     }
     
@@ -1479,7 +1513,7 @@ class PlayerActivity : ComponentActivity() {
     val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
     val density = resources.displayMetrics.density
     val sizePx = (buttonSize * density).toInt()
-    val margin = (16 * density).toInt() // 16dp de margem
+    val margin = (16f * density).toInt() // 16dp de margem
     
     // Criar botão customizado (bola de futebol)
     footballStatsButton = android.widget.ImageButton(this).apply {
@@ -1550,7 +1584,7 @@ class PlayerActivity : ComponentActivity() {
           // Adicionar borda vermelha
           val borderDrawable = android.graphics.drawable.GradientDrawable().apply {
             shape = android.graphics.drawable.GradientDrawable.OVAL
-            setStroke((6 * density).toInt(), android.graphics.Color.RED)
+            setStroke((6f * density).toInt(), android.graphics.Color.RED)
             setColor(android.graphics.Color.TRANSPARENT)
           }
           background = borderDrawable
@@ -1569,9 +1603,15 @@ class PlayerActivity : ComponentActivity() {
         }
       }
       
+      // ✅ Reposicionar botão acima do buffering (canto superior direito, mas acima do indicador de buffer)
+      // Calcular posição baseada no tamanho do buffering (geralmente ~48dp em smartphones, ~56dp em TV)
+      val bufferingOffset = if (MaxiApp.isTv) (72f * density).toInt() else (64f * density).toInt()
+      val topMargin = bufferingOffset + margin
+      val rightMargin = margin + (if (MaxiApp.isTv) (8f * density).toInt() else 0) // Margem extra em TV para não sair
       layoutParams = FrameLayout.LayoutParams(sizePx, sizePx).apply {
         gravity = android.view.Gravity.TOP or android.view.Gravity.END
-        setMargins(0, margin, margin, 0)
+        // ✅ Margem superior maior para ficar acima do buffering, margem direita para não sair da tela
+        setMargins(0, topMargin, rightMargin, 0)
       }
     }
     
@@ -1584,10 +1624,20 @@ class PlayerActivity : ComponentActivity() {
     }
     
     rootLayout.addView(footballStatsButton)
+    
+    // ✅ Garantir que o botão está visível e acessível em todos os dispositivos
+    footballStatsButton?.visibility = android.view.View.VISIBLE
+    footballStatsButton?.bringToFront() // Trazer para frente
+    
     android.util.Log.i("PlayerActivity", "⚽ Botão de estatísticas de futebol criado")
+    android.util.Log.i("PlayerActivity", "   - Dispositivo: ${MaxiApp.deviceCategory}")
+    android.util.Log.i("PlayerActivity", "   - isTv: ${MaxiApp.isTv}, isTvBox: ${MaxiApp.isTvBox}, isFireStick: ${MaxiApp.isFireStick}")
+    android.util.Log.i("PlayerActivity", "   - Tamanho do botão: ${sizePx}px (${buttonSize}dp)")
+    android.util.Log.i("PlayerActivity", "   - Visibilidade: ${footballStatsButton?.visibility}")
+    android.util.Log.i("PlayerActivity", "   - Botão habilitado: $footballStatsButtonEnabled")
   }
   
-  // ⚽ MOSTRAR OVERLAY DE ESTATÍSTICAS
+  // ⚽ MOSTRAR OVERLAY DE ESTATÍSTICAS (versão simplificada)
   private fun showFootballStatsOverlay() {
     if (footballStatsOverlay != null) {
       // Se já existe, apenas mostrar/esconder
@@ -1599,7 +1649,18 @@ class PlayerActivity : ComponentActivity() {
     val rootLayout = footballStatsButton?.parent as? FrameLayout ?: return
     val channelName = intent.getStringExtra("channelName") ?: "Canal de Futebol"
     
-    // Criar overlay
+    // Criar overlay simples com dados simulados
+    createSimpleFootballOverlay(rootLayout, channelName)
+  }
+  
+  // ⚽ CRIAR OVERLAY SIMPLES DE ESTATÍSTICAS
+  private fun createSimpleFootballOverlay(
+    rootLayout: FrameLayout,
+    channelName: String
+  ) {
+    val density = resources.displayMetrics.density
+    
+    // Criar overlay simples
     footballStatsOverlay = FrameLayout(this).apply {
       layoutParams = FrameLayout.LayoutParams(
         FrameLayout.LayoutParams.MATCH_PARENT,
@@ -1607,14 +1668,11 @@ class PlayerActivity : ComponentActivity() {
       )
       setBackgroundColor(android.graphics.Color.argb(200, 0, 0, 0)) // Fundo semi-transparente
       
-      // Container principal
+      // Container simples
       val container = android.widget.LinearLayout(this@PlayerActivity).apply {
         orientation = android.widget.LinearLayout.VERTICAL
         gravity = android.view.Gravity.CENTER
-        setPadding((32 * resources.displayMetrics.density).toInt(), 
-                   (32 * resources.displayMetrics.density).toInt(),
-                   (32 * resources.displayMetrics.density).toInt(),
-                   (32 * resources.displayMetrics.density).toInt())
+        setPadding((32f * density).toInt(), (32f * density).toInt(), (32f * density).toInt(), (32f * density).toInt())
         
         layoutParams = FrameLayout.LayoutParams(
           FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -1624,89 +1682,74 @@ class PlayerActivity : ComponentActivity() {
         }
       }
       
-      // Card de conteúdo
-      val card = android.widget.LinearLayout(this@PlayerActivity).apply {
-        orientation = android.widget.LinearLayout.VERTICAL
-        setBackgroundColor(android.graphics.Color.argb(240, 30, 30, 30))
-        setPadding((24 * resources.displayMetrics.density).toInt(),
-                   (24 * resources.displayMetrics.density).toInt(),
-                   (24 * resources.displayMetrics.density).toInt(),
-                   (24 * resources.displayMetrics.density).toInt())
-        
-        // Título
-        val title = android.widget.TextView(this@PlayerActivity).apply {
-          text = "⚽ Estatísticas do Jogo"
-          textSize = if (MaxiApp.isTv) 20f else 18f
-          setTextColor(android.graphics.Color.WHITE)
-          setTypeface(null, android.graphics.Typeface.BOLD)
+      // Card simples
+      val card = android.widget.FrameLayout(this@PlayerActivity).apply {
+        setBackgroundColor(android.graphics.Color.argb(245, 20, 20, 20))
+        layoutParams = FrameLayout.LayoutParams(
+          (if (MaxiApp.isTv) 600 else 500).toInt(),
+          (if (MaxiApp.isTv) 400 else 300).toInt()
+        ).apply {
           gravity = android.view.Gravity.CENTER
-          setPadding(0, 0, 0, (16 * resources.displayMetrics.density).toInt())
         }
-        addView(title)
-        
-        // Informações do jogo (simulado - sem API por enquanto)
-        // ✅ Usar hash do nome do canal para gerar informações únicas por jogo
-        val channelHash = channelName.hashCode()
-        val gameNumber = Math.abs(channelHash % 10) + 1 // Número do jogo baseado no hash (1-10)
-        
-        // Gerar informações únicas baseadas no hash do canal
-        val score1 = Math.abs(channelHash % 4) // 0-3
-        val score2 = Math.abs((channelHash * 2) % 4) // 0-3
-        val time = if (Math.abs(channelHash % 2) == 0) "45'" else "90'"
-        val half = if (Math.abs(channelHash % 2) == 0) "1º Tempo" else "2º Tempo"
-        val possession1 = 40 + Math.abs(channelHash % 20) // 40-60%
-        val possession2 = 100 - possession1
-        val shots1 = 3 + Math.abs(channelHash % 5) // 3-7
-        val shots2 = 2 + Math.abs((channelHash * 3) % 5) // 2-6
-        val cards1 = Math.abs(channelHash % 3) // 0-2
-        val cards2 = Math.abs((channelHash * 2) % 3) // 0-2
-        val corners1 = Math.abs(channelHash % 4) // 0-3
-        val corners2 = Math.abs((channelHash * 3) % 4) // 0-3
-        
-        val gameInfo = android.widget.TextView(this@PlayerActivity).apply {
-          text = "Jogo ao vivo\n$channelName\n\n" +
-                 "Placar: $score1 - $score2\n" +
-                 "Tempo: $time\n" +
-                 "$half\n\n" +
-                 "📊 Estatísticas:\n" +
-                 "• Posse: $possession1% - $possession2%\n" +
-                 "• Chutes: $shots1 - $shots2\n" +
-                 "• Cartões: ${if (cards1 > 0) "$cards1🟨" else "0"} - ${if (cards2 > 0) "$cards2🟨" else "0"}\n" +
-                 "• Escanteios: $corners1 - $corners2"
-          textSize = if (MaxiApp.isTv) 16f else 14f
-          setTextColor(android.graphics.Color.WHITE)
-          gravity = android.view.Gravity.CENTER
-          setPadding(0, 0, 0, (16 * resources.displayMetrics.density).toInt())
-        }
-        addView(gameInfo)
-        
-        // Botão desativar botão
-        val disableButton = android.widget.Button(this@PlayerActivity).apply {
-          text = "Desativar Botão de Estatísticas"
-          textSize = if (MaxiApp.isTv) 14f else 12f
-          setOnClickListener {
-            // ⚽ Desativar apenas para este jogo (não salvar preferência global)
-            // O botão voltará automaticamente no próximo jogo
-            footballStatsButtonEnabled = false
-            footballStatsButton?.visibility = android.view.View.GONE
-            rotationAnimator?.cancel()
-            hideFootballStatsOverlay()
-            android.widget.Toast.makeText(this@PlayerActivity, "Botão desativado para este jogo. Reativará no próximo jogo.", android.widget.Toast.LENGTH_SHORT).show()
-          }
-        }
-        addView(disableButton)
-        
-        // Botão fechar
-        val closeButton = android.widget.Button(this@PlayerActivity).apply {
-          text = "Fechar"
-          textSize = if (MaxiApp.isTv) 14f else 12f
-          setOnClickListener {
-            hideFootballStatsOverlay()
-          }
-        }
-        addView(closeButton)
       }
       
+      val contentLayout = android.widget.LinearLayout(this@PlayerActivity).apply {
+        orientation = android.widget.LinearLayout.VERTICAL
+        setPadding((20f * density).toInt(), (20f * density).toInt(), (20f * density).toInt(), (20f * density).toInt())
+      }
+      
+      // Título
+      val titleView = android.widget.TextView(this@PlayerActivity).apply {
+        text = "⚽ $channelName"
+        textSize = if (MaxiApp.isTv) 20f else 18f
+        setTextColor(android.graphics.Color.argb(255, 0, 212, 255))
+        setTypeface(null, android.graphics.Typeface.BOLD)
+        gravity = android.view.Gravity.CENTER
+        setPadding(0, 0, 0, (16f * density).toInt())
+      }
+      contentLayout.addView(titleView)
+      
+      // Dados simulados simples
+      val statsView = android.widget.TextView(this@PlayerActivity).apply {
+        text = "📊 Estatísticas do Jogo\n\n" +
+               "🟢 AO VIVO\n" +
+               "⏱️ Tempo: 45'\n" +
+               "⚽ Placar: 2 - 1\n" +
+               "📈 Posse: 55% - 45%\n" +
+               "🎯 Chutes: 8 - 5"
+        textSize = if (MaxiApp.isTv) 16f else 14f
+        setTextColor(android.graphics.Color.WHITE)
+        gravity = android.view.Gravity.CENTER
+        setPadding(0, (16f * density).toInt(), 0, 0)
+      }
+      contentLayout.addView(statsView)
+      
+      // Botão fechar
+      val closeButton = android.widget.Button(this@PlayerActivity).apply {
+        text = "✕ FECHAR"
+        textSize = if (MaxiApp.isTv) 16f else 14f
+        setTextColor(android.graphics.Color.WHITE)
+        setTypeface(null, android.graphics.Typeface.BOLD)
+        background = GradientDrawable().apply {
+          setColor(android.graphics.Color.argb(255, 244, 67, 54))
+          cornerRadius = 8f
+        }
+        setPadding((24f * density).toInt(), (12f * density).toInt(), (24f * density).toInt(), (12f * density).toInt())
+        setOnClickListener {
+          hideFootballStatsOverlay()
+        }
+        layoutParams = android.widget.LinearLayout.LayoutParams(
+          FrameLayout.LayoutParams.MATCH_PARENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+          setMargins(0, (24f * density).toInt(), 0, 0)
+        }
+        isFocusable = true
+        isFocusableInTouchMode = true
+      }
+      contentLayout.addView(closeButton)
+      
+      card.addView(contentLayout)
       container.addView(card)
       addView(container)
       
@@ -1718,13 +1761,14 @@ class PlayerActivity : ComponentActivity() {
     
     rootLayout.addView(footballStatsOverlay)
     isStatsOverlayVisible = true
-    android.util.Log.i("PlayerActivity", "⚽ Overlay de estatísticas exibido")
+    android.util.Log.i("PlayerActivity", "⚽ Overlay simples exibido")
   }
   
   // ⚽ OCULTAR OVERLAY DE ESTATÍSTICAS
   private fun hideFootballStatsOverlay() {
     footballStatsOverlay?.visibility = android.view.View.GONE
     isStatsOverlayVisible = false
+    android.util.Log.i("PlayerActivity", "⚽ Overlay fechado")
   }
   
   // ⚽ ZOOM EM EVENTOS IMPORTANTES
@@ -1801,6 +1845,12 @@ class PlayerActivity : ComponentActivity() {
   
   // ✅ FASE 1: CONTROLES AVANÇADOS - Avançar/Retroceder 10 segundos
   override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    // ✅ Detectar interação do usuário (D-pad) para mostrar latência/stats
+    lastUserInteraction = System.currentTimeMillis()
+    showLatencyStats = true
+    updateLatency()
+    updateStreamStats()
+    
     if (MaxiApp.isTv && player != null) {
       when (keyCode) {
         KeyEvent.KEYCODE_DPAD_LEFT -> {
@@ -1966,11 +2016,12 @@ class PlayerActivity : ComponentActivity() {
       if (exo.playbackState == Player.STATE_BUFFERING) {
         bufferIndicatorOverlay?.let { overlay ->
           overlay.text = "Carregando..."
-          overlay.setTextColor(android.graphics.Color.argb(255, 255, 193, 7)) // Amarelo
+          // ✅ COR MODERNA: Azul ciano em vez de amarelo
+          overlay.setTextColor(android.graphics.Color.argb(255, 0, 212, 255)) // Azul ciano moderno
           overlay.background = GradientDrawable().apply {
             setColor(android.graphics.Color.argb(200, 0, 0, 0))
             cornerRadius = 6f
-            setStroke(2, android.graphics.Color.argb(255, 255, 193, 7))
+            setStroke(2, android.graphics.Color.argb(255, 0, 212, 255)) // Azul ciano moderno
           }
           overlay.visibility = android.view.View.VISIBLE
         }
@@ -2008,9 +2059,18 @@ class PlayerActivity : ComponentActivity() {
     return latency.coerceIn(0, 20000) // Máximo 20s
   }
   
-  // ✅ FASE 1: Atualizar overlay de latência
+  // ✅ FASE 1: Atualizar overlay de latência (só mostra quando usuário interagir)
   private fun updateLatency() {
     if (player == null || contentType != "live") {
+      latencyOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
+    // ✅ Só mostrar se usuário interagiu recentemente (últimos 5 segundos)
+    val timeSinceInteraction = System.currentTimeMillis() - lastUserInteraction
+    val shouldShow = showLatencyStats && timeSinceInteraction < 5000
+    
+    if (!shouldShow) {
       latencyOverlay?.visibility = android.view.View.GONE
       return
     }
@@ -2077,10 +2137,19 @@ class PlayerActivity : ComponentActivity() {
     )
   }
   
-  // ✅ FASE 1: Atualizar overlay de estatísticas
+  // ✅ FASE 1: Atualizar overlay de estatísticas (só mostra quando usuário interagir)
   private fun updateStreamStats() {
     val exo = player ?: return
     if (contentType != "live") {
+      statsOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
+    // ✅ Só mostrar se usuário interagiu recentemente (últimos 5 segundos)
+    val timeSinceInteraction = System.currentTimeMillis() - lastUserInteraction
+    val shouldShow = showLatencyStats && timeSinceInteraction < 5000
+    
+    if (!shouldShow) {
       statsOverlay?.visibility = android.view.View.GONE
       return
     }
@@ -2441,5 +2510,115 @@ class PlayerActivity : ComponentActivity() {
         android.util.Log.e("PlayerActivity", "❌ Erro ao reiniciar stream: ${e.message}", e)
       }
     }, 2000) // Aguardar 2 segundos antes de tentar novamente
+  }
+  
+  // ✅ BOTÕES MODERNOS QUANDO PAUSA
+  private fun showPauseControls() {
+    if (pauseControlsOverlay != null || player == null) return
+    
+    val rootLayout = pv.parent as? FrameLayout ?: return
+    val density = resources.displayMetrics.density
+    
+    pauseControlsOverlay = FrameLayout(this).apply {
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT
+      )
+      setBackgroundColor(android.graphics.Color.argb(150, 0, 0, 0)) // Fundo semi-transparente
+      
+      // Container central com botões
+      val container = android.widget.LinearLayout(this@PlayerActivity).apply {
+        orientation = android.widget.LinearLayout.HORIZONTAL
+        gravity = android.view.Gravity.CENTER
+        layoutParams = FrameLayout.LayoutParams(
+          FrameLayout.LayoutParams.WRAP_CONTENT,
+          FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+          gravity = android.view.Gravity.CENTER
+        }
+        
+        // Botão Retroceder 10s
+        val rewindButton = createModernButton("⏪", "10s") { 
+          player?.let { 
+            val newPos = (it.currentPosition - 10000).coerceAtLeast(0)
+            it.seekTo(newPos)
+          }
+        }
+        addView(rewindButton)
+        
+        // Botão Play
+        val playButton = createModernButton("▶", "Play") {
+          player?.play()
+        }
+        addView(playButton)
+        
+        // Botão Avançar 10s
+        val forwardButton = createModernButton("⏩", "10s") {
+          player?.let {
+            val newPos = if (it.duration > 0) {
+              (it.currentPosition + 10000).coerceAtMost(it.duration)
+            } else {
+              it.currentPosition + 10000
+            }
+            it.seekTo(newPos)
+          }
+        }
+        addView(forwardButton)
+      }
+      addView(container)
+    }
+    
+    rootLayout.addView(pauseControlsOverlay)
+    isPausedControlsVisible = true
+  }
+  
+  private fun hidePauseControls() {
+    pauseControlsOverlay?.let { overlay ->
+      (overlay.parent as? FrameLayout)?.removeView(overlay)
+      pauseControlsOverlay = null
+      isPausedControlsVisible = false
+    }
+  }
+  
+  private fun createModernButton(text: String, label: String, onClick: () -> Unit): android.widget.Button {
+    val buttonSize = if (MaxiApp.isTv) 80 else 64 // dp
+    val density = resources.displayMetrics.density
+    val sizePx = (buttonSize * density).toInt()
+    val buttonText = "$text\n$label"
+    
+    return android.widget.Button(this).apply {
+      this.text = buttonText
+      textSize = if (MaxiApp.isTv) 18f else 14f
+      setTextColor(android.graphics.Color.WHITE)
+      setTypeface(null, android.graphics.Typeface.BOLD)
+      setPadding((16 * density).toInt(), (12 * density).toInt(), (16 * density).toInt(), (12 * density).toInt())
+      
+      // Gradiente moderno azul/ciano
+      background = GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(android.graphics.Color.argb(220, 0, 212, 255)) // Azul ciano
+        setStroke((4 * density).toInt(), android.graphics.Color.WHITE)
+      }
+      
+      layoutParams = android.widget.LinearLayout.LayoutParams(sizePx, sizePx).apply {
+        setMargins((12 * density).toInt(), 0, (12 * density).toInt(), 0)
+      }
+      
+      setOnClickListener { onClick() }
+      
+      // Foco para TV
+      setOnFocusChangeListener { _, hasFocus ->
+        if (hasFocus) {
+          animate().scaleX(1.15f).scaleY(1.15f).setDuration(200).start()
+          elevation = 12f
+        } else {
+          animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
+          elevation = 0f
+        }
+      }
+      
+      isFocusable = true
+      isFocusableInTouchMode = true
+    }
   }
 }

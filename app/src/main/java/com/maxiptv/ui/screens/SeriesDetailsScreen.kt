@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.maxiptv.data.FavoritesManager
 import com.maxiptv.data.PlaybackPositionManager
+import com.maxiptv.data.getPercentageWatched
 import com.maxiptv.MaxiApp
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
@@ -55,6 +56,7 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int, category: String?
   var isFavorite by remember { mutableStateOf(false) }
   var showContinueDialog by remember { mutableStateOf(false) }
   var savedPosition by remember { mutableStateOf<com.maxiptv.data.PlaybackPosition?>(null) }
+  var pendingPlayerIntent by remember { mutableStateOf<Intent?>(null) }
   
   val scope = rememberCoroutineScope()
   
@@ -506,18 +508,22 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int, category: String?
                         scope.launch {
                           val episodePosition = PlaybackPositionManager.getPosition(episodeId, "series")
                           
-                          // 🎯 Usar startActivityForResult para navegação inteligente
                           val playerIntent = Intent(ctx, PlayerActivity::class.java)
                             .putExtra("url", url)
                             .putExtra("contentType", "series")
-                            .putExtra("contentId", episodeId) // ✅ Passar ID do episódio para salvar posição
+                            .putExtra("contentId", episodeId)
                             .putExtra("returnToCategory", "series")
                             .putExtra("categoryId", seriesId.toString())
-                            .putExtra("savedPosition", episodePosition?.position ?: -1L)
                           
-                          // Para Compose, vamos usar uma abordagem diferente
-                          // O PlayerActivity vai navegar de volta automaticamente
-                          ctx.startActivity(playerIntent)
+                          // ✅ Mostrar diálogo se houver posição salva
+                          if (episodePosition != null && episodePosition.getPercentageWatched() < 95) {
+                            savedPosition = episodePosition
+                            pendingPlayerIntent = playerIntent
+                            showContinueDialog = true
+                          } else {
+                            playerIntent.putExtra("savedPosition", episodePosition?.position ?: -1L)
+                            ctx.startActivity(playerIntent)
+                          }
                         }
                       }
                     },
@@ -549,6 +555,89 @@ fun SeriesDetailsScreen(nav: NavHostController, seriesId: Int, category: String?
         }
       }
     }
+  }
+  
+  // ✅ Diálogo "Continuar ou Iniciar" para séries
+  if (showContinueDialog && savedPosition != null && pendingPlayerIntent != null) {
+    AlertDialog(
+      onDismissRequest = { 
+        showContinueDialog = false
+        savedPosition = null
+        pendingPlayerIntent = null
+      },
+      title = {
+        Text(
+          "Continuar assistindo?",
+          fontSize = if (MaxiApp.isTv) 22.sp else 18.sp,
+          fontWeight = FontWeight.Bold,
+          color = Color.White
+        )
+      },
+      text = {
+        Column {
+          Text(
+            "Você parou em: ${PlaybackPositionManager.formatTime(savedPosition!!.position)}",
+            fontSize = if (MaxiApp.isTv) 18.sp else 16.sp,
+            color = Color.White
+          )
+          Spacer(Modifier.height(8.dp))
+          Text(
+            "Tempo restante: ${PlaybackPositionManager.formatRemainingTime(savedPosition!!.position, savedPosition!!.duration)}",
+            fontSize = if (MaxiApp.isTv) 16.sp else 14.sp,
+            color = Color.Gray
+          )
+        }
+      },
+      confirmButton = {
+        var isContinuarFocused by remember { mutableStateOf(false) }
+        Button(
+          onClick = {
+            pendingPlayerIntent?.putExtra("savedPosition", savedPosition!!.position)
+            ctx.startActivity(pendingPlayerIntent)
+            showContinueDialog = false
+            savedPosition = null
+            pendingPlayerIntent = null
+          },
+          modifier = Modifier
+            .onFocusChanged { isContinuarFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isContinuarFocused)
+                Modifier.border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(8.dp))
+              else Modifier
+            ),
+          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D4FF))
+        ) {
+          Text("Continuar", fontWeight = FontWeight.Bold)
+        }
+      },
+      dismissButton = {
+        var isIniciarFocused by remember { mutableStateOf(false) }
+        OutlinedButton(
+          onClick = {
+            pendingPlayerIntent?.putExtra("savedPosition", -1L)
+            ctx.startActivity(pendingPlayerIntent)
+            showContinueDialog = false
+            savedPosition = null
+            pendingPlayerIntent = null
+          },
+          modifier = Modifier
+            .onFocusChanged { isIniciarFocused = it.isFocused }
+            .focusable()
+            .then(
+              if (isIniciarFocused)
+                Modifier.border(3.dp, Color(0xFFFF5722), RoundedCornerShape(8.dp))
+              else Modifier
+            ),
+          colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5722))
+        ) {
+          Text("Iniciar do início", fontWeight = FontWeight.Bold)
+        }
+      },
+      containerColor = Color(0xFF1A1A1A),
+      titleContentColor = Color.White,
+      textContentColor = Color.White
+    )
   }
 }
 

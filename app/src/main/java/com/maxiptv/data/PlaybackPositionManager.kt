@@ -30,9 +30,16 @@ object PlaybackPositionManager {
    * Salvar posição de reprodução
    */
   suspend fun savePosition(contentId: Int, contentType: String, position: Long, duration: Long) {
-    // Só salvar se assistiu pelo menos 10 segundos e não terminou (pelo menos 5% restante)
-    if (position < 10000 || position >= duration * 0.95) {
-      android.util.Log.d("PlaybackPosition", "⏭️ Posição não salva: muito curta ($position ms) ou quase terminado")
+    // ✅ Se terminou (95%+ assistido), limpar automaticamente do DataStore
+    if (duration > 0 && position >= duration * 0.95) {
+      android.util.Log.i("PlaybackPosition", "✅ Conteúdo terminado (${(position * 100 / duration)}%) - removendo do DataStore")
+      removePosition(contentId, contentType)
+      return
+    }
+    
+    // Só salvar se assistiu pelo menos 10 segundos
+    if (position < 10000) {
+      android.util.Log.d("PlaybackPosition", "⏭️ Posição não salva: muito curta ($position ms)")
       return
     }
     
@@ -117,5 +124,14 @@ object PlaybackPositionManager {
       else -> "menos de 1min restante"
     }
   }
+  
+}
+
+/**
+ * Calcular percentual assistido (função de extensão)
+ */
+fun PlaybackPosition.getPercentageWatched(): Int {
+  if (duration <= 0) return 0
+  return ((position.toFloat() / duration) * 100).toInt()
 }
 
