@@ -1607,12 +1607,35 @@ class PlayerActivity : ComponentActivity() {
       // Calcular posição baseada no tamanho do buffering (geralmente ~48dp em smartphones, ~56dp em TV)
       val bufferingOffset = if (MaxiApp.isTv) (72f * density).toInt() else (64f * density).toInt()
       val topMargin = bufferingOffset + margin
-      val rightMargin = margin + (if (MaxiApp.isTv) (8f * density).toInt() else 0) // Margem extra em TV para não sair
+      
+      // ✅ CORREÇÃO TV: Aumentar margem direita para considerar overscan padding e outros overlays
+      // Em TV, outros overlays (qualityOverlay, liveChannelInfoOverlay) usam 40dp de margem direita
+      // Precisamos garantir que o botão não fique coberto e não saia da área visível
+      val overscanPadding = when {
+        MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding
+        MaxiApp.isNativeTv -> 24
+        MaxiApp.isTvBox -> 16
+        else -> 0
+      }
+      val rightMarginDp = if (MaxiApp.isTv) {
+        // TV: margem maior para não ficar coberto por outros overlays e considerar overscan
+        margin + overscanPadding + (if (MaxiApp.isFireStick) 16 else 8) // Extra para Fire Stick
+      } else {
+        margin // Smartphone: margem normal
+      }
+      val rightMargin = (rightMarginDp * density).toInt()
+      
       layoutParams = FrameLayout.LayoutParams(sizePx, sizePx).apply {
         gravity = android.view.Gravity.TOP or android.view.Gravity.END
-        // ✅ Margem superior maior para ficar acima do buffering, margem direita para não sair da tela
+        // ✅ Margem superior maior para ficar acima do buffering, margem direita aumentada para TV
         setMargins(0, topMargin, rightMargin, 0)
       }
+      
+      android.util.Log.i("PlayerActivity", "⚽ Posicionamento do botão:")
+      android.util.Log.i("PlayerActivity", "   - Top margin: ${topMargin}px (${topMargin / density}dp)")
+      android.util.Log.i("PlayerActivity", "   - Right margin: ${rightMargin}px (${rightMarginDp}dp)")
+      android.util.Log.i("PlayerActivity", "   - Overscan padding considerado: ${overscanPadding}dp")
+      android.util.Log.i("PlayerActivity", "   - Button size: ${sizePx}px (${buttonSize}dp)")
     }
     
     // Adicionar animação de rotação contínua
@@ -1625,9 +1648,27 @@ class PlayerActivity : ComponentActivity() {
     
     rootLayout.addView(footballStatsButton)
     
-    // ✅ Garantir que o botão está visível e acessível em todos os dispositivos
+    // ✅ CORREÇÃO TV: Garantir que o botão está visível e ACIMA de todos os outros overlays
     footballStatsButton?.visibility = android.view.View.VISIBLE
     footballStatsButton?.bringToFront() // Trazer para frente
+    
+    // ✅ CORREÇÃO TV: Forçar elevação para garantir que está acima de outros overlays
+    footballStatsButton?.elevation = 16f // Elevação alta para ficar acima de outros overlays
+    
+    // ✅ CORREÇÃO TV: Aguardar um frame e garantir visibilidade novamente (workaround para timing)
+    rootLayout.post {
+      footballStatsButton?.visibility = android.view.View.VISIBLE
+      footballStatsButton?.bringToFront()
+      footballStatsButton?.elevation = 16f
+      
+      // Log final de verificação
+      android.util.Log.i("PlayerActivity", "⚽ Verificação final do botão:")
+      android.util.Log.i("PlayerActivity", "   - Visibility: ${footballStatsButton?.visibility}")
+      android.util.Log.i("PlayerActivity", "   - Elevation: ${footballStatsButton?.elevation}")
+      android.util.Log.i("PlayerActivity", "   - Parent: ${footballStatsButton?.parent?.javaClass?.simpleName}")
+      android.util.Log.i("PlayerActivity", "   - X: ${footballStatsButton?.x}, Y: ${footballStatsButton?.y}")
+      android.util.Log.i("PlayerActivity", "   - Width: ${footballStatsButton?.width}, Height: ${footballStatsButton?.height}")
+    }
     
     android.util.Log.i("PlayerActivity", "⚽ Botão de estatísticas de futebol criado")
     android.util.Log.i("PlayerActivity", "   - Dispositivo: ${MaxiApp.deviceCategory}")
