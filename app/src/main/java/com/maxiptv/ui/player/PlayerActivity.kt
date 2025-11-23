@@ -1608,20 +1608,19 @@ class PlayerActivity : ComponentActivity() {
       val bufferingOffset = if (MaxiApp.isTv) (72f * density).toInt() else (64f * density).toInt()
       val topMargin = bufferingOffset + margin
       
-      // ✅ CORREÇÃO TV: Aumentar margem direita para considerar overscan padding e outros overlays
+      // ✅ CORREÇÃO TV: Aumentar margem direita para considerar outros overlays
       // Em TV, outros overlays (qualityOverlay, liveChannelInfoOverlay) usam 40dp de margem direita
-      // Precisamos garantir que o botão não fique coberto e não saia da área visível
-      val overscanPadding = when {
-        MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding
-        MaxiApp.isNativeTv -> 24
-        MaxiApp.isTvBox -> 16
-        else -> 0
-      }
+      // IMPORTANTE: Não somar overscanPadding aqui, pois o layout já considera overscan
+      // O overscan já está aplicado no rootLayout, então precisamos apenas garantir que
+      // o botão não fique coberto por outros overlays (que usam 40dp de margem)
       val rightMarginDp = if (MaxiApp.isTv) {
-        // TV: margem maior para não ficar coberto por outros overlays e considerar overscan
-        margin + overscanPadding + (if (MaxiApp.isFireStick) 16 else 8) // Extra para Fire Stick
+        // TV: margem maior para não ficar coberto por outros overlays
+        // Usar 40dp (mesma margem dos outros overlays) + 8dp extra para espaçamento
+        // NÃO somar overscanPadding aqui pois já está aplicado no layout principal
+        val otherOverlaysMargin = 40 // dp - margem usada por qualityOverlay e liveChannelInfoOverlay
+        otherOverlaysMargin + 8 // 8dp extra para garantir espaçamento
       } else {
-        margin // Smartphone: margem normal
+        margin // Smartphone: margem normal (16dp)
       }
       val rightMargin = (rightMarginDp * density).toInt()
       
@@ -1634,8 +1633,11 @@ class PlayerActivity : ComponentActivity() {
       android.util.Log.i("PlayerActivity", "⚽ Posicionamento do botão:")
       android.util.Log.i("PlayerActivity", "   - Top margin: ${topMargin}px (${topMargin / density}dp)")
       android.util.Log.i("PlayerActivity", "   - Right margin: ${rightMargin}px (${rightMarginDp}dp)")
-      android.util.Log.i("PlayerActivity", "   - Overscan padding considerado: ${overscanPadding}dp")
+      android.util.Log.i("PlayerActivity", "   - Device: ${MaxiApp.deviceCategory}")
+      android.util.Log.i("PlayerActivity", "   - isTv: ${MaxiApp.isTv}, isFireStick: ${MaxiApp.isFireStick}")
       android.util.Log.i("PlayerActivity", "   - Button size: ${sizePx}px (${buttonSize}dp)")
+      android.util.Log.i("PlayerActivity", "   - Screen width: ${resources.displayMetrics.widthPixels}px")
+      android.util.Log.i("PlayerActivity", "   - Button X position: ${resources.displayMetrics.widthPixels - rightMargin - sizePx}px")
     }
     
     // Adicionar animação de rotação contínua
