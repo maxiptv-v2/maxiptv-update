@@ -149,9 +149,8 @@ class PlayerActivity : ComponentActivity() {
     footballStatsButton = null
     footballStatsOverlay = null
     isStatsOverlayVisible = false
-    pv.scaleX = 1.0f
-    pv.scaleY = 1.0f
     currentZoomLevel = 1.0f
+    // ⚠️ pv será inicializado mais tarde, então resetar zoom será feito depois
     
     // ✅ API MODERNA - WindowInsetsController (substitui systemUiVisibility depreciado)
     windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
@@ -241,6 +240,9 @@ class PlayerActivity : ComponentActivity() {
     })
     
     pv = PlayerView(this)
+    // ⚽ Resetar zoom do modo futebol (agora que pv está inicializado)
+    pv.scaleX = 1.0f
+    pv.scaleY = 1.0f
     // Forçar PlayerView a ocupar toda a tela, incluindo áreas do sistema
     pv.layoutParams = FrameLayout.LayoutParams(
       ViewGroup.LayoutParams.MATCH_PARENT, 
@@ -563,16 +565,18 @@ class PlayerActivity : ComponentActivity() {
       createFootballOverlay(rootLayout)
       android.util.Log.i("PlayerActivity", "⚽ Overlay de gramado criado para modo futebol")
       
-      // ✅ Carregar preferências de futebol
+      // ✅ Carregar preferências de futebol e criar botão
+      // ⚽ Novo jogo: sempre reativar botão (mesmo que tenha sido desativado antes)
+      // O usuário pode desativar novamente se não quiser neste jogo específico
+      footballStatsButtonEnabled = true // Sempre ativado em novo jogo
+      
       lifecycleScope.launch {
-        // ⚽ Novo jogo: sempre reativar botão (mesmo que tenha sido desativado antes)
-        // O usuário pode desativar novamente se não quiser neste jogo específico
-        footballStatsButtonEnabled = true // Sempre ativado em novo jogo
         footballAutoZoomEnabled = PlayerSettingsManager.isFootballAutoZoomEnabled()
-        
-        // Criar botão de estatísticas (sempre criado em novo jogo)
-        createFootballStatsButton(rootLayout)
       }
+      
+      // Criar botão de estatísticas imediatamente (não dentro de corrotina)
+      createFootballStatsButton(rootLayout)
+      android.util.Log.i("PlayerActivity", "⚽ Botão de estatísticas criado para modo futebol")
     }
     
     // Log da URL para debug

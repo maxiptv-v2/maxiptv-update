@@ -86,73 +86,74 @@ fun VodDetailsScreen(nav: NavHostController, vodId: Int) {
   }
   
   // ✅ Pré-carregar tracks disponíveis quando o filme for selecionado
-  LaunchedEffect(vodId, selectedLanguage) {
-    scope.launch {
-      // Buscar URL do stream
-      val currentTitle = info?.info?.name ?: ""
-      val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
-      
-      val targetVersion = allVods.find { vod ->
-        val vodBase = vod.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
-        val matchesTitle = vodBase == baseTitle
-        val matchesLanguage = when (selectedLanguage) {
-          "Legendado" -> vod.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
-          "Dublado" -> vod.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
-          "Original" -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
-          else -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
-        }
-        matchesTitle && matchesLanguage
-      }
-      
-      val streamId = targetVersion?.stream_id ?: vodId
-      val (base, user, pass) = SettingsRepo.loadBlocking()
-      val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
-      val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
-      val url = "${baseUrl}movie/$user/$pass/$streamId.mp4"
-      
-      // ✅ Criar player temporário apenas para detectar tracks
-      // IMPORTANTE: ExoPlayer deve ser acessado apenas na main thread
-      withContext(Dispatchers.Main) {
-        try {
-          val tempPlayer = ExoPlayer.Builder(ctx).build()
-          val mediaItem = MediaItem.fromUri(url)
-          tempPlayer.setMediaItem(mediaItem)
-          tempPlayer.prepare()
-          
-          // Aguardar tracks serem carregados
-          var attempts = 0
-          while (tempPlayer.currentTracks.groups.isEmpty() && attempts < 50) {
-            kotlinx.coroutines.delay(100)
-            attempts++
-          }
-          
-          // Extrair tracks de legendas e áudio
-          val subtitleTracks = mutableListOf<Format>()
-          val audioTracks = mutableListOf<Format>()
-          
-          tempPlayer.currentTracks.groups.forEach { group ->
-            if (group.type == C.TRACK_TYPE_TEXT) {
-              for (i in 0 until group.length) {
-                subtitleTracks.add(group.getTrackFormat(i))
-              }
-            } else if (group.type == C.TRACK_TYPE_AUDIO) {
-              for (i in 0 until group.length) {
-                audioTracks.add(group.getTrackFormat(i))
-              }
-            }
-          }
-          
-          availableSubtitleTracks = subtitleTracks
-          availableAudioTracks = audioTracks
-          
-          tempPlayer.release()
-          android.util.Log.d("VodDetails", "✅ Tracks detectados: ${subtitleTracks.size} legendas, ${audioTracks.size} áudios")
-        } catch (e: Exception) {
-          android.util.Log.e("VodDetails", "❌ Erro ao detectar tracks: ${e.message}")
-        }
-      }
-    }
-  }
+  // IMPORTANTE: Desabilitado temporariamente para evitar crashes - será detectado quando o player for aberto
+  // LaunchedEffect(vodId, selectedLanguage) {
+  //   scope.launch {
+  //     // Buscar URL do stream
+  //     val currentTitle = info?.info?.name ?: ""
+  //     val baseTitle = currentTitle.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
+  //     
+  //     val targetVersion = allVods.find { vod ->
+  //       val vodBase = vod.name.replace(Regex("\\s*\\[(LEG|DUB|DUAL|LEGENDADO|DUBLADO)\\]", RegexOption.IGNORE_CASE), "").trim()
+  //       val matchesTitle = vodBase == baseTitle
+  //       val matchesLanguage = when (selectedLanguage) {
+  //         "Legendado" -> vod.name.contains(Regex("\\[(LEG|LEGENDADO)\\]", RegexOption.IGNORE_CASE))
+  //         "Dublado" -> vod.name.contains(Regex("\\[(DUB|DUBLADO)\\]", RegexOption.IGNORE_CASE))
+  //         "Original" -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+  //         else -> !vod.name.contains(Regex("\\[(LEG|LEGENDADO|DUB|DUBLADO|DUAL)\\]", RegexOption.IGNORE_CASE))
+  //       }
+  //       matchesTitle && matchesLanguage
+  //     }
+  //     
+  //     val streamId = targetVersion?.stream_id ?: vodId
+  //     val (base, user, pass) = SettingsRepo.loadBlocking()
+  //     val cleanBase = base.replace("/player_api.php", "").replace("player_api.php", "")
+  //     val baseUrl = if (cleanBase.endsWith("/")) cleanBase else "$cleanBase/"
+  //     val url = "${baseUrl}movie/$user/$pass/$streamId.mp4"
+  //     
+  //     // ✅ Criar player temporário apenas para detectar tracks
+  //     // IMPORTANTE: ExoPlayer deve ser acessado apenas na main thread
+  //     withContext(Dispatchers.Main) {
+  //       try {
+  //         val tempPlayer = ExoPlayer.Builder(ctx).build()
+  //         val mediaItem = MediaItem.fromUri(url)
+  //         tempPlayer.setMediaItem(mediaItem)
+  //         tempPlayer.prepare()
+  //         
+  //         // Aguardar tracks serem carregados
+  //         var attempts = 0
+  //         while (tempPlayer.currentTracks.groups.isEmpty() && attempts < 50) {
+  //           kotlinx.coroutines.delay(100)
+  //           attempts++
+  //         }
+  //         
+  //         // Extrair tracks de legendas e áudio
+  //         val subtitleTracks = mutableListOf<Format>()
+  //         val audioTracks = mutableListOf<Format>()
+  //         
+  //         tempPlayer.currentTracks.groups.forEach { group ->
+  //           if (group.type == C.TRACK_TYPE_TEXT) {
+  //             for (i in 0 until group.length) {
+  //               subtitleTracks.add(group.getTrackFormat(i))
+  //             }
+  //           } else if (group.type == C.TRACK_TYPE_AUDIO) {
+  //             for (i in 0 until group.length) {
+  //               audioTracks.add(group.getTrackFormat(i))
+  //             }
+  //           }
+  //         }
+  //         
+  //         availableSubtitleTracks = subtitleTracks
+  //         availableAudioTracks = audioTracks
+  //         
+  //         tempPlayer.release()
+  //         android.util.Log.d("VodDetails", "✅ Tracks detectados: ${subtitleTracks.size} legendas, ${audioTracks.size} áudios")
+  //       } catch (e: Exception) {
+  //         android.util.Log.e("VodDetails", "❌ Erro ao detectar tracks: ${e.message}")
+  //       }
+  //     }
+  //   }
+  // }
   
   // Verificar se é favorito
   LaunchedEffect(vodId) {
