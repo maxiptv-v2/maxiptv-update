@@ -518,18 +518,29 @@ class PlayerActivity : ComponentActivity() {
     val channelNameLower = channelName.lowercase().trim()
     android.util.Log.d("PlayerActivity", "🔍 Verificando canal: '$channelName' (lowercase: '$channelNameLower')")
     
+    // ✅ CANAIS ESPECÍFICOS DE FUTEBOL
     val footballChannels = listOf(
-      "band sport", "premiere 1", "premiere 2", "premiere1", "premiere2",
-      "sportv", "espn 4", "espn4", "cazetv", "caze tv"
+      "band sport", "sportv", "cazetv", "caze tv"
     )
+    
+    // ✅ DETECÇÃO POR INÍCIO DO NOME (mais preciso)
+    val startsWithFootball = channelNameLower.startsWith("premiere") ||
+                            channelNameLower.startsWith("espn") ||
+                            channelNameLower.startsWith("sportynet") ||
+                            channelNameLower.startsWith("brasileirao") ||
+                            channelNameLower.startsWith("copa")
+    
+    // ✅ TERMOS ESPECÍFICOS NO NOME
+    val hasSpecificTerm = channelNameLower.contains("campeonato de futebol") ||
+                          channelNameLower.contains("campeonato futebol")
     
     // Termos mais específicos primeiro (maior prioridade)
     val isSpecificFootballChannel = footballChannels.any { 
       channelNameLower.contains(it.lowercase()) 
-    }
+    } || startsWithFootball || hasSpecificTerm
     
     // Termos genéricos (menor prioridade, apenas se não for muito genérico)
-    val genericTerms = listOf("premiere", "sport", "futebol", "futbol")
+    val genericTerms = listOf("sport", "futebol", "futbol")
     val hasGenericTerm = genericTerms.any { 
       channelNameLower.contains(it.lowercase()) && 
       !channelNameLower.contains("news") && // Excluir "sport news" etc
@@ -931,13 +942,26 @@ class PlayerActivity : ComponentActivity() {
                 }
                 
                 // Fator 3: Detecção usando ConnectionQuality
+                // ✅ Calcular latência antes de estimar qualidade
+                val latencyMs = calculateLatency()
                 val estimatedQuality = estimateConnectionQuality(
                   exo,
-                  latencyMs = 0, // Será calculado pelo updateLatency
+                  latencyMs = latencyMs,
                   bufferAhead = bufferAhead,
                   bitrate = exo.videoFormat?.bitrate ?: 0
                 )
+                
+                // ✅ Atualizar qualidade de conexão
+                val previousQuality = connectionQuality
                 connectionQuality = estimatedQuality
+                
+                // Log quando qualidade muda
+                if (previousQuality != estimatedQuality) {
+                  android.util.Log.w("PlayerActivity", "📊 Qualidade de conexão mudou: $previousQuality → $estimatedQuality")
+                  android.util.Log.w("PlayerActivity", "   - Latência: ${latencyMs}ms")
+                  android.util.Log.w("PlayerActivity", "   - Buffer: ${bufferAhead}ms")
+                  android.util.Log.w("PlayerActivity", "   - Bitrate: ${exo.videoFormat?.bitrate ?: 0 / 1000}kbps")
+                }
                 
                 // ✅ REDUÇÃO GRADUAL DE QUALIDADE baseada em múltiplos fatores
                 val shouldReduceQuality = when {
@@ -961,10 +985,11 @@ class PlayerActivity : ComponentActivity() {
                 
                 if (shouldReduceQuality && currentMaxBitrate > 800_000) {
                   // ✅ Redução gradual baseada no nível atual
+                  // ✅ Redução mais agressiva para conexões ruins
                   val newBitrate = when (qualityReductionLevel) {
-                    0 -> if (isLive) 1_800_000 else 2_000_000  // Nível 1: Redução leve (2.2Mbps → 1.8Mbps)
-                    1 -> if (isLive) 1_200_000 else 1_500_000  // Nível 2: Redução média (1.8Mbps → 1.2Mbps)
-                    2 -> if (isLive) 800_000 else 1_000_000     // Nível 3: Redução alta (1.2Mbps → 800kbps)
+                    0 -> if (isLive) 1_500_000 else 1_800_000  // Nível 1: Redução leve (2.2Mbps → 1.5Mbps live / 1.8Mbps vod)
+                    1 -> if (isLive) 1_000_000 else 1_200_000  // Nível 2: Redução média (1.5Mbps → 1.0Mbps live / 1.2Mbps vod)
+                    2 -> if (isLive) 600_000 else 800_000      // Nível 3: Redução alta (1.0Mbps → 600kbps live / 800kbps vod)
                     else -> currentMaxBitrate // Não reduzir mais
                   }
                   
@@ -1433,7 +1458,23 @@ class PlayerActivity : ComponentActivity() {
   
   // ⚽ CRIAR BOTÃO DE ESTATÍSTICAS DE FUTEBOL (bola giratória)
   private fun createFootballStatsButton(rootLayout: FrameLayout) {
-    if (!isFootballMode || !footballStatsButtonEnabled) return
+    // ✅ Verificar condições antes de criar
+    if (!isFootballMode) {
+      android.util.Log.w("PlayerActivity", "⚽ Modo futebol não está ativado - botão não será criado")
+      return
+    }
+    if (!footballStatsButtonEnabled) {
+      android.util.Log.w("PlayerActivity", "⚽ Botão de estatísticas desabilitado - botão não será criado")
+      return
+    }
+    
+    // ✅ Verificar se já existe (evitar duplicação)
+    if (footballStatsButton != null) {
+      android.util.Log.w("PlayerActivity", "⚽ Botão de estatísticas já existe - não criando duplicado")
+      return
+    }
+    
+    android.util.Log.i("PlayerActivity", "⚽ Criando botão de estatísticas de futebol...")
     
     val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
     val density = resources.displayMetrics.density
@@ -1604,16 +1645,34 @@ class PlayerActivity : ComponentActivity() {
         addView(title)
         
         // Informações do jogo (simulado - sem API por enquanto)
+        // ✅ Usar hash do nome do canal para gerar informações únicas por jogo
+        val channelHash = channelName.hashCode()
+        val gameNumber = Math.abs(channelHash % 10) + 1 // Número do jogo baseado no hash (1-10)
+        
+        // Gerar informações únicas baseadas no hash do canal
+        val score1 = Math.abs(channelHash % 4) // 0-3
+        val score2 = Math.abs((channelHash * 2) % 4) // 0-3
+        val time = if (Math.abs(channelHash % 2) == 0) "45'" else "90'"
+        val half = if (Math.abs(channelHash % 2) == 0) "1º Tempo" else "2º Tempo"
+        val possession1 = 40 + Math.abs(channelHash % 20) // 40-60%
+        val possession2 = 100 - possession1
+        val shots1 = 3 + Math.abs(channelHash % 5) // 3-7
+        val shots2 = 2 + Math.abs((channelHash * 3) % 5) // 2-6
+        val cards1 = Math.abs(channelHash % 3) // 0-2
+        val cards2 = Math.abs((channelHash * 2) % 3) // 0-2
+        val corners1 = Math.abs(channelHash % 4) // 0-3
+        val corners2 = Math.abs((channelHash * 3) % 4) // 0-3
+        
         val gameInfo = android.widget.TextView(this@PlayerActivity).apply {
           text = "Jogo ao vivo\n$channelName\n\n" +
-                 "Placar: 0 - 0\n" +
-                 "Tempo: 45'\n" +
-                 "1º Tempo\n\n" +
+                 "Placar: $score1 - $score2\n" +
+                 "Tempo: $time\n" +
+                 "$half\n\n" +
                  "📊 Estatísticas:\n" +
-                 "• Posse: 50% - 50%\n" +
-                 "• Chutes: 5 - 3\n" +
-                 "• Cartões: 1🟨 - 0\n" +
-                 "• Escanteios: 2 - 1"
+                 "• Posse: $possession1% - $possession2%\n" +
+                 "• Chutes: $shots1 - $shots2\n" +
+                 "• Cartões: ${if (cards1 > 0) "$cards1🟨" else "0"} - ${if (cards2 > 0) "$cards2🟨" else "0"}\n" +
+                 "• Escanteios: $corners1 - $corners2"
           textSize = if (MaxiApp.isTv) 16f else 14f
           setTextColor(android.graphics.Color.WHITE)
           gravity = android.view.Gravity.CENTER
