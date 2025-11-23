@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 294
-        versionName = "1.0.294"
+        versionCode = 296
+        versionName = "1.0.296"
     vectorDrawables.useSupportLibrary = true
     ndk {
       abiFilters += listOf("armeabi-v7a", "arm64-v8a")
@@ -98,6 +98,7 @@ dependencies {
   implementation("com.squareup.retrofit2:retrofit:2.9.0")
   implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
   implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
+  implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
   implementation("androidx.datastore:datastore-preferences:1.0.0")
   implementation("io.coil-kt:coil-compose:2.6.0")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")

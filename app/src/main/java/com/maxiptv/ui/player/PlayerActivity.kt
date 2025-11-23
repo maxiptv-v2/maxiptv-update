@@ -106,6 +106,9 @@ class PlayerActivity : ComponentActivity() {
   private var footballAutoZoomEnabled: Boolean = true // Se zoom automático está habilitado
   private var rotationAnimator: android.animation.ObjectAnimator? = null // Animação de rotação do botão
   private var currentZoomLevel: Float = 1.0f // Nível de zoom atual (1.0 = normal)
+  // ⚽ NOVO: Sistema de estatísticas via API
+  private var currentMatchId: Long? = null // ID da partida atual
+  private var soccerStatsViewModel: com.maxiptv.ui.player.soccer.SoccerStatsViewModel? = null // ViewModel para estatísticas
   private var pauseControlsOverlay: android.view.ViewGroup? = null // Overlay com botões modernos quando pausa
   private var isPausedControlsVisible: Boolean = false // Se controles de pausa estão visíveis
   private val bufferIndicatorRunnable = object : Runnable {
@@ -572,10 +575,21 @@ class PlayerActivity : ComponentActivity() {
     
     isFootballMode = contentType == "live" && (isSpecificFootballChannel || hasGenericTerm)
     
+    // ⚽ NOVO: Tentar extrair matchId do nome do canal
+    if (isFootballMode) {
+      currentMatchId = com.maxiptv.data.soccer.MatchIdExtractor.extractMatchId(channelName)
+      if (currentMatchId != null) {
+        android.util.Log.i("PlayerActivity", "⚽ MatchId extraído: $currentMatchId")
+      } else {
+        android.util.Log.i("PlayerActivity", "⚽ MatchId não encontrado no nome do canal")
+      }
+    }
+    
     if (isFootballMode) {
       android.util.Log.i("PlayerActivity", "⚽ MODO FUTEBOL ATIVADO para: '$channelName'")
       android.util.Log.i("PlayerActivity", "   - Canal específico: $isSpecificFootballChannel")
       android.util.Log.i("PlayerActivity", "   - Termo genérico: $hasGenericTerm")
+      android.util.Log.i("PlayerActivity", "   - MatchId: ${currentMatchId ?: "não disponível"}")
     } else {
       android.util.Log.d("PlayerActivity", "📺 Modo normal (não é futebol): '$channelName'")
     }
@@ -611,6 +625,12 @@ class PlayerActivity : ComponentActivity() {
       // Criar botão de estatísticas imediatamente (não dentro de corrotina)
       createFootballStatsButton(rootLayout)
       android.util.Log.i("PlayerActivity", "⚽ Botão de estatísticas criado para modo futebol")
+      
+      // ⚽ NOVO: Inicializar ViewModel de estatísticas se houver matchId
+      if (currentMatchId != null) {
+        soccerStatsViewModel = com.maxiptv.ui.player.soccer.SoccerStatsViewModel()
+        android.util.Log.i("PlayerActivity", "⚽ ViewModel de estatísticas inicializado para matchId: $currentMatchId")
+      }
     }
     
     // Log da URL para debug
@@ -1384,6 +1404,11 @@ class PlayerActivity : ComponentActivity() {
       footballStatsOverlay = null
     }
     
+    // ⚽ NOVO: Limpar ViewModel de estatísticas
+    soccerStatsViewModel?.clearData()
+    soccerStatsViewModel = null
+    currentMatchId = null
+    
     // ⚽ Resetar zoom (se pv estiver inicializado)
     if (::pv.isInitialized) {
       pv.scaleX = 1.0f
@@ -1680,7 +1705,7 @@ class PlayerActivity : ComponentActivity() {
     android.util.Log.i("PlayerActivity", "   - Botão habilitado: $footballStatsButtonEnabled")
   }
   
-  // ⚽ MOSTRAR OVERLAY DE ESTATÍSTICAS (versão simplificada)
+  // ⚽ MOSTRAR OVERLAY DE ESTATÍSTICAS (versão melhorada com API real)
   private fun showFootballStatsOverlay() {
     if (footballStatsOverlay != null) {
       // Se já existe, apenas mostrar/esconder
@@ -1692,8 +1717,17 @@ class PlayerActivity : ComponentActivity() {
     val rootLayout = footballStatsButton?.parent as? FrameLayout ?: return
     val channelName = intent.getStringExtra("channelName") ?: "Canal de Futebol"
     
-    // Criar overlay simples com dados simulados
-    createSimpleFootballOverlay(rootLayout, channelName)
+    // ⚽ NOVO: Se houver matchId e ViewModel, usar dados reais da API
+    if (currentMatchId != null && soccerStatsViewModel != null) {
+      android.util.Log.i("PlayerActivity", "⚽ Abrindo overlay com dados reais da API (matchId: $currentMatchId)")
+      soccerStatsViewModel?.openOverlay(currentMatchId!!)
+      // Por enquanto, usar overlay simples (overlay Compose será implementado depois)
+      createSimpleFootballOverlay(rootLayout, channelName)
+    } else {
+      // Fallback: criar overlay simples com dados simulados
+      android.util.Log.i("PlayerActivity", "⚽ Abrindo overlay simples (sem matchId)")
+      createSimpleFootballOverlay(rootLayout, channelName)
+    }
   }
   
   // ⚽ CRIAR OVERLAY SIMPLES DE ESTATÍSTICAS
@@ -1811,6 +1845,8 @@ class PlayerActivity : ComponentActivity() {
   private fun hideFootballStatsOverlay() {
     footballStatsOverlay?.visibility = android.view.View.GONE
     isStatsOverlayVisible = false
+    // ⚽ NOVO: Parar polling quando fechar overlay
+    soccerStatsViewModel?.closeOverlay()
     android.util.Log.i("PlayerActivity", "⚽ Overlay fechado")
   }
   
