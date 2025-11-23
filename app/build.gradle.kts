@@ -5,7 +5,7 @@ plugins {
   id("com.android.application")
   id("org.jetbrains.kotlin.android")
   id("com.google.devtools.ksp")
-  kotlin("plugin.serialization") version "1.8.22"
+  kotlin("plugin.serialization") version "1.9.24"
 }
 android {
   namespace = "com.maxiptv"
@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 296
-        versionName = "1.0.296"
+        versionCode = 298
+        versionName = "1.0.298"
     vectorDrawables.useSupportLibrary = true
     ndk {
       abiFilters += listOf("armeabi-v7a", "arm64-v8a")
@@ -64,7 +64,7 @@ android {
     }
   }
   buildFeatures { compose = true; buildConfig = true }
-  composeOptions { kotlinCompilerExtensionVersion = "1.4.8" }
+  composeOptions { kotlinCompilerExtensionVersion = "1.5.14" } // ✅ Compose 1.5+ para TV Box/Fire Stick
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8

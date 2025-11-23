@@ -36,18 +36,23 @@ object MatchIdExtractor {
     
     /**
      * Verifica se o canal é de futebol baseado em palavras-chave
+     * Usa startsWith para detecção mais precisa (evita falsos positivos)
      */
     fun isFootballChannel(channelName: String): Boolean {
-        val nameLower = channelName.lowercase()
-        val footballKeywords = listOf(
-            "futebol", "football", "soccer", "premiere", "sportv", "espn",
-            "band", "globo", "ge", "flamengo", "palmeiras", "corinthians",
-            "são paulo", "santos", "fluminense", "botafogo", "vasco",
-            "atlético", "atletico", "cruzeiro", "gremio", "internacional",
-            "brasileirão", "brasileirao", "libertadores", "copa do brasil"
+        val footballChannels = listOf(
+            "premiere",
+            "band sports",
+            "band sport hd",
+            "sportv",
+            "espn",
+            "cazé tv",
+            "brasileirao",
+            "copa",
+            "copa paulista",
+            "amazon prime"
         )
-        
-        return footballKeywords.any { nameLower.contains(it) }
+
+        return footballChannels.any { channelName.lowercase().startsWith(it.lowercase()) }
     }
     
     /**

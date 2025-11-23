@@ -540,30 +540,12 @@ class PlayerActivity : ComponentActivity() {
     contentType = intent.getStringExtra("contentType") ?: "live" // live, vod ou series
     val channelName = intent.getStringExtra("channelName") ?: ""
     
-    // ✅ Detectar se é canal de futebol pelo nome
+    // ⚽ Detectar se é canal de futebol pelo nome (usando função melhorada)
     val channelNameLower = channelName.lowercase().trim()
     android.util.Log.d("PlayerActivity", "🔍 Verificando canal: '$channelName' (lowercase: '$channelNameLower')")
     
-    // ✅ CANAIS ESPECÍFICOS DE FUTEBOL
-    val footballChannels = listOf(
-      "band sport", "sportv", "cazetv", "caze tv"
-    )
-    
-    // ✅ DETECÇÃO POR INÍCIO DO NOME (mais preciso)
-    val startsWithFootball = channelNameLower.startsWith("premiere") ||
-                            channelNameLower.startsWith("espn") ||
-                            channelNameLower.startsWith("sportynet") ||
-                            channelNameLower.startsWith("brasileirao") ||
-                            channelNameLower.startsWith("copa")
-    
-    // ✅ TERMOS ESPECÍFICOS NO NOME
-    val hasSpecificTerm = channelNameLower.contains("campeonato de futebol") ||
-                          channelNameLower.contains("campeonato futebol")
-    
-    // Termos mais específicos primeiro (maior prioridade)
-    val isSpecificFootballChannel = footballChannels.any { 
-      channelNameLower.contains(it.lowercase()) 
-    } || startsWithFootball || hasSpecificTerm
+    // ⚽ NOVO: Usar função melhorada do MatchIdExtractor para detecção mais precisa
+    val isSpecificFootballChannel = com.maxiptv.data.soccer.MatchIdExtractor.isFootballChannel(channelName)
     
     // Termos genéricos (menor prioridade, apenas se não for muito genérico)
     val genericTerms = listOf("sport", "futebol", "futbol")
