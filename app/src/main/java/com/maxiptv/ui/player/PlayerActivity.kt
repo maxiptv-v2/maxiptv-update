@@ -1570,7 +1570,7 @@ class PlayerActivity : ComponentActivity() {
       setImageBitmap(bitmap)
       background = null // Sem background
       scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
-      alpha = 0.8f // 80% de opacidade
+      alpha = 1.0f // 100% de opacidade para melhor visibilidade
       
       // Configurar foco e clique
       isFocusable = true
@@ -1655,7 +1655,9 @@ class PlayerActivity : ComponentActivity() {
       start()
     }
     
-    rootLayout.addView(footballStatsButton)
+    // ✅ Adicionar botão por último para garantir que fique acima de todos os overlays
+    // Usar childCount como índice para adicionar no final da lista de views
+    rootLayout.addView(footballStatsButton, rootLayout.childCount)
     
     // ✅ CORREÇÃO TV: Garantir que o botão está visível e ACIMA de todos os outros overlays
     footballStatsButton?.visibility = android.view.View.VISIBLE
