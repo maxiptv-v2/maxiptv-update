@@ -23,9 +23,9 @@ import com.maxiptv.data.soccer.*
 @Composable
 fun SoccerStatsOverlay(
     modifier: Modifier = Modifier,
-    currentMatch: MatchDetail,
-    matchPreview: MatchPreview?,
-    otherMatches: List<MatchSummary>,
+    currentMatch: MatchDetailFull,
+    matchPreview: MatchPreviewFull?,
+    otherMatches: List<MatchSummaryFull>,
     onClose: () -> Unit
 ) {
     Box(
@@ -56,7 +56,7 @@ fun SoccerStatsOverlay(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Estatísticas principais
+                // Estatísticas principais (usando campos do MatchDetailFull)
                 Text(
                     text = "Posse: ${currentMatch.possessionHome}% x ${currentMatch.possessionAway}%",
                     color = Color.White,
@@ -72,70 +72,42 @@ fun SoccerStatsOverlay(
                     color = Color.White,
                     fontSize = 16.sp
                 )
-                Text(
-                    text = "xG: ${String.format("%.2f", currentMatch.xGHome)} x ${String.format("%.2f", currentMatch.xGAway)}",
-                    color = Color.White,
-                    fontSize = 16.sp
-                )
 
-                // Probabilidades
-                matchPreview?.let {
+                // Preview/Predições (se disponível)
+                matchPreview?.match_data?.let { previewData ->
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Probabilidades:",
+                        text = "Previsões:",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
-                    Text(
-                        text = "${currentMatch.homeTeamName}: ${String.format("%.0f", it.homeWinPercent)}%",
-                        color = Color.Green,
-                        fontSize = 16.sp
-                    )
-                    Text(
-                        text = "Empate: ${String.format("%.0f", it.drawPercent)}%",
-                        color = Color.Yellow,
-                        fontSize = 16.sp
-                    )
-                    Text(
-                        text = "${currentMatch.awayTeamName}: ${String.format("%.0f", it.awayWinPercent)}%",
-                        color = Color.Red,
-                        fontSize = 16.sp
-                    )
-
-                    // Sugestões de apostas
-                    if (!it.suggestedBets.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
+                    previewData.prediction?.let { pred ->
                         Text(
-                            text = "Sugestões de apostas:",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
+                            text = "Predição: ${pred.choice ?: ""}",
+                            color = Color.Green,
+                            fontSize = 16.sp
                         )
-                        it.suggestedBets.forEach { bet ->
-                            Text(
-                                text = "- $bet",
-                                color = Color.Cyan,
-                                fontSize = 14.sp
-                            )
-                        }
+                    }
+                    if (previewData.excitement_rating != null) {
+                        Text(
+                            text = "⭐ Rating: ${String.format("%.1f", previewData.excitement_rating)}/10",
+                            color = Color(0xFFFFD700),
+                            fontSize = 16.sp
+                        )
                     }
                 }
 
-                // Zoom no jogador se houver evento
-                currentMatch.currentEvent?.let { event ->
-                    event.playerId?.let { playerId ->
+                // Eventos (usando estrutura do MatchDetailFull)
+                currentMatch.events?.firstOrNull()?.let { event ->
+                    event.player?.let { player ->
                         Spacer(modifier = Modifier.height(16.dp))
-                        // Buscar dados do jogador (simplificado por enquanto)
-                        val player = PlayerDetail(
-                            id = playerId,
-                            name = event.player?.name ?: "Jogador",
-                            goals = null,
-                            assists = null,
-                            yellowCards = null,
-                            redCards = null
+                        // Mostrar último evento
+                        Text(
+                            text = "Último evento: ${event.type ?: ""} - ${player.name ?: ""}",
+                            color = Color.Cyan,
+                            fontSize = 14.sp
                         )
-                        ZoomablePlayerCard(player = player, event = event)
                     }
                 }
             }

@@ -6,55 +6,40 @@ import retrofit2.http.Query
 
 /**
  * API Service para estatísticas de futebol
- * Base URL: https://api.sportmonks.com/v3/football/
+ * Base URL: https://api.soccerdataapi.com/
+ * Documentação: https://soccerdataapi.com/docs/
+ * 
+ * IMPORTANTE: Esta API requer o header "Accept-Encoding: gzip" em todas as requisições
  */
 interface SoccerApi {
     
-    @GET("matches/{match_id}")
+    /**
+     * GET /match/?match_id={id}&auth_token={token}
+     * Retorna informações completas da partida: score, statistics, events, lineups, formation, status
+     */
+    @GET("match/")
     suspend fun getMatch(
-        @Path("match_id") matchId: Long,
-        @Query("api_token") apiToken: String = "836475b96827b5eb935418deeb0ce2377dae6669"
-    ): MatchDetailResponse
+        @Query("match_id") matchId: Long,
+        @Query("auth_token") authToken: String
+    ): MatchDetailFull
     
-    @GET("livescores")
+    /**
+     * GET /livescores/?auth_token={token}
+     * Retorna lista de partidas ao vivo
+     */
+    @GET("livescores/")
     suspend fun getLiveScores(
-        @Query("api_token") apiToken: String = "836475b96827b5eb935418deeb0ce2377dae6669"
-    ): LiveScoresResponse
+        @Query("auth_token") authToken: String
+    ): LiveScoresResponseFull
     
-    @GET("match-previews/{match_id}")
+    /**
+     * GET /match-preview/?match_id={id}&auth_token={token}
+     * Retorna preview com predições, clima, conteúdo textual
+     */
+    @GET("match-preview/")
     suspend fun getMatchPreview(
-        @Path("match_id") matchId: Long,
-        @Query("api_token") apiToken: String = "836475b96827b5eb935418deeb0ce2377dae6669"
-    ): MatchPreviewResponse
-    
-    @GET("match-previews/upcoming")
-    suspend fun getUpcomingPreviews(
-        @Query("league_id") leagueId: String,
-        @Query("api_token") apiToken: String = "836475b96827b5eb935418deeb0ce2377dae6669"
-    ): UpcomingPreviewsResponse
-    
-    @GET("leagues/{league_id}")
-    suspend fun getLeague(
-        @Path("league_id") leagueId: String,
-        @Query("api_token") apiToken: String = "836475b96827b5eb935418deeb0ce2377dae6669"
-    ): LeagueDetailResponse
-    
-    @GET("seasons/{season_id}")
-    suspend fun getSeason(
-        @Path("season_id") seasonId: String,
-        @Query("api_token") apiToken: String = "836475b96827b5eb935418deeb0ce2377dae6669"
-    ): SeasonDetailResponse
-    
-    @GET("teams/{team_id}")
-    suspend fun getTeam(
-        @Path("team_id") teamId: String,
-        @Query("api_token") apiToken: String = "836475b96827b5eb935418deeb0ce2377dae6669"
-    ): TeamDetailResponse
-    
-    @GET("players/{player_id}")
-    suspend fun getPlayer(
-        @Path("player_id") playerId: String,
-        @Query("api_token") apiToken: String = "836475b96827b5eb935418deeb0ce2377dae6669"
-    ): PlayerDetailResponse
+        @Query("match_id") matchId: Long,
+        @Query("auth_token") authToken: String
+    ): MatchPreviewFull
 }
 
