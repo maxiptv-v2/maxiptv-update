@@ -10,16 +10,21 @@ import okhttp3.MediaType.Companion.toMediaType
 
 /**
  * Repository para estatísticas de futebol
- * Usa API SportMonks (https://api.sportmonks.com/v3/football/)
+ * Usa Soccer Data API (https://api.soccerdataapi.com/)
+ * Documentação: https://soccerdataapi.com/docs/
  */
 object SoccerRepository {
-    private const val BASE_URL = "https://api.sportmonks.com/v3/football/"
+    private const val BASE_URL = "https://api.soccerdataapi.com/"
     private const val TAG = "SoccerRepository"
+    
+    // 🔑 Chave de API da Soccer Data API
+    private const val API_AUTH_TOKEN = "836475b96827b5eb935418deeb0ce2377dae6669"
     
     private val api: SoccerApi by lazy {
         val json = Json {
             ignoreUnknownKeys = true
             isLenient = true
+            coerceInputValues = true
         }
         
         val contentType = "application/json".toMediaType()
@@ -33,6 +38,8 @@ object SoccerRepository {
                 val request = chain.request().newBuilder()
                     .header("User-Agent", "MaxiPTV/1.1.1 (Android)")
                     .header("Accept", "application/json")
+                    // ✅ OBRIGATÓRIO: Soccer Data API requer Accept-Encoding: gzip
+                    .header("Accept-Encoding", "gzip")
                     .build()
                 chain.proceed(request)
             }
@@ -49,79 +56,53 @@ object SoccerRepository {
     }
     
     /**
-     * Busca detalhes de uma partida específica
+     * Busca detalhes completos de uma partida específica
+     * Retorna: score, statistics, events, lineups, formation, status
      */
-    suspend fun getMatchDetail(matchId: Long): MatchDetail? {
+    suspend fun getMatchDetail(matchId: Long): MatchDetailFull? {
         return try {
-            val response = api.getMatch(matchId)
-            response.data
+            Log.d(TAG, "🔍 Buscando detalhes da partida $matchId na Soccer Data API...")
+            val response = api.getMatch(matchId, API_AUTH_TOKEN)
+            Log.d(TAG, "✅ Dados recebidos: ${response.homeTeamName} x ${response.awayTeamName}")
+            response
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao buscar detalhes da partida $matchId", e)
+            Log.e(TAG, "❌ Erro ao buscar detalhes da partida $matchId", e)
+            e.printStackTrace()
             null
         }
     }
     
     /**
      * Busca placares ao vivo
+     * Retorna lista de partidas em andamento
      */
-    suspend fun getOtherMatches(): List<MatchSummary> {
+    suspend fun getOtherMatches(): List<MatchSummaryFull> {
         return try {
-            val response = api.getLiveScores()
-            response.data ?: emptyList()
+            Log.d(TAG, "🔍 Buscando partidas ao vivo...")
+            val response = api.getLiveScores(API_AUTH_TOKEN)
+            val matches = response.results ?: emptyList()
+            Log.d(TAG, "✅ ${matches.size} partidas ao vivo encontradas")
+            matches
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao buscar placares ao vivo", e)
+            Log.e(TAG, "❌ Erro ao buscar placares ao vivo", e)
+            e.printStackTrace()
             emptyList()
         }
     }
     
     /**
-     * Busca preview de uma partida
+     * Busca preview completo de uma partida
+     * Retorna: weather, predictions, content textual, excitement_rating
      */
-    suspend fun getMatchPreview(matchId: Long): MatchPreview? {
+    suspend fun getMatchPreview(matchId: Long): MatchPreviewFull? {
         return try {
-            val response = api.getMatchPreview(matchId)
-            response.data
+            Log.d(TAG, "🔍 Buscando preview da partida $matchId...")
+            val response = api.getMatchPreview(matchId, API_AUTH_TOKEN)
+            Log.d(TAG, "✅ Preview recebido (word_count: ${response.word_count})")
+            response
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao buscar preview da partida $matchId", e)
-            null
-        }
-    }
-    
-    /**
-     * Busca previews de partidas futuras de uma liga
-     */
-    suspend fun getUpcomingMatches(leagueId: String): List<MatchPreview> {
-        return try {
-            val response = api.getUpcomingPreviews(leagueId)
-            response.data ?: emptyList()
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao buscar partidas futuras da liga $leagueId", e)
-            emptyList()
-        }
-    }
-    
-    /**
-     * Busca detalhes de um time
-     */
-    suspend fun getTeam(teamId: String): TeamDetail? {
-        return try {
-            val response = api.getTeam(teamId)
-            response.data
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao buscar detalhes do time $teamId", e)
-            null
-        }
-    }
-    
-    /**
-     * Busca detalhes de um jogador
-     */
-    suspend fun getPlayer(playerId: String): PlayerDetail? {
-        return try {
-            val response = api.getPlayer(playerId)
-            response.data
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao buscar detalhes do jogador $playerId", e)
+            Log.e(TAG, "❌ Erro ao buscar preview da partida $matchId", e)
+            e.printStackTrace()
             null
         }
     }

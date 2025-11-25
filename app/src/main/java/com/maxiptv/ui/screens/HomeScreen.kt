@@ -7,6 +7,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,8 +44,11 @@ import com.maxiptv.data.UpdateInfo
 import com.maxiptv.data.ApkDownloader
 import com.maxiptv.data.DeviceLogger
 import com.maxiptv.ui.player.PlayerActivity
+import com.maxiptv.ui.player.soccer.SoccerStatsButton
+import com.maxiptv.data.soccer.SoccerRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun HomeScreen(nav: NavHostController) {
@@ -1374,6 +1379,9 @@ fun EmbeddedPlayer(
     else -> 180.dp
   }
   
+  // ⚽ ESTADO PARA CONTROLAR DIÁLOGO DE ESTATÍSTICAS
+  var showFootballStatsDialog by remember { mutableStateOf(false) }
+  
   // ⚽ DETECTAR SE É CANAL DE FUTEBOL
   val isFootballChannel = remember(channel.name) {
     val channelNameLower = channel.name.lowercase().trim()
@@ -1402,6 +1410,70 @@ fun EmbeddedPlayer(
     }
   }
   
+  // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando Soccer Data API)
+  var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
+  var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
+  var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
+  var isLoadingStats by remember { mutableStateOf(false) }
+  var statsError by remember { mutableStateOf<String?>(null) }
+  
+  // ✅ CORRIGIDO: rememberCoroutineScope() precisa estar no nível do Composable
+  val scope = rememberCoroutineScope()
+  
+  // ⚽ FUNÇÃO PARA ABRIR DIÁLOGO DE ESTATÍSTICAS
+  val openStatsDialog: () -> Unit = {
+    android.util.Log.i("EmbeddedPlayer", "⚽ Abrindo diálogo de estatísticas para matchId: $matchId")
+    
+    if (matchId != null) {
+      isLoadingStats = true
+      statsError = null
+      showFootballStatsDialog = true
+      
+      // Buscar dados da API
+      scope.launch {
+        try {
+          android.util.Log.i("EmbeddedPlayer", "⚽ Buscando dados da API para matchId: $matchId")
+          
+          // Buscar detalhes da partida
+          val detail = SoccerRepository.getMatchDetail(matchId)
+          matchDetail = detail
+          
+          // Buscar preview da partida
+          val preview = SoccerRepository.getMatchPreview(matchId)
+          matchPreview = preview
+          
+          // Buscar outros jogos ao vivo
+          val other = SoccerRepository.getOtherMatches()
+          otherMatches = other
+          
+          isLoadingStats = false
+          android.util.Log.i("EmbeddedPlayer", "⚽ Dados carregados com sucesso")
+        } catch (e: Exception) {
+          isLoadingStats = false
+          statsError = e.message ?: "Erro desconhecido ao carregar estatísticas"
+          android.util.Log.e("EmbeddedPlayer", "❌ Erro ao carregar estatísticas: ${e.message}", e)
+        }
+      }
+      
+      // Polling será feito manualmente se necessário (por enquanto apenas busca única)
+    } else {
+      android.util.Log.w("EmbeddedPlayer", "⚠️ MatchId não disponível - não é possível buscar estatísticas")
+      statsError = "MatchId não disponível para este canal"
+      showFootballStatsDialog = true
+    }
+  }
+  
+  // ✅ QUALIDADE ADAPTATIVA: Estado para rastrear qualidade e buffering (usar objeto mutável dentro do remember)
+  val qualityState = remember { 
+    object {
+      var currentMaxBitrate = 2_200_000
+      var qualityReductionLevel = 0
+      var bufferingCount = 0
+      var lastBufferingTime = 0L
+      var connectionQuality = com.maxiptv.ui.player.ConnectionQuality.GOOD
+    }
+  }
+  
   val exoPlayer = remember(channel.stream_id, isFootballChannel) {
     // ⚽ FUTEBOL: Configurações otimizadas (timeouts maiores, buffer maior)
     // ⚡ NORMAL: Configurações leves para carrossel
@@ -1418,44 +1490,143 @@ fun EmbeddedPlayer(
     val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
       .setDataSourceFactory(dataSourceFactory)
     
-    // ⚽ FUTEBOL: Buffer otimizado para evitar travamento em transmissões esportivas
-    // ⚡ NORMAL: LoadControl super leve para carrossel
-    val loadControl = if (isFootballChannel) {
-      androidx.media3.exoplayer.DefaultLoadControl.Builder()
-        .setBufferDurationsMs(
-          8000,   // ⚽ FUTEBOL: 8 segundos (mais buffer)
-          25000,  // ⚽ FUTEBOL: 25 segundos (mais buffer)
-          2000,   // ⚽ FUTEBOL: 2 segundos (inicia rápido)
-          3000    // ⚽ FUTEBOL: 3 segundos (mais tolerante)
-        )
-        .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(8000, true) // ⚽ FUTEBOL: 8s de back buffer
-        .build()
-    } else {
-      androidx.media3.exoplayer.DefaultLoadControl.Builder()
-        .setBufferDurationsMs(
-          5000,   // minBufferMs: 5 segundos (bem leve)
-          15000,  // maxBufferMs: 15 segundos (limitado)
-          1000,   // bufferForPlaybackMs: 1 segundo (inicia rápido)
-          2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
-        )
-        .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(5000, true) // Back buffer curto e limpar sempre
-        .build()
-    }
+    // ✅ QUALIDADE ADAPTATIVA: LoadControl dinâmico baseado em qualidade de conexão
+    val initialLoadControl = com.maxiptv.ui.player.createAdaptiveLoadControl(qualityState.connectionQuality)
     
     androidx.media3.exoplayer.ExoPlayer.Builder(context)
       .setMediaSourceFactory(mediaSourceFactory)
-      .setLoadControl(loadControl)
+      .setLoadControl(initialLoadControl)
       .build().apply {
+        // ✅ QUALIDADE ADAPTATIVA: Configuração inicial de bitrate
+        trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
+          .setPreferredTextLanguage(null)
+          .setMaxVideoBitrate(qualityState.currentMaxBitrate)
+          .setMaxVideoSize(1280, 720) // 720p inicial
+          .setMinVideoBitrate(500_000)
+          .build()
+        
         val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
         setMediaItem(mediaItem)
         volume = 0f // SEM ÁUDIO
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
+        
+        // ✅ QUALIDADE ADAPTATIVA: Listener para detectar WiFi lento e reduzir qualidade automaticamente
+        addListener(object : androidx.media3.common.Player.Listener {
+          override fun onPlaybackStateChanged(playbackState: Int) {
+            when (playbackState) {
+              androidx.media3.common.Player.STATE_BUFFERING -> {
+                val now = System.currentTimeMillis()
+                val bufferAhead = bufferedPosition - currentPosition
+                val timeSinceLastBuffering = if (qualityState.lastBufferingTime > 0) now - qualityState.lastBufferingTime else Long.MAX_VALUE
+                
+                // ✅ FATOR 1: Detecção de buffering frequente
+                if (qualityState.lastBufferingTime > 0 && timeSinceLastBuffering < 5000) {
+                  qualityState.bufferingCount++
+                  android.util.Log.w("EmbeddedPlayer", "⚠️ Buffering frequente detectado (${qualityState.bufferingCount} eventos)")
+                } else if (timeSinceLastBuffering > 10000) {
+                  qualityState.bufferingCount = 0 // Reset se rede estável
+                }
+                
+                // ✅ FATOR 2: Buffer muito baixo (< 2 segundos)
+                val bufferLow = bufferAhead < 2000
+                
+                // ✅ FATOR 3: Estimativa de qualidade de conexão
+                val latencyMs = bufferAhead.coerceAtLeast(0)
+                val estimatedQuality = com.maxiptv.ui.player.estimateConnectionQuality(
+                  this@apply,
+                  latencyMs,
+                  bufferAhead,
+                  videoFormat?.bitrate ?: 0
+                )
+                qualityState.connectionQuality = estimatedQuality
+                
+                // ✅ REDUÇÃO AUTOMÁTICA DE QUALIDADE quando WiFi lento
+                val shouldReduceQuality = when {
+                  qualityState.bufferingCount >= 2 && (estimatedQuality == com.maxiptv.ui.player.ConnectionQuality.POOR || bufferLow) -> {
+                    android.util.Log.w("EmbeddedPlayer", "🚨 Redução IMEDIATA: buffering frequente + conexão ruim")
+                    true
+                  }
+                  qualityState.bufferingCount >= 2 || (bufferLow && estimatedQuality == com.maxiptv.ui.player.ConnectionQuality.POOR) -> {
+                    android.util.Log.w("EmbeddedPlayer", "⚠️ Redução LEVE: buffering ou buffer baixo")
+                    true
+                  }
+                  estimatedQuality == com.maxiptv.ui.player.ConnectionQuality.POOR && qualityState.qualityReductionLevel == 0 -> {
+                    android.util.Log.w("EmbeddedPlayer", "📉 Redução PREVENTIVA: conexão ruim")
+                    true
+                  }
+                  else -> false
+                }
+                
+                // ✅ Aplicar redução de qualidade gradualmente (MESMA LÓGICA DO PLAYERACTIVITY PARA LIVE)
+                if (shouldReduceQuality && qualityState.currentMaxBitrate > 800_000) {
+                  // ✅ Mini player sempre é Live TV, usa mesmos valores do PlayerActivity para Live
+                  val newBitrate = when (qualityState.qualityReductionLevel) {
+                    0 -> 1_500_000  // Nível 1: 2.2Mbps → 1.5Mbps (LIVE)
+                    1 -> 1_000_000  // Nível 2: 1.5Mbps → 1.0Mbps (LIVE)
+                    2 -> 600_000    // Nível 3: 1.0Mbps → 600kbps (LIVE)
+                    else -> qualityState.currentMaxBitrate
+                  }
+                  
+                  if (newBitrate < qualityState.currentMaxBitrate) {
+                    qualityState.qualityReductionLevel++
+                    qualityState.currentMaxBitrate = newBitrate
+                    
+                    val newResolution = when (qualityState.qualityReductionLevel) {
+                      1 -> Pair(1280, 720)  // 720p
+                      2 -> Pair(854, 480)   // 480p
+                      else -> Pair(640, 360) // 360p
+                    }
+                    
+                    android.util.Log.i("EmbeddedPlayer", "📉 WiFi lento detectado! Reduzindo qualidade (nível ${qualityState.qualityReductionLevel})")
+                    android.util.Log.i("EmbeddedPlayer", "   Bitrate: ${qualityState.currentMaxBitrate / 1000}kbps, Resolução: ${newResolution.first}x${newResolution.second}")
+                    
+                    // ✅ Aplicar novo bitrate automaticamente
+                    trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
+                      .setPreferredTextLanguage(null)
+                      .setMaxVideoBitrate(qualityState.currentMaxBitrate)
+                      .setMaxVideoSize(newResolution.first, newResolution.second)
+                      .setMinVideoBitrate((qualityState.currentMaxBitrate * 0.3).toInt())
+                      .build()
+                  }
+                }
+                
+                qualityState.lastBufferingTime = now
+                android.util.Log.d("EmbeddedPlayer", "⏳ Buffering (contador: ${qualityState.bufferingCount}, buffer: ${bufferAhead}ms, qualidade: $estimatedQuality)")
+              }
+              androidx.media3.common.Player.STATE_READY -> {
+                // ✅ RESTAURAR qualidade quando rede melhorar
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                  if (isPlaying && qualityState.bufferingCount == 0 && qualityState.connectionQuality != com.maxiptv.ui.player.ConnectionQuality.POOR) {
+                    if (qualityState.qualityReductionLevel > 0) {
+                      qualityState.qualityReductionLevel = 0
+                      qualityState.currentMaxBitrate = 2_200_000
+                      trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
+                        .setPreferredTextLanguage(null)
+                        .setMaxVideoBitrate(qualityState.currentMaxBitrate)
+                        .setMaxVideoSize(1280, 720)
+                        .setMinVideoBitrate(500_000)
+                        .build()
+                      android.util.Log.i("EmbeddedPlayer", "✅ Rede melhorou! Qualidade restaurada (${qualityState.currentMaxBitrate / 1000}kbps)")
+                    }
+                  }
+                }, 30000) // 30 segundos de reprodução estável
+              }
+            }
+          }
+          
+          override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
+            val format = videoFormat
+            if (format != null) {
+              android.util.Log.d("EmbeddedPlayer", "📊 Qualidade atual: ${format.width}x${format.height} @ ${format.bitrate / 1000}Kbps")
+            }
+          }
+        })
+        
         prepare()
         playWhenReady = true // INICIA TOCANDO AUTOMATICAMENTE
         android.util.Log.i("EmbeddedPlayer", "▶️ Player criado${if (isFootballChannel) " (MODO FUTEBOL)" else " (LEVE)"} para carrossel: ${channel.name}")
         android.util.Log.i("EmbeddedPlayer", "   URL: ${channel.toLiveUrl()}")
+        android.util.Log.i("EmbeddedPlayer", "   ✅ Qualidade adaptativa HABILITADA")
         if (isFootballChannel && matchId != null) {
           android.util.Log.i("EmbeddedPlayer", "⚽ MatchId: $matchId")
         }
@@ -1633,6 +1804,52 @@ fun EmbeddedPlayer(
       }
     }
     
+    // ⚽ BOTÃO DE ESTATÍSTICAS DE FUTEBOL (canto superior direito, abaixo do "AO VIVO")
+    if (isFootballChannel) {
+      var isFootballButtonFocused by remember { mutableStateOf(false) }
+      
+      Box(
+        modifier = Modifier
+          .align(Alignment.TopEnd)
+          .padding(
+            top = when (deviceType) {
+              "tv" -> 60.dp  // Abaixo do badge "AO VIVO"
+              "phone" -> 40.dp
+              else -> 50.dp
+            },
+            end = 16.dp
+          )
+          .clickable { openStatsDialog() }
+          .focusable()
+          .onFocusChanged { isFootballButtonFocused = it.isFocused }
+          .then(
+            if (isFootballButtonFocused) {
+              Modifier
+                .border(3.dp, Color(0xFFFFD700), RoundedCornerShape(36.dp))
+                .shadow(
+                  elevation = 16.dp,
+                  spotColor = Color(0xFFFFD700).copy(alpha = 0.9f),
+                  ambientColor = Color(0xFFFFD700).copy(alpha = 0.7f),
+                  shape = CircleShape
+                )
+            } else {
+              Modifier
+            }
+          )
+      ) {
+        SoccerStatsButton(
+          onClick = { openStatsDialog() },
+          modifier = Modifier.size(
+            when (deviceType) {
+              "tv" -> 56.dp
+              "phone" -> 40.dp
+              else -> 48.dp
+            }
+          )
+        )
+      }
+    }
+    
     // ✅ Botão de FULLSCREEN (canto inferior direito)
     var isFullscreenButtonFocused by remember { mutableStateOf(false) }
     
@@ -1668,6 +1885,570 @@ fun EmbeddedPlayer(
         },
         fontWeight = FontWeight.Bold,
         color = Color(0xFF00D4FF)
+      )
+    }
+    
+    // ⚽ DIÁLOGO DE ESTATÍSTICAS DE FUTEBOL
+    if (showFootballStatsDialog && isFootballChannel) {
+      FootballStatsDialog(
+        channelName = channel.name,
+        matchId = matchId,
+        matchDetail = matchDetail,
+        matchPreview = matchPreview,
+        otherMatches = otherMatches,
+        isLoading = isLoadingStats,
+        error = statsError,
+        onDismiss = { 
+          showFootballStatsDialog = false
+          // Limpar dados quando fechar
+          matchDetail = null
+          matchPreview = null
+          otherMatches = emptyList()
+          statsError = null
+        },
+        deviceType = deviceType
+      )
+    }
+  }
+}
+
+// ⚽ DIÁLOGO DE ESTATÍSTICAS DE FUTEBOL PARA MINI PLAYER
+@Composable
+fun FootballStatsDialog(
+  channelName: String,
+  matchId: Long?,
+  matchDetail: com.maxiptv.data.soccer.MatchDetailFull?,
+  matchPreview: com.maxiptv.data.soccer.MatchPreviewFull?,
+  otherMatches: List<com.maxiptv.data.soccer.MatchSummaryFull>,
+  isLoading: Boolean,
+  error: String?,
+  onDismiss: () -> Unit,
+  deviceType: String
+) {
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    containerColor = Color(0xFF1A1A1A),
+    titleContentColor = Color(0xFFFFD700),
+    textContentColor = Color.White,
+    title = {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+      ) {
+        Text(
+          text = "⚽ $channelName",
+          fontSize = when (deviceType) {
+            "tv" -> 20.sp
+            "phone" -> 16.sp
+            else -> 18.sp
+          },
+          fontWeight = FontWeight.Bold,
+          color = Color(0xFFFFD700)
+        )
+        if (matchId != null) {
+          Spacer(Modifier.width(8.dp))
+          Text(
+            text = "(Match ID: $matchId)",
+            fontSize = when (deviceType) {
+              "tv" -> 12.sp
+              "phone" -> 10.sp
+              else -> 11.sp
+            },
+            color = Color.Gray
+          )
+        }
+      }
+    },
+    text = {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .verticalScroll(rememberScrollState())
+      ) {
+        if (isLoading) {
+          Box(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(32.dp),
+            contentAlignment = Alignment.Center
+          ) {
+            CircularProgressIndicator(
+              color = Color(0xFFFFD700),
+              modifier = Modifier.size(when (deviceType) {
+                "tv" -> 48.dp
+                "phone" -> 32.dp
+                else -> 40.dp
+              })
+            )
+          }
+          Spacer(Modifier.height(8.dp))
+          Text(
+            text = "Carregando estatísticas...",
+            fontSize = when (deviceType) {
+              "tv" -> 16.sp
+              "phone" -> 12.sp
+              else -> 14.sp
+            },
+            color = Color.Gray,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+          )
+        } else if (error != null) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            Icon(
+              imageVector = Icons.Default.Warning,
+              contentDescription = null,
+              tint = Color(0xFFFF5252),
+              modifier = Modifier.size(when (deviceType) {
+                "tv" -> 24.dp
+                "phone" -> 20.dp
+                else -> 22.dp
+              })
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+              text = error,
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              },
+              color = Color(0xFFFF5252)
+            )
+          }
+          Spacer(Modifier.height(8.dp))
+          Text(
+            text = "Verifique se o MatchId está correto no nome do canal ou tente novamente.",
+            fontSize = when (deviceType) {
+              "tv" -> 14.sp
+              "phone" -> 10.sp
+              else -> 12.sp
+            },
+            color = Color.Gray
+          )
+        } else if (matchDetail != null) {
+          // ============================================================
+          // CABEÇALHO: Times e Status
+          // ============================================================
+          Text(
+            text = "${matchDetail.homeTeamName} X ${matchDetail.awayTeamName}",
+            fontSize = when (deviceType) {
+              "tv" -> 20.sp
+              "phone" -> 16.sp
+              else -> 18.sp
+            },
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+          )
+          
+          // Status da partida
+          matchDetail.status?.let { status ->
+            Spacer(Modifier.height(4.dp))
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+              Text(
+                text = status.long ?: status.short ?: "",
+                fontSize = when (deviceType) {
+                  "tv" -> 14.sp
+                  "phone" -> 11.sp
+                  else -> 13.sp
+                },
+                color = Color(0xFFFFD700)
+              )
+              if (status.elapsed != null) {
+                Text(
+                  text = "${status.elapsed}'",
+                  fontSize = when (deviceType) {
+                    "tv" -> 14.sp
+                    "phone" -> 11.sp
+                    else -> 13.sp
+                  },
+                  color = Color.Gray
+                )
+              }
+            }
+          }
+          
+          // ============================================================
+          // PLACAR DESTACADO
+          // ============================================================
+          matchDetail.score?.let { score ->
+            Spacer(Modifier.height(16.dp))
+            Box(
+              modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF1A1A1A), RoundedCornerShape(12.dp))
+                .border(2.dp, Color(0xFFFFD700), RoundedCornerShape(12.dp))
+                .padding(16.dp),
+              contentAlignment = Alignment.Center
+            ) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Text(
+                  text = "${score.home ?: score.current?.home ?: 0}",
+                  fontSize = when (deviceType) {
+                    "tv" -> 32.sp
+                    "phone" -> 24.sp
+                    else -> 28.sp
+                  },
+                  fontWeight = FontWeight.Bold,
+                  color = Color(0xFF4CAF50)
+                )
+                Text(
+                  text = "X",
+                  fontSize = when (deviceType) {
+                    "tv" -> 24.sp
+                    "phone" -> 18.sp
+                    else -> 22.sp
+                  },
+                  color = Color.Gray
+                )
+                Text(
+                  text = "${score.away ?: score.current?.away ?: 0}",
+                  fontSize = when (deviceType) {
+                    "tv" -> 32.sp
+                    "phone" -> 24.sp
+                    else -> 28.sp
+                  },
+                  fontWeight = FontWeight.Bold,
+                  color = Color(0xFFFF5252)
+                )
+              }
+            }
+          }
+          
+          Spacer(Modifier.height(16.dp))
+          
+          // ============================================================
+          // ESTATÍSTICAS PRINCIPAIS
+          // ============================================================
+          Text(
+            text = "📊 Estatísticas:",
+            fontSize = when (deviceType) {
+              "tv" -> 16.sp
+              "phone" -> 12.sp
+              else -> 14.sp
+            },
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFFFD700)
+          )
+          
+          Spacer(Modifier.height(8.dp))
+          
+          // Mostrar todas as estatísticas disponíveis
+          matchDetail.statistics?.forEach { stat ->
+            val homeVal = stat.home?.replace("%", "")?.toIntOrNull() ?: 0
+            val awayVal = stat.away?.replace("%", "")?.toIntOrNull() ?: 0
+            
+            if (homeVal > 0 || awayVal > 0 || stat.home?.contains("%") == true || stat.away?.contains("%") == true) {
+              StatsRow(
+                label = "${stat.type ?: ""}:",
+                homeValue = stat.home ?: "0",
+                awayValue = stat.away ?: "0",
+                deviceType = deviceType
+              )
+            }
+          }
+          
+          // ============================================================
+          // EVENTOS DA PARTIDA (Gols, Cartões, Substituições)
+          // ============================================================
+          if (!matchDetail.events.isNullOrEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+              text = "⚽ Eventos:",
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              },
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFFFFD700)
+            )
+            
+            Spacer(Modifier.height(8.dp))
+            
+            matchDetail.events.sortedBy { it.time?.elapsed ?: 0 }.forEach { event ->
+              val minute = event.time?.elapsed ?: 0
+              val extra = event.time?.extra
+              val timeStr = if (extra != null && extra > 0) "$minute+$extra'" else "${minute}'"
+              
+              val icon = when (event.type?.lowercase()) {
+                "goal" -> "⚽"
+                "card" -> if (event.detail?.contains("Yellow", ignoreCase = true) == true) "🟨" else "🟥"
+                "subst" -> "🔄"
+                else -> "•"
+              }
+              
+              val eventText = when (event.type?.lowercase()) {
+                "goal" -> "$icon $timeStr - ${event.player?.name ?: "Gol"} (${event.team?.name ?: ""})${if (event.assist != null) " | Assistência: ${event.assist.name}" else ""}"
+                "card" -> "$icon $timeStr - ${event.player?.name ?: ""} (${event.team?.name ?: ""}) - ${event.detail ?: ""}"
+                "subst" -> "$icon $timeStr - ${event.player?.name ?: ""} entra, ${event.assist?.name ?: ""} sai (${event.team?.name ?: ""})"
+                else -> "$icon $timeStr - ${event.detail ?: ""} (${event.team?.name ?: ""})"
+              }
+              
+              Text(
+                text = eventText,
+                fontSize = when (deviceType) {
+                  "tv" -> 13.sp
+                  "phone" -> 10.sp
+                  else -> 12.sp
+                },
+                color = Color.White,
+                modifier = Modifier.padding(vertical = 2.dp)
+              )
+            }
+          }
+          
+          // ============================================================
+          // FORMAÇÕES
+          // ============================================================
+          matchDetail.formation?.let { formation ->
+            Spacer(Modifier.height(16.dp))
+            Text(
+              text = "📐 Formações:",
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              },
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFFFFD700)
+            )
+            
+            Spacer(Modifier.height(8.dp))
+            
+            Text(
+              text = "${matchDetail.homeTeamName}: ${formation.home ?: "N/A"}",
+              fontSize = when (deviceType) {
+                "tv" -> 13.sp
+                "phone" -> 11.sp
+                else -> 12.sp
+              },
+              color = Color(0xFF4CAF50)
+            )
+            
+            Text(
+              text = "${matchDetail.awayTeamName}: ${formation.away ?: "N/A"}",
+              fontSize = when (deviceType) {
+                "tv" -> 13.sp
+                "phone" -> 11.sp
+                else -> 12.sp
+              },
+              color = Color(0xFFFF5252)
+            )
+          }
+          
+          // ============================================================
+          // PREVIEW: CLIMA E PREDIÇÕES
+          // ============================================================
+          matchPreview?.match_data?.let { previewData ->
+            Spacer(Modifier.height(16.dp))
+            Text(
+              text = "🌤️ Preview:",
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              },
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFFFFD700)
+            )
+            
+            Spacer(Modifier.height(8.dp))
+            
+            previewData.weather?.let { weather ->
+              Text(
+                text = "Clima: ${weather.description ?: ""} - ${weather.temp_c?.toInt() ?: 0}°C",
+                fontSize = when (deviceType) {
+                  "tv" -> 13.sp
+                  "phone" -> 11.sp
+                  else -> 12.sp
+                },
+                color = Color.White
+              )
+            }
+            
+            if (previewData.excitement_rating != null) {
+              Text(
+                text = "⭐ Rating: ${String.format("%.1f", previewData.excitement_rating)}/10",
+                fontSize = when (deviceType) {
+                  "tv" -> 13.sp
+                  "phone" -> 11.sp
+                  else -> 12.sp
+                },
+                color = Color(0xFFFFD700)
+              )
+            }
+            
+            previewData.prediction?.let { prediction ->
+              Text(
+                text = "🎯 Predição: ${prediction.choice ?: ""}",
+                fontSize = when (deviceType) {
+                  "tv" -> 13.sp
+                  "phone" -> 11.sp
+                  else -> 12.sp
+                },
+                color = Color(0xFF4CAF50)
+              )
+            }
+          }
+          
+          // ============================================================
+          // OUTROS JOGOS AO VIVO
+          // ============================================================
+          if (otherMatches.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+              text = "📺 Outros jogos ao vivo:",
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              },
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFFFFD700)
+            )
+            
+            Spacer(Modifier.height(8.dp))
+            
+            otherMatches.take(3).forEach { match ->
+              val scoreText = if (match.score != null) {
+                " (${match.score.home ?: 0} x ${match.score.away ?: 0})"
+              } else {
+                ""
+              }
+              
+              Text(
+                text = "• ${match.homeTeamName} X ${match.awayTeamName}$scoreText",
+                fontSize = when (deviceType) {
+                  "tv" -> 13.sp
+                  "phone" -> 10.sp
+                  else -> 12.sp
+                },
+                color = Color.Gray
+              )
+            }
+            
+            if (otherMatches.size > 3) {
+              Text(
+                text = "... e mais ${otherMatches.size - 3} jogos",
+                fontSize = when (deviceType) {
+                  "tv" -> 12.sp
+                  "phone" -> 9.sp
+                  else -> 11.sp
+                },
+                color = Color.Gray,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+              )
+            }
+          }
+        } else {
+          Text(
+            text = "Estatísticas não disponíveis no momento.",
+            fontSize = when (deviceType) {
+              "tv" -> 16.sp
+              "phone" -> 12.sp
+              else -> 14.sp
+            },
+            color = Color.Gray
+          )
+        }
+      }
+    },
+    confirmButton = {
+      Button(
+        onClick = onDismiss,
+        colors = ButtonDefaults.buttonColors(
+          containerColor = Color(0xFFFFD700),
+          contentColor = Color.Black
+        ),
+        modifier = Modifier
+          .focusable()
+      ) {
+        Text(
+          text = "FECHAR",
+          fontWeight = FontWeight.Bold,
+          fontSize = when (deviceType) {
+            "tv" -> 16.sp
+            "phone" -> 12.sp
+            else -> 14.sp
+          }
+        )
+      }
+    },
+    modifier = Modifier
+      .fillMaxWidth(if (deviceType == "tv") 0.85f else if (deviceType == "phone") 0.95f else 0.9f)
+  )
+}
+
+@Composable
+fun StatsRow(
+  label: String,
+  homeValue: String,
+  awayValue: String,
+  deviceType: String
+) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = 4.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    Text(
+      text = label,
+      fontSize = when (deviceType) {
+        "tv" -> 14.sp
+        "phone" -> 11.sp
+        else -> 13.sp
+      },
+      color = Color.Gray,
+      modifier = Modifier.weight(1f)
+    )
+    
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      Text(
+        text = homeValue,
+        fontSize = when (deviceType) {
+          "tv" -> 14.sp
+          "phone" -> 11.sp
+          else -> 13.sp
+        },
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFF4CAF50)
+      )
+      
+      Text(
+        text = "X",
+        fontSize = when (deviceType) {
+          "tv" -> 14.sp
+          "phone" -> 11.sp
+          else -> 13.sp
+        },
+        color = Color.Gray
+      )
+      
+      Text(
+        text = awayValue,
+        fontSize = when (deviceType) {
+          "tv" -> 14.sp
+          "phone" -> 11.sp
+          else -> 13.sp
+        },
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFFFF5252)
       )
     }
   }

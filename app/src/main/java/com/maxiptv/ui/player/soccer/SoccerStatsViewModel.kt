@@ -20,13 +20,14 @@ class SoccerStatsViewModel : ViewModel() {
     
     private val TAG = "SoccerStatsViewModel"
     
-    var currentMatchDetail: MatchDetail? = null
+    // ✅ ATUALIZADO: Usar tipos da Soccer Data API
+    var currentMatchDetail: MatchDetailFull? = null
         private set
     
-    var currentMatchPreview: MatchPreview? = null
+    var currentMatchPreview: MatchPreviewFull? = null
         private set
     
-    var otherMatches: List<MatchSummary> = emptyList()
+    var otherMatches: List<MatchSummaryFull> = emptyList()
         private set
     
     private var pollingJob: Job? = null
