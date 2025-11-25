@@ -1,4 +1,5 @@
 package com.maxiptv.ui.screens
+import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -40,6 +41,7 @@ import com.maxiptv.data.UpdateManager
 import com.maxiptv.data.UpdateInfo
 import com.maxiptv.data.ApkDownloader
 import com.maxiptv.data.DeviceLogger
+import com.maxiptv.ui.player.PlayerActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -1372,33 +1374,79 @@ fun EmbeddedPlayer(
     else -> 180.dp
   }
   
-  val exoPlayer = remember(channel.stream_id) {
-    // ⚡ DataSource otimizado para carrossel (timeouts mais curtos)
+  // ⚽ DETECTAR SE É CANAL DE FUTEBOL
+  val isFootballChannel = remember(channel.name) {
+    val channelNameLower = channel.name.lowercase().trim()
+    val isSpecificFootballChannel = com.maxiptv.data.soccer.MatchIdExtractor.isFootballChannel(channel.name)
+    val genericTerms = listOf("sport", "futebol", "futbol")
+    val hasGenericTerm = genericTerms.any { 
+      channelNameLower.contains(it.lowercase()) && 
+      !channelNameLower.contains("news") && 
+      !channelNameLower.contains("noticias")
+    }
+    val isFootball = isSpecificFootballChannel || hasGenericTerm
+    
+    if (isFootball) {
+      android.util.Log.i("EmbeddedPlayer", "⚽ CANAL DE FUTEBOL DETECTADO: ${channel.name}")
+    }
+    
+    isFootball
+  }
+  
+  // ⚽ EXTRAIR MATCH ID SE FOR FUTEBOL
+  val matchId = remember(channel.name) {
+    if (isFootballChannel) {
+      com.maxiptv.data.soccer.MatchIdExtractor.extractMatchId(channel.name)
+    } else {
+      null
+    }
+  }
+  
+  val exoPlayer = remember(channel.stream_id, isFootballChannel) {
+    // ⚽ FUTEBOL: Configurações otimizadas (timeouts maiores, buffer maior)
+    // ⚡ NORMAL: Configurações leves para carrossel
+    val connectTimeout = if (isFootballChannel) 15000 else 6000  // ⚽ FUTEBOL: 15s vs 6s
+    val readTimeout = if (isFootballChannel) 20000 else 6000       // ⚽ FUTEBOL: 20s vs 6s
+    
     val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
       .setAllowCrossProtocolRedirects(true)
       .setUserAgent("MaxiPTV/1.1.1 (Android)")
-      .setConnectTimeoutMs(6000)  // ⚡ 6 segundos (mais rápido que player principal)
-      .setReadTimeoutMs(6000)     // ⚡ 6 segundos
+      .setConnectTimeoutMs(connectTimeout)
+      .setReadTimeoutMs(readTimeout)
       .setKeepPostFor302Redirects(true)
     
     val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
       .setDataSourceFactory(dataSourceFactory)
     
-    // ⚡ LoadControl super leve para carrossel (menos buffer)
-    val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
-      .setBufferDurationsMs(
-        5000,   // minBufferMs: 5 segundos (bem leve)
-        15000,  // maxBufferMs: 15 segundos (limitado)
-        1000,   // bufferForPlaybackMs: 1 segundo (inicia rápido)
-        2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
-      )
-      .setPrioritizeTimeOverSizeThresholds(true)
-      .setBackBuffer(5000, true) // Back buffer curto e limpar sempre
-      .build()
+    // ⚽ FUTEBOL: Buffer otimizado para evitar travamento em transmissões esportivas
+    // ⚡ NORMAL: LoadControl super leve para carrossel
+    val loadControl = if (isFootballChannel) {
+      androidx.media3.exoplayer.DefaultLoadControl.Builder()
+        .setBufferDurationsMs(
+          8000,   // ⚽ FUTEBOL: 8 segundos (mais buffer)
+          25000,  // ⚽ FUTEBOL: 25 segundos (mais buffer)
+          2000,   // ⚽ FUTEBOL: 2 segundos (inicia rápido)
+          3000    // ⚽ FUTEBOL: 3 segundos (mais tolerante)
+        )
+        .setPrioritizeTimeOverSizeThresholds(true)
+        .setBackBuffer(8000, true) // ⚽ FUTEBOL: 8s de back buffer
+        .build()
+    } else {
+      androidx.media3.exoplayer.DefaultLoadControl.Builder()
+        .setBufferDurationsMs(
+          5000,   // minBufferMs: 5 segundos (bem leve)
+          15000,  // maxBufferMs: 15 segundos (limitado)
+          1000,   // bufferForPlaybackMs: 1 segundo (inicia rápido)
+          2000    // bufferForPlaybackAfterRebufferMs: 2 segundos
+        )
+        .setPrioritizeTimeOverSizeThresholds(true)
+        .setBackBuffer(5000, true) // Back buffer curto e limpar sempre
+        .build()
+    }
     
     androidx.media3.exoplayer.ExoPlayer.Builder(context)
       .setMediaSourceFactory(mediaSourceFactory)
-      .setLoadControl(loadControl) // ⚡ Aplicar cache leve
+      .setLoadControl(loadControl)
       .build().apply {
         val mediaItem = androidx.media3.common.MediaItem.fromUri(channel.toLiveUrl())
         setMediaItem(mediaItem)
@@ -1406,8 +1454,11 @@ fun EmbeddedPlayer(
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
         prepare()
         playWhenReady = true // INICIA TOCANDO AUTOMATICAMENTE
-        android.util.Log.i("EmbeddedPlayer", "▶️ Player criado (LEVE) para carrossel: ${channel.name}")
+        android.util.Log.i("EmbeddedPlayer", "▶️ Player criado${if (isFootballChannel) " (MODO FUTEBOL)" else " (LEVE)"} para carrossel: ${channel.name}")
         android.util.Log.i("EmbeddedPlayer", "   URL: ${channel.toLiveUrl()}")
+        if (isFootballChannel && matchId != null) {
+          android.util.Log.i("EmbeddedPlayer", "⚽ MatchId: $matchId")
+        }
       }
   }
   
@@ -1428,6 +1479,23 @@ fun EmbeddedPlayer(
     }
   }
   
+  // ⚽ Função para abrir em fullscreen
+  val openFullscreen: () -> Unit = {
+    android.util.Log.i("EmbeddedPlayer", "🖥️ Abrindo em fullscreen: ${channel.name}")
+    val playerIntent = Intent(context, PlayerActivity::class.java)
+      .putExtra("url", channel.toLiveUrl())
+      .putExtra("contentType", "live")
+      .putExtra("channelName", channel.name) // ⚽ Passar nome do canal para detecção de futebol
+    
+    // ⚽ Passar matchId se disponível
+    if (matchId != null) {
+      android.util.Log.i("EmbeddedPlayer", "⚽ Passando matchId para PlayerActivity: $matchId")
+      // O PlayerActivity vai extrair o matchId do channelName, mas podemos passar também
+    }
+    
+    context.startActivity(playerIntent)
+  }
+  
   Box(
     modifier = Modifier
       .fillMaxWidth()
@@ -1435,12 +1503,19 @@ fun EmbeddedPlayer(
       .padding(horizontal = if (deviceType == "tv") 48.dp else if (deviceType == "phone") 16.dp else 24.dp)
       .clip(RoundedCornerShape(16.dp))
       .background(Color.Black)
-      .border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(16.dp))
+      .border(3.dp, if (isFootballChannel) Color(0xFFFFD700) else Color(0xFF00D4FF), RoundedCornerShape(16.dp)) // ⚽ Dourado para futebol
       .shadow(
         elevation = 16.dp,
-        spotColor = Color(0xFF00D4FF).copy(alpha = 0.6f),
+        spotColor = if (isFootballChannel) Color(0xFFFFD700).copy(alpha = 0.6f) else Color(0xFF00D4FF).copy(alpha = 0.6f),
         shape = RoundedCornerShape(16.dp)
-      ),
+      )
+      .clickable { openFullscreen() } // ✅ Adicionar clique para abrir em fullscreen
+      .focusable() // ✅ Tornar focável para TV
+      .onFocusChanged { focusState ->
+        if (focusState.isFocused) {
+          android.util.Log.d("EmbeddedPlayer", "🎯 Miniplayer focado")
+        }
+      },
     contentAlignment = Alignment.Center
   ) {
     // Para TV Box, usar largura total para eliminar barras pretas laterais
@@ -1522,6 +1597,77 @@ fun EmbeddedPlayer(
         },
         fontWeight = FontWeight.Bold,
         color = Color.White
+      )
+    }
+    
+    // ⚽ Indicador de FUTEBOL (canto superior esquerdo, se for canal de futebol)
+    if (isFootballChannel) {
+      val footballGlow = rememberInfiniteTransition(label = "footballGlow")
+      val footballAlpha by footballGlow.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+          animation = tween(1000, easing = FastOutSlowInEasing),
+          repeatMode = RepeatMode.Reverse
+        ),
+        label = "footballAlpha"
+      )
+      
+      Box(
+        modifier = Modifier
+          .align(Alignment.TopStart)
+          .padding(16.dp)
+          .background(Color(0xFFFFD700).copy(alpha = footballAlpha), RoundedCornerShape(6.dp))
+          .padding(horizontal = 10.dp, vertical = 4.dp)
+      ) {
+        Text(
+          text = "⚽ FUTEBOL",
+          fontSize = when (deviceType) {
+            "tv" -> 14.sp
+            "phone" -> 10.sp
+            else -> 12.sp
+          },
+          fontWeight = FontWeight.Bold,
+          color = Color.Black
+        )
+      }
+    }
+    
+    // ✅ Botão de FULLSCREEN (canto inferior direito)
+    var isFullscreenButtonFocused by remember { mutableStateOf(false) }
+    
+    Box(
+      modifier = Modifier
+        .align(Alignment.BottomEnd)
+        .padding(16.dp)
+        .clickable { openFullscreen() }
+        .focusable()
+        .onFocusChanged { isFullscreenButtonFocused = it.isFocused }
+        .then(
+          if (isFullscreenButtonFocused) {
+            Modifier
+              .border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(8.dp))
+              .shadow(
+                elevation = 12.dp,
+                spotColor = Color(0xFF00D4FF).copy(alpha = 0.9f),
+                shape = RoundedCornerShape(8.dp)
+              )
+          } else {
+            Modifier
+          }
+        )
+        .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
+        .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+      Text(
+        text = "FULLSCREEN",
+        fontSize = when (deviceType) {
+          "tv" -> 14.sp
+          "phone" -> 10.sp
+          else -> 12.sp
+        },
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFF00D4FF)
       )
     }
   }
