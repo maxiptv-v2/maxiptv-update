@@ -145,7 +145,14 @@ try {
         git add app/src/
         git add app/build.gradle.kts
         git add build-release.ps1
-        git add update.json
+        
+        # ✅ GARANTIR que update.json seja sempre incluído
+        if (Test-Path "update.json") {
+            git add -f update.json
+            Write-Host "   [OK] update.json adicionado ao commit" -ForegroundColor Green
+        } else {
+            Write-Host "   [AVISO] update.json nao encontrado!" -ForegroundColor Yellow
+        }
         
         # Adicionar APK como binário (se existir)
         if (Test-Path "maxiptv-release.apk") {

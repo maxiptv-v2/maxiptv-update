@@ -1705,19 +1705,20 @@ class PlayerActivity : ComponentActivity() {
     if (currentMatchId != null && soccerStatsViewModel != null) {
       android.util.Log.i("PlayerActivity", "⚽ Abrindo overlay com dados reais da API (matchId: $currentMatchId)")
       soccerStatsViewModel?.openOverlay(currentMatchId!!)
-      // Por enquanto, usar overlay simples (overlay Compose será implementado depois)
-      createSimpleFootballOverlay(rootLayout, channelName)
+      // Usar overlay com dados reais do ViewModel
+      createSimpleFootballOverlay(rootLayout, channelName, soccerStatsViewModel)
     } else {
       // Fallback: criar overlay simples com dados simulados
       android.util.Log.i("PlayerActivity", "⚽ Abrindo overlay simples (sem matchId)")
-      createSimpleFootballOverlay(rootLayout, channelName)
+      createSimpleFootballOverlay(rootLayout, channelName, null)
     }
   }
   
   // ⚽ CRIAR OVERLAY SIMPLES DE ESTATÍSTICAS
   private fun createSimpleFootballOverlay(
     rootLayout: FrameLayout,
-    channelName: String
+    channelName: String,
+    viewModel: com.maxiptv.ui.player.soccer.SoccerStatsViewModel?
   ) {
     val density = resources.displayMetrics.density
     
@@ -1770,20 +1771,106 @@ class PlayerActivity : ComponentActivity() {
       }
       contentLayout.addView(titleView)
       
-      // Dados simulados simples
+      // TextView para estatísticas (será atualizado com dados reais se disponível)
       val statsView = android.widget.TextView(this@PlayerActivity).apply {
-        text = "📊 Estatísticas do Jogo\n\n" +
-               "🟢 AO VIVO\n" +
-               "⏱️ Tempo: 45'\n" +
-               "⚽ Placar: 2 - 1\n" +
-               "📈 Posse: 55% - 45%\n" +
-               "🎯 Chutes: 8 - 5"
+        text = if (viewModel != null) {
+          "⏳ Carregando estatísticas..."
+        } else {
+          "📊 Estatísticas do Jogo\n\n" +
+          "🟢 AO VIVO\n" +
+          "⏱️ Tempo: 45'\n" +
+          "⚽ Placar: 2 - 1\n" +
+          "📈 Posse: 55% - 45%\n" +
+          "🎯 Chutes: 8 - 5"
+        }
         textSize = if (MaxiApp.isTv) 16f else 14f
         setTextColor(android.graphics.Color.WHITE)
         gravity = android.view.Gravity.CENTER
         setPadding(0, (16f * density).toInt(), 0, 0)
       }
       contentLayout.addView(statsView)
+      
+      // ⚽ Se houver ViewModel, observar dados e atualizar o texto
+      if (viewModel != null) {
+        lifecycleScope.launch {
+          // Atualizar periodicamente enquanto o overlay estiver visível
+          while (isStatsOverlayVisible && footballStatsOverlay != null) {
+            val matchDetail = viewModel.currentMatchDetail
+            val matchPreview = viewModel.currentMatchPreview
+            
+            if (matchDetail != null) {
+              // Usar dados reais da API
+              val statsText = buildString {
+                append("📊 Estatísticas do Jogo\n\n")
+                
+                // Nomes dos times
+                val homeName = matchDetail.homeTeamName.ifEmpty { "Time Casa" }
+                val awayName = matchDetail.awayTeamName.ifEmpty { "Time Visitante" }
+                append("$homeName X $awayName\n\n")
+                
+                // Status e tempo
+                val statusText = matchDetail.status?.long ?: matchDetail.status?.short ?: "Não iniciado"
+                val isLive = statusText.contains("Half", ignoreCase = true) || statusText.contains("LIVE", ignoreCase = true)
+                
+                if (isLive) {
+                  append("🟢 AO VIVO\n")
+                } else {
+                  append("⚪ $statusText\n")
+                }
+                
+                val minute = matchDetail.status?.elapsed
+                if (minute != null && minute > 0) {
+                  append("⏱️ Tempo: ${minute}'\n")
+                }
+                
+                // Placar
+                val scoreHome = matchDetail.score?.home ?: matchDetail.score?.current?.home ?: 0
+                val scoreAway = matchDetail.score?.away ?: matchDetail.score?.current?.away ?: 0
+                append("⚽ Placar: $scoreHome - $scoreAway\n\n")
+                
+                // Estatísticas
+                val possHome = matchDetail.possessionHome
+                val possAway = matchDetail.possessionAway
+                if (possHome > 0 || possAway > 0) {
+                  append("📈 Posse: ${possHome}% - ${possAway}%\n")
+                }
+                
+                val shotsHome = matchDetail.shotsHome
+                val shotsAway = matchDetail.shotsAway
+                if (shotsHome > 0 || shotsAway > 0) {
+                  append("🎯 Chutes: $shotsHome - $shotsAway\n")
+                }
+                
+                val cornersHome = matchDetail.cornersHome
+                val cornersAway = matchDetail.cornersAway
+                if (cornersHome > 0 || cornersAway > 0) {
+                  append("📐 Escanteios: $cornersHome - $cornersAway\n")
+                }
+                
+                val foulsHome = matchDetail.foulsHome
+                val foulsAway = matchDetail.foulsAway
+                if (foulsHome > 0 || foulsAway > 0) {
+                  append("⚠️ Faltas: $foulsHome - $foulsAway\n")
+                }
+                
+                // Se não houver estatísticas, mostrar mensagem
+                if (possHome == 0 && possAway == 0 && shotsHome == 0 && shotsAway == 0) {
+                  append("\n📊 Estatísticas serão atualizadas em breve...")
+                }
+              }
+              
+              statsView.text = statsText
+              android.util.Log.i("PlayerActivity", "⚽ Estatísticas atualizadas no overlay")
+            } else {
+              // Ainda carregando
+              statsView.text = "⏳ Carregando estatísticas..."
+            }
+            
+            // Aguardar 2 segundos antes de atualizar novamente
+            kotlinx.coroutines.delay(2000)
+          }
+        }
+      }
       
       // Botão fechar
       val closeButton = android.widget.Button(this@PlayerActivity).apply {
