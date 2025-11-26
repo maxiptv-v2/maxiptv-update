@@ -315,6 +315,17 @@ fun LiveScreen(nav: NavHostController) {
     }
   }
   
+  // ✅ Recarregar EPG se estiver vazio após alguns segundos (pode ter falhado no primeiro carregamento)
+  LaunchedEffect(epgData.size) {
+    if (epgData.isEmpty()) {
+      android.util.Log.w("LiveScreen", "⚠️ EPG vazio, tentando recarregar...")
+      kotlinx.coroutines.delay(3000) // Aguardar 3 segundos antes de tentar novamente
+      scope.launch {
+        XRepo.loadEpg()
+      }
+    }
+  }
+  
   // Cleanup do player compartilhado quando sair da tela
   DisposableEffect(Unit) {
     onDispose {
@@ -890,6 +901,17 @@ fun MiniPlayer(
         )
         .padding(16.dp, 8.dp, 16.dp, 16.dp) // Padding reduzido no topo
     ) {
+      // ✅ Recarregar EPG se estiver vazio quando um canal é selecionado
+      val scope = rememberCoroutineScope()
+      LaunchedEffect(channel.stream_id) {
+        if (epgData.isEmpty()) {
+          android.util.Log.w("MiniPlayer", "⚠️ EPG vazio ao selecionar canal, recarregando...")
+          scope.launch {
+            XRepo.loadEpg()
+          }
+        }
+      }
+      
       // Buscar programa atual e próximo do EPG
       val currentProgramme = EpgParser.getCurrentProgramme(channel.name, epgData)
       val nextProgramme = EpgParser.getNextProgramme(channel.name, epgData)
@@ -897,6 +919,9 @@ fun MiniPlayer(
       // Log para debug do EPG
       android.util.Log.i("MiniPlayer", "📺 Canal: ${channel.name}")
       android.util.Log.i("MiniPlayer", "📡 EPG carregado: ${epgData.size} canais")
+      if (epgData.isNotEmpty()) {
+        android.util.Log.i("MiniPlayer", "📋 Primeiros canais EPG: ${epgData.keys.take(10).joinToString(", ")}")
+      }
       android.util.Log.i("MiniPlayer", "🎬 Programa atual: ${currentProgramme?.title ?: "NÃO ENCONTRADO"}")
       android.util.Log.i("MiniPlayer", "🎬 Próximo programa: ${nextProgramme?.title ?: "NÃO ENCONTRADO"}")
       

@@ -153,6 +153,30 @@ object EpgParser {
     }
     
     /**
+     * Normaliza o nome do canal para melhor matching
+     */
+    private fun normalizeChannelName(name: String): String {
+        return name.lowercase()
+            .replace(" ", "")
+            .replace("-", "")
+            .replace("_", "")
+            .replace("hd", "")
+            .replace("fhd", "")
+            .replace("4k", "")
+            .replace("uhd", "")
+            .replace("tv", "")
+            .replace("canal", "")
+            .replace("são", "sao")
+            .replace("paulo", "sp")
+            .replace("rio", "rj")
+            .replace("janeiro", "rj")
+            .replace("belo", "bh")
+            .replace("horizonte", "bh")
+            .replace("minas", "mg")
+            .replace("gerais", "mg")
+    }
+    
+    /**
      * Busca o programa atual para um canal
      */
     fun getCurrentProgramme(channelId: String, epgData: Map<String, List<EpgProgramme>>): EpgProgramme? {
@@ -166,29 +190,28 @@ object EpgParser {
         }
         
         // Se não encontrar, tentar busca flexível
-        val normalizedChannelId = channelId.lowercase()
-            .replace(" ", "")
-            .replace("-", "")
-            .replace("_", "")
-            .replace("hd", "")
-            .replace("fhd", "")
-            .replace("4k", "")
-            .replace("uhd", "")
-            .replace("tv", "")
-            .replace("canal", "")
+        val normalizedChannelId = normalizeChannelName(channelId)
         
         Log.i("EpgParser", "🔍 Tentando busca flexível com: '$normalizedChannelId'")
         
         // Tentar mapeamentos específicos para canais conhecidos
         // IMPORTANTE: EPG tem "GLOBO SAO PAULO" e "RECORD Sao Paulo" - vamos mapear TODOS os canais regionais para esses
         val channelMappings = mapOf(
-            "globo" to listOf("globosaopaulo", "globo", "redeglobo", "tvglobo"),
-            "record" to listOf("recordsaopaulo", "record", "recordtv", "tvrecord"),
-            "sbt" to listOf("sbt", "tvsbt"),
-            "band" to listOf("bandhd", "band", "bandeirantes", "tvband"),
-            "rede" to listOf("rede", "redetv"),
-            "cultura" to listOf("cultura", "tvcultura"),
-            "futura" to listOf("futura", "tvfutura")
+            "globo" to listOf("globosaopaulo", "globo", "redeglobo", "tvglobo", "globosp", "globorj", "globobh", "globors"),
+            "record" to listOf("recordsaopaulo", "record", "recordtv", "tvrecord", "recordsp", "recordrj", "recordbh"),
+            "sbt" to listOf("sbt", "tvsbt", "sbthd", "sbtsp", "sbtrj"),
+            "band" to listOf("bandhd", "band", "bandeirantes", "tvband", "bandsp", "bandrj"),
+            "rede" to listOf("rede", "redetv", "redetvhd", "redesp", "rederj"),
+            "cultura" to listOf("cultura", "tvcultura", "culturapaulista", "culturap"),
+            "futura" to listOf("futura", "tvfutura", "futurahd"),
+            "gazeta" to listOf("gazeta", "tvgazeta", "gazetahd", "gazetasp"),
+            "cnn" to listOf("cnn", "cnnbrasil", "cnnbr"),
+            "globo news" to listOf("globonews", "globonews", "gnews"),
+            "sportv" to listOf("sportv", "sportvhd", "sportv1", "sportv2"),
+            "multishow" to listOf("multishow", "multishowhd"),
+            "gnt" to listOf("gnt", "gnthd"),
+            "viva" to listOf("viva", "vivahd"),
+            "canal brasil" to listOf("canalbrasil", "canalbrasilhd")
         )
         
         // Verificar mapeamentos específicos
@@ -207,6 +230,14 @@ object EpgParser {
                             .replace("uhd", "")
                             .replace("tv", "")
                             .replace("canal", "")
+                            .replace("são", "sao")
+                            .replace("paulo", "sp")
+                            .replace("rio", "rj")
+                            .replace("janeiro", "rj")
+                            .replace("belo", "bh")
+                            .replace("horizonte", "bh")
+                            .replace("minas", "mg")
+                            .replace("gerais", "mg")
                         
                         if (normalizedEpgId.contains(variation) || variation.contains(normalizedEpgId)) {
                             Log.i("EpgParser", "🎯 Match específico encontrado: '$epgChannelId' -> '$variation'")
@@ -232,6 +263,14 @@ object EpgParser {
                 .replace("uhd", "")
                 .replace("tv", "")
                 .replace("canal", "")
+                .replace("são", "sao")
+                .replace("paulo", "sp")
+                .replace("rio", "rj")
+                .replace("janeiro", "rj")
+                .replace("belo", "bh")
+                .replace("horizonte", "bh")
+                .replace("minas", "mg")
+                .replace("gerais", "mg")
             
             if (normalizedEpgId.contains(normalizedChannelId) || normalizedChannelId.contains(normalizedEpgId)) {
                 Log.i("EpgParser", "🎯 Match flexível encontrado: '$epgChannelId' -> '$normalizedEpgId'")
@@ -272,17 +311,33 @@ object EpgParser {
             .replace("uhd", "")
             .replace("tv", "")
             .replace("canal", "")
+            .replace("são", "sao")
+            .replace("paulo", "sp")
+            .replace("rio", "rj")
+            .replace("janeiro", "rj")
+            .replace("belo", "bh")
+            .replace("horizonte", "bh")
+            .replace("minas", "mg")
+            .replace("gerais", "mg")
         
         // Tentar mapeamentos específicos para canais conhecidos
         // IMPORTANTE: EPG tem "GLOBO SAO PAULO" e "RECORD Sao Paulo" - vamos mapear TODOS os canais regionais para esses
         val channelMappings = mapOf(
-            "globo" to listOf("globosaopaulo", "globo", "redeglobo", "tvglobo"),
-            "record" to listOf("recordsaopaulo", "record", "recordtv", "tvrecord"),
-            "sbt" to listOf("sbt", "tvsbt"),
-            "band" to listOf("bandhd", "band", "bandeirantes", "tvband"),
-            "rede" to listOf("rede", "redetv"),
-            "cultura" to listOf("cultura", "tvcultura"),
-            "futura" to listOf("futura", "tvfutura")
+            "globo" to listOf("globosaopaulo", "globo", "redeglobo", "tvglobo", "globosp", "globorj", "globobh", "globors"),
+            "record" to listOf("recordsaopaulo", "record", "recordtv", "tvrecord", "recordsp", "recordrj", "recordbh"),
+            "sbt" to listOf("sbt", "tvsbt", "sbthd", "sbtsp", "sbtrj"),
+            "band" to listOf("bandhd", "band", "bandeirantes", "tvband", "bandsp", "bandrj"),
+            "rede" to listOf("rede", "redetv", "redetvhd", "redesp", "rederj"),
+            "cultura" to listOf("cultura", "tvcultura", "culturapaulista", "culturap"),
+            "futura" to listOf("futura", "tvfutura", "futurahd"),
+            "gazeta" to listOf("gazeta", "tvgazeta", "gazetahd", "gazetasp"),
+            "cnn" to listOf("cnn", "cnnbrasil", "cnnbr"),
+            "globo news" to listOf("globonews", "globonews", "gnews"),
+            "sportv" to listOf("sportv", "sportvhd", "sportv1", "sportv2"),
+            "multishow" to listOf("multishow", "multishowhd"),
+            "gnt" to listOf("gnt", "gnthd"),
+            "viva" to listOf("viva", "vivahd"),
+            "canal brasil" to listOf("canalbrasil", "canalbrasilhd")
         )
         
         // Verificar mapeamentos específicos
@@ -301,6 +356,14 @@ object EpgParser {
                             .replace("uhd", "")
                             .replace("tv", "")
                             .replace("canal", "")
+                            .replace("são", "sao")
+                            .replace("paulo", "sp")
+                            .replace("rio", "rj")
+                            .replace("janeiro", "rj")
+                            .replace("belo", "bh")
+                            .replace("horizonte", "bh")
+                            .replace("minas", "mg")
+                            .replace("gerais", "mg")
                         
                         if (normalizedEpgId.contains(variation) || variation.contains(normalizedEpgId)) {
                             Log.i("EpgParser", "🎯 Match específico encontrado: '$epgChannelId' -> '$variation'")
@@ -326,6 +389,14 @@ object EpgParser {
                 .replace("uhd", "")
                 .replace("tv", "")
                 .replace("canal", "")
+                .replace("são", "sao")
+                .replace("paulo", "sp")
+                .replace("rio", "rj")
+                .replace("janeiro", "rj")
+                .replace("belo", "bh")
+                .replace("horizonte", "bh")
+                .replace("minas", "mg")
+                .replace("gerais", "mg")
             
             if (normalizedEpgId.contains(normalizedChannelId) || normalizedChannelId.contains(normalizedEpgId)) {
                 Log.i("EpgParser", "🎯 Match flexível encontrado: '$epgChannelId' -> '$normalizedEpgId'")

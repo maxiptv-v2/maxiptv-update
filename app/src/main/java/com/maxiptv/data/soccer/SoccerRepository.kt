@@ -74,15 +74,51 @@ object SoccerRepository {
     
     /**
      * Busca placares ao vivo
-     * Retorna lista de partidas em andamento
+     * Retorna lista de partidas (ao vivo, pre-match, ou recentes)
+     * Transforma a estrutura aninhada da API em lista plana
      */
     suspend fun getOtherMatches(): List<MatchSummaryFull> {
         return try {
             Log.d(TAG, "🔍 Buscando partidas ao vivo...")
             val response = api.getLiveScores(API_AUTH_TOKEN)
-            val matches = response.results ?: emptyList()
-            Log.d(TAG, "✅ ${matches.size} partidas ao vivo encontradas")
-            matches
+            val allMatches = mutableListOf<MatchSummaryFull>()
+            
+            // Processar estrutura aninhada: leagues -> stages -> matches
+            response.results?.forEach { league ->
+                league.stage?.forEach { stage ->
+                    stage.matches?.forEach { match ->
+                        // Transformar MatchInLiveScores em MatchSummaryFull
+                        val matchSummary = MatchSummaryFull(
+                            id = match.id,
+                            name = "${match.teams?.home?.name ?: ""} x ${match.teams?.away?.name ?: ""}",
+                            league = LeagueInfo(
+                                id = league.league_id,
+                                name = league.league_name
+                            ),
+                            home = match.teams?.home,
+                            away = match.teams?.away,
+                            starting_at = if (match.date != null && match.time != null) {
+                                "${match.date} ${match.time}"
+                            } else null,
+                            score = if (match.goals != null) {
+                                MatchScore(
+                                    home = match.goals.home,
+                                    away = match.goals.away
+                                )
+                            } else null,
+                            status = MatchStatus(
+                                long = match.status,
+                                short = match.status,
+                                elapsed = match.minute
+                            )
+                        )
+                        allMatches.add(matchSummary)
+                    }
+                }
+            }
+            
+            Log.d(TAG, "✅ ${allMatches.size} partidas encontradas (estrutura processada)")
+            allMatches
         } catch (e: Exception) {
             Log.e(TAG, "❌ Erro ao buscar placares ao vivo", e)
             e.printStackTrace()

@@ -50,6 +50,7 @@ import com.maxiptv.ui.player.createAdaptiveLoadControl
 import com.maxiptv.ui.player.detectQualityDegradation
 import com.maxiptv.ui.player.estimateConnectionQuality
 import com.maxiptv.data.PlaybackPositionManager
+import com.maxiptv.data.soccer.SoccerRepository
 
 class PlayerActivity : ComponentActivity() {
   private var player: ExoPlayer? = null
@@ -94,6 +95,9 @@ class PlayerActivity : ComponentActivity() {
   private var liveChannelInfoHandler: android.os.Handler? = null // Handler para atualizar informações do canal
   private var currentChannelName: String? = null // Nome do canal atual (Live)
   private var currentChannelLogo: String? = null // Logo do canal atual (Live)
+  // ✅ AVISO PRÓXIMO EPISÓDIO: Overlay para mostrar próximo capítulo/episódio
+  private var nextEpisodeOverlay: android.view.ViewGroup? = null // Overlay de próximo episódio
+  private var nextEpisodeHandler: android.os.Handler? = null // Handler para verificar quando mostrar aviso
   private var lastBufferTime = 0L // Último tempo de buffer
   private var contentId: Int? = null // ID do conteúdo (vodId ou seriesId) para salvar posição
   private var positionSaveHandler: android.os.Handler? = null // Handler para salvar posição periodicamente
@@ -563,7 +567,22 @@ class PlayerActivity : ComponentActivity() {
       if (currentMatchId != null) {
         android.util.Log.i("PlayerActivity", "⚽ MatchId extraído: $currentMatchId")
       } else {
-        android.util.Log.i("PlayerActivity", "⚽ MatchId não encontrado no nome do canal")
+        android.util.Log.i("PlayerActivity", "⚽ MatchId não encontrado no nome do canal - buscando partidas ao vivo...")
+        // ⚽ NOVO: Se não encontrou matchId, buscar partidas ao vivo e usar a primeira
+        lifecycleScope.launch {
+          try {
+            val liveMatches = com.maxiptv.data.soccer.SoccerRepository.getOtherMatches()
+            if (liveMatches.isNotEmpty()) {
+              val firstMatch = liveMatches.first()
+              currentMatchId = firstMatch.id
+              android.util.Log.i("PlayerActivity", "⚽ Usando primeira partida ao vivo: ${firstMatch.homeTeamName} x ${firstMatch.awayTeamName} (ID: $currentMatchId)")
+            } else {
+              android.util.Log.w("PlayerActivity", "⚠️ Nenhuma partida ao vivo encontrada")
+            }
+          } catch (e: Exception) {
+            android.util.Log.e("PlayerActivity", "❌ Erro ao buscar partidas ao vivo", e)
+          }
+        }
       }
     }
     
@@ -571,7 +590,7 @@ class PlayerActivity : ComponentActivity() {
       android.util.Log.i("PlayerActivity", "⚽ MODO FUTEBOL ATIVADO para: '$channelName'")
       android.util.Log.i("PlayerActivity", "   - Canal específico: $isSpecificFootballChannel")
       android.util.Log.i("PlayerActivity", "   - Termo genérico: $hasGenericTerm")
-      android.util.Log.i("PlayerActivity", "   - MatchId: ${currentMatchId ?: "não disponível"}")
+      android.util.Log.i("PlayerActivity", "   - MatchId: ${currentMatchId ?: "não disponível (buscando...)"}")
     } else {
       android.util.Log.d("PlayerActivity", "📺 Modo normal (não é futebol): '$channelName'")
     }
@@ -612,6 +631,29 @@ class PlayerActivity : ComponentActivity() {
       if (currentMatchId != null) {
         soccerStatsViewModel = com.maxiptv.ui.player.soccer.SoccerStatsViewModel()
         android.util.Log.i("PlayerActivity", "⚽ ViewModel de estatísticas inicializado para matchId: $currentMatchId")
+      } else {
+        // ⚽ NOVO: Se matchId ainda não está disponível (buscando partidas ao vivo), inicializar ViewModel depois
+        lifecycleScope.launch {
+          // Aguardar um pouco para a busca de partidas ao vivo completar
+          kotlinx.coroutines.delay(2000)
+          if (currentMatchId != null && soccerStatsViewModel == null) {
+            soccerStatsViewModel = com.maxiptv.ui.player.soccer.SoccerStatsViewModel()
+            android.util.Log.i("PlayerActivity", "⚽ ViewModel de estatísticas inicializado após buscar matchId: $currentMatchId")
+          }
+        }
+      }
+    }
+    
+    // ✅ Carregar EPG se for canal live (para mostrar próximo programa)
+    if (contentType == "live") {
+      currentChannelName = channelName
+      lifecycleScope.launch {
+        try {
+          com.maxiptv.data.XRepo.loadEpg()
+          android.util.Log.i("PlayerActivity", "✅ EPG carregado para canal live: $channelName")
+        } catch (e: Exception) {
+          android.util.Log.e("PlayerActivity", "❌ Erro ao carregar EPG: ${e.message}")
+        }
       }
     }
     
@@ -1077,10 +1119,17 @@ class PlayerActivity : ComponentActivity() {
                   startLatencyUpdates()
                   startStatsUpdates()
                   startLiveChannelInfoUpdates() // ✅ LIVE PROFESSIONAL: Iniciar atualização de informações do canal
+                  // ✅ AVISO PRÓXIMO EPISÓDIO: Iniciar verificação para canais live também
+                  startNextEpisodeCheck()
+                } else if (contentType == "series") {
+                  // ✅ AVISO PRÓXIMO EPISÓDIO: Iniciar verificação para séries
+                  startNextEpisodeCheck()
                 }
               }
               Player.STATE_ENDED -> {
                 android.util.Log.i("PlayerActivity", "🏁 Reprodução finalizada")
+                // ✅ Parar verificação de próximo episódio quando terminar
+                stopNextEpisodeCheck()
               }
             }
           }
@@ -1385,6 +1434,9 @@ class PlayerActivity : ComponentActivity() {
       (it.parent as? android.view.ViewGroup)?.removeView(it)
       footballStatsOverlay = null
     }
+    
+    // ✅ Parar verificação de próximo episódio
+    stopNextEpisodeCheck()
     
     // ⚽ NOVO: Limpar ViewModel de estatísticas
     soccerStatsViewModel?.clearData()
@@ -2449,6 +2501,231 @@ class PlayerActivity : ComponentActivity() {
   private fun stopLiveChannelInfoUpdates() {
     liveChannelInfoHandler?.removeCallbacksAndMessages(null)
     liveChannelInfoHandler = null
+  }
+  
+  // ✅ AVISO PRÓXIMO EPISÓDIO: Iniciar verificação de próximo episódio
+  private fun startNextEpisodeCheck() {
+    stopNextEpisodeCheck() // Parar qualquer verificação anterior
+    
+    nextEpisodeHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    val checkRunnable = object : Runnable {
+      override fun run() {
+        checkAndShowNextEpisode()
+        nextEpisodeHandler?.postDelayed(this, 1000) // Verificar a cada 1 segundo
+      }
+    }
+    nextEpisodeHandler?.post(checkRunnable)
+    android.util.Log.d("PlayerActivity", "📺 Iniciando verificação de próximo episódio")
+  }
+  
+  // ✅ AVISO PRÓXIMO EPISÓDIO: Parar verificação
+  private fun stopNextEpisodeCheck() {
+    nextEpisodeHandler?.removeCallbacksAndMessages(null)
+    nextEpisodeHandler = null
+    // Ocultar overlay se estiver visível
+    nextEpisodeOverlay?.visibility = android.view.View.GONE
+  }
+  
+  // ✅ AVISO PRÓXIMO EPISÓDIO: Verificar se deve mostrar aviso de próximo episódio
+  private fun checkAndShowNextEpisode() {
+    val exo = player ?: return
+    
+    if (contentType == "series") {
+      // Para séries: mostrar nos últimos 30 segundos do episódio
+      val currentPosition = exo.currentPosition
+      val duration = exo.duration
+      
+      if (duration == androidx.media3.common.C.TIME_UNSET || duration <= 0) return
+      
+      val remaining = duration - currentPosition
+      val remainingSeconds = remaining / 1000
+      
+      // Mostrar aviso nos últimos 30 segundos
+      if (remainingSeconds <= 30 && remainingSeconds > 0) {
+        if (nextEpisodeOverlay == null) {
+          createNextEpisodeOverlay()
+        }
+        nextEpisodeOverlay?.visibility = android.view.View.VISIBLE
+        
+        // Atualizar texto com tempo restante
+        val minutes = (remainingSeconds / 60).toInt()
+        val seconds = (remainingSeconds % 60).toInt()
+        val timeText = if (minutes > 0) {
+          "${minutes}m ${seconds}s"
+        } else {
+          "${seconds}s"
+        }
+        
+        // Buscar informações do próximo episódio (se disponível)
+        val nextEpisodeText = getNextEpisodeInfo()
+        
+        updateNextEpisodeOverlay(timeText, nextEpisodeText)
+      } else if (remainingSeconds <= 0) {
+        // Ocultar quando terminar
+        nextEpisodeOverlay?.visibility = android.view.View.GONE
+      }
+    } else if (contentType == "live") {
+      // Para canais live: mostrar próximo programa do EPG
+      val nextProgramme = getNextProgrammeFromEpg()
+      
+      if (nextProgramme != null) {
+        if (nextEpisodeOverlay == null) {
+          createNextEpisodeOverlay()
+        }
+        nextEpisodeOverlay?.visibility = android.view.View.VISIBLE
+        
+        // Calcular tempo até o próximo programa
+        val now = System.currentTimeMillis()
+        val timeUntilNext = nextProgramme.start - now
+        val minutesUntil = (timeUntilNext / 60000).toInt()
+        val secondsUntil = ((timeUntilNext % 60000) / 1000).toInt()
+        
+        val timeText = if (minutesUntil > 0) {
+          "Em ${minutesUntil}m ${secondsUntil}s"
+        } else if (secondsUntil > 0) {
+          "Em ${secondsUntil}s"
+        } else {
+          "Em breve"
+        }
+        
+        val nextProgrammeText = "${nextProgramme.title} - ${nextProgramme.startTime()}"
+        
+        updateNextEpisodeOverlay(timeText, nextProgrammeText)
+      } else {
+        // Ocultar se não houver próximo programa
+        nextEpisodeOverlay?.visibility = android.view.View.GONE
+      }
+    }
+  }
+  
+  // ✅ AVISO PRÓXIMO EPISÓDIO: Obter próximo programa do EPG (para canais live)
+  private fun getNextProgrammeFromEpg(): com.maxiptv.data.EpgProgramme? {
+    val channelName = currentChannelName ?: return null
+    
+    return try {
+      val epgData = com.maxiptv.data.XRepo.epgData.value
+      com.maxiptv.data.EpgParser.getNextProgramme(channelName, epgData)
+    } catch (e: Exception) {
+      android.util.Log.e("PlayerActivity", "❌ Erro ao buscar próximo programa do EPG: ${e.message}")
+      null
+    }
+  }
+  
+  // ✅ AVISO PRÓXIMO EPISÓDIO: Obter informações do próximo episódio
+  private fun getNextEpisodeInfo(): String? {
+    // TODO: Buscar informações do próximo episódio da API
+    // Por enquanto, retornar null (pode ser implementado depois)
+    return null
+  }
+  
+  // ✅ AVISO PRÓXIMO EPISÓDIO: Criar overlay de próximo episódio
+  private fun createNextEpisodeOverlay() {
+    val rootLayout = pv.parent as? FrameLayout ?: return
+    
+    nextEpisodeOverlay = FrameLayout(this).apply {
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.WRAP_CONTENT,
+        android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL
+      ).apply {
+        setMargins(40, 0, 40, if (MaxiApp.isTv) 120 else 80)
+      }
+      visibility = android.view.View.GONE
+      background = GradientDrawable().apply {
+        setColor(android.graphics.Color.argb(220, 0, 0, 0)) // Fundo preto semi-transparente
+        cornerRadius = 16f
+        setStroke(3, android.graphics.Color.argb(255, 0, 212, 255)) // Borda azul ciano
+      }
+      setPadding(24, 20, 24, 20)
+      
+      // Layout vertical para o conteúdo
+      val contentLayout = android.widget.LinearLayout(this@PlayerActivity).apply {
+        orientation = android.widget.LinearLayout.VERTICAL
+        layoutParams = android.widget.LinearLayout.LayoutParams(
+          android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+          android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+      }
+      
+      // Título dinâmico baseado no tipo de conteúdo
+      val titleText = android.widget.TextView(this@PlayerActivity).apply {
+        text = if (contentType == "live") "⏭️ PRÓXIMO PROGRAMA" else "⏭️ PRÓXIMO EPISÓDIO"
+        textSize = if (MaxiApp.isTv) 18f else 16f
+        setTextColor(android.graphics.Color.argb(255, 0, 212, 255)) // Azul ciano
+        setTypeface(null, android.graphics.Typeface.BOLD)
+        layoutParams = android.widget.LinearLayout.LayoutParams(
+          android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+          android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+          bottomMargin = 8
+        }
+        tag = "titleText"
+      }
+      
+      // Texto do tempo restante
+      val timeText = android.widget.TextView(this@PlayerActivity).apply {
+        text = ""
+        textSize = if (MaxiApp.isTv) 16f else 14f
+        setTextColor(android.graphics.Color.WHITE)
+        setTypeface(null, android.graphics.Typeface.NORMAL)
+        layoutParams = android.widget.LinearLayout.LayoutParams(
+          android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+          android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        tag = "timeText"
+      }
+      
+      // Texto do próximo episódio (se disponível)
+      val episodeText = android.widget.TextView(this@PlayerActivity).apply {
+        text = ""
+        textSize = if (MaxiApp.isTv) 14f else 12f
+        setTextColor(android.graphics.Color.argb(255, 200, 200, 200)) // Cinza claro
+        setTypeface(null, android.graphics.Typeface.NORMAL)
+        layoutParams = android.widget.LinearLayout.LayoutParams(
+          android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+          android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+          topMargin = 4
+        }
+        tag = "episodeText"
+        visibility = android.view.View.GONE
+      }
+      
+      contentLayout.addView(titleText)
+      contentLayout.addView(timeText)
+      contentLayout.addView(episodeText)
+      addView(contentLayout)
+    }
+    
+    rootLayout.addView(nextEpisodeOverlay)
+    android.util.Log.d("PlayerActivity", "✅ Overlay de próximo episódio criado")
+  }
+  
+  // ✅ AVISO PRÓXIMO EPISÓDIO: Atualizar conteúdo do overlay
+  private fun updateNextEpisodeOverlay(timeText: String, nextEpisodeInfo: String?) {
+    nextEpisodeOverlay?.let { overlay ->
+      val titleTextView = overlay.findViewWithTag<android.widget.TextView>("titleText")
+      val timeTextView = overlay.findViewWithTag<android.widget.TextView>("timeText")
+      val episodeTextView = overlay.findViewWithTag<android.widget.TextView>("episodeText")
+      
+      // Atualizar título baseado no tipo de conteúdo
+      titleTextView?.text = if (contentType == "live") "⏭️ PRÓXIMO PROGRAMA" else "⏭️ PRÓXIMO EPISÓDIO"
+      
+      if (contentType == "live") {
+        // Para live: mostrar "Em X minutos" ou "Em breve"
+        timeTextView?.text = timeText
+      } else {
+        // Para séries: mostrar "Tempo restante: X"
+        timeTextView?.text = "Tempo restante: $timeText"
+      }
+      
+      if (nextEpisodeInfo != null) {
+        episodeTextView?.text = nextEpisodeInfo
+        episodeTextView?.visibility = android.view.View.VISIBLE
+      } else {
+        episodeTextView?.visibility = android.view.View.GONE
+      }
+    }
   }
   
   // ✅ FASE 1: Criar LoadControl adaptativo baseado em qualidade de conexão

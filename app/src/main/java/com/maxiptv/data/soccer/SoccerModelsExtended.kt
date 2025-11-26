@@ -223,7 +223,7 @@ data class PreviewContent(
 )
 
 // ============================================================================
-// RESPONSE DE LIVESCORES
+// RESPONSE DE LIVESCORES (ESTRUTURA REAL DA API)
 // ============================================================================
 
 @Serializable
@@ -231,7 +231,56 @@ data class LiveScoresResponseFull(
     val count: Int? = null,
     val next: String? = null,
     val previous: String? = null,
-    val results: List<MatchSummaryFull>? = null
+    val results: List<LeagueWithMatches>? = null
+)
+
+@Serializable
+data class LeagueWithMatches(
+    val league_id: Long? = null,
+    val league_name: String? = null,
+    val country: CountryInfo? = null,
+    val is_cup: Boolean? = null,
+    val stage: List<StageWithMatches>? = null
+)
+
+@Serializable
+data class CountryInfo(
+    val id: Long? = null,
+    val name: String? = null
+)
+
+@Serializable
+data class StageWithMatches(
+    val stage_id: Long? = null,
+    val stage_name: String? = null,
+    val matches: List<MatchInLiveScores>? = null
+)
+
+@Serializable
+data class MatchInLiveScores(
+    val id: Long,
+    val date: String? = null,
+    val time: String? = null,
+    val teams: MatchTeams? = null,
+    val stadium: String? = null,
+    val status: String? = null,  // "pre-match", "live", "1H", "2H", "HT", "finished"
+    val minute: Int? = null,
+    val winner: String? = null,
+    val has_extra_time: Boolean? = null,
+    val has_penalties: Boolean? = null,
+    val goals: MatchGoals? = null
+)
+
+@Serializable
+data class MatchTeams(
+    val home: TeamInfo? = null,
+    val away: TeamInfo? = null
+)
+
+@Serializable
+data class MatchGoals(
+    val home: Int? = null,
+    val away: Int? = null
 )
 
 @Serializable
