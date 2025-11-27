@@ -247,25 +247,26 @@ fun LiveScreen(nav: NavHostController) {
   
   // 🔥 PLAYER COMPARTILHADO - UM ÚNICO ExoPlayer com MELHORIAS PROFISSIONAIS (Fase 1 e 2)
   val sharedPlayer = remember {
-    val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
-      .setAllowCrossProtocolRedirects(true)
-      .setUserAgent("MaxiPTV/1.1.1 (Android)")
-      .setConnectTimeoutMs(8000) // Aumentado para melhor estabilidade (8s)
-      .setReadTimeoutMs(10000)    // Aumentado para melhor estabilidade (10s)
-      .setKeepPostFor302Redirects(true)
-    
-    val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
-      .setDataSourceFactory(dataSourceFactory)
-    
-    // ✅ FASE 1: Buffer adaptativo inicial (será atualizado dinamicamente)
-    val initialLoadControl = createAdaptiveLoadControl(ConnectionQuality.GOOD)
-    
-    androidx.media3.exoplayer.ExoPlayer.Builder(context)
-      .setMediaSourceFactory(mediaSourceFactory)
-      .setLoadControl(initialLoadControl)
-      // ✅ MATCH-FRAME VIDEO: Frame pacing e FPS matching para evitar stutter em TVs 120Hz
-      .setVideoChangeFrameRateStrategy(androidx.media3.common.C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_ONLY_IF_SEAMLESS)
-      .build().apply {
+    try {
+      val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
+        .setAllowCrossProtocolRedirects(true)
+        .setUserAgent("MaxiPTV/1.1.1 (Android)")
+        .setConnectTimeoutMs(8000) // Aumentado para melhor estabilidade (8s)
+        .setReadTimeoutMs(10000)    // Aumentado para melhor estabilidade (10s)
+        .setKeepPostFor302Redirects(true)
+      
+      val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context)
+        .setDataSourceFactory(dataSourceFactory)
+      
+      // ✅ FASE 1: Buffer adaptativo inicial (será atualizado dinamicamente)
+      val initialLoadControl = createAdaptiveLoadControl(ConnectionQuality.GOOD)
+      
+      androidx.media3.exoplayer.ExoPlayer.Builder(context)
+        .setMediaSourceFactory(mediaSourceFactory)
+        .setLoadControl(initialLoadControl)
+        // ✅ MATCH-FRAME VIDEO: Frame pacing e FPS matching para evitar stutter em TVs 120Hz
+        .setVideoChangeFrameRateStrategy(androidx.media3.common.C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_ONLY_IF_SEAMLESS)
+        .build().apply {
         volume = 0.3f // Começa baixo no mini player
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
         
@@ -455,6 +456,12 @@ fun LiveScreen(nav: NavHostController) {
         
         android.util.Log.i("SharedPlayer", "🎯 Player compartilhado criado com melhorias profissionais (Fase 1 e 2)")
       }
+    } catch (e: Exception) {
+      android.util.Log.e("LiveScreen", "❌ ERRO CRÍTICO ao criar sharedPlayer: ${e.message}", e)
+      e.printStackTrace()
+      // Retornar um player vazio para evitar crash total
+      androidx.media3.exoplayer.ExoPlayer.Builder(context).build()
+    }
   }
   
   // 📡 Carregar EPG em background
@@ -593,6 +600,11 @@ fun LiveScreen(nav: NavHostController) {
             // ✅ RESIZE_MODE_FILL garante que o vídeo preencha toda a tela (importante para Fire Stick)
             resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL
             setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+            // ✅ CONFIGURAR FOCO: Tornar focusable para D-pad (seta para cima focará no botão de estatísticas)
+            isFocusable = true
+            isFocusableInTouchMode = false
+            // ID único para navegação de foco
+            id = android.view.View.generateViewId()
           }
           
           // ⚽ Adicionar botão de estatísticas se for canal de futebol
@@ -600,12 +612,16 @@ fun LiveScreen(nav: NavHostController) {
             val rootLayout = playerView.parent as? android.widget.FrameLayout ?: android.widget.FrameLayout(ctx).apply {
               addView(playerView)
             }
-            createFootballStatsButtonInView(ctx, rootLayout, current!!.name, channelMatchId, soccerStatsViewModel) {
+            val statsButton = createFootballStatsButtonInView(ctx, rootLayout, current!!.name, channelMatchId, soccerStatsViewModel) {
               // Extrair matchId e abrir diálogo
               val matchId = MatchIdExtractor.extractMatchId(current!!.name)
               currentMatchId = matchId
               showFootballStatsDialog = true
             }
+            // ✅ CONFIGURAR FOCO: Quando apertar seta para cima no PlayerView, focar no botão de estatísticas
+            playerView.nextFocusUpId = statsButton.id
+            statsButton.nextFocusDownId = playerView.id
+            android.util.Log.i("LiveScreen", "✅ Navegação de foco configurada: PlayerView (ID: ${playerView.id}) → StatsButton (ID: ${statsButton.id})")
             rootLayout
           } else {
             playerView
@@ -952,18 +968,28 @@ fun LiveScreen(nav: NavHostController) {
                   },
                   modifier = Modifier
                     .clickable { 
-                      // 1x OK = tocar canal onde está o foco
-                      android.util.Log.i("LiveScreen", "🎯 Canal clicado: ${s.name}")
-                      current = s
-                      android.util.Log.i("LiveScreen", "🎯 Canal atual mudou para: ${current?.name}")
+                      try {
+                        // 1x OK = tocar canal onde está o foco
+                        android.util.Log.i("LiveScreen", "🎯 Canal clicado: ${s.name}")
+                        current = s
+                        android.util.Log.i("LiveScreen", "🎯 Canal atual mudou para: ${current?.name}")
+                      } catch (e: Exception) {
+                        android.util.Log.e("LiveScreen", "❌ Erro ao clicar no canal: ${e.message}", e)
+                        e.printStackTrace()
+                      }
                     }
                     .focusable()
                     .onFocusChanged { focusState ->
-                      isFocused = focusState.isFocused
-                      if (focusState.isFocused) {
-                        // Quando ganha foco, tocar o canal
-                        android.util.Log.i("LiveScreen", "🎯 Canal com foco: ${s.name}")
-                        current = s
+                      try {
+                        isFocused = focusState.isFocused
+                        if (focusState.isFocused) {
+                          // Quando ganha foco, tocar o canal
+                          android.util.Log.i("LiveScreen", "🎯 Canal com foco: ${s.name}")
+                          current = s
+                        }
+                      } catch (e: Exception) {
+                        android.util.Log.e("LiveScreen", "❌ Erro ao mudar foco do canal: ${e.message}", e)
+                        e.printStackTrace()
                       }
                     }
                 )
@@ -998,15 +1024,25 @@ fun LiveScreen(nav: NavHostController) {
               channel = current!!,
               epgData = epgData,
               onFullscreen = { 
-                // 📺 Canais normais: apenas mudar layout (MESMO PLAYER, SÓ MUDA LAYOUT)
-                android.util.Log.i("MiniPlayer", "🎯 Ativando fullscreen - volume 100%")
-                sharedPlayer.volume = 1.0f // Volume máximo em fullscreen
-                isFullscreen = true // Trocar para layout fullscreen
+                try {
+                  // 📺 Canais normais: apenas mudar layout (MESMO PLAYER, SÓ MUDA LAYOUT)
+                  android.util.Log.i("MiniPlayer", "🎯 Ativando fullscreen - volume 100%")
+                  sharedPlayer.volume = 1.0f // Volume máximo em fullscreen
+                  isFullscreen = true // Trocar para layout fullscreen
+                } catch (e: Exception) {
+                  android.util.Log.e("LiveScreen", "❌ Erro ao ativar fullscreen: ${e.message}", e)
+                  e.printStackTrace()
+                }
               },
               onStatsClick = {
-                val matchId = MatchIdExtractor.extractMatchId(current!!.name)
-                currentMatchId = matchId
-                showFootballStatsDialog = true
+                try {
+                  val matchId = MatchIdExtractor.extractMatchId(current!!.name)
+                  currentMatchId = matchId
+                  showFootballStatsDialog = true
+                } catch (e: Exception) {
+                  android.util.Log.e("LiveScreen", "❌ Erro ao abrir estatísticas: ${e.message}", e)
+                  e.printStackTrace()
+                }
               }
             )
           } else {
@@ -1231,26 +1267,56 @@ fun MiniPlayer(
 ) {
   // Atualizar canal quando mudar - MUDAR MÍDIA NO MESMO PLAYER com Low Latency HLS
   LaunchedEffect(channel.stream_id) {
-    android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
-    player.stop() // Parar player atual
-    
-    // ✅ FASE 2: Modo Low Latency HLS para canais live (AJUSTADO para mais estabilidade)
-    val mediaItem = androidx.media3.common.MediaItem.Builder()
-      .setUri(channel.toLiveUrl())
-      .setLiveConfiguration(
-        androidx.media3.common.MediaItem.LiveConfiguration.Builder()
-          .setTargetOffsetMs(2000) // ✅ Low Latency AJUSTADO: 2s de offset (era 0) - mais estável
-          .setMinOffsetMs(1000) // ✅ Low Latency AJUSTADO: Offset mínimo 1s (era 0) - evitar travamentos
-          .setMaxOffsetMs(5000) // ✅ Low Latency AJUSTADO: Máximo 5s de atraso (mantido)
-          .setMinPlaybackSpeed(0.95f) // ✅ Low Latency AJUSTADO: Velocidade mínima 0.95 (era 0.98) - mais tolerante
-          .setMaxPlaybackSpeed(1.05f) // ✅ Low Latency AJUSTADO: Velocidade máxima 1.05 (era 1.02) - mais tolerante
-          .build()
-      )
-      .build()
-    
-    player.setMediaItem(mediaItem)
-    player.prepare()
-    player.playWhenReady = true
+    try {
+      android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
+      
+      // ✅ PROTEÇÃO: Verificar se o player ainda está válido
+      if (player.playbackState == androidx.media3.common.Player.STATE_IDLE) {
+        android.util.Log.w("MiniPlayer", "⚠️ Player em estado IDLE, pulando atualização")
+        return@LaunchedEffect
+      }
+      
+      player.stop() // Parar player atual
+      
+      // ✅ PROTEÇÃO: Tentar gerar URL e verificar se é válida
+      val url = try {
+        channel.toLiveUrl()
+      } catch (e: Exception) {
+        android.util.Log.e("MiniPlayer", "❌ Erro ao gerar URL do canal: ${e.message}", e)
+        return@LaunchedEffect
+      }
+      
+      if (url.isBlank()) {
+        android.util.Log.e("MiniPlayer", "❌ URL do canal está vazia")
+        return@LaunchedEffect
+      }
+      
+      android.util.Log.i("MiniPlayer", "   URL: $url")
+      
+      // ✅ FASE 2: Modo Low Latency HLS para canais live (AJUSTADO para mais estabilidade)
+      val mediaItem = androidx.media3.common.MediaItem.Builder()
+        .setUri(url)
+        .setLiveConfiguration(
+          androidx.media3.common.MediaItem.LiveConfiguration.Builder()
+            .setTargetOffsetMs(2000) // ✅ Low Latency AJUSTADO: 2s de offset (era 0) - mais estável
+            .setMinOffsetMs(1000) // ✅ Low Latency AJUSTADO: Offset mínimo 1s (era 0) - evitar travamentos
+            .setMaxOffsetMs(5000) // ✅ Low Latency AJUSTADO: Máximo 5s de atraso (mantido)
+            .setMinPlaybackSpeed(0.95f) // ✅ Low Latency AJUSTADO: Velocidade mínima 0.95 (era 0.98) - mais tolerante
+            .setMaxPlaybackSpeed(1.05f) // ✅ Low Latency AJUSTADO: Velocidade máxima 1.05 (era 1.02) - mais tolerante
+            .build()
+        )
+        .build()
+      
+      player.setMediaItem(mediaItem)
+      player.prepare()
+      player.playWhenReady = true
+      
+      android.util.Log.i("MiniPlayer", "✅ Player atualizado com sucesso")
+    } catch (e: Exception) {
+      android.util.Log.e("MiniPlayer", "❌ Erro ao atualizar canal no mini player: ${e.message}", e)
+      e.printStackTrace()
+      // Não propagar exceção para evitar crash
+    }
   }
   
   val exoPlayer = player // Renomear localmente para evitar conflito
@@ -1648,6 +1714,39 @@ private fun createFootballStatsButtonInView(
   val rightMargin = (rightMarginDp * density).toInt()
   
   return android.widget.ImageButton(ctx).apply {
+    // ✅ CONFIGURAR FOCO PARA D-PAD
+    isFocusable = true
+    isFocusableInTouchMode = true
+    focusable = android.view.View.FOCUSABLE
+    importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_YES
+    // ✅ ID único para navegação de foco
+    id = android.view.View.generateViewId()
+    
+    // ✅ Configurar navegação de foco (seta para baixo volta para o player)
+    nextFocusUpId = android.view.View.NO_ID
+    nextFocusLeftId = android.view.View.NO_ID
+    nextFocusRightId = android.view.View.NO_ID
+    
+    // ✅ Listener para visual de foco
+    setOnFocusChangeListener { _, hasFocus ->
+      if (hasFocus) {
+        android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas FOCO no fullscreen")
+        // Adicionar borda quando focado
+        background = android.graphics.drawable.GradientDrawable().apply {
+          shape = android.graphics.drawable.GradientDrawable.OVAL
+          setStroke((4 * density).toInt(), android.graphics.Color.parseColor("#FF1744")) // Vermelho neon
+          setColor(android.graphics.Color.TRANSPARENT)
+        }
+        // Zoom quando focado
+        scaleX = 1.2f
+        scaleY = 1.2f
+      } else {
+        background = null
+        scaleX = 1.0f
+        scaleY = 1.0f
+      }
+    }
+    
     // Criar drawable de bola de futebol
     val bitmap = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
@@ -1683,7 +1782,6 @@ private fun createFootballStatsButtonInView(
     canvas.drawLine(centerX, centerY - radius, centerX, centerY + radius, linePaint)
     
     setImageBitmap(bitmap)
-    background = null
     
     setOnClickListener {
       android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas clicado")
@@ -1705,6 +1803,6 @@ private fun createFootballStatsButtonInView(
     
     elevation = 16f
     rootLayout.addView(this)
-    android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas criado no fullscreen")
+    android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas criado no fullscreen (ID: $id)")
   }
 }
