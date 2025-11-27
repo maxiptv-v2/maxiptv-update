@@ -1270,13 +1270,10 @@ fun MiniPlayer(
     try {
       android.util.Log.i("MiniPlayer", "🔄 Canal alterado no mini player: ${channel.name}")
       
-      // ✅ PROTEÇÃO: Verificar se o player ainda está válido
-      if (player.playbackState == androidx.media3.common.Player.STATE_IDLE) {
-        android.util.Log.w("MiniPlayer", "⚠️ Player em estado IDLE, pulando atualização")
-        return@LaunchedEffect
+      // ✅ PROTEÇÃO: Parar player apenas se não estiver em IDLE (estado inicial é normal)
+      if (player.playbackState != androidx.media3.common.Player.STATE_IDLE) {
+        player.stop() // Parar player atual apenas se estiver tocando
       }
-      
-      player.stop() // Parar player atual
       
       // ✅ PROTEÇÃO: Tentar gerar URL e verificar se é válida
       val url = try {
