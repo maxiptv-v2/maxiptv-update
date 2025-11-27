@@ -1,5 +1,6 @@
 package com.maxiptv.ui.screens
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.Spring
@@ -103,18 +105,42 @@ fun LiveScreen(nav: NavHostController) {
       otherMatches = emptyList()
       
       try {
-        android.util.Log.i("LiveScreen", "⚽ Buscando estatísticas para matchId: $currentMatchId")
-        val detail = SoccerRepository.getMatchDetail(currentMatchId!!)
-        val preview = SoccerRepository.getMatchPreview(currentMatchId!!)
-        val others = SoccerRepository.getOtherMatches()
+        android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
+        android.util.Log.i("LiveScreen", "⚽ INICIANDO BUSCA NA API SOCCER DATA")
+        android.util.Log.i("LiveScreen", "   MatchId: $currentMatchId")
+        android.util.Log.i("LiveScreen", "   Canal: ${current?.name}")
+        android.util.Log.i("LiveScreen", "   URL Base: https://api.soccerdataapi.com/")
+        android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
         
+        // Buscar detalhes da partida
+        android.util.Log.i("LiveScreen", "📡 1/3 - Buscando getMatchDetail($currentMatchId)...")
+        val detail = SoccerRepository.getMatchDetail(currentMatchId!!)
+        android.util.Log.i("LiveScreen", "   ✅ getMatchDetail retornou: ${detail?.homeTeamName} x ${detail?.awayTeamName}")
         matchDetail = detail
+        
+        // Buscar preview da partida
+        android.util.Log.i("LiveScreen", "📡 2/3 - Buscando getMatchPreview($currentMatchId)...")
+        val preview = SoccerRepository.getMatchPreview(currentMatchId!!)
+        android.util.Log.i("LiveScreen", "   ✅ getMatchPreview retornou (word_count: ${preview?.word_count})")
         matchPreview = preview
+        
+        // Buscar outros jogos
+        android.util.Log.i("LiveScreen", "📡 3/3 - Buscando getOtherMatches()...")
+        val others = SoccerRepository.getOtherMatches()
+        android.util.Log.i("LiveScreen", "   ✅ getOtherMatches retornou ${others.size} partidas")
         otherMatches = others
+        
         isLoadingStats = false
-        android.util.Log.i("LiveScreen", "✅ Estatísticas carregadas com sucesso")
+        android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
+        android.util.Log.i("LiveScreen", "✅ TODAS AS ESTATÍSTICAS CARREGADAS COM SUCESSO!")
+        android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
       } catch (e: Exception) {
-        android.util.Log.e("LiveScreen", "❌ Erro ao buscar estatísticas: ${e.message}", e)
+        android.util.Log.e("LiveScreen", "═══════════════════════════════════════")
+        android.util.Log.e("LiveScreen", "❌ ERRO AO BUSCAR ESTATÍSTICAS")
+        android.util.Log.e("LiveScreen", "   Erro: ${e.message}")
+        android.util.Log.e("LiveScreen", "   Tipo: ${e.javaClass.simpleName}")
+        android.util.Log.e("LiveScreen", "   StackTrace:", e)
+        android.util.Log.e("LiveScreen", "═══════════════════════════════════════")
         statsError = e.message ?: "Erro desconhecido"
         isLoadingStats = false
       }
@@ -1150,75 +1176,126 @@ fun MiniPlayer(
     } else null
     
     if (isFootballChannel && onStatsClick != null) {
-      // ⚽ Adicionar botão de estatísticas no canto superior direito
-      androidx.compose.ui.viewinterop.AndroidView(
-        factory = { ctx ->
-          val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
-          val density = ctx.resources.displayMetrics.density
-          val sizePx = (buttonSize * density).toInt()
-          val margin = (16f * density).toInt()
-          
-          android.widget.ImageButton(ctx).apply {
-            // Criar drawable de bola de futebol
-            val bitmap = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
-            val canvas = android.graphics.Canvas(bitmap)
-            
-            val paint = android.graphics.Paint().apply {
-              isAntiAlias = true
-              style = android.graphics.Paint.Style.FILL
-              color = android.graphics.Color.WHITE
-            }
-            
-            val strokePaint = android.graphics.Paint().apply {
-              isAntiAlias = true
-              style = android.graphics.Paint.Style.STROKE
-              strokeWidth = 4f
-              color = android.graphics.Color.BLACK
-            }
-            
-            val centerX = sizePx / 2f
-            val centerY = sizePx / 2f
-            val radius = (sizePx * 0.4f)
-            
-            canvas.drawCircle(centerX, centerY, radius, paint)
-            canvas.drawCircle(centerX, centerY, radius, strokePaint)
-            
-            val linePaint = android.graphics.Paint().apply {
-              isAntiAlias = true
-              style = android.graphics.Paint.Style.STROKE
-              strokeWidth = 3f
-              color = android.graphics.Color.BLACK
-            }
-            
-            canvas.drawLine(centerX - radius, centerY, centerX + radius, centerY, linePaint)
-            canvas.drawLine(centerX, centerY - radius, centerX, centerY + radius, linePaint)
-            
-            setImageBitmap(bitmap)
-            background = null
-            
-            setOnClickListener {
-              android.util.Log.i("MiniPlayer", "⚽ Botão de estatísticas clicado")
-              onStatsClick() // Usar o callback passado como parâmetro
-            }
-            
-            // Animação de rotação
-            val rotationAnimator = android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
-              duration = 3000
-              repeatCount = android.animation.ObjectAnimator.INFINITE
-              interpolator = android.view.animation.LinearInterpolator()
-              start()
-            }
-            
-            layoutParams = android.widget.FrameLayout.LayoutParams(sizePx, sizePx).apply {
-              gravity = android.view.Gravity.TOP or android.view.Gravity.END
-              setMargins(0, margin, margin, 0)
-            }
-          }
-        },
+      // ⚽ Estado para controlar foco e zoom
+      var isFocused by remember { mutableStateOf(false) }
+      val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.2f else 1.0f,
+        animationSpec = spring(
+          dampingRatio = Spring.DampingRatioMediumBouncy,
+          stiffness = Spring.StiffnessLow
+        ),
+        label = "statsButtonZoom"
+      )
+      
+      // ⚽ Adicionar botão de estatísticas no canto superior direito com foco D-pad
+      Box(
         modifier = Modifier
           .align(Alignment.TopEnd)
           .padding(if (MaxiApp.isTv) 16.dp else 12.dp)
-      )
+          .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+            transformOrigin = TransformOrigin.Center
+          }
+          .onFocusChanged { focusState ->
+            isFocused = focusState.isFocused
+            android.util.Log.d("MiniPlayer", "⚽ Botão de estatísticas - Foco: ${focusState.isFocused}")
+          }
+          .focusable() // ✅ Habilitar foco para D-PAD
+          .then(
+            if (isFocused) {
+              // ✅ Borda vermelha quando focado
+              Modifier.border(
+                width = 4.dp,
+                color = Color(0xFFFF1744), // Vermelho neon
+                shape = RoundedCornerShape(50) // Círculo
+              )
+            } else {
+              Modifier
+            }
+          )
+      ) {
+        androidx.compose.ui.viewinterop.AndroidView(
+          factory = { ctx ->
+            val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
+            val density = ctx.resources.displayMetrics.density
+            val sizePx = (buttonSize * density).toInt()
+            
+            android.widget.ImageButton(ctx).apply {
+              // ✅ Tornar focusable para D-pad
+              isFocusable = true
+              isFocusableInTouchMode = true
+              
+              // Criar drawable de bola de futebol
+              val bitmap = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
+              val canvas = android.graphics.Canvas(bitmap)
+              
+              val paint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                style = android.graphics.Paint.Style.FILL
+                color = android.graphics.Color.WHITE
+              }
+              
+              val strokePaint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = 4f
+                color = android.graphics.Color.BLACK
+              }
+              
+              val centerX = sizePx / 2f
+              val centerY = sizePx / 2f
+              val radius = (sizePx * 0.4f)
+              
+              canvas.drawCircle(centerX, centerY, radius, paint)
+              canvas.drawCircle(centerX, centerY, radius, strokePaint)
+              
+              val linePaint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = 3f
+                color = android.graphics.Color.BLACK
+              }
+              
+              canvas.drawLine(centerX - radius, centerY, centerX + radius, centerY, linePaint)
+              canvas.drawLine(centerX, centerY - radius, centerX, centerY + radius, linePaint)
+              
+              setImageBitmap(bitmap)
+              background = null
+              
+              setOnClickListener {
+                android.util.Log.i("MiniPlayer", "⚽ Botão de estatísticas clicado - Iniciando busca na API Soccer...")
+                android.util.Log.i("MiniPlayer", "   MatchId: ${MatchIdExtractor.extractMatchId(channel.name)}")
+                android.util.Log.i("MiniPlayer", "   Canal: ${channel.name}")
+                onStatsClick() // Usar o callback passado como parâmetro
+              }
+              
+              // ✅ Listener para foco (D-pad)
+              setOnFocusChangeListener { view, hasFocus ->
+                android.util.Log.d("MiniPlayer", "⚽ Botão de estatísticas - Foco D-pad: $hasFocus")
+                if (hasFocus) {
+                  // Efeito visual quando focado
+                  view.scaleX = 1.2f
+                  view.scaleY = 1.2f
+                } else {
+                  view.scaleX = 1.0f
+                  view.scaleY = 1.0f
+                }
+              }
+              
+              // Animação de rotação
+              val rotationAnimator = android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
+                duration = 3000
+                repeatCount = android.animation.ObjectAnimator.INFINITE
+                interpolator = android.view.animation.LinearInterpolator()
+                start()
+              }
+              
+              layoutParams = android.widget.FrameLayout.LayoutParams(sizePx, sizePx)
+            }
+          }
+        )
+      }
     }
   }
 }

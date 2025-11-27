@@ -1,5 +1,10 @@
 package com.maxiptv.ui.screens
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -49,6 +54,98 @@ import com.maxiptv.data.soccer.SoccerRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
+
+/**
+ * 🔥 Função para abrir o Downloader app no Fire OS com URL pré-preenchida
+ * O Downloader é um app popular no Fire Stick para baixar arquivos
+ */
+private fun openDownloaderApp(context: Context, downloadUrl: String) {
+  try {
+    android.util.Log.i("HomeScreen", "🔥 Fire OS: Tentando abrir Downloader com URL: $downloadUrl")
+    
+    // Tentar abrir Downloader com URL scheme especial
+    // Formato: downloader://https://url-do-arquivo.apk
+    val downloaderUri = "downloader://$downloadUrl"
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloaderUri))
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    
+    // Verificar se o Downloader está instalado
+    val packageManager = context.packageManager
+    val resolveInfo = packageManager.resolveActivity(intent, 0)
+    
+    if (resolveInfo != null) {
+      // Downloader instalado - abrir com URL
+      context.startActivity(intent)
+      android.util.Log.i("HomeScreen", "✅ Downloader aberto com sucesso!")
+      
+      Toast.makeText(
+        context,
+        "Downloader aberto! Clique em GO para baixar.",
+        Toast.LENGTH_LONG
+      ).show()
+    } else {
+      // Downloader NÃO instalado - mostrar instruções e copiar URL
+      android.util.Log.w("HomeScreen", "⚠️ Downloader não está instalado")
+      
+      // Copiar URL para clipboard
+      val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+      val clip = ClipData.newPlainText("MaxiPTV Update URL", downloadUrl)
+      clipboard.setPrimaryClip(clip)
+      
+      Toast.makeText(
+        context,
+        "URL copiada! Instale o Downloader da Amazon App Store.",
+        Toast.LENGTH_LONG
+      ).show()
+      
+      // Tentar abrir Amazon App Store na página do Downloader
+      try {
+        val appStoreIntent = Intent(
+          Intent.ACTION_VIEW,
+          Uri.parse("amzn://apps/android?p=com.esaba.downloader")
+        )
+        appStoreIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(appStoreIntent)
+        android.util.Log.i("HomeScreen", "✅ Amazon App Store aberta (Downloader)")
+      } catch (e: Exception) {
+        // Se falhar, tentar web browser
+        try {
+          val webIntent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://www.amazon.com/AFTVnews-com-Downloader/dp/B01N0BP507")
+          )
+          webIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+          context.startActivity(webIntent)
+          android.util.Log.i("HomeScreen", "✅ Browser aberto para baixar Downloader")
+        } catch (e2: Exception) {
+          android.util.Log.e("HomeScreen", "❌ Erro ao abrir App Store/Browser: ${e2.message}")
+        }
+      }
+    }
+  } catch (e: Exception) {
+    android.util.Log.e("HomeScreen", "❌ Erro ao abrir Downloader: ${e.message}", e)
+    
+    // Fallback: copiar URL e mostrar mensagem
+    try {
+      val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+      val clip = ClipData.newPlainText("MaxiPTV Update URL", downloadUrl)
+      clipboard.setPrimaryClip(clip)
+      
+      Toast.makeText(
+        context,
+        "URL copiada! Cole no Downloader manualmente.",
+        Toast.LENGTH_LONG
+      ).show()
+    } catch (e2: Exception) {
+      android.util.Log.e("HomeScreen", "❌ Erro ao copiar URL: ${e2.message}")
+      Toast.makeText(
+        context,
+        "Erro ao abrir Downloader. Tente instalar manualmente.",
+        Toast.LENGTH_SHORT
+      ).show()
+    }
+  }
+}
 
 @Composable
 fun HomeScreen(nav: NavHostController) {
@@ -342,130 +439,47 @@ fun HomeScreen(nav: NavHostController) {
     )
   }
   
-  // Dialog de atualização disponível
+  // ✅ Dialog de atualização disponível (UNIFICADO com suporte Fire OS)
   if (showUpdateDialog && updateAvailable != null) {
+    // 🔥 Detectar Fire OS para UI diferenciada
+    val isFireOS = MaxiApp.isFireStick
+    val primaryColor = if (isFireOS) Color(0xFFFF9800) else Color(0xFF00FF00) // Laranja Amazon vs Verde
+    val iconColor = if (isFireOS) Color(0xFFFF9800) else Color(0xFF00FF00)
+    
     AlertDialog(
       onDismissRequest = { showUpdateDialog = false },
       title = {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          Icon(
-            imageVector = Icons.Default.Info,
-            contentDescription = null,
-            tint = Color(0xFF00D4FF),
-            modifier = Modifier.size(32.dp)
-          )
-          Spacer(Modifier.width(12.dp))
-          Text("🆕 Atualização Disponível!", fontWeight = FontWeight.Bold)
-        }
-      },
-      text = {
         Column {
-          Text(
-            "Nova versão: ${updateAvailable!!.version}",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF00D4FF)
-          )
-          Spacer(Modifier.height(8.dp))
-          Text(
-            "Versão atual: ${UpdateManager.getCurrentVersionName(context)}",
-            fontSize = 14.sp,
-            color = Color.Gray
-          )
-          Spacer(Modifier.height(16.dp))
-          Text(
-            updateAvailable!!.releaseNotes,
-            fontSize = 14.sp
-          )
-          Spacer(Modifier.height(12.dp))
-          Text(
-            "Tamanho: ${updateAvailable!!.fileSize}",
-            fontSize = 12.sp,
-            color = Color.Gray
-          )
-        }
-      },
-      confirmButton = {
-        var isUpdateFocused by remember { mutableStateOf(false) }
-        Button(
-          onClick = {
-            isDownloading = true
-            showUpdateDialog = false
-            ApkDownloader.downloadAndInstall(
-              context,
-              updateAvailable!!.downloadUrl,
-              updateAvailable!!.version
+          // 🔥 Badge Fire OS (apenas se for Fire OS)
+          if (isFireOS) {
+            Box(
+              modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFF9800), RoundedCornerShape(8.dp))
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+              contentAlignment = Alignment.Center
+            ) {
+              Text(
+                "🔥 FIRE OS AMAZON DETECTADO",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+              )
+            }
+            Spacer(Modifier.height(12.dp))
+          }
+          
+          // Título principal
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+              imageVector = Icons.Default.Refresh,
+              contentDescription = null,
+              tint = iconColor,
+              modifier = Modifier.size(32.dp)
             )
-          },
-          enabled = !isDownloading,
-          modifier = Modifier
-            .onFocusChanged { isUpdateFocused = it.isFocused }
-            .focusable()
-            .then(
-              if (isUpdateFocused) 
-                Modifier
-                  .border(4.dp, Color(0xFF00FF00), RoundedCornerShape(8.dp))
-                  .shadow(
-                    elevation = 15.dp,
-                    spotColor = Color(0xFF00FF00).copy(alpha = 0.9f),
-                    ambientColor = Color(0xFF00FF00).copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(8.dp)
-                  )
-              else 
-                Modifier
-            ),
-          colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF00D4FF)
-          )
-        ) {
-          Icon(Icons.Default.Refresh, contentDescription = null)
-          Spacer(Modifier.width(8.dp))
-          Text("ATUALIZAR AGORA", fontWeight = FontWeight.Bold)
-        }
-      },
-      dismissButton = {
-        var isLaterFocused by remember { mutableStateOf(false) }
-        OutlinedButton(
-          onClick = { showUpdateDialog = false },
-          modifier = Modifier
-            .onFocusChanged { isLaterFocused = it.isFocused }
-            .focusable()
-            .then(
-              if (isLaterFocused) 
-                Modifier
-                  .border(4.dp, Color(0xFFFF9800), RoundedCornerShape(8.dp))
-                  .shadow(
-                    elevation = 15.dp,
-                    spotColor = Color(0xFFFF9800).copy(alpha = 0.9f),
-                    ambientColor = Color(0xFFFF9800).copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(8.dp)
-                  )
-              else 
-                Modifier
-            )
-        ) {
-          Icon(Icons.Default.Close, contentDescription = null)
-          Spacer(Modifier.width(8.dp))
-          Text("DEPOIS", fontWeight = FontWeight.Bold)
-        }
-      }
-    )
-  }
-  
-  // Dialog de atualização disponível
-  if (showUpdateDialog && updateAvailable != null) {
-    AlertDialog(
-      onDismissRequest = { showUpdateDialog = false },
-      title = {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          Icon(
-            imageVector = Icons.Default.Refresh,
-            contentDescription = null,
-            tint = Color(0xFF00FF00),
-            modifier = Modifier.size(32.dp)
-          )
-          Spacer(Modifier.width(12.dp))
-          Text("🆕 Atualização Disponível!", fontWeight = FontWeight.Bold)
+            Spacer(Modifier.width(12.dp))
+            Text("🆕 Atualização Disponível!", fontWeight = FontWeight.Bold)
+          }
         }
       },
       text = {
@@ -474,7 +488,7 @@ fun HomeScreen(nav: NavHostController) {
             "Nova versão ${updateAvailable!!.version} disponível!",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF00FF00)
+            color = primaryColor
           )
           Spacer(Modifier.height(12.dp))
           Text(
@@ -488,6 +502,42 @@ fun HomeScreen(nav: NavHostController) {
             fontSize = 14.sp,
             color = Color.Gray
           )
+          
+          // 🔥 Instruções específicas para Fire OS
+          if (isFireOS) {
+            Spacer(Modifier.height(16.dp))
+            Box(
+              modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF2A2A2A), RoundedCornerShape(8.dp))
+                .padding(12.dp)
+            ) {
+              Column {
+                Text(
+                  "ℹ️ Fire OS detectado!",
+                  fontSize = 14.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = Color(0xFFFF9800)
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                  "O app Downloader será aberto automaticamente com a URL já preenchida.",
+                  fontSize = 13.sp,
+                  color = Color.White,
+                  lineHeight = 18.sp
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                  "Clique em GO no Downloader para baixar e instalar.",
+                  fontSize = 13.sp,
+                  color = Color(0xFFFFD700),
+                  fontWeight = FontWeight.Bold,
+                  lineHeight = 18.sp
+                )
+              }
+            }
+          }
+          
           Spacer(Modifier.height(16.dp))
           Text(
             "📋 Novidades:",
@@ -507,36 +557,41 @@ fun HomeScreen(nav: NavHostController) {
         Button(
           onClick = {
             showUpdateDialog = false
-            isDownloading = true
-            ApkDownloader.downloadAndInstall(
-              context,
-              updateAvailable!!.downloadUrl,
-              updateAvailable!!.version
-            )
+            // 🔥 Fire OS: Abrir Downloader | Android: Download direto
+            if (isFireOS) {
+              openDownloaderApp(context, updateAvailable!!.downloadUrl)
+            } else {
+              isDownloading = true
+              ApkDownloader.downloadAndInstall(
+                context,
+                updateAvailable!!.downloadUrl,
+                updateAvailable!!.version
+              )
+            }
           },
-          enabled = !isDownloading,
+          enabled = if (isFireOS) true else !isDownloading, // Fire OS sempre habilitado
           modifier = Modifier
             .onFocusChanged { isConfirmFocused = it.isFocused }
             .focusable()
             .then(
               if (isConfirmFocused) 
                 Modifier
-                  .border(4.dp, Color(0xFF00FF00), RoundedCornerShape(8.dp))
+                  .border(4.dp, primaryColor, RoundedCornerShape(8.dp))
                   .shadow(
                     elevation = 15.dp,
-                    spotColor = Color(0xFF00FF00).copy(alpha = 0.9f),
-                    ambientColor = Color(0xFF00FF00).copy(alpha = 0.7f),
+                    spotColor = primaryColor.copy(alpha = 0.9f),
+                    ambientColor = primaryColor.copy(alpha = 0.7f),
                     shape = RoundedCornerShape(8.dp)
                   )
               else 
                 Modifier
             ),
           colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF00FF00),
+            containerColor = primaryColor, // Laranja para Fire OS, Verde para Android
             contentColor = Color.Black
           )
         ) {
-          if (isDownloading) {
+          if (!isFireOS && isDownloading) {
             CircularProgressIndicator(
               modifier = Modifier.size(20.dp),
               color = Color.Black,
@@ -544,10 +599,19 @@ fun HomeScreen(nav: NavHostController) {
             )
             Spacer(Modifier.width(8.dp))
           } else {
-            Icon(Icons.Default.Refresh, contentDescription = null)
+            Icon(
+              imageVector = Icons.Default.Refresh,
+              contentDescription = null
+            )
             Spacer(Modifier.width(8.dp))
           }
-          Text(if (isDownloading) "BAIXANDO..." else "ATUALIZAR AGORA", fontWeight = FontWeight.Bold)
+          // 🔥 Texto diferente para Fire OS
+          Text(
+            if (isFireOS) "ABRIR DOWNLOADER" 
+            else if (isDownloading) "BAIXANDO..." 
+            else "ATUALIZAR AGORA",
+            fontWeight = FontWeight.Bold
+          )
         }
       },
       dismissButton = {
