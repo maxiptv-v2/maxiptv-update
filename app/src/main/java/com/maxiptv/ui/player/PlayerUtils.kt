@@ -25,6 +25,10 @@ class PlayerState {
   var lastVideoFormat: Format? = null
   var qualityDegradedWarningShown = false
   var originalStreamUrl: String? = null
+  // ✅ Propriedades para adaptação automática de qualidade
+  var bufferingCount = 0 // Contador de eventos de buffering
+  var lastBufferingTime = 0L // Último tempo de buffering
+  var qualityReductionLevel = 0 // Nível de redução de qualidade (0 = nenhuma, 1 = leve, 2 = média, 3 = alta)
 }
 
 /**

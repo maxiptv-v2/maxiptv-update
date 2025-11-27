@@ -153,7 +153,11 @@ fun LiveScreen(nav: NavHostController) {
   val isFireStick = MaxiApp.isFireStick
   
   // ✅ Estado para rastrear qualidade de conexão e failover (usando classe compartilhada)
-  val playerState = remember { PlayerState() }
+  val playerState = remember { 
+    PlayerState().apply {
+      currentMaxBitrate = 2_200_000 // Inicializar bitrate para Live TV
+    }
+  }
   
   // ✅ Função para retry stream com delay e Low Latency HLS (definida primeiro para ser usada em retryWithFailover)
   fun retryStream(player: androidx.media3.exoplayer.ExoPlayer, url: String) {
@@ -303,13 +307,133 @@ fun LiveScreen(nav: NavHostController) {
             when (playbackState) {
               androidx.media3.common.Player.STATE_IDLE -> 
                 android.util.Log.i("SharedPlayer", "⏸️ Player IDLE")
-              androidx.media3.common.Player.STATE_BUFFERING -> 
-                android.util.Log.i("SharedPlayer", "⏳ Buffering...")
+              androidx.media3.common.Player.STATE_BUFFERING -> {
+                val now = System.currentTimeMillis()
+                
+                // ✅ DETECÇÃO MELHORADA DE WI-FI LENTO: Múltiplos fatores de detecção
+                val bufferAhead = bufferedPosition - currentPosition
+                val timeSinceLastBuffering = if (playerState.lastBufferingTime > 0) now - playerState.lastBufferingTime else Long.MAX_VALUE
+                
+                // Fator 1: Buffering frequente (mais sensível - 2 eventos em 5s)
+                if (playerState.lastBufferingTime > 0 && timeSinceLastBuffering < 5000) {
+                  playerState.bufferingCount++
+                  android.util.Log.w("SharedPlayer", "⚠️ Buffering frequente detectado (${playerState.bufferingCount} eventos em ${timeSinceLastBuffering / 1000}s)")
+                } else if (timeSinceLastBuffering > 10000) {
+                  // Reset contador se buffering espaçado (rede normal)
+                  playerState.bufferingCount = 0
+                  android.util.Log.d("SharedPlayer", "✅ Rede estável, resetando contador de buffering")
+                }
+                
+                // Fator 2: Buffer muito baixo (< 2 segundos)
+                val bufferLow = bufferAhead < 2000
+                if (bufferLow) {
+                  android.util.Log.w("SharedPlayer", "⚠️ Buffer muito baixo: ${bufferAhead}ms")
+                }
+                
+                // Fator 3: Detecção usando ConnectionQuality
+                val latencyMs = bufferAhead.coerceAtLeast(0)
+                val estimatedQuality = estimateConnectionQuality(
+                  this@apply,
+                  latencyMs = latencyMs,
+                  bufferAhead = bufferAhead,
+                  bitrate = videoFormat?.bitrate ?: 0
+                )
+                
+                // ✅ Atualizar qualidade de conexão
+                val previousQuality = playerState.connectionQuality
+                playerState.connectionQuality = estimatedQuality
+                
+                // Log quando qualidade muda
+                if (previousQuality != estimatedQuality) {
+                  android.util.Log.w("SharedPlayer", "📊 Qualidade de conexão mudou: $previousQuality → $estimatedQuality")
+                  android.util.Log.w("SharedPlayer", "   - Latência: ${latencyMs}ms")
+                  android.util.Log.w("SharedPlayer", "   - Buffer: ${bufferAhead}ms")
+                  android.util.Log.w("SharedPlayer", "   - Bitrate: ${(videoFormat?.bitrate ?: 0) / 1000}kbps")
+                }
+                
+                // ✅ REDUÇÃO GRADUAL DE QUALIDADE baseada em múltiplos fatores
+                val shouldReduceQuality = when {
+                  // Redução imediata: buffering muito frequente OU buffer muito baixo + qualidade ruim
+                  playerState.bufferingCount >= 2 && (estimatedQuality == ConnectionQuality.POOR || bufferLow) -> {
+                    android.util.Log.w("SharedPlayer", "🚨 Redução IMEDIATA: buffering frequente + conexão ruim")
+                    true
+                  }
+                  // Redução leve: buffering frequente OU buffer baixo
+                  playerState.bufferingCount >= 2 || (bufferLow && estimatedQuality == ConnectionQuality.POOR) -> {
+                    android.util.Log.w("SharedPlayer", "⚠️ Redução LEVE: buffering ou buffer baixo detectado")
+                    true
+                  }
+                  // Redução preventiva: qualidade ruim detectada
+                  estimatedQuality == ConnectionQuality.POOR && playerState.qualityReductionLevel == 0 -> {
+                    android.util.Log.w("SharedPlayer", "📉 Redução PREVENTIVA: qualidade de conexão ruim")
+                    true
+                  }
+                  else -> false
+                }
+                
+                if (shouldReduceQuality && playerState.currentMaxBitrate > 800_000) {
+                  // ✅ Redução gradual baseada no nível atual (LIVE TV)
+                  val newBitrate = when (playerState.qualityReductionLevel) {
+                    0 -> 1_500_000  // Nível 1: Redução leve (2.2Mbps → 1.5Mbps live)
+                    1 -> 1_000_000  // Nível 2: Redução média (1.5Mbps → 1.0Mbps live)
+                    2 -> 600_000    // Nível 3: Redução alta (1.0Mbps → 600kbps live)
+                    else -> playerState.currentMaxBitrate // Não reduzir mais
+                  }
+                  
+                  if (newBitrate < playerState.currentMaxBitrate) {
+                    playerState.qualityReductionLevel++
+                    playerState.currentMaxBitrate = newBitrate
+                    
+                    val newResolution = when (playerState.qualityReductionLevel) {
+                      1 -> Pair(1280, 720)  // 720p
+                      2 -> Pair(854, 480)   // 480p
+                      else -> Pair(640, 360) // 360p
+                    }
+                    
+                    android.util.Log.i("SharedPlayer", "📉 Wi-Fi lento detectado! Reduzindo qualidade (nível ${playerState.qualityReductionLevel})")
+                    android.util.Log.i("SharedPlayer", "   Bitrate: ${playerState.currentMaxBitrate / 1000}kbps")
+                    android.util.Log.i("SharedPlayer", "   Resolução: ${newResolution.first}x${newResolution.second}")
+                    android.util.Log.i("SharedPlayer", "   Qualidade conexão: $estimatedQuality")
+                    
+                    // ✅ Aplicar novo bitrate e forçar re-seleção de tracks
+                    val newParams = androidx.media3.common.TrackSelectionParameters.Builder(context)
+                      .setPreferredTextLanguage(null)
+                      .setMaxVideoBitrate(playerState.currentMaxBitrate)
+                      .setMaxVideoSize(newResolution.first, newResolution.second)
+                      .setMinVideoBitrate((playerState.currentMaxBitrate * 0.3).toInt())
+                      .build()
+                    
+                    trackSelectionParameters = newParams
+                    android.util.Log.i("SharedPlayer", "✅ Qualidade reduzida automaticamente para evitar travamentos")
+                  }
+                }
+                
+                playerState.lastBufferingTime = now
+                android.util.Log.i("SharedPlayer", "⏳ Bufferizando... (contador: ${playerState.bufferingCount}, buffer: ${bufferAhead}ms, qualidade: $estimatedQuality)")
+              }
               androidx.media3.common.Player.STATE_READY -> {
                 android.util.Log.i("SharedPlayer", "✅ Player pronto!")
                 // Resetar contador de failover quando player estiver pronto
                 playerState.failoverAttempts = 0
                 playerState.originalStreamUrl = null
+                
+                // ✅ RESTAURAR qualidade quando rede melhorar
+                // Se está tocando bem por mais de 30 segundos, resetar contador de buffering e qualidade
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                  if (isPlaying && playerState.bufferingCount == 0 && playerState.connectionQuality != ConnectionQuality.POOR) {
+                    if (playerState.qualityReductionLevel > 0) {
+                      playerState.qualityReductionLevel = 0
+                      playerState.currentMaxBitrate = 2_200_000
+                      trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
+                        .setPreferredTextLanguage(null)
+                        .setMaxVideoBitrate(playerState.currentMaxBitrate)
+                        .setMaxVideoSize(1280, 720)
+                        .setMinVideoBitrate(500_000)
+                        .build()
+                      android.util.Log.i("SharedPlayer", "✅ Rede melhorou! Qualidade restaurada (${playerState.currentMaxBitrate / 1000}kbps)")
+                    }
+                  }
+                }, 30000) // 30 segundos de reprodução estável
               }
               androidx.media3.common.Player.STATE_ENDED -> 
                 android.util.Log.i("SharedPlayer", "🏁 Fim da stream")
@@ -317,42 +441,13 @@ fun LiveScreen(nav: NavHostController) {
           }
           
           override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
-            // Detectar mudanças de qualidade
+            // ✅ Detectar mudanças de qualidade (detecção de degradação)
             val tracks = currentTracks
             tracks.groups.forEach { group ->
               if (group.type == androidx.media3.common.C.TRACK_TYPE_VIDEO && group.length > 0) {
                 val format = group.getTrackFormat(0)
                 detectQualityDegradation(playerState, format)
-                
-                // Estimar qualidade de conexão e atualizar buffer dinamicamente
-                val bufferedPosition = bufferedPosition
-                val currentPosition = currentPosition
-                val bufferAhead = bufferedPosition - currentPosition
-                val latencyMs = (bufferedPosition - currentPosition).coerceAtLeast(0)
-                val estimatedQuality = estimateConnectionQuality(
-                  this@apply,
-                  latencyMs,
-                  bufferAhead,
-                  format.bitrate
-                )
-                
-                // Atualizar qualidade de conexão
-                if (playerState.connectionQuality != estimatedQuality) {
-                  playerState.connectionQuality = estimatedQuality
-                  android.util.Log.i("SharedPlayer", "📊 Qualidade de conexão: $estimatedQuality")
-                  
-                  // ✅ FASE 1: Atualizar LoadControl dinamicamente baseado na qualidade
-                  // Nota: ExoPlayer não permite trocar LoadControl em runtime, mas podemos
-                  // ajustar parâmetros de track selection para compensar
-                  if (estimatedQuality == ConnectionQuality.POOR && playerState.currentMaxBitrate > 1_000_000) {
-                    playerState.currentMaxBitrate = (playerState.currentMaxBitrate * 0.8).toInt()
-                    trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
-                      .setMaxVideoBitrate(playerState.currentMaxBitrate)
-                      .setMinVideoBitrate((playerState.currentMaxBitrate * 0.3).toInt())
-                      .build()
-                    android.util.Log.i("SharedPlayer", "📉 Bitrate reduzido para ${playerState.currentMaxBitrate / 1000}Kbps devido à conexão ruim")
-                  }
-                }
+                // Nota: A adaptação automática completa está no onPlaybackStateChanged
               }
             }
           }
@@ -522,11 +617,11 @@ fun LiveScreen(nav: NavHostController) {
       )
       
       // 🎨 Overlay moderno com EPG (MESMO ESTILO DO MINI PLAYER) - COM SAFE AREA/OVERSCAN
-      // ✅ Aplicar padding de overscan para não cortar na TV
+      // ✅ Aplicar padding de overscan para não cortar na TV (aumentado significativamente)
       val overscanPaddingFullscreen = when {
-        MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding.coerceAtLeast(20).dp
-        MaxiApp.isNativeTv -> 32.dp // Padding padrão para Android TV
-        MaxiApp.isTvBox -> 28.dp
+        MaxiApp.isFireStick -> (MaxiApp.fireStickOverscanPadding.coerceAtLeast(20) + 20).dp // Adicionar 20dp extra
+        MaxiApp.isNativeTv -> 52.dp // Aumentado de 32dp para 52dp
+        MaxiApp.isTvBox -> 48.dp // Aumentado de 28dp para 48dp
         else -> 0.dp
       }
       
@@ -548,10 +643,10 @@ fun LiveScreen(nav: NavHostController) {
             shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
           )
           .padding(
-            start = (20.dp + overscanPaddingFullscreen).coerceAtMost(40.dp), // Máximo 40dp para não ficar muito largo
+            start = (24.dp + overscanPaddingFullscreen), // Padding mínimo 24dp + overscan (sem limite máximo)
             top = 12.dp,
-            end = (20.dp + overscanPaddingFullscreen).coerceAtMost(40.dp),
-            bottom = (20.dp + overscanPaddingFullscreen / 2).coerceAtMost(35.dp) // Bottom com menos padding
+            end = (24.dp + overscanPaddingFullscreen), // Padding mínimo 24dp + overscan (sem limite máximo)
+            bottom = (24.dp + overscanPaddingFullscreen / 2) // Bottom com menos padding mas ainda seguro
           )
       ) {
         Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
@@ -1169,7 +1264,7 @@ fun MiniPlayer(
         android.util.Log.i("MiniPlayer", "🎯 2x OK no mini player - abrindo fullscreen")
         onFullscreen()
       }
-      .focusable()
+      // ✅ Removido .focusable() para não interferir com o foco do botão de futebol
       .onFocusChanged { focusState ->
         if (focusState.isFocused) {
           android.util.Log.i("MiniPlayer", "🎯 Mini player com foco - pronto para 2x OK")
@@ -1186,6 +1281,10 @@ fun MiniPlayer(
           resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
           // Desabilitar overlay nativo do ExoPlayer para mostrar nosso EPG
           setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_NEVER)
+          // ✅ IMPORTANTE: Desabilitar foco no PlayerView para não interferir com botão de futebol
+          isFocusable = false
+          isFocusableInTouchMode = false
+          descendantFocusability = android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
           layoutParams = android.view.ViewGroup.LayoutParams(
             android.view.ViewGroup.LayoutParams.MATCH_PARENT,
             android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -1198,11 +1297,11 @@ fun MiniPlayer(
     )
     
     // 🎨 Overlay moderno com EPG (APENAS no mini player) - COM SAFE AREA/OVERSCAN
-    // ✅ Aplicar padding de overscan para não cortar na TV
+    // ✅ Aplicar padding de overscan para não cortar na TV (aumentado significativamente)
     val overscanPadding = when {
-      MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding.coerceAtLeast(20).dp
-      MaxiApp.isNativeTv -> 32.dp // Padding padrão para Android TV
-      MaxiApp.isTvBox -> 28.dp
+      MaxiApp.isFireStick -> (MaxiApp.fireStickOverscanPadding.coerceAtLeast(20) + 20).dp // Adicionar 20dp extra
+      MaxiApp.isNativeTv -> 52.dp // Aumentado de 32dp para 52dp
+      MaxiApp.isTvBox -> 48.dp // Aumentado de 28dp para 48dp
       else -> 0.dp
     }
     
@@ -1224,10 +1323,10 @@ fun MiniPlayer(
           shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
         )
         .padding(
-          start = (20.dp + overscanPadding).coerceAtMost(40.dp), // Máximo 40dp para não ficar muito largo
+          start = (24.dp + overscanPadding), // Padding mínimo 24dp + overscan (sem limite máximo)
           top = 12.dp,
-          end = (20.dp + overscanPadding).coerceAtMost(40.dp),
-          bottom = (20.dp + overscanPadding / 2).coerceAtMost(35.dp) // Bottom com menos padding
+          end = (24.dp + overscanPadding), // Padding mínimo 24dp + overscan (sem limite máximo)
+          bottom = (24.dp + overscanPadding / 2) // Bottom com menos padding mas ainda seguro
         )
     ) {
       // ✅ Recarregar EPG se estiver vazio quando um canal é selecionado
@@ -1409,13 +1508,13 @@ fun MiniPlayer(
     } else null
     
     if (isFootballChannel && onStatsClick != null) {
-      // ⚽ Estado para controlar foco e zoom
+      // ⚽ Estado para controlar foco e zoom animado
       var isFocused by remember { mutableStateOf(false) }
       val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.2f else 1.0f,
+        targetValue = if (isFocused) 1.3f else 1.0f, // Aumentado para 1.3f para zoom mais visível
         animationSpec = spring(
           dampingRatio = Spring.DampingRatioMediumBouncy,
-          stiffness = Spring.StiffnessLow
+          stiffness = Spring.StiffnessMedium // Aumentado para animação mais rápida
         ),
         label = "statsButtonZoom"
       )
@@ -1426,21 +1525,17 @@ fun MiniPlayer(
           .align(Alignment.TopEnd)
           .padding(if (MaxiApp.isTv) 16.dp else 12.dp)
           .graphicsLayer {
+            // ✅ Zoom animado quando focado (1.0f → 1.3f)
             scaleX = scale
             scaleY = scale
             transformOrigin = TransformOrigin.Center
           }
-          .onFocusChanged { focusState ->
-            isFocused = focusState.isFocused
-            android.util.Log.d("MiniPlayer", "⚽ Botão de estatísticas - Foco: ${focusState.isFocused}")
-          }
-          .focusable() // ✅ Habilitar foco para D-PAD
           .then(
             if (isFocused) {
-              // ✅ Borda vermelha quando focado
+              // ✅ Borda vermelha quando focado (mesma cor do "AO VIVO")
               Modifier.border(
                 width = 4.dp,
-                color = Color(0xFFFF1744), // Vermelho neon
+                color = Color(0xFFFF1744), // Vermelho neon - mesma cor do "AO VIVO"
                 shape = RoundedCornerShape(50) // Círculo
               )
             } else {
@@ -1455,9 +1550,13 @@ fun MiniPlayer(
             val sizePx = (buttonSize * density).toInt()
             
             android.widget.ImageButton(ctx).apply {
-              // ✅ Tornar focusable para D-pad
+              // ✅ Tornar focusable para D-pad - SEM interferir com ExoPlayer
+              // O ExoPlayer está com isFocusable = false, então não há conflito
               isFocusable = true
               isFocusableInTouchMode = true
+              focusable = android.view.View.FOCUSABLE
+              // ✅ Prioridade de foco: botão pode receber foco antes do PlayerView
+              importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_YES
               
               // Criar drawable de bola de futebol
               val bitmap = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
@@ -1503,19 +1602,6 @@ fun MiniPlayer(
                 onStatsClick() // Usar o callback passado como parâmetro
               }
               
-              // ✅ Listener para foco (D-pad)
-              setOnFocusChangeListener { view, hasFocus ->
-                android.util.Log.d("MiniPlayer", "⚽ Botão de estatísticas - Foco D-pad: $hasFocus")
-                if (hasFocus) {
-                  // Efeito visual quando focado
-                  view.scaleX = 1.2f
-                  view.scaleY = 1.2f
-                } else {
-                  view.scaleX = 1.0f
-                  view.scaleY = 1.0f
-                }
-              }
-              
               // Animação de rotação
               val rotationAnimator = android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
                 duration = 3000
@@ -1525,6 +1611,16 @@ fun MiniPlayer(
               }
               
               layoutParams = android.widget.FrameLayout.LayoutParams(sizePx, sizePx)
+            }
+          },
+          update = { view ->
+            // ✅ Atualizar listener de foco sempre que o Composable recompor
+            view.setOnFocusChangeListener { _, hasFocus ->
+              // Usar Handler para atualizar estado do Composable na UI thread
+              android.os.Handler(android.os.Looper.getMainLooper()).post {
+                isFocused = hasFocus
+              }
+              android.util.Log.d("MiniPlayer", "⚽ Botão de estatísticas - Foco D-pad: $hasFocus")
             }
           }
         )
