@@ -41,6 +41,7 @@ object MatchIdExtractor {
         val name = channelName.lowercase()
 
         return name.contains("premiere") ||
+               name.contains("premier") ||  // ✅ Adicionado: "Premier" (sem "e" no final)
                name.contains("sportv") ||
                name.contains("band sport") ||
                name.contains("espn") ||

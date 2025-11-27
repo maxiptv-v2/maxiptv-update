@@ -546,10 +546,12 @@ class PlayerActivity : ComponentActivity() {
     
     // ⚽ Detectar se é canal de futebol pelo nome (usando função melhorada)
     val channelNameLower = channelName.lowercase().trim()
-    android.util.Log.d("PlayerActivity", "🔍 Verificando canal: '$channelName' (lowercase: '$channelNameLower')")
+    android.util.Log.i("PlayerActivity", "🔍 Verificando canal: '$channelName' (lowercase: '$channelNameLower')")
+    android.util.Log.i("PlayerActivity", "   - contentType: $contentType")
     
     // ⚽ NOVO: Usar função melhorada do MatchIdExtractor para detecção mais precisa
     val isSpecificFootballChannel = com.maxiptv.data.soccer.MatchIdExtractor.isFootballChannel(channelName)
+    android.util.Log.i("PlayerActivity", "   - isSpecificFootballChannel: $isSpecificFootballChannel")
     
     // Termos genéricos (menor prioridade, apenas se não for muito genérico)
     val genericTerms = listOf("sport", "futebol", "futbol")
@@ -558,8 +560,10 @@ class PlayerActivity : ComponentActivity() {
       !channelNameLower.contains("news") && // Excluir "sport news" etc
       !channelNameLower.contains("noticias")
     }
+    android.util.Log.i("PlayerActivity", "   - hasGenericTerm: $hasGenericTerm")
     
     isFootballMode = contentType == "live" && (isSpecificFootballChannel || hasGenericTerm)
+    android.util.Log.i("PlayerActivity", "   - isFootballMode: $isFootballMode (contentType='$contentType' && (isSpecific=$isSpecificFootballChannel || generic=$hasGenericTerm))")
     
     // ⚽ NOVO: Tentar extrair matchId do nome do canal
     if (isFootballMode) {
