@@ -1804,10 +1804,10 @@ fun EmbeddedPlayer(
       )
     }
     
-    // Indicador de "AO VIVO" piscante (canto superior direito)
+    // Indicador de "AO VIVO" piscante (canto superior direito) - SEM FUNDO, APENAS TEXTO VERMELHO
     val infiniteTransition = rememberInfiniteTransition(label = "liveIndicator")
     val liveAlpha by infiniteTransition.animateFloat(
-      initialValue = 0.3f,
+      initialValue = 0.7f,
       targetValue = 1f,
       animationSpec = infiniteRepeatable(
         animation = tween(800, easing = FastOutSlowInEasing),
@@ -1820,8 +1820,6 @@ fun EmbeddedPlayer(
       modifier = Modifier
         .align(Alignment.TopEnd)
         .padding(16.dp)
-        .background(Color(0xFFFF5252).copy(alpha = liveAlpha), RoundedCornerShape(6.dp))
-        .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
       Text(
         text = "● AO VIVO",
@@ -1831,7 +1829,14 @@ fun EmbeddedPlayer(
           else -> 12.sp
         },
         fontWeight = FontWeight.Bold,
-        color = Color.White
+        color = Color(0xFFFF0000).copy(alpha = liveAlpha), // Vermelho piscante, sem fundo
+        style = androidx.compose.ui.text.TextStyle(
+          shadow = androidx.compose.ui.graphics.Shadow(
+            color = Color.Black.copy(alpha = 0.8f),
+            offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+            blurRadius = 3f
+          )
+        )
       )
     }
     

@@ -2489,11 +2489,8 @@ class PlayerActivity : ComponentActivity() {
       return
     }
     
-    // ✅ FULLSCREEN: Não mostrar overlay em fullscreen
-    if (isFullscreen) {
-      liveChannelInfoOverlay?.visibility = android.view.View.GONE
-      return
-    }
+    // ✅ FULLSCREEN: EPG também aparece em fullscreen (mantém EPG do mini player)
+    // Removido: verificação que ocultava EPG em fullscreen
     
     val channelName = currentChannelName ?: return
     
@@ -2508,15 +2505,13 @@ class PlayerActivity : ComponentActivity() {
         val currentProgramme = com.maxiptv.data.EpgParser.getCurrentProgramme(channelName, epgData)
         val nextProgramme = com.maxiptv.data.EpgParser.getNextProgramme(channelName, epgData)
         
-        // Construir texto com informações do canal (SEM próximo programa)
+        // Construir texto com informações do canal (SEM próximo programa e SEM subTitle/hashtag)
         val infoText = buildString {
           append("📺 $channelName\n")
           if (currentProgramme != null) {
             append("━━━━━━━━━━━━━━━━\n")
             append("▶ ${currentProgramme.title}\n")
-            if (currentProgramme.subTitle != null) {
-              append("   ${currentProgramme.subTitle}\n")
-            }
+            // ✅ REMOVIDO: subTitle (pode conter hashtags como #CoracaoIndoma)
             append("   ${currentProgramme.startTime()} - ${currentProgramme.stopTime()}\n")
             // ✅ REMOVIDO: Próximo programa não será mais mostrado
           } else {

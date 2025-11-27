@@ -471,7 +471,7 @@ fun LiveScreen(nav: NavHostController) {
   // ✅ Adicionar categoria adulta no início
   val categoriesWithAdult = listOf("🔞 ADULTO" to "ADULT") + normalCats.map { it.category_name to it.category_id }
   
-  // 🔥 SE FULLSCREEN, MOSTRAR SÓ O PLAYER (TELA TODA, SEM TopBar/Categorias)
+  // 🔥 SE FULLSCREEN, MOSTRAR PLAYER COM EPG (TELA TODA, SEM TopBar/Categorias)
   if (isFullscreen && current != null) {
     // ⚽ Detectar se é canal de futebol
     val isFootballChannel = MatchIdExtractor.isFootballChannel(current!!.name)
@@ -479,7 +479,11 @@ fun LiveScreen(nav: NavHostController) {
       MatchIdExtractor.extractMatchId(current!!.name) ?: currentMatchId
     } else null
     
-    // Fullscreen limpo - só o player com controles nativos
+    // ✅ Buscar programa atual e próximo do EPG (mesmo estilo do mini player)
+    val currentProgramme = EpgParser.getCurrentProgramme(current!!.name, epgData)
+    val nextProgramme = EpgParser.getNextProgramme(current!!.name, epgData)
+    
+    // Fullscreen com EPG - player com controles nativos + overlay de EPG
     // BACK do controle remoto sai do fullscreen (BackHandler acima)
     // IMPORTANTE: Nenhuma TopBar é renderizada em fullscreen
     // ✅ CORREÇÃO FIRE STICK: Usar systemBarsPadding() e RESIZE_MODE_FILL para garantir fullscreen completo
@@ -516,6 +520,187 @@ fun LiveScreen(nav: NavHostController) {
           .fillMaxSize()           // Garante que o Compose ocupe 100% da tela
           .systemBarsPadding()      // Ajusta status/nav quando necessário (Android TV ignora, mas Fire Stick precisa)
       )
+      
+      // 🎨 Overlay moderno com EPG (MESMO ESTILO DO MINI PLAYER) - COM SAFE AREA/OVERSCAN
+      // ✅ Aplicar padding de overscan para não cortar na TV
+      val overscanPaddingFullscreen = when {
+        MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding.coerceAtLeast(20).dp
+        MaxiApp.isNativeTv -> 32.dp // Padding padrão para Android TV
+        MaxiApp.isTvBox -> 28.dp
+        else -> 0.dp
+      }
+      
+      Box(
+        modifier = Modifier
+          .align(Alignment.BottomStart)
+          .fillMaxWidth()
+          .background(
+            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+              colors = listOf(
+                Color.Transparent,
+                Color.Black.copy(alpha = 0.3f),
+                Color.Black.copy(alpha = 0.75f),
+                Color.Black.copy(alpha = 0.9f)
+              ),
+              startY = 0f,
+              endY = Float.POSITIVE_INFINITY
+            ),
+            shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
+          )
+          .padding(
+            start = (20.dp + overscanPaddingFullscreen).coerceAtMost(40.dp), // Máximo 40dp para não ficar muito largo
+            top = 12.dp,
+            end = (20.dp + overscanPaddingFullscreen).coerceAtMost(40.dp),
+            bottom = (20.dp + overscanPaddingFullscreen / 2).coerceAtMost(35.dp) // Bottom com menos padding
+          )
+      ) {
+        Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+          // 📺 Nome do canal com visual moderno
+          Text(
+            text = current!!.name,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            letterSpacing = 0.3.sp,
+            style = androidx.compose.ui.text.TextStyle(
+              shadow = androidx.compose.ui.graphics.Shadow(
+                color = Color.Black.copy(alpha = 0.95f),
+                offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                blurRadius = 8f
+              )
+            )
+          )
+          
+          // 🎬 Programa atual (se disponível no EPG)
+          if (currentProgramme != null) {
+            Row(
+              horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+              verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+              // Badge "AO VIVO" - SEM FUNDO, APENAS TEXTO VERMELHO MODERNO
+              Text(
+                text = "● AO VIVO",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFFFF1744), // Vermelho vibrante moderno
+                letterSpacing = 1.sp,
+                style = androidx.compose.ui.text.TextStyle(
+                  shadow = androidx.compose.ui.graphics.Shadow(
+                    color = Color.Black.copy(alpha = 0.9f),
+                    offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                    blurRadius = 4f
+                  )
+                )
+              )
+              
+              // Horário do programa com visual moderno
+              Text(
+                text = "${currentProgramme.startTime()} - ${currentProgramme.stopTime()}",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF64B5F6), // Azul moderno mais vibrante
+                letterSpacing = 0.4.sp,
+                style = androidx.compose.ui.text.TextStyle(
+                  shadow = androidx.compose.ui.graphics.Shadow(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                    blurRadius = 3f
+                  )
+                )
+              )
+            }
+            
+            // Título do programa atual com visual moderno
+            Text(
+              text = currentProgramme.title,
+              fontSize = 17.sp,
+              fontWeight = FontWeight.SemiBold,
+              color = Color(0xFFFFEB3B), // Amarelo mais vibrante
+              maxLines = 2,
+              overflow = TextOverflow.Ellipsis,
+              lineHeight = 22.sp,
+              letterSpacing = 0.1.sp,
+              style = androidx.compose.ui.text.TextStyle(
+                shadow = androidx.compose.ui.graphics.Shadow(
+                  color = Color.Black.copy(alpha = 0.8f),
+                  offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                  blurRadius = 5f
+                )
+              )
+            )
+            
+            // 📺 Próxima atração com visual moderno
+            if (nextProgramme != null) {
+              Row(
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+              ) {
+                // Label "Em seguida"
+                Text(
+                  text = "EM SEGUIDA",
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = Color(0xFF78909C), // Cinza azulado
+                  letterSpacing = 0.8.sp,
+                  style = androidx.compose.ui.text.TextStyle(
+                    shadow = androidx.compose.ui.graphics.Shadow(
+                      color = Color.Black.copy(alpha = 0.7f),
+                      offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                      blurRadius = 3f
+                    )
+                  )
+                )
+                
+                Text(
+                  text = "•",
+                  fontSize = 11.sp,
+                  color = Color(0xFF78909C),
+                  style = androidx.compose.ui.text.TextStyle(
+                    shadow = androidx.compose.ui.graphics.Shadow(
+                      color = Color.Black.copy(alpha = 0.7f),
+                      offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                      blurRadius = 3f
+                    )
+                  )
+                )
+                
+                Text(
+                  text = "${nextProgramme.startTime()}h",
+                  fontSize = 12.sp,
+                  fontWeight = FontWeight.SemiBold,
+                  color = Color(0xFFB0BEC5),
+                  style = androidx.compose.ui.text.TextStyle(
+                    shadow = androidx.compose.ui.graphics.Shadow(
+                      color = Color.Black.copy(alpha = 0.7f),
+                      offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                      blurRadius = 3f
+                    )
+                  )
+                )
+                
+                Text(
+                  text = nextProgramme.title,
+                  fontSize = 14.sp,
+                  fontWeight = FontWeight.Medium,
+                  color = Color(0xFFCFD8DC), // Cinza claro
+                  maxLines = 1,
+                  overflow = TextOverflow.Ellipsis,
+                  modifier = Modifier.weight(1f),
+                  style = androidx.compose.ui.text.TextStyle(
+                    shadow = androidx.compose.ui.graphics.Shadow(
+                      color = Color.Black.copy(alpha = 0.7f),
+                      offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                      blurRadius = 3f
+                    )
+                  )
+                )
+              }
+            }
+          }
+        }
+      }
     }
     return // IMPORTANTE: Sair da função ANTES de renderizar TopBar ou qualquer outro elemento
   }
@@ -1012,20 +1197,38 @@ fun MiniPlayer(
         .clip(RoundedCornerShape(16.dp)) // Bordas arredondadas para visual moderno
     )
     
-    // 🎨 Overlay elegante com EPG (APENAS no mini player)
+    // 🎨 Overlay moderno com EPG (APENAS no mini player) - COM SAFE AREA/OVERSCAN
+    // ✅ Aplicar padding de overscan para não cortar na TV
+    val overscanPadding = when {
+      MaxiApp.isFireStick -> MaxiApp.fireStickOverscanPadding.coerceAtLeast(20).dp
+      MaxiApp.isNativeTv -> 32.dp // Padding padrão para Android TV
+      MaxiApp.isTvBox -> 28.dp
+      else -> 0.dp
+    }
+    
     Box(
       modifier = Modifier
         .align(Alignment.BottomStart)
         .fillMaxWidth()
         .background(
-          androidx.compose.ui.graphics.Brush.verticalGradient(
+          brush = androidx.compose.ui.graphics.Brush.verticalGradient(
             colors = listOf(
               Color.Transparent,
-              Color.Black.copy(alpha = 0.85f)
-            )
-          )
+              Color.Black.copy(alpha = 0.3f),
+              Color.Black.copy(alpha = 0.75f),
+              Color.Black.copy(alpha = 0.9f)
+            ),
+            startY = 0f,
+            endY = Float.POSITIVE_INFINITY
+          ),
+          shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
         )
-        .padding(16.dp, 8.dp, 16.dp, 16.dp) // Padding reduzido no topo
+        .padding(
+          start = (20.dp + overscanPadding).coerceAtMost(40.dp), // Máximo 40dp para não ficar muito largo
+          top = 12.dp,
+          end = (20.dp + overscanPadding).coerceAtMost(40.dp),
+          bottom = (20.dp + overscanPadding / 2).coerceAtMost(35.dp) // Bottom com menos padding
+        )
     ) {
       // ✅ Recarregar EPG se estiver vazio quando um canal é selecionado
       val scope = rememberCoroutineScope()
@@ -1051,21 +1254,21 @@ fun MiniPlayer(
       android.util.Log.i("MiniPlayer", "🎬 Programa atual: ${currentProgramme?.title ?: "NÃO ENCONTRADO"}")
       android.util.Log.i("MiniPlayer", "🎬 Próximo programa: ${nextProgramme?.title ?: "NÃO ENCONTRADO"}")
       
-      Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
-        // 📺 Nome do canal com visual profissional
+      Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+        // 📺 Nome do canal com visual moderno
         Text(
           text = channel.name,
-          fontSize = 22.sp,
+          fontSize = 24.sp,
           fontWeight = FontWeight.Bold,
           color = Color.White,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
-          letterSpacing = 0.5.sp,
+          letterSpacing = 0.3.sp,
           style = androidx.compose.ui.text.TextStyle(
             shadow = androidx.compose.ui.graphics.Shadow(
-              color = Color.Black.copy(alpha = 0.9f),
-              offset = androidx.compose.ui.geometry.Offset(2f, 2f),
-              blurRadius = 6f
+              color = Color.Black.copy(alpha = 0.95f),
+              offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+              blurRadius = 8f
             )
           )
         )
@@ -1073,99 +1276,129 @@ fun MiniPlayer(
         // 🎬 Programa atual (se disponível no EPG)
         if (currentProgramme != null) {
           Row(
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
           ) {
-            // Badge "AO VIVO" estilo moderno
-            Box(
-              modifier = Modifier
-                .background(
-                  androidx.compose.ui.graphics.Brush.horizontalGradient(
-                    colors = listOf(Color(0xFFFF1744), Color(0xFFE91E63))
-                  ),
-                  RoundedCornerShape(6.dp)
+            // Badge "AO VIVO" - SEM FUNDO, APENAS TEXTO VERMELHO MODERNO
+            Text(
+              text = "● AO VIVO",
+              fontSize = 11.sp,
+              fontWeight = FontWeight.ExtraBold,
+              color = Color(0xFFFF1744), // Vermelho vibrante moderno
+              letterSpacing = 1.sp,
+              style = androidx.compose.ui.text.TextStyle(
+                shadow = androidx.compose.ui.graphics.Shadow(
+                  color = Color.Black.copy(alpha = 0.9f),
+                  offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                  blurRadius = 4f
                 )
-                .padding(horizontal = 8.dp, vertical = 3.dp)
-            ) {
-              Text(
-                text = "● AO VIVO",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                letterSpacing = 0.8.sp
               )
-            }
+            )
             
-            // Horário do programa
+            // Horário do programa com visual moderno
             Text(
               text = "${currentProgramme.startTime()} - ${currentProgramme.stopTime()}",
-              fontSize = 13.sp,
+              fontSize = 14.sp,
               fontWeight = FontWeight.SemiBold,
-              color = Color(0xFF90CAF9), // Azul claro
-              letterSpacing = 0.3.sp
+              color = Color(0xFF64B5F6), // Azul moderno mais vibrante
+              letterSpacing = 0.4.sp,
+              style = androidx.compose.ui.text.TextStyle(
+                shadow = androidx.compose.ui.graphics.Shadow(
+                  color = Color.Black.copy(alpha = 0.7f),
+                  offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                  blurRadius = 3f
+                )
+              )
             )
           }
           
-          // Título do programa atual
+          // Título do programa atual com visual moderno
           Text(
             text = currentProgramme.title,
-            fontSize = 16.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFFFFF59D), // Amarelo suave
+            color = Color(0xFFFFEB3B), // Amarelo mais vibrante
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            lineHeight = 20.sp,
-            letterSpacing = 0.2.sp,
+            lineHeight = 22.sp,
+            letterSpacing = 0.1.sp,
             style = androidx.compose.ui.text.TextStyle(
               shadow = androidx.compose.ui.graphics.Shadow(
-                color = Color.Black.copy(alpha = 0.7f),
-                offset = androidx.compose.ui.geometry.Offset(1f, 1f),
-                blurRadius = 3f
+                color = Color.Black.copy(alpha = 0.8f),
+                offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                blurRadius = 5f
               )
             )
           )
           
-          // 📺 Próxima atração com visual melhorado
+          // 📺 Próxima atração com visual moderno
           if (nextProgramme != null) {
             Row(
-              horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+              horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
               verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
             ) {
               // Label "Em seguida"
               Text(
                 text = "EM SEGUIDA",
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF78909C), // Cinza azulado
-                letterSpacing = 0.8.sp
+                letterSpacing = 0.8.sp,
+                style = androidx.compose.ui.text.TextStyle(
+                  shadow = androidx.compose.ui.graphics.Shadow(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                    blurRadius = 3f
+                  )
+                )
               )
               
               Text(
                 text = "•",
-                fontSize = 10.sp,
-                color = Color(0xFF78909C)
+                fontSize = 11.sp,
+                color = Color(0xFF78909C),
+                style = androidx.compose.ui.text.TextStyle(
+                  shadow = androidx.compose.ui.graphics.Shadow(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                    blurRadius = 3f
+                  )
+                )
               )
               
               Text(
                 text = "${nextProgramme.startTime()}h",
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFB0BEC5)
+                color = Color(0xFFB0BEC5),
+                style = androidx.compose.ui.text.TextStyle(
+                  shadow = androidx.compose.ui.graphics.Shadow(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                    blurRadius = 3f
+                  )
+                )
               )
               
               Text(
                 text = nextProgramme.title,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFFCFD8DC), // Cinza claro
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                style = androidx.compose.ui.text.TextStyle(
+                  shadow = androidx.compose.ui.graphics.Shadow(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                    blurRadius = 3f
+                  )
+                )
               )
             }
           }
         }
-        // ❌ OVERLAY ANTIGO REMOVIDO - SÓ EPG AGORA!
       }
     }
     
