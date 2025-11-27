@@ -610,8 +610,21 @@ class PlayerActivity : ComponentActivity() {
     android.util.Log.d("PlayerActivity", "🔍 PlayerActivity iniciado - configurações serão aplicadas quando tracks estiverem disponíveis")
     
     // ✅ MELHORIA 2: Mostrar/ocultar overlay de tempo restante baseado no tipo de conteúdo
+    // ✅ FULLSCREEN: Não mostrar overlays em fullscreen
     val isVodOrSeries = contentType == "vod" || contentType == "series"
-    remainingTimeOverlay?.visibility = if (isVodOrSeries) android.view.View.VISIBLE else android.view.View.GONE
+    remainingTimeOverlay?.visibility = if (isFullscreen) android.view.View.GONE else if (isVodOrSeries) android.view.View.VISIBLE else android.view.View.GONE
+    
+    // ✅ FULLSCREEN: Garantir que todos os overlays estão ocultos ao iniciar em fullscreen
+    if (isFullscreen) {
+      qualityOverlay?.visibility = android.view.View.GONE
+      bufferIndicatorOverlay?.visibility = android.view.View.GONE
+      latencyOverlay?.visibility = android.view.View.GONE
+      statsOverlay?.visibility = android.view.View.GONE
+      liveChannelInfoOverlay?.visibility = android.view.View.GONE
+      nextEpisodeOverlay?.visibility = android.view.View.GONE
+      pauseControlsOverlay?.visibility = android.view.View.GONE
+      android.util.Log.d("PlayerActivity", "🖥️ Iniciando em fullscreen: Todos os overlays ocultados")
+    }
     
     // ⚽ CRIAR OVERLAY DE GRAMADO PARA MODO FUTEBOL (apenas se necessário)
     if (isFootballMode) {
@@ -1284,6 +1297,21 @@ class PlayerActivity : ComponentActivity() {
       // quando necessário (ex: para exibir diálogos do sistema)
       windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
       
+      // ✅ OCULTAR TODOS OS OVERLAYS EM FULLSCREEN
+      // Em fullscreen, não mostrar nada sobre o player - só controles nativos quando usuário interagir
+      qualityOverlay?.visibility = android.view.View.GONE
+      remainingTimeOverlay?.visibility = android.view.View.GONE
+      bufferIndicatorOverlay?.visibility = android.view.View.GONE
+      latencyOverlay?.visibility = android.view.View.GONE
+      statsOverlay?.visibility = android.view.View.GONE
+      liveChannelInfoOverlay?.visibility = android.view.View.GONE
+      nextEpisodeOverlay?.visibility = android.view.View.GONE
+      pauseControlsOverlay?.visibility = android.view.View.GONE
+      // ⚽ Botão de futebol pode ficar (é útil mesmo em fullscreen)
+      // footballStatsButton permanece visível se necessário
+      
+      android.util.Log.d("PlayerActivity", "🖥️ Fullscreen: Todos os overlays ocultados")
+      
       // ✅ Fire Stick: Garantir que a janela permite diálogos mesmo em fullscreen
       if (MaxiApp.isFireStick) {
         // Não bloquear diálogos em fullscreen no Fire Stick
@@ -1298,6 +1326,17 @@ class PlayerActivity : ComponentActivity() {
     } else {
       // ✅ API MODERNA - Sair de fullscreen
       windowInsetsController.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+      
+      // ✅ RESTAURAR OVERLAYS AO SAIR DO FULLSCREEN (se necessário)
+      // Restaurar visibilidade baseada no tipo de conteúdo
+      if (contentType == "live") {
+        // Para live: mostrar apenas informações do canal (sem próximo programa)
+        // liveChannelInfoOverlay será atualizado pelo handler
+      } else if (contentType == "vod" || contentType == "series") {
+        remainingTimeOverlay?.visibility = android.view.View.VISIBLE
+      }
+      
+      android.util.Log.d("PlayerActivity", "🖥️ Saindo do fullscreen: Overlays restaurados")
       
       // ✅ Fire Stick: Restaurar flags normais ao sair do fullscreen
       if (MaxiApp.isFireStick) {
@@ -2145,6 +2184,12 @@ class PlayerActivity : ComponentActivity() {
       return
     }
     
+    // ✅ FULLSCREEN: Não mostrar overlay em fullscreen
+    if (isFullscreen) {
+      remainingTimeOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
     val duration = exo.duration
     val currentPosition = exo.currentPosition
     
@@ -2178,6 +2223,12 @@ class PlayerActivity : ComponentActivity() {
   // ✅ MELHORIA 3: Atualizar indicador visual de buffer
   private fun updateBufferIndicator() {
     val exo = player ?: return
+    
+    // ✅ FULLSCREEN: Não mostrar overlay em fullscreen
+    if (isFullscreen) {
+      bufferIndicatorOverlay?.visibility = android.view.View.GONE
+      return
+    }
     
     // Calcular percentual de buffer disponível
     val bufferedPosition = exo.bufferedPosition
@@ -2272,6 +2323,12 @@ class PlayerActivity : ComponentActivity() {
       return
     }
     
+    // ✅ FULLSCREEN: Não mostrar overlay em fullscreen
+    if (isFullscreen) {
+      latencyOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
     // ✅ Só mostrar se usuário interagiu recentemente (últimos 5 segundos)
     val timeSinceInteraction = System.currentTimeMillis() - lastUserInteraction
     val shouldShow = showLatencyStats && timeSinceInteraction < 5000
@@ -2351,6 +2408,12 @@ class PlayerActivity : ComponentActivity() {
       return
     }
     
+    // ✅ FULLSCREEN: Não mostrar overlay em fullscreen
+    if (isFullscreen) {
+      statsOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
     // ✅ Só mostrar se usuário interagiu recentemente (últimos 5 segundos)
     val timeSinceInteraction = System.currentTimeMillis() - lastUserInteraction
     val shouldShow = showLatencyStats && timeSinceInteraction < 5000
@@ -2426,6 +2489,12 @@ class PlayerActivity : ComponentActivity() {
       return
     }
     
+    // ✅ FULLSCREEN: Não mostrar overlay em fullscreen
+    if (isFullscreen) {
+      liveChannelInfoOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
     val channelName = currentChannelName ?: return
     
     // Buscar informações do EPG em background
@@ -2439,7 +2508,7 @@ class PlayerActivity : ComponentActivity() {
         val currentProgramme = com.maxiptv.data.EpgParser.getCurrentProgramme(channelName, epgData)
         val nextProgramme = com.maxiptv.data.EpgParser.getNextProgramme(channelName, epgData)
         
-        // Construir texto com informações do canal
+        // Construir texto com informações do canal (SEM próximo programa)
         val infoText = buildString {
           append("📺 $channelName\n")
           if (currentProgramme != null) {
@@ -2449,11 +2518,7 @@ class PlayerActivity : ComponentActivity() {
               append("   ${currentProgramme.subTitle}\n")
             }
             append("   ${currentProgramme.startTime()} - ${currentProgramme.stopTime()}\n")
-            if (nextProgramme != null) {
-              append("━━━━━━━━━━━━━━━━\n")
-              append("⏭ ${nextProgramme.title}\n")
-              append("   ${nextProgramme.startTime()}\n")
-            }
+            // ✅ REMOVIDO: Próximo programa não será mais mostrado
           } else {
             append("━━━━━━━━━━━━━━━━\n")
             append("Programação não disponível\n")
@@ -2534,6 +2599,12 @@ class PlayerActivity : ComponentActivity() {
   private fun checkAndShowNextEpisode() {
     val exo = player ?: return
     
+    // ✅ FULLSCREEN: Não mostrar overlay de próximo episódio em fullscreen
+    if (isFullscreen) {
+      nextEpisodeOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
     if (contentType == "series") {
       // Para séries: mostrar nos últimos 30 segundos do episódio
       val currentPosition = exo.currentPosition
@@ -2569,36 +2640,9 @@ class PlayerActivity : ComponentActivity() {
         nextEpisodeOverlay?.visibility = android.view.View.GONE
       }
     } else if (contentType == "live") {
-      // Para canais live: mostrar próximo programa do EPG
-      val nextProgramme = getNextProgrammeFromEpg()
-      
-      if (nextProgramme != null) {
-        if (nextEpisodeOverlay == null) {
-          createNextEpisodeOverlay()
-        }
-        nextEpisodeOverlay?.visibility = android.view.View.VISIBLE
-        
-        // Calcular tempo até o próximo programa
-        val now = System.currentTimeMillis()
-        val timeUntilNext = nextProgramme.start - now
-        val minutesUntil = (timeUntilNext / 60000).toInt()
-        val secondsUntil = ((timeUntilNext % 60000) / 1000).toInt()
-        
-        val timeText = if (minutesUntil > 0) {
-          "Em ${minutesUntil}m ${secondsUntil}s"
-        } else if (secondsUntil > 0) {
-          "Em ${secondsUntil}s"
-        } else {
-          "Em breve"
-        }
-        
-        val nextProgrammeText = "${nextProgramme.title} - ${nextProgramme.startTime()}"
-        
-        updateNextEpisodeOverlay(timeText, nextProgrammeText)
-      } else {
-        // Ocultar se não houver próximo programa
-        nextEpisodeOverlay?.visibility = android.view.View.GONE
-      }
+      // ✅ REMOVIDO: Banner "PRÓXIMO PROGRAMA" desabilitado para canais live
+      // O overlay de próximo programa não será mais mostrado em canais live
+      nextEpisodeOverlay?.visibility = android.view.View.GONE
     }
   }
   
@@ -2751,6 +2795,12 @@ class PlayerActivity : ComponentActivity() {
   
   // ✅ MELHORIA 1: Mostrar indicador visual de qualidade atual
   private fun showQualityIndicator(resolution: String, bitrate: Int?) {
+    // ✅ FULLSCREEN: Não mostrar overlay em fullscreen
+    if (isFullscreen) {
+      qualityOverlay?.visibility = android.view.View.GONE
+      return
+    }
+    
     qualityOverlay?.let { overlay ->
       val bitrateText = bitrate?.let { " @ ${it / 1000}Kbps" } ?: ""
       overlay.text = "$resolution$bitrateText"
