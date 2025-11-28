@@ -50,9 +50,18 @@ fun StatisticBarChart(
         Text(
             text = label,
             fontSize = fontSize,
-            color = Color.Gray,
+            color = Color(0xFFCFD8DC),
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 4.dp)
+            fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+            letterSpacing = 0.2.sp,
+            modifier = Modifier.padding(bottom = 6.dp),
+            style = androidx.compose.ui.text.TextStyle(
+                shadow = androidx.compose.ui.graphics.Shadow(
+                    color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.5f),
+                    offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                    blurRadius = 3f
+                )
+            )
         )
         
         // Gráfico de barras
@@ -78,12 +87,21 @@ fun StatisticBarChart(
                 // Valor numérico
                 Text(
                     text = "$homeValue",
-                    fontSize = fontSize,
+                    fontSize = (fontSize.value + 1f).sp,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    letterSpacing = 0.3.sp,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .padding(horizontal = 4.dp)
+                        .padding(horizontal = 6.dp),
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f),
+                            offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                            blurRadius = 4f
+                        )
+                    )
                 )
             }
             
@@ -110,12 +128,21 @@ fun StatisticBarChart(
                 // Valor numérico
                 Text(
                     text = "$awayValue",
-                    fontSize = fontSize,
+                    fontSize = (fontSize.value + 1f).sp,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    letterSpacing = 0.3.sp,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(horizontal = 4.dp)
+                        .padding(horizontal = 6.dp),
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f),
+                            offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                            blurRadius = 4f
+                        )
+                    )
                 )
             }
         }

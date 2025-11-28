@@ -52,13 +52,22 @@ fun PossessionPieChart(
         Text(
             text = "⚽ Posse de Bola",
             fontSize = when (deviceType) {
-                "tv" -> 16.sp
-                "phone" -> 12.sp
-                else -> 14.sp
+                "tv" -> 18.sp
+                "phone" -> 14.sp
+                else -> 16.sp
             },
             fontWeight = FontWeight.Bold,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
             color = Color(0xFFFFD700),
-            modifier = Modifier.padding(bottom = 12.dp)
+            letterSpacing = 0.5.sp,
+            modifier = Modifier.padding(bottom = 12.dp),
+            style = androidx.compose.ui.text.TextStyle(
+                shadow = androidx.compose.ui.graphics.Shadow(
+                    color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f),
+                    offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                    blurRadius = 4f
+                )
+            )
         )
         
         Row(
@@ -81,17 +90,35 @@ fun PossessionPieChart(
                     text = homeTeamName,
                     fontSize = fontSize,
                     color = Color.White,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    letterSpacing = 0.2.sp,
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f),
+                            offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                            blurRadius = 3f
+                        )
+                    )
                 )
                 Text(
                     text = "$homePossession%",
                     fontSize = when (deviceType) {
-                        "tv" -> 20.sp
-                        "phone" -> 16.sp
-                        else -> 18.sp
+                        "tv" -> 22.sp
+                        "phone" -> 18.sp
+                        else -> 20.sp
                     },
-                    fontWeight = FontWeight.Bold,
-                    color = homeColor
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    color = homeColor,
+                    letterSpacing = 0.5.sp,
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.8f),
+                            offset = androidx.compose.ui.geometry.Offset(2f, 2f),
+                            blurRadius = 6f
+                        )
+                    )
                 )
             }
             
@@ -135,17 +162,35 @@ fun PossessionPieChart(
                     text = awayTeamName,
                     fontSize = fontSize,
                     color = Color.White,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    letterSpacing = 0.2.sp,
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f),
+                            offset = androidx.compose.ui.geometry.Offset(1f, 1f),
+                            blurRadius = 3f
+                        )
+                    )
                 )
                 Text(
                     text = "$awayPossession%",
                     fontSize = when (deviceType) {
-                        "tv" -> 20.sp
-                        "phone" -> 16.sp
-                        else -> 18.sp
+                        "tv" -> 22.sp
+                        "phone" -> 18.sp
+                        else -> 20.sp
                     },
-                    fontWeight = FontWeight.Bold,
-                    color = awayColor
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    color = awayColor,
+                    letterSpacing = 0.5.sp,
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.8f),
+                            offset = androidx.compose.ui.geometry.Offset(2f, 2f),
+                            blurRadius = 6f
+                        )
+                    )
                 )
             }
         }

@@ -113,29 +113,26 @@ fun LiveScreen(nav: NavHostController) {
         android.util.Log.i("LiveScreen", "   URL Base: https://v3.football.api-sports.io/")
         android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
         
-        // ✅ NOVO: Se não houver Match ID, tentar buscar pelo nome dos times
+        // ✅ NOVO: Se não houver Match ID, usar busca inteligente para identificar a partida
         var finalMatchId = currentMatchId
         if (finalMatchId == null && current != null) {
-          android.util.Log.i("LiveScreen", "🔍 Match ID não encontrado, tentando buscar pelo nome dos times...")
-          val teamNames = MatchIdExtractor.extractTeamNames(current!!.name)
-          if (teamNames != null) {
-            android.util.Log.i("LiveScreen", "   Times extraídos: ${teamNames.first} x ${teamNames.second}")
-            finalMatchId = SoccerRepository.findMatchByTeamNames(teamNames.first, teamNames.second)
-            if (finalMatchId != null) {
-              android.util.Log.i("LiveScreen", "   ✅ Match ID encontrado pelo nome dos times: $finalMatchId")
-              // Atualizar currentMatchId para uso futuro
-              currentMatchId = finalMatchId
-            } else {
-              android.util.Log.w("LiveScreen", "   ⚠️ Partida não encontrada pelo nome dos times")
-            }
+          android.util.Log.i("LiveScreen", "🔍 Match ID não encontrado, buscando automaticamente para o canal...")
+          
+          // Tentar buscar Match ID usando busca inteligente por canal
+          finalMatchId = SoccerRepository.findMatchForChannel(current!!.name)
+          
+          if (finalMatchId != null) {
+            android.util.Log.i("LiveScreen", "   ✅ Match ID identificado automaticamente: $finalMatchId")
+            // Atualizar currentMatchId para uso futuro
+            currentMatchId = finalMatchId
           } else {
-            android.util.Log.w("LiveScreen", "   ⚠️ Não foi possível extrair nomes dos times do canal")
+            android.util.Log.w("LiveScreen", "   ⚠️ Não foi possível identificar a partida para este canal")
           }
         }
         
         if (finalMatchId == null) {
           android.util.Log.e("LiveScreen", "❌ Match ID não disponível - não é possível buscar estatísticas")
-          statsError = "Partida não encontrada. Verifique se o jogo está ao vivo ou se o nome do canal contém os times."
+          statsError = "Partida não encontrada. Verifique se o jogo está ao vivo."
           isLoadingStats = false
           return@LaunchedEffect
         }
@@ -193,7 +190,7 @@ fun LiveScreen(nav: NavHostController) {
   // ✅ Estado para rastrear qualidade de conexão e failover (usando classe compartilhada)
   val playerState = remember { 
     PlayerState().apply {
-      currentMaxBitrate = 2_200_000 // Inicializar bitrate para Live TV
+      currentMaxBitrate = 1_500_000 // Inicializar bitrate para Live TV (REDUZIDO de 2.2Mbps)
     }
   }
   
@@ -308,12 +305,12 @@ fun LiveScreen(nav: NavHostController) {
         volume = 0.3f // Começa baixo no mini player
         repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
         
-        // 📊 QUALIDADE ADAPTATIVA OTIMIZADA
+        // 📊 QUALIDADE ADAPTATIVA OTIMIZADA (REDUZIDA para evitar travamentos)
         trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
           .setPreferredTextLanguage(null)
-          .setMaxVideoBitrate(2_200_000) // 2.2Mbps (qualidade balanceada)
+          .setMaxVideoBitrate(1_500_000) // 1.5Mbps (REDUZIDO de 2.2Mbps - mais estável)
           .setMaxVideoSize(1280, 720)   // Limitar a 720p
-          .setMinVideoBitrate(500_000)  // Bitrate mínimo
+          .setMinVideoBitrate(400_000)  // Bitrate mínimo (REDUZIDO de 500k)
           .build()
         
         // 🔄 RETRY AUTOMÁTICO MELHORADO - Sistema de failover profissional
@@ -410,12 +407,12 @@ fun LiveScreen(nav: NavHostController) {
                   else -> false
                 }
                 
-                if (shouldReduceQuality && playerState.currentMaxBitrate > 800_000) {
-                  // ✅ Redução gradual baseada no nível atual (LIVE TV)
+                if (shouldReduceQuality && playerState.currentMaxBitrate > 600_000) {
+                  // ✅ Redução gradual baseada no nível atual (LIVE TV) - OTIMIZADA
                   val newBitrate = when (playerState.qualityReductionLevel) {
-                    0 -> 1_500_000  // Nível 1: Redução leve (2.2Mbps → 1.5Mbps live)
-                    1 -> 1_000_000  // Nível 2: Redução média (1.5Mbps → 1.0Mbps live)
-                    2 -> 600_000    // Nível 3: Redução alta (1.0Mbps → 600kbps live)
+                    0 -> 1_000_000  // Nível 1: Redução leve (1.5Mbps → 1.0Mbps live)
+                    1 -> 700_000    // Nível 2: Redução média (1.0Mbps → 700kbps live)
+                    2 -> 500_000    // Nível 3: Redução alta (700kbps → 500kbps live)
                     else -> playerState.currentMaxBitrate // Não reduzir mais
                   }
                   
@@ -462,12 +459,12 @@ fun LiveScreen(nav: NavHostController) {
                   if (isPlaying && playerState.bufferingCount == 0 && playerState.connectionQuality != ConnectionQuality.POOR) {
                     if (playerState.qualityReductionLevel > 0) {
                       playerState.qualityReductionLevel = 0
-                      playerState.currentMaxBitrate = 2_200_000
+                      playerState.currentMaxBitrate = 1_500_000 // Restaurar para 1.5Mbps (não 2.2Mbps)
                       trackSelectionParameters = androidx.media3.common.TrackSelectionParameters.Builder(context)
                         .setPreferredTextLanguage(null)
                         .setMaxVideoBitrate(playerState.currentMaxBitrate)
                         .setMaxVideoSize(1280, 720)
-                        .setMinVideoBitrate(500_000)
+                        .setMinVideoBitrate(400_000)
                         .build()
                       android.util.Log.i("SharedPlayer", "✅ Rede melhorou! Qualidade restaurada (${playerState.currentMaxBitrate / 1000}kbps)")
                     }
@@ -1065,8 +1062,22 @@ fun LiveScreen(nav: NavHostController) {
                 try {
                   // 📺 Canais normais: apenas mudar layout (MESMO PLAYER, SÓ MUDA LAYOUT)
                   android.util.Log.i("MiniPlayer", "🎯 Ativando fullscreen - volume 100%")
-                  sharedPlayer.volume = 1.0f // Volume máximo em fullscreen
-                  isFullscreen = true // Trocar para layout fullscreen
+                  
+                  // ✅ OTIMIZAÇÃO: Garantir que o player está pronto antes de mudar para fullscreen
+                  if (sharedPlayer.playbackState == androidx.media3.common.Player.STATE_READY || 
+                      sharedPlayer.playbackState == androidx.media3.common.Player.STATE_BUFFERING) {
+                    sharedPlayer.volume = 1.0f // Volume máximo em fullscreen
+                    isFullscreen = true // Trocar para layout fullscreen
+                  } else {
+                    // Se player não está pronto, aguardar um pouco
+                    android.util.Log.w("MiniPlayer", "⚠️ Player não está pronto, aguardando...")
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                      if (sharedPlayer.playbackState == androidx.media3.common.Player.STATE_READY) {
+                        sharedPlayer.volume = 1.0f
+                        isFullscreen = true
+                      }
+                    }, 500)
+                  }
                 } catch (e: Exception) {
                   android.util.Log.e("LiveScreen", "❌ Erro ao ativar fullscreen: ${e.message}", e)
                   e.printStackTrace()
@@ -1291,7 +1302,8 @@ fun LiveScreen(nav: NavHostController) {
           MaxiApp.isTv -> "tv"
           MaxiApp.isFireStick -> "tv"
           else -> "phone"
-        }
+        },
+        isVisible = showFootballStatsDialog // ✅ Passar estado de visibilidade para controlar foco
       )
     }
   }

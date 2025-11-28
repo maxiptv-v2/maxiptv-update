@@ -289,6 +289,12 @@ class PlayerActivity : ComponentActivity() {
     pv.setCustomErrorMessage("")
     pv.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
     
+    // ✅ CONFIGURAR FOCO PARA D-PAD: Tornar PlayerView focável para navegação (importante para modo futebol)
+    // O foco será configurado dinamicamente quando o botão de estatísticas for criado
+    pv.isFocusable = true
+    pv.isFocusableInTouchMode = false
+    pv.id = android.view.View.generateViewId() // ID único para navegação de foco
+    
     // ✅ COR MODERNA DO BUFFERING: Customizar cor do buffering nativo do ExoPlayer
     // O ExoPlayer usa um ProgressBar interno, vamos criar um overlay customizado com cor azul/ciano
     // Nota: O buffering nativo do ExoPlayer não pode ser facilmente customizado, então vamos
@@ -565,26 +571,25 @@ class PlayerActivity : ComponentActivity() {
     isFootballMode = contentType == "live" && (isSpecificFootballChannel || hasGenericTerm)
     android.util.Log.i("PlayerActivity", "   - isFootballMode: $isFootballMode (contentType='$contentType' && (isSpecific=$isSpecificFootballChannel || generic=$hasGenericTerm))")
     
-    // ⚽ NOVO: Tentar extrair matchId do nome do canal
+    // ⚽ NOVO: Tentar identificar Match ID usando busca inteligente
     if (isFootballMode) {
       currentMatchId = com.maxiptv.data.soccer.MatchIdExtractor.extractMatchId(channelName)
       if (currentMatchId != null) {
-        android.util.Log.i("PlayerActivity", "⚽ MatchId extraído: $currentMatchId")
+        android.util.Log.i("PlayerActivity", "⚽ MatchId extraído do nome do canal: $currentMatchId")
       } else {
-        android.util.Log.i("PlayerActivity", "⚽ MatchId não encontrado no nome do canal - buscando partidas ao vivo...")
-        // ⚽ NOVO: Se não encontrou matchId, buscar partidas ao vivo e usar a primeira
+        android.util.Log.i("PlayerActivity", "⚽ MatchId não encontrado no nome - buscando automaticamente...")
+        // ⚽ NOVO: Usar busca inteligente para identificar a partida automaticamente
         lifecycleScope.launch {
           try {
-            val liveMatches = com.maxiptv.data.soccer.SoccerRepository.getOtherMatches()
-            if (liveMatches.isNotEmpty()) {
-              val firstMatch = liveMatches.first()
-              currentMatchId = firstMatch.id
-              android.util.Log.i("PlayerActivity", "⚽ Usando primeira partida ao vivo: ${firstMatch.homeTeamName} x ${firstMatch.awayTeamName} (ID: $currentMatchId)")
+            val identifiedMatchId = com.maxiptv.data.soccer.SoccerRepository.findMatchForChannel(channelName)
+            if (identifiedMatchId != null) {
+              currentMatchId = identifiedMatchId
+              android.util.Log.i("PlayerActivity", "⚽ Match ID identificado automaticamente: $currentMatchId")
             } else {
-              android.util.Log.w("PlayerActivity", "⚠️ Nenhuma partida ao vivo encontrada")
+              android.util.Log.w("PlayerActivity", "⚠️ Não foi possível identificar a partida para este canal")
             }
           } catch (e: Exception) {
-            android.util.Log.e("PlayerActivity", "❌ Erro ao buscar partidas ao vivo", e)
+            android.util.Log.e("PlayerActivity", "❌ Erro ao buscar partida automaticamente", e)
           }
         }
       }
@@ -1766,6 +1771,15 @@ class PlayerActivity : ComponentActivity() {
       footballStatsButton?.visibility = android.view.View.VISIBLE
       footballStatsButton?.bringToFront()
       footballStatsButton?.elevation = 16f
+      
+      // ✅ CONFIGURAR NAVEGAÇÃO DE FOCO: Quando apertar seta para cima no PlayerView, focar no botão de estatísticas
+      if (footballStatsButton != null && ::pv.isInitialized) {
+        pv.nextFocusUpId = footballStatsButton!!.id
+        footballStatsButton!!.nextFocusDownId = pv.id
+        android.util.Log.i("PlayerActivity", "✅ Navegação de foco configurada: PlayerView (ID: ${pv.id}) ⬆️ → StatsButton (ID: ${footballStatsButton!!.id}) ⬇️")
+      } else {
+        android.util.Log.w("PlayerActivity", "⚠️ Não foi possível configurar navegação de foco - botão ou PlayerView não estão prontos")
+      }
       
       // Log final de verificação
       android.util.Log.i("PlayerActivity", "⚽ Verificação final do botão:")

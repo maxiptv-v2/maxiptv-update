@@ -21,7 +21,7 @@ class PlayerState {
   var connectionQuality = ConnectionQuality.GOOD
   var failoverAttempts = 0
   val maxFailoverAttempts = 4
-  var currentMaxBitrate = 2_200_000 // Bitrate máximo atual
+  var currentMaxBitrate = 1_500_000 // Bitrate máximo atual (REDUZIDO de 2.2Mbps para evitar travamentos)
   var lastVideoFormat: Format? = null
   var qualityDegradedWarningShown = false
   var originalStreamUrl: String? = null
@@ -37,29 +37,29 @@ class PlayerState {
 fun createAdaptiveLoadControl(quality: ConnectionQuality): LoadControl {
   return when (quality) {
     ConnectionQuality.EXCELLENT -> {
-      // ✅ Buffer aumentado para conexão excelente (garantir estabilidade em canais live)
+      // ✅ Buffer OTIMIZADO para conexão excelente (reduzido para evitar travamentos)
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          10000,  // minBufferMs: 10 segundos (AUMENTADO de 8s - mais estabilidade)
-          25000,  // maxBufferMs: 25 segundos (AUMENTADO de 18s - mais buffer)
-          4000,   // bufferForPlaybackMs: 4 segundos (AUMENTADO de 3s - evitar travamentos)
-          6000    // bufferForPlaybackAfterRebufferMs: 6 segundos (AUMENTADO de 5s - reconexão mais estável)
+          8000,   // minBufferMs: 8 segundos (REDUZIDO de 10s - mais responsivo)
+          20000,  // maxBufferMs: 20 segundos (REDUZIDO de 25s - evita acúmulo)
+          4000,   // bufferForPlaybackMs: 4 segundos (mantido - bom equilíbrio)
+          6000    // bufferForPlaybackAfterRebufferMs: 6 segundos (mantido - reconexão estável)
         )
         .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(10000, true) // 10s de back buffer (AUMENTADO de 8s)
+        .setBackBuffer(8000, true) // 8s de back buffer (REDUZIDO de 10s)
         .build()
     }
     ConnectionQuality.GOOD -> {
-      // ✅ Buffer aumentado para conexão boa (garantir estabilidade em canais live)
+      // ✅ Buffer OTIMIZADO para conexão boa (reduzido para evitar travamentos)
       DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-          12000,  // minBufferMs: 12 segundos (AUMENTADO de 10s - mais estabilidade)
-          30000,  // maxBufferMs: 30 segundos (AUMENTADO de 20s - muito mais buffer)
-          5000,   // bufferForPlaybackMs: 5 segundos (AUMENTADO de 4s - evitar travamentos)
-          8000    // bufferForPlaybackAfterRebufferMs: 8 segundos (AUMENTADO de 6s - reconexão mais estável)
+          6000,   // minBufferMs: 6 segundos (REDUZIDO de 12s - menos latência, mais estável)
+          15000,  // maxBufferMs: 15 segundos (REDUZIDO de 30s - evita acúmulo excessivo)
+          3000,   // bufferForPlaybackMs: 3 segundos (REDUZIDO de 5s - start mais rápido)
+          5000    // bufferForPlaybackAfterRebufferMs: 5 segundos (REDUZIDO de 8s - reconexão mais rápida)
         )
         .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(12000, true) // 12s de back buffer (AUMENTADO de 10s)
+        .setBackBuffer(5000, true) // 5s de back buffer (REDUZIDO de 12s - menos memória)
         .build()
     }
     ConnectionQuality.POOR -> {

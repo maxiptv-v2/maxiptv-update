@@ -268,6 +268,180 @@ object SoccerRepository {
         }
     }
     
+    /**
+     * Busca automaticamente o Match ID para um canal de futebol
+     * Estratégia inteligente:
+     * 1. Tenta extrair Match ID do nome do canal
+     * 2. Tenta extrair nomes dos times e buscar
+     * 3. Busca todas as partidas ao vivo e tenta identificar a mais relevante
+     * 4. Prioriza partidas brasileiras, partidas ao vivo de verdade, etc
+     * 
+     * @param channelName Nome do canal (ex: "Amazon Prime 4 HD (Eventos)", "Premiere 1")
+     * @return Match ID encontrado ou null
+     */
+    suspend fun findMatchForChannel(channelName: String): Long? {
+        return try {
+            Log.d(TAG, "🔍 Buscando Match ID para canal: '$channelName'")
+            
+            // ESTRATÉGIA 1: Tentar extrair Match ID diretamente do nome do canal
+            val directMatchId = MatchIdExtractor.extractMatchId(channelName)
+            if (directMatchId != null) {
+                Log.d(TAG, "✅ Match ID extraído diretamente do nome: $directMatchId")
+                return directMatchId
+            }
+            
+            // ESTRATÉGIA 2: Tentar extrair nomes dos times e buscar
+            val teamNames = MatchIdExtractor.extractTeamNames(channelName)
+            if (teamNames != null) {
+                Log.d(TAG, "🔍 Times extraídos do canal: ${teamNames.first} x ${teamNames.second}")
+                val matchIdByTeams = findMatchByTeamNames(teamNames.first, teamNames.second)
+                if (matchIdByTeams != null) {
+                    Log.d(TAG, "✅ Match ID encontrado pelo nome dos times: $matchIdByTeams")
+                    return matchIdByTeams
+                }
+            }
+            
+            // ESTRATÉGIA 3: Buscar todas as partidas ao vivo e identificar a mais relevante
+            Log.d(TAG, "🔍 Buscando partidas ao vivo para identificar correspondência...")
+            val response = api.getLiveFixtures("all", API_KEY)
+            val fixtures = response.response ?: emptyList()
+            
+            if (fixtures.isEmpty()) {
+                Log.w(TAG, "⚠️ Nenhuma partida ao vivo encontrada")
+                return null
+            }
+            
+            Log.d(TAG, "   ✅ ${fixtures.size} partidas encontradas")
+            
+            // Normalizar nome do canal para busca
+            val normalizedChannel = channelName.lowercase().trim()
+            
+            // Detectar se é canal brasileiro de futebol
+            val isBrazilianChannel = normalizedChannel.contains("premiere") ||
+                                     normalizedChannel.contains("premier") ||
+                                     normalizedChannel.contains("sportv") ||
+                                     normalizedChannel.contains("espn") ||
+                                     normalizedChannel.contains("band") ||
+                                     normalizedChannel.contains("cazé") ||
+                                     normalizedChannel.contains("caze") ||
+                                     normalizedChannel.contains("amazon") ||
+                                     normalizedChannel.contains("prime")
+            
+            // Separar partidas ao vivo das outras
+            val liveMatches = mutableListOf<ApiSportsFixture>()
+            val otherMatches = mutableListOf<ApiSportsFixture>()
+            
+            for (fixture in fixtures) {
+                val status = fixture.fixture?.status?.short?.lowercase() ?: ""
+                val isLive = status == "live" || status == "1h" || status == "2h" || status == "ht"
+                
+                if (isLive) {
+                    liveMatches.add(fixture)
+                } else {
+                    otherMatches.add(fixture)
+                }
+            }
+            
+            // Criar lista de partidas com pontuação de relevância
+            val candidates = mutableListOf<Pair<ApiSportsFixture, Int>>()
+            
+            // PRIORIDADE: Processar partidas ao vivo primeiro (elas têm mais chances de ser a correta)
+            for (fixture in liveMatches) {
+                var score = 1000  // Base alta para partidas ao vivo
+                val status = fixture.fixture?.status?.short?.lowercase() ?: ""
+                val league = fixture.league?.name ?: ""
+                val country = fixture.league?.country ?: ""
+                
+                // Ajustar score baseado no status (LIVE é o mais prioritário)
+                when (status) {
+                    "live" -> score += 200
+                    "1h", "2h" -> score += 100
+                    "ht" -> score += 50
+                }
+                
+                // Se for canal brasileiro, priorizar partidas brasileiras
+                if (isBrazilianChannel) {
+                    if (country.lowercase() == "brazil" || country.lowercase() == "brasil") {
+                        score += 300  // Grande bônus para partidas brasileiras
+                    }
+                    
+                    // Priorizar ligas importantes do Brasil
+                    val brazilianLeagues = listOf(
+                        "brasileirão", "brasileirao", "serie a", "série a",
+                        "copa do brasil", "copa libertadores", "copa sudamericana",
+                        "paulistão", "paulista", "carioca", "gaúcho", "mineiro",
+                        "brasileirão série b", "serie b", "copa verde"
+                    )
+                    if (brazilianLeagues.any { league.lowercase().contains(it) }) {
+                        score += 200  // Grande bônus para ligas brasileiras importantes
+                    }
+                }
+                
+                // Bônus para qualquer liga importante (brasileiras ou internacionais)
+                val importantLeagues = listOf(
+                    "brasileirão", "brasileirao", "serie a", "série a",
+                    "premier league", "la liga", "serie a", "bundesliga",
+                    "champions league", "europa league", "copa libertadores",
+                    "copa do brasil", "copa sudamericana", "world cup"
+                )
+                if (importantLeagues.any { league.lowercase().contains(it) }) {
+                    score += 100
+                }
+                
+                // Bônus para partidas com placar (já têm eventos acontecendo)
+                if (fixture.goals?.home != null && fixture.goals?.away != null) {
+                    score += 50
+                }
+                
+                candidates.add(Pair(fixture, score))
+            }
+            
+            // Processar outras partidas com pontuação menor (fallback)
+            for (fixture in otherMatches) {
+                var score = 100  // Base baixa para partidas não ao vivo
+                val league = fixture.league?.name ?: ""
+                val country = fixture.league?.country ?: ""
+                
+                // Ainda priorizar partidas brasileiras em canais brasileiros
+                if (isBrazilianChannel) {
+                    if (country.lowercase() == "brazil" || country.lowercase() == "brasil") {
+                        score += 50
+                    }
+                }
+                
+                candidates.add(Pair(fixture, score))
+            }
+            
+            // Ordenar por pontuação (maior primeiro)
+            candidates.sortByDescending { it.second }
+            
+            // Se há candidatos, retornar o melhor
+            if (candidates.isNotEmpty()) {
+                val bestMatch = candidates.first()
+                val matchId = bestMatch.first.fixture?.id ?: 0L
+                val homeTeam = bestMatch.first.teams?.home?.name ?: ""
+                val awayTeam = bestMatch.first.teams?.away?.name ?: ""
+                val status = bestMatch.first.fixture?.status?.short ?: ""
+                
+                Log.d(TAG, "✅ Partida identificada para '$channelName':")
+                Log.d(TAG, "   Match ID: $matchId")
+                Log.d(TAG, "   Partida: $homeTeam x $awayTeam")
+                Log.d(TAG, "   Status: $status")
+                Log.d(TAG, "   Pontuação: ${bestMatch.second}")
+                
+                return matchId
+            }
+            
+            Log.w(TAG, "⚠️ Nenhuma partida relevante encontrada para o canal '$channelName'")
+            null
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao buscar Match ID para canal '$channelName'", e)
+            e.printStackTrace()
+            null
+        }
+    }
+    
     // ============================================================================
     // FUNÇÕES ADAPTADORAS: Converter modelos da API Sports para modelos existentes
     // ============================================================================
