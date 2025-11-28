@@ -1,12 +1,12 @@
 {
-  "version": "v1.0.326",
-  "versionCode": 326,
-  "buildNumber": 326,
+  "version": "v1.0.327",
+  "versionCode": 327,
+  "buildNumber": 327,
   "downloadUrl": "https://raw.githubusercontent.com/maxiptv-v2/maxiptv-update/main/maxiptv-release.apk",
   "releaseNotes": "MaxiPTV v1.0.277\n\n✅ CORREÇÕES\n- Restaurado VodInfo para versão 270 (sinopse funcionando corretamente)\n- Sinopse dos filmes VOD agora aparece corretamente ao clicar no banner\n\n📺 VOD\n- Exibição correta da sinopse (plot) dos filmes\n- Nome do filme exibido corretamente\n\n⚙️ GERAL\n- Código limpo e otimizado",
   "minimumVersion": "1.0.0",
   "forceUpdate": false,
   "fileSize": "4.5 MB",
-  "lastUpdated": "2025-11-27T18:28:27Z",
+  "lastUpdated": "2025-11-27T19:03:10Z",
   "checksum": "sha256:placeholder"
 }

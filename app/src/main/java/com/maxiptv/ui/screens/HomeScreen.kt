@@ -3,6 +3,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.*
@@ -63,28 +64,125 @@ private fun openDownloaderApp(context: Context, downloadUrl: String) {
   try {
     android.util.Log.i("HomeScreen", "🔥 Fire OS: Tentando abrir Downloader com URL: $downloadUrl")
     
-    // Tentar abrir Downloader com URL scheme especial
-    // Formato: downloader://https://url-do-arquivo.apk
-    val downloaderUri = "downloader://$downloadUrl"
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloaderUri))
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-    
-    // Verificar se o Downloader está instalado
     val packageManager = context.packageManager
-    val resolveInfo = packageManager.resolveActivity(intent, 0)
+    val downloaderPackage = "com.esaba.downloader"
     
-    if (resolveInfo != null) {
-      // Downloader instalado - abrir com URL
-      context.startActivity(intent)
-      android.util.Log.i("HomeScreen", "✅ Downloader aberto com sucesso!")
+    // Verificar se o Downloader está instalado pelo package name
+    try {
+      packageManager.getPackageInfo(downloaderPackage, 0)
       
-      Toast.makeText(
-        context,
-        "Downloader aberto! Clique em GO para baixar.",
-        Toast.LENGTH_LONG
-      ).show()
-    } else {
-      // Downloader NÃO instalado - mostrar instruções e copiar URL
+      // ✅ Downloader instalado - abrir diretamente com Intent específico
+      android.util.Log.i("HomeScreen", "✅ Downloader encontrado, abrindo com URL...")
+      
+      // Método 1: Tentar abrir com ACTION_VIEW e URL como data (método mais comum)
+      // IMPORTANTE: Verificar se o Downloader pode resolver este Intent antes de tentar
+      val intent1 = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl)).apply {
+        setPackage(downloaderPackage) // ✅ CRÍTICO: Especificar package para não abrir navegador
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        // NÃO adicionar CATEGORY_BROWSABLE para evitar que o Android escolha navegador
+      }
+      
+      try {
+        // ✅ Verificar se o Downloader pode resolver este Intent (não deixar Android escolher navegador)
+        val resolveInfo = packageManager.resolveActivity(intent1, PackageManager.MATCH_DEFAULT_ONLY)
+        if (resolveInfo != null && resolveInfo.activityInfo.packageName == downloaderPackage) {
+          context.startActivity(intent1)
+          android.util.Log.i("HomeScreen", "✅ Downloader aberto com ACTION_VIEW (URL pode estar preenchida)!")
+          Toast.makeText(
+            context,
+            "Downloader aberto! Se a URL não preencheu, ela está copiada. Cole e clique em GO.",
+            Toast.LENGTH_LONG
+          ).show()
+          // Copiar URL para clipboard como backup
+          val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+          val clip = ClipData.newPlainText("MaxiPTV Update URL", downloadUrl)
+          clipboard.setPrimaryClip(clip)
+          return
+        } else {
+          android.util.Log.w("HomeScreen", "⚠️ ACTION_VIEW não resolve para Downloader (pode abrir navegador) - pulando método 1")
+        }
+      } catch (e: Exception) {
+        android.util.Log.w("HomeScreen", "⚠️ ACTION_VIEW falhou: ${e.message}")
+      }
+      
+      // Método 2: Tentar com Intent explícito e passar URL via Intent extras
+      val intent2 = Intent().apply {
+        setClassName(downloaderPackage, "com.esaba.downloader.MainActivity")
+        action = Intent.ACTION_VIEW
+        data = Uri.parse(downloadUrl) // Passar URL diretamente
+        putExtra("url", downloadUrl) // Extra para garantir
+        putExtra("text", downloadUrl) // Alguns apps usam "text"
+        putExtra(Intent.EXTRA_TEXT, downloadUrl) // Padrão Android
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+      }
+      
+      try {
+        context.startActivity(intent2)
+        android.util.Log.i("HomeScreen", "✅ Downloader aberto com Intent explícito!")
+        Toast.makeText(
+          context,
+          "Downloader aberto! A URL já está preenchida. Clique em GO.",
+          Toast.LENGTH_LONG
+        ).show()
+        return
+      } catch (e: Exception) {
+        android.util.Log.w("HomeScreen", "⚠️ Intent explícito falhou, tentando método alternativo: ${e.message}")
+      }
+      
+      // Método 3: Tentar com ACTION_SEND (compartilhar URL)
+      val shareIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, downloadUrl)
+        setPackage(downloaderPackage)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+      }
+      
+      try {
+        if (shareIntent.resolveActivity(packageManager) != null) {
+          context.startActivity(shareIntent)
+          android.util.Log.i("HomeScreen", "✅ Downloader aberto via ACTION_SEND!")
+          Toast.makeText(
+            context,
+            "Downloader aberto! A URL já está preenchida. Clique em GO.",
+            Toast.LENGTH_LONG
+          ).show()
+          return
+        }
+      } catch (e: Exception) {
+        android.util.Log.w("HomeScreen", "⚠️ ACTION_SEND falhou, tentando método 4: ${e.message}")
+      }
+      
+      // Método 4: Abrir app diretamente e copiar URL (usuário cola manualmente)
+      val openAppIntent = packageManager.getLaunchIntentForPackage(downloaderPackage)?.apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        // Tentar passar URL como extra mesmo no launch intent
+        putExtra("url", downloadUrl)
+        putExtra(Intent.EXTRA_TEXT, downloadUrl)
+      }
+      
+      if (openAppIntent != null) {
+        // Copiar URL para clipboard antes de abrir (fallback caso o extra não funcione)
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("MaxiPTV Update URL", downloadUrl)
+        clipboard.setPrimaryClip(clip)
+        
+        try {
+          context.startActivity(openAppIntent)
+          android.util.Log.i("HomeScreen", "✅ Downloader aberto (URL copiada para clipboard)")
+          Toast.makeText(
+            context,
+            "Downloader aberto! A URL foi copiada. Se não preencheu automaticamente, cole no campo de URL e clique em GO.",
+            Toast.LENGTH_LONG
+          ).show()
+          return
+        } catch (e: Exception) {
+          android.util.Log.e("HomeScreen", "❌ Erro ao abrir Downloader: ${e.message}")
+        }
+      }
+      
+    } catch (e: PackageManager.NameNotFoundException) {
+      // Downloader NÃO instalado
       android.util.Log.w("HomeScreen", "⚠️ Downloader não está instalado")
       
       // Copiar URL para clipboard
@@ -107,7 +205,7 @@ private fun openDownloaderApp(context: Context, downloadUrl: String) {
         appStoreIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(appStoreIntent)
         android.util.Log.i("HomeScreen", "✅ Amazon App Store aberta (Downloader)")
-      } catch (e: Exception) {
+      } catch (e2: Exception) {
         // Se falhar, tentar web browser
         try {
           val webIntent = Intent(
@@ -117,8 +215,8 @@ private fun openDownloaderApp(context: Context, downloadUrl: String) {
           webIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
           context.startActivity(webIntent)
           android.util.Log.i("HomeScreen", "✅ Browser aberto para baixar Downloader")
-        } catch (e2: Exception) {
-          android.util.Log.e("HomeScreen", "❌ Erro ao abrir App Store/Browser: ${e2.message}")
+        } catch (e3: Exception) {
+          android.util.Log.e("HomeScreen", "❌ Erro ao abrir App Store/Browser: ${e3.message}")
         }
       }
     }
