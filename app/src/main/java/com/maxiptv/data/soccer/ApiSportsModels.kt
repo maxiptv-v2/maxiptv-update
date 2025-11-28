@@ -387,3 +387,35 @@ data class TotalComparison(
     val away: String? = null
 )
 
+// ============================================================================
+// ODDS (PROBABILIDADES DE APOSTAS)
+// ============================================================================
+
+@Serializable
+data class ApiSportsOdds(
+    val league: ApiSportsLeague? = null,
+    val fixture: FixtureInfo? = null,
+    val update: String? = null,
+    val bookmakers: List<Bookmaker>? = null
+)
+
+@Serializable
+data class Bookmaker(
+    val id: Int? = null,
+    val name: String? = null,
+    val bets: List<Bet>? = null
+)
+
+@Serializable
+data class Bet(
+    val id: Int? = null,
+    val name: String? = null,  // "Match Winner", "Over/Under", "Asian Handicap", etc
+    val values: List<BetValue>? = null
+)
+
+@Serializable
+data class BetValue(
+    val value: String? = null,  // "Home", "Draw", "Away", "Over 2.5", etc
+    val odd: String? = null     // "2.26", "3.30", etc
+)
+

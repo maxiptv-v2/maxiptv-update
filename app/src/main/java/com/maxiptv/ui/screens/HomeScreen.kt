@@ -1576,6 +1576,7 @@ fun EmbeddedPlayer(
   var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
   var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
   var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
+  var matchOdds by remember { mutableStateOf<com.maxiptv.data.soccer.ApiSportsOdds?>(null) }
   var isLoadingStats by remember { mutableStateOf(false) }
   var statsError by remember { mutableStateOf<String?>(null) }
   
@@ -1635,10 +1636,20 @@ fun EmbeddedPlayer(
         matchPreview = preview
         
         // Buscar outros jogos ao vivo
-        android.util.Log.i("EmbeddedPlayer", "📡 3/3 - Buscando getOtherMatches()...")
+        android.util.Log.i("EmbeddedPlayer", "📡 3/4 - Buscando getOtherMatches()...")
         val other = com.maxiptv.data.soccer.SoccerRepository.getOtherMatches()
         android.util.Log.i("EmbeddedPlayer", "   ✅ getOtherMatches retornou ${other.size} partidas")
         otherMatches = other
+        
+        // Buscar odds (probabilidades de apostas)
+        android.util.Log.i("EmbeddedPlayer", "📡 4/4 - Buscando odds (probabilidades de apostas)...")
+        val odds = com.maxiptv.data.soccer.SoccerRepository.getLiveOdds(finalMatchId) ?: com.maxiptv.data.soccer.SoccerRepository.getOdds(finalMatchId)
+        if (odds != null) {
+          android.util.Log.i("EmbeddedPlayer", "   ✅ Odds encontradas: ${odds.bookmakers?.size ?: 0} casas de aposta")
+        } else {
+          android.util.Log.w("EmbeddedPlayer", "   ⚠️ Nenhuma odd encontrada")
+        }
+        matchOdds = odds
         
         isLoadingStats = false
         android.util.Log.i("EmbeddedPlayer", "✅ TODAS AS ESTATÍSTICAS CARREGADAS COM SUCESSO!")
@@ -2088,6 +2099,7 @@ fun EmbeddedPlayer(
         matchDetail = matchDetail,
         matchPreview = matchPreview,
         otherMatches = otherMatches,
+        matchOdds = matchOdds,
         isLoading = isLoadingStats,
         error = statsError,
         onDismiss = { 
@@ -2096,6 +2108,7 @@ fun EmbeddedPlayer(
           matchDetail = null
           matchPreview = null
           otherMatches = emptyList()
+          matchOdds = null
           statsError = null
         },
         deviceType = deviceType
@@ -2112,6 +2125,7 @@ fun FootballStatsDialog(
   matchDetail: com.maxiptv.data.soccer.MatchDetailFull?,
   matchPreview: com.maxiptv.data.soccer.MatchPreviewFull?,
   otherMatches: List<com.maxiptv.data.soccer.MatchSummaryFull>,
+  matchOdds: com.maxiptv.data.soccer.ApiSportsOdds?,
   isLoading: Boolean,
   error: String?,
   onDismiss: () -> Unit,
@@ -2542,6 +2556,89 @@ fun FootballStatsDialog(
                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
               )
             }
+          }
+          
+          // ============================================================
+          // ODDS (PROBABILIDADES DE APOSTAS)
+          // ============================================================
+          if (matchOdds != null && !matchOdds.bookmakers.isNullOrEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+              text = "💰 Odds (Probabilidades de Apostas):",
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              },
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFFFFD700)
+            )
+            
+            Spacer(Modifier.height(8.dp))
+            
+            // Mostrar até 3 casas de aposta principais
+            matchOdds.bookmakers!!.take(3).forEach { bookmaker ->
+              Spacer(Modifier.height(8.dp))
+              Text(
+                text = "🏢 ${bookmaker.name}",
+                fontSize = when (deviceType) {
+                  "tv" -> 14.sp
+                  "phone" -> 11.sp
+                  else -> 13.sp
+                },
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4CAF50)
+              )
+              
+              // Mostrar tipos de aposta principais (Match Winner, Over/Under, etc)
+              bookmaker.bets?.filter { bet ->
+                bet.name?.contains("Match Winner", ignoreCase = true) == true ||
+                bet.name?.contains("Over/Under", ignoreCase = true) == true ||
+                bet.name?.contains("Both Teams", ignoreCase = true) == true
+              }?.take(2)?.forEach { bet ->
+                Spacer(Modifier.height(4.dp))
+                Row(
+                  modifier = Modifier.fillMaxWidth(),
+                  horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                  Text(
+                    text = "  ${bet.name}:",
+                    fontSize = when (deviceType) {
+                      "tv" -> 12.sp
+                      "phone" -> 10.sp
+                      else -> 11.sp
+                    },
+                    color = Color.White,
+                    modifier = Modifier.weight(1f)
+                  )
+                  bet.values?.take(3)?.forEach { value ->
+                    Text(
+                      text = "${value.value}: ${value.odd}",
+                      fontSize = when (deviceType) {
+                        "tv" -> 12.sp
+                        "phone" -> 10.sp
+                        else -> 11.sp
+                      },
+                      color = Color(0xFFFFD700),
+                      modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                  }
+                }
+              }
+            }
+            
+            // Aviso legal
+            Spacer(Modifier.height(8.dp))
+            Text(
+              text = "ℹ️ Informações apenas para fins informativos",
+              fontSize = when (deviceType) {
+                "tv" -> 10.sp
+                "phone" -> 8.sp
+                else -> 9.sp
+              },
+              color = Color.Gray,
+              fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
           }
         } else {
           Text(

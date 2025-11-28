@@ -94,5 +94,25 @@ interface SoccerApi {
         @Query("fixture") fixtureId: Long,
         @Header("x-apisports-key") apiKey: String
     ): ApiSportsResponse<ApiSportsLineup>
+    
+    /**
+     * GET /odds?fixture={id}
+     * Retorna probabilidades de apostas (odds) pré-jogo de várias casas de aposta
+     */
+    @GET("odds")
+    suspend fun getOdds(
+        @Query("fixture") fixtureId: Long,
+        @Header("x-apisports-key") apiKey: String
+    ): ApiSportsResponse<ApiSportsOdds>
+    
+    /**
+     * GET /odds/live?fixture={id}
+     * Retorna probabilidades de apostas (odds) ao vivo (atualizadas durante a partida)
+     */
+    @GET("odds/live")
+    suspend fun getLiveOdds(
+        @Query("fixture") fixtureId: Long,
+        @Header("x-apisports-key") apiKey: String
+    ): ApiSportsResponse<ApiSportsOdds>
 }
 

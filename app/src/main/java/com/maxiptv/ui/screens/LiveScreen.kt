@@ -91,6 +91,7 @@ fun LiveScreen(nav: NavHostController) {
   var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
   var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
   var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
+  var matchOdds by remember { mutableStateOf<com.maxiptv.data.soccer.ApiSportsOdds?>(null) }
   var isLoadingStats by remember { mutableStateOf(false) }
   var statsError by remember { mutableStateOf<String?>(null) }
   val scope = rememberCoroutineScope()
@@ -152,10 +153,20 @@ fun LiveScreen(nav: NavHostController) {
         matchPreview = preview
         
         // Buscar outros jogos
-        android.util.Log.i("LiveScreen", "📡 3/3 - Buscando getOtherMatches()...")
+        android.util.Log.i("LiveScreen", "📡 3/4 - Buscando getOtherMatches()...")
         val others = SoccerRepository.getOtherMatches()
         android.util.Log.i("LiveScreen", "   ✅ getOtherMatches retornou ${others.size} partidas")
         otherMatches = others
+        
+        // Buscar odds (probabilidades de apostas)
+        android.util.Log.i("LiveScreen", "📡 4/4 - Buscando odds (probabilidades de apostas)...")
+        val odds = SoccerRepository.getLiveOdds(finalMatchId) ?: SoccerRepository.getOdds(finalMatchId)
+        if (odds != null) {
+          android.util.Log.i("LiveScreen", "   ✅ Odds encontradas: ${odds.bookmakers?.size ?: 0} casas de aposta")
+        } else {
+          android.util.Log.w("LiveScreen", "   ⚠️ Nenhuma odd encontrada")
+        }
+        matchOdds = odds
         
         isLoadingStats = false
         android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
@@ -1265,6 +1276,7 @@ fun LiveScreen(nav: NavHostController) {
         matchDetail = matchDetail,
         matchPreview = matchPreview,
         otherMatches = otherMatches,
+        matchOdds = matchOdds,
         isLoading = isLoadingStats,
         error = statsError,
         onDismiss = { 
@@ -1272,6 +1284,7 @@ fun LiveScreen(nav: NavHostController) {
           matchDetail = null
           matchPreview = null
           otherMatches = emptyList()
+          matchOdds = null
           statsError = null
         },
         deviceType = when {

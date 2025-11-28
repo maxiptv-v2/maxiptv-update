@@ -459,5 +459,49 @@ object SoccerRepository {
             )
         )
     }
+    
+    /**
+     * Busca odds (probabilidades de apostas) pré-jogo
+     */
+    suspend fun getOdds(matchId: Long): ApiSportsOdds? {
+        return try {
+            Log.d(TAG, "💰 Buscando odds pré-jogo para matchId: $matchId")
+            val response = api.getOdds(matchId, API_KEY)
+            
+            if (response.response != null && response.response!!.isNotEmpty()) {
+                val odds = response.response!![0]
+                Log.d(TAG, "✅ Odds encontradas: ${odds.bookmakers?.size ?: 0} casas de aposta")
+                odds
+            } else {
+                Log.w(TAG, "⚠️ Nenhuma odd encontrada")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao buscar odds: ${e.message}", e)
+            null
+        }
+    }
+    
+    /**
+     * Busca odds (probabilidades de apostas) ao vivo
+     */
+    suspend fun getLiveOdds(matchId: Long): ApiSportsOdds? {
+        return try {
+            Log.d(TAG, "💰 Buscando odds ao vivo para matchId: $matchId")
+            val response = api.getLiveOdds(matchId, API_KEY)
+            
+            if (response.response != null && response.response!!.isNotEmpty()) {
+                val odds = response.response!![0]
+                Log.d(TAG, "✅ Odds ao vivo encontradas: ${odds.bookmakers?.size ?: 0} casas de aposta")
+                odds
+            } else {
+                Log.w(TAG, "⚠️ Nenhuma odd ao vivo encontrada")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Erro ao buscar odds ao vivo: ${e.message}", e)
+            null
+        }
+    }
 }
 
