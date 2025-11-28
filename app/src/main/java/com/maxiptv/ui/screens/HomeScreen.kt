@@ -1,4 +1,6 @@
 package com.maxiptv.ui.screens
+import com.maxiptv.ui.screens.soccer.StatisticBarChart
+import com.maxiptv.ui.screens.soccer.PossessionPieChart
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -2334,33 +2336,123 @@ fun FootballStatsDialog(
           Spacer(Modifier.height(16.dp))
           
           // ============================================================
-          // ESTATÍSTICAS PRINCIPAIS
+          // POSSE DE BOLA (GRÁFICO DE PIZZA)
           // ============================================================
-          Text(
-            text = "📊 Estatísticas:",
-            fontSize = when (deviceType) {
-              "tv" -> 16.sp
-              "phone" -> 12.sp
-              else -> 14.sp
-            },
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFFFD700)
-          )
-          
-          Spacer(Modifier.height(8.dp))
-          
-          // Mostrar todas as estatísticas disponíveis
-          matchDetail.statistics?.forEach { stat ->
-            val homeVal = stat.home?.replace("%", "")?.toIntOrNull() ?: 0
-            val awayVal = stat.away?.replace("%", "")?.toIntOrNull() ?: 0
-            
-            if (homeVal > 0 || awayVal > 0 || stat.home?.contains("%") == true || stat.away?.contains("%") == true) {
-              StatsRow(
-                label = "${stat.type ?: ""}:",
-                homeValue = stat.home ?: "0",
-                awayValue = stat.away ?: "0",
+          val possessionStat = matchDetail.statistics?.find { 
+            it.type?.lowercase()?.contains("possession") == true || 
+            it.type?.lowercase()?.contains("posse") == true 
+          }
+          if (possessionStat != null) {
+            val homePoss = possessionStat.home?.replace("%", "")?.toIntOrNull() ?: 0
+            val awayPoss = possessionStat.away?.replace("%", "")?.toIntOrNull() ?: 0
+            if (homePoss > 0 || awayPoss > 0) {
+              PossessionPieChart(
+                homePossession = homePoss,
+                awayPossession = awayPoss,
+                homeTeamName = matchDetail.homeTeamName,
+                awayTeamName = matchDetail.awayTeamName,
                 deviceType = deviceType
               )
+            }
+          }
+          
+          // ============================================================
+          // ESTATÍSTICAS PRINCIPAIS (GRÁFICOS DE BARRAS)
+          // ============================================================
+          val mainStats = matchDetail.statistics?.filter { stat ->
+            val statType = stat.type?.lowercase() ?: ""
+            // Estatísticas principais que ficam bem em gráficos de barras
+            statType.contains("shots") || 
+            statType.contains("on target") ||
+            statType.contains("corner") ||
+            statType.contains("foul") ||
+            statType.contains("offside") ||
+            statType.contains("yellow card") ||
+            statType.contains("red card") ||
+            statType.contains("attack") ||
+            statType.contains("dangerous attack")
+          } ?: emptyList()
+          
+          if (mainStats.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+              text = "📊 Estatísticas Detalhadas:",
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              },
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFFFFD700)
+            )
+            
+            Spacer(Modifier.height(8.dp))
+            
+            // Mostrar estatísticas principais com gráficos de barras
+            mainStats.forEach { stat ->
+              val homeVal = stat.home?.replace("%", "")?.toIntOrNull() ?: 0
+              val awayVal = stat.away?.replace("%", "")?.toIntOrNull() ?: 0
+              
+              if (homeVal > 0 || awayVal > 0) {
+                // Determinar valor máximo para o gráfico (20% de margem)
+                val maxValue = (maxOf(homeVal, awayVal, 10) * 1.2f).toInt()
+                
+                StatisticBarChart(
+                  label = stat.type ?: "",
+                  homeValue = homeVal,
+                  awayValue = awayVal,
+                  maxValue = maxValue,
+                  deviceType = deviceType
+                )
+              }
+            }
+          }
+          
+          // ============================================================
+          // OUTRAS ESTATÍSTICAS (TEXTO SIMPLES)
+          // ============================================================
+          val otherStats = matchDetail.statistics?.filter { stat ->
+            val statType = stat.type?.lowercase() ?: ""
+            val isPossession = statType.contains("possession") || statType.contains("posse")
+            val isMainStat = statType.contains("shots") || 
+                           statType.contains("on target") ||
+                           statType.contains("corner") ||
+                           statType.contains("foul") ||
+                           statType.contains("offside") ||
+                           statType.contains("yellow card") ||
+                           statType.contains("red card") ||
+                           statType.contains("attack") ||
+                           statType.contains("dangerous attack")
+            !isPossession && !isMainStat
+          } ?: emptyList()
+          
+          if (otherStats.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+              text = "📈 Outras Estatísticas:",
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              },
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFFFFD700)
+            )
+            
+            Spacer(Modifier.height(8.dp))
+            
+            otherStats.forEach { stat ->
+              val homeVal = stat.home?.replace("%", "")?.toIntOrNull() ?: 0
+              val awayVal = stat.away?.replace("%", "")?.toIntOrNull() ?: 0
+              
+              if (homeVal > 0 || awayVal > 0 || stat.home?.contains("%") == true || stat.away?.contains("%") == true) {
+                StatsRow(
+                  label = "${stat.type ?: ""}:",
+                  homeValue = stat.home ?: "0",
+                  awayValue = stat.away ?: "0",
+                  deviceType = deviceType
+                )
+              }
             }
           }
           
@@ -2559,7 +2651,7 @@ fun FootballStatsDialog(
           }
           
           // ============================================================
-          // ODDS (PROBABILIDADES DE APOSTAS)
+          // ODDS (PROBABILIDADES DE APOSTAS) - CARDS MELHORADOS
           // ============================================================
           if (matchOdds != null && !matchOdds.bookmakers.isNullOrEmpty()) {
             Spacer(Modifier.height(16.dp))
@@ -2576,59 +2668,122 @@ fun FootballStatsDialog(
             
             Spacer(Modifier.height(8.dp))
             
-            // Mostrar até 3 casas de aposta principais
+            // Mostrar até 3 casas de aposta principais com cards
             matchOdds.bookmakers!!.take(3).forEach { bookmaker ->
-              Spacer(Modifier.height(8.dp))
-              Text(
-                text = "🏢 ${bookmaker.name}",
-                fontSize = when (deviceType) {
-                  "tv" -> 14.sp
-                  "phone" -> 11.sp
-                  else -> 13.sp
-                },
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF4CAF50)
-              )
+              Spacer(Modifier.height(12.dp))
               
-              // Mostrar tipos de aposta principais (Match Winner, Over/Under, etc)
-              bookmaker.bets?.filter { bet ->
-                bet.name?.contains("Match Winner", ignoreCase = true) == true ||
-                bet.name?.contains("Over/Under", ignoreCase = true) == true ||
-                bet.name?.contains("Both Teams", ignoreCase = true) == true
-              }?.take(2)?.forEach { bet ->
-                Spacer(Modifier.height(4.dp))
-                Row(
-                  modifier = Modifier.fillMaxWidth(),
-                  horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                  Text(
-                    text = "  ${bet.name}:",
-                    fontSize = when (deviceType) {
-                      "tv" -> 12.sp
-                      "phone" -> 10.sp
-                      else -> 11.sp
-                    },
-                    color = Color.White,
-                    modifier = Modifier.weight(1f)
+              // Card da casa de aposta
+              Box(
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .background(
+                    Color(0xFF2A2A2A),
+                    RoundedCornerShape(12.dp)
                   )
-                  bet.values?.take(3)?.forEach { value ->
+                  .border(1.dp, Color(0xFF4CAF50), RoundedCornerShape(12.dp))
+                  .padding(12.dp)
+              ) {
+                Column {
+                  // Nome da casa de aposta
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                  ) {
                     Text(
-                      text = "${value.value}: ${value.odd}",
+                      text = "🏢",
                       fontSize = when (deviceType) {
-                        "tv" -> 12.sp
+                        "tv" -> 18.sp
+                        "phone" -> 14.sp
+                        else -> 16.sp
+                      },
+                      modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                      text = bookmaker.name ?: "Casa de Aposta",
+                      fontSize = when (deviceType) {
+                        "tv" -> 15.sp
+                        "phone" -> 12.sp
+                        else -> 13.sp
+                      },
+                      fontWeight = FontWeight.Bold,
+                      color = Color(0xFF4CAF50)
+                    )
+                  }
+                  
+                  Spacer(Modifier.height(8.dp))
+                  
+                  // Tipos de aposta principais (Match Winner, Over/Under, etc)
+                  bookmaker.bets?.filter { bet ->
+                    bet.name?.contains("Match Winner", ignoreCase = true) == true ||
+                    bet.name?.contains("Over/Under", ignoreCase = true) == true ||
+                    bet.name?.contains("Both Teams", ignoreCase = true) == true
+                  }?.take(2)?.forEach { bet ->
+                    Spacer(Modifier.height(8.dp))
+                    
+                    // Nome do tipo de aposta
+                    Text(
+                      text = bet.name ?: "",
+                      fontSize = when (deviceType) {
+                        "tv" -> 13.sp
                         "phone" -> 10.sp
                         else -> 11.sp
                       },
-                      color = Color(0xFFFFD700),
-                      modifier = Modifier.padding(horizontal = 4.dp)
+                      color = Color.White,
+                      fontWeight = FontWeight.Medium,
+                      modifier = Modifier.padding(bottom = 4.dp)
                     )
+                    
+                    // Valores das odds em cards pequenos
+                    Row(
+                      modifier = Modifier.fillMaxWidth(),
+                      horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                      bet.values?.take(3)?.forEach { value ->
+                        Box(
+                          modifier = Modifier
+                            .weight(1f)
+                            .background(
+                              Color(0xFF1A1A1A),
+                              RoundedCornerShape(8.dp)
+                            )
+                            .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                            .padding(vertical = 6.dp, horizontal = 8.dp)
+                        ) {
+                          Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                          ) {
+                            Text(
+                              text = value.value ?: "",
+                              fontSize = when (deviceType) {
+                                "tv" -> 10.sp
+                                "phone" -> 8.sp
+                                else -> 9.sp
+                              },
+                              color = Color.Gray
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                              text = value.odd ?: "",
+                              fontSize = when (deviceType) {
+                                "tv" -> 14.sp
+                                "phone" -> 11.sp
+                                else -> 12.sp
+                              },
+                              fontWeight = FontWeight.Bold,
+                              color = Color(0xFFFFD700)
+                            )
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
             }
             
             // Aviso legal
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             Text(
               text = "ℹ️ Informações apenas para fins informativos",
               fontSize = when (deviceType) {
