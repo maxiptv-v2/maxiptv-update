@@ -20,7 +20,7 @@ class SoccerStatsViewModel : ViewModel() {
     
     private val TAG = "SoccerStatsViewModel"
     
-    // ✅ ATUALIZADO: Usar tipos da Soccer Data API
+    // ✅ Usar tipos da API Sports
     var currentMatchDetail: MatchDetailFull? = null
         private set
     

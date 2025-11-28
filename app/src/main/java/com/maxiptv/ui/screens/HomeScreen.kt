@@ -1572,7 +1572,7 @@ fun EmbeddedPlayer(
     }
   }
   
-  // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando Soccer Data API)
+  // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando API Sports)
   var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
   var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
   var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
@@ -1586,42 +1586,67 @@ fun EmbeddedPlayer(
   val openStatsDialog: () -> Unit = {
     android.util.Log.i("EmbeddedPlayer", "⚽ Abrindo diálogo de estatísticas para matchId: $matchId")
     
-    if (matchId != null) {
-      isLoadingStats = true
-      statsError = null
-      showFootballStatsDialog = true
-      
-      // Buscar dados da API
-      scope.launch {
-        try {
-          android.util.Log.i("EmbeddedPlayer", "⚽ Buscando dados da API para matchId: $matchId")
-          
-          // Buscar detalhes da partida
-          val detail = SoccerRepository.getMatchDetail(matchId)
-          matchDetail = detail
-          
-          // Buscar preview da partida
-          val preview = SoccerRepository.getMatchPreview(matchId)
-          matchPreview = preview
-          
-          // Buscar outros jogos ao vivo
-          val other = SoccerRepository.getOtherMatches()
-          otherMatches = other
-          
-          isLoadingStats = false
-          android.util.Log.i("EmbeddedPlayer", "⚽ Dados carregados com sucesso")
-        } catch (e: Exception) {
-          isLoadingStats = false
-          statsError = e.message ?: "Erro desconhecido ao carregar estatísticas"
-          android.util.Log.e("EmbeddedPlayer", "❌ Erro ao carregar estatísticas: ${e.message}", e)
+    isLoadingStats = true
+    statsError = null
+    showFootballStatsDialog = true
+    
+    // Buscar dados da API
+    scope.launch {
+      try {
+        android.util.Log.i("EmbeddedPlayer", "⚽ INICIANDO BUSCA NA API SPORTS")
+        android.util.Log.i("EmbeddedPlayer", "   MatchId inicial: $matchId")
+        android.util.Log.i("EmbeddedPlayer", "   Canal: ${channel.name}")
+        
+        // ✅ NOVO: Se não houver Match ID, tentar buscar pelo nome dos times
+        var finalMatchId = matchId
+        if (finalMatchId == null) {
+          android.util.Log.i("EmbeddedPlayer", "🔍 Match ID não encontrado, tentando buscar pelo nome dos times...")
+          val teamNames = com.maxiptv.data.soccer.MatchIdExtractor.extractTeamNames(channel.name)
+          if (teamNames != null) {
+            android.util.Log.i("EmbeddedPlayer", "   Times extraídos: ${teamNames.first} x ${teamNames.second}")
+            finalMatchId = com.maxiptv.data.soccer.SoccerRepository.findMatchByTeamNames(teamNames.first, teamNames.second)
+            if (finalMatchId != null) {
+              android.util.Log.i("EmbeddedPlayer", "   ✅ Match ID encontrado pelo nome dos times: $finalMatchId")
+            } else {
+              android.util.Log.w("EmbeddedPlayer", "   ⚠️ Partida não encontrada pelo nome dos times")
+            }
+          } else {
+            android.util.Log.w("EmbeddedPlayer", "   ⚠️ Não foi possível extrair nomes dos times do canal")
+          }
         }
+        
+        if (finalMatchId == null) {
+          android.util.Log.e("EmbeddedPlayer", "❌ Match ID não disponível - não é possível buscar estatísticas")
+          statsError = "Partida não encontrada. Verifique se o jogo está ao vivo ou se o nome do canal contém os times."
+          isLoadingStats = false
+          return@launch
+        }
+        
+        // Buscar detalhes da partida
+        android.util.Log.i("EmbeddedPlayer", "📡 1/3 - Buscando getMatchDetail($finalMatchId)...")
+        val detail = com.maxiptv.data.soccer.SoccerRepository.getMatchDetail(finalMatchId)
+        android.util.Log.i("EmbeddedPlayer", "   ✅ getMatchDetail retornou: ${detail?.homeTeamName} x ${detail?.awayTeamName}")
+        matchDetail = detail
+        
+        // Buscar preview da partida
+        android.util.Log.i("EmbeddedPlayer", "📡 2/3 - Buscando getMatchPreview($finalMatchId)...")
+        val preview = com.maxiptv.data.soccer.SoccerRepository.getMatchPreview(finalMatchId)
+        android.util.Log.i("EmbeddedPlayer", "   ✅ getMatchPreview retornou")
+        matchPreview = preview
+        
+        // Buscar outros jogos ao vivo
+        android.util.Log.i("EmbeddedPlayer", "📡 3/3 - Buscando getOtherMatches()...")
+        val other = com.maxiptv.data.soccer.SoccerRepository.getOtherMatches()
+        android.util.Log.i("EmbeddedPlayer", "   ✅ getOtherMatches retornou ${other.size} partidas")
+        otherMatches = other
+        
+        isLoadingStats = false
+        android.util.Log.i("EmbeddedPlayer", "✅ TODAS AS ESTATÍSTICAS CARREGADAS COM SUCESSO!")
+      } catch (e: Exception) {
+        isLoadingStats = false
+        statsError = e.message ?: "Erro desconhecido ao carregar estatísticas"
+        android.util.Log.e("EmbeddedPlayer", "❌ Erro ao carregar estatísticas: ${e.message}", e)
       }
-      
-      // Polling será feito manualmente se necessário (por enquanto apenas busca única)
-    } else {
-      android.util.Log.w("EmbeddedPlayer", "⚠️ MatchId não disponível - não é possível buscar estatísticas")
-      statsError = "MatchId não disponível para este canal"
-      showFootballStatsDialog = true
     }
   }
   

@@ -87,7 +87,7 @@ fun LiveScreen(nav: NavHostController) {
   var currentMatchId by remember { mutableStateOf<Long?>(null) }
   val soccerStatsViewModel = remember { SoccerStatsViewModel() }
   
-  // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando Soccer Data API)
+  // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando API Sports)
   var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
   var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
   var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
@@ -97,7 +97,7 @@ fun LiveScreen(nav: NavHostController) {
   
   // ⚽ Buscar estatísticas quando o diálogo for aberto
   LaunchedEffect(showFootballStatsDialog, currentMatchId) {
-    if (showFootballStatsDialog && currentMatchId != null) {
+    if (showFootballStatsDialog) {
       isLoadingStats = true
       statsError = null
       matchDetail = null
@@ -106,21 +106,48 @@ fun LiveScreen(nav: NavHostController) {
       
       try {
         android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
-        android.util.Log.i("LiveScreen", "⚽ INICIANDO BUSCA NA API SOCCER DATA")
-        android.util.Log.i("LiveScreen", "   MatchId: $currentMatchId")
+        android.util.Log.i("LiveScreen", "⚽ INICIANDO BUSCA NA API SPORTS")
+        android.util.Log.i("LiveScreen", "   MatchId inicial: $currentMatchId")
         android.util.Log.i("LiveScreen", "   Canal: ${current?.name}")
-        android.util.Log.i("LiveScreen", "   URL Base: https://api.soccerdataapi.com/")
+        android.util.Log.i("LiveScreen", "   URL Base: https://v3.football.api-sports.io/")
         android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
         
+        // ✅ NOVO: Se não houver Match ID, tentar buscar pelo nome dos times
+        var finalMatchId = currentMatchId
+        if (finalMatchId == null && current != null) {
+          android.util.Log.i("LiveScreen", "🔍 Match ID não encontrado, tentando buscar pelo nome dos times...")
+          val teamNames = MatchIdExtractor.extractTeamNames(current!!.name)
+          if (teamNames != null) {
+            android.util.Log.i("LiveScreen", "   Times extraídos: ${teamNames.first} x ${teamNames.second}")
+            finalMatchId = SoccerRepository.findMatchByTeamNames(teamNames.first, teamNames.second)
+            if (finalMatchId != null) {
+              android.util.Log.i("LiveScreen", "   ✅ Match ID encontrado pelo nome dos times: $finalMatchId")
+              // Atualizar currentMatchId para uso futuro
+              currentMatchId = finalMatchId
+            } else {
+              android.util.Log.w("LiveScreen", "   ⚠️ Partida não encontrada pelo nome dos times")
+            }
+          } else {
+            android.util.Log.w("LiveScreen", "   ⚠️ Não foi possível extrair nomes dos times do canal")
+          }
+        }
+        
+        if (finalMatchId == null) {
+          android.util.Log.e("LiveScreen", "❌ Match ID não disponível - não é possível buscar estatísticas")
+          statsError = "Partida não encontrada. Verifique se o jogo está ao vivo ou se o nome do canal contém os times."
+          isLoadingStats = false
+          return@LaunchedEffect
+        }
+        
         // Buscar detalhes da partida
-        android.util.Log.i("LiveScreen", "📡 1/3 - Buscando getMatchDetail($currentMatchId)...")
-        val detail = SoccerRepository.getMatchDetail(currentMatchId!!)
+        android.util.Log.i("LiveScreen", "📡 1/3 - Buscando getMatchDetail($finalMatchId)...")
+        val detail = SoccerRepository.getMatchDetail(finalMatchId)
         android.util.Log.i("LiveScreen", "   ✅ getMatchDetail retornou: ${detail?.homeTeamName} x ${detail?.awayTeamName}")
         matchDetail = detail
         
         // Buscar preview da partida
-        android.util.Log.i("LiveScreen", "📡 2/3 - Buscando getMatchPreview($currentMatchId)...")
-        val preview = SoccerRepository.getMatchPreview(currentMatchId!!)
+        android.util.Log.i("LiveScreen", "📡 2/3 - Buscando getMatchPreview($finalMatchId)...")
+        val preview = SoccerRepository.getMatchPreview(finalMatchId)
         android.util.Log.i("LiveScreen", "   ✅ getMatchPreview retornou (word_count: ${preview?.word_count})")
         matchPreview = preview
         

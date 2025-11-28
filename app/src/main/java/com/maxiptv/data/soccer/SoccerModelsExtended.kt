@@ -3,17 +3,50 @@ package com.maxiptv.data.soccer
 import kotlinx.serialization.Serializable
 
 /**
- * Modelos de dados ESTENDIDOS para Soccer Data API
- * Baseado na documentação: https://soccerdataapi.com/docs/
+ * Modelos de dados para API Sports (api-sports.io)
+ * Baseado na documentação: https://www.api-sports.io/documentation/football/v3
  * 
- * O endpoint /match/ retorna uma estrutura completa com:
- * - score (placar atual, intervalo, final)
- * - statistics (array de estatísticas detalhadas)
- * - events (gols, cartões, substituições, etc)
- * - lineups (escalações completas)
- * - formation (formações dos times)
- * - status (status da partida)
+ * Endpoints principais:
+ * - /fixtures - Detalhes da partida (score, teams, league, events, lineups, statistics)
+ * - /fixtures/statistics - Estatísticas ao vivo (chutes, posse, cartões, etc)
+ * - /fixtures/events - Eventos ao vivo (gols, cartões, substituições, etc)
+ * - /fixtures/lineups - Escalações completas
+ * - /predictions - Previsões baseadas em IA
  */
+
+// ============================================================================
+// TIPOS COMPARTILHADOS (com id: Long? para compatibilidade)
+// ============================================================================
+
+@Serializable
+data class TeamInfo(
+    val id: Long? = null,
+    val name: String? = null
+)
+
+@Serializable
+data class PlayerInfo(
+    val id: Long? = null,
+    val name: String? = null
+)
+
+@Serializable
+data class LeagueInfo(
+    val id: Long? = null,
+    val name: String? = null
+)
+
+@Serializable
+data class PlayerDetail(
+    val id: Long,
+    val name: String? = null,
+    val goals: Int? = null,
+    val assists: Int? = null,
+    val yellowCards: Int? = null,
+    val redCards: Int? = null
+) {
+    val playerId: String get() = id.toString()
+}
 
 // ============================================================================
 // RESPONSE PRINCIPAL DO ENDPOINT /match/

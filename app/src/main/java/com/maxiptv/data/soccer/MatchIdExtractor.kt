@@ -63,5 +63,61 @@ object MatchIdExtractor {
         // Pode ser expandido para mapear canais específicos para matchIds conhecidos
         return null
     }
+    
+    /**
+     * Extrai os nomes dos times do nome do canal
+     * Formato esperado: "Premiere 1 - Sao Paulo x Fluminense"
+     * ou "ESPN - Flamengo x Palmeiras" ou similar
+     * Retorna Pair(homeTeam, awayTeam) ou null se não conseguir extrair
+     */
+    fun extractTeamNames(channelName: String): Pair<String, String>? {
+        val name = channelName.trim()
+        
+        // Primeiro, tentar encontrar o padrão "Time1 x Time2" ou "Time1 X Time2"
+        // Procurar pela última ocorrência de " x " ou " X " (para evitar pegar números de canais)
+        val xPattern = Regex("([^xX]+)[xX]([^xX]+)", RegexOption.IGNORE_CASE)
+        val xMatch = xPattern.findAll(name).lastOrNull()
+        
+        if (xMatch != null) {
+            var team1 = xMatch.groupValues[1].trim()
+            var team2 = xMatch.groupValues[2].trim()
+            
+            // Remover prefixos comuns de canais e números de canais
+            val prefixPattern = Regex("^(Premiere|ESPN|Sportv|Band Sport|Cazé|Caze|Amazon|Prime|\\d+)[\\s-]*", RegexOption.IGNORE_CASE)
+            team1 = team1.replace(prefixPattern, "").trim()
+            team2 = team2.replace(prefixPattern, "").trim()
+            
+            // Remover hífens e espaços extras no início
+            team1 = team1.replace(Regex("^[\\s-]+"), "").trim()
+            team2 = team2.replace(Regex("^[\\s-]+"), "").trim()
+            
+            // Verificar se os nomes não estão vazios e têm pelo menos 3 caracteres
+            if (team1.length >= 3 && team2.length >= 3) {
+                return Pair(team1, team2)
+            }
+        }
+        
+        // Fallback: tentar padrão "Time1 vs Time2"
+        val vsPattern = Regex("([^vV]+)[vV][sS]([^vV]+)", RegexOption.IGNORE_CASE)
+        val vsMatch = vsPattern.findAll(name).lastOrNull()
+        
+        if (vsMatch != null) {
+            var team1 = vsMatch.groupValues[1].trim()
+            var team2 = vsMatch.groupValues[2].trim()
+            
+            val prefixPattern = Regex("^(Premiere|ESPN|Sportv|Band Sport|Cazé|Caze|Amazon|Prime|\\d+)[\\s-]*", RegexOption.IGNORE_CASE)
+            team1 = team1.replace(prefixPattern, "").trim()
+            team2 = team2.replace(prefixPattern, "").trim()
+            
+            team1 = team1.replace(Regex("^[\\s-]+"), "").trim()
+            team2 = team2.replace(Regex("^[\\s-]+"), "").trim()
+            
+            if (team1.length >= 3 && team2.length >= 3) {
+                return Pair(team1, team2)
+            }
+        }
+        
+        return null
+    }
 }
 
