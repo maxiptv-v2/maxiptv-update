@@ -2892,13 +2892,47 @@ fun FootballStatsDialog(
                   bookmaker.bets?.filter { bet ->
                     bet.name?.contains("Match Winner", ignoreCase = true) == true ||
                     bet.name?.contains("Over/Under", ignoreCase = true) == true ||
-                    bet.name?.contains("Both Teams", ignoreCase = true) == true
-                  }?.take(2)?.forEach { bet ->
+                    bet.name?.contains("Both Teams", ignoreCase = true) == true ||
+                    bet.name?.contains("Double Chance", ignoreCase = true) == true
+                  }?.take(3)?.forEach { bet ->
                     Spacer(Modifier.height(8.dp))
                     
-                    // Nome do tipo de aposta
+                    // Função para traduzir nome do tipo de aposta
+                    fun translateBetName(betName: String?): String {
+                      return when {
+                        betName == null -> ""
+                        betName.contains("Match Winner", ignoreCase = true) -> "Vencedor da Partida"
+                        betName.contains("Over/Under", ignoreCase = true) -> "Mais/Menos Gols"
+                        betName.contains("Both Teams Score", ignoreCase = true) -> "Ambos Marcam"
+                        betName.contains("Double Chance", ignoreCase = true) -> "Dupla Chance"
+                        else -> betName
+                      }
+                    }
+                    
+                    // Função para traduzir valores das odds
+                    fun translateOddValue(value: String?): String {
+                      if (value == null) return ""
+                      
+                      val valueLower = value.lowercase()
+                      
+                      return when {
+                        valueLower == "home" -> "Casa"
+                        valueLower == "away" -> "Visitante"
+                        valueLower == "draw" -> "Empate"
+                        valueLower == "yes" -> "Sim"
+                        valueLower == "no" -> "Não"
+                        valueLower.contains("home/draw") -> "Casa/Empate"
+                        valueLower.contains("home/away") -> "Casa/Visitante"
+                        valueLower.contains("draw/away") -> "Empate/Visitante"
+                        valueLower.contains("over") -> value.replace(Regex("over", RegexOption.IGNORE_CASE), "Mais")
+                        valueLower.contains("under") -> value.replace(Regex("under", RegexOption.IGNORE_CASE), "Menos")
+                        else -> value
+                      }
+                    }
+                    
+                    // Nome do tipo de aposta (traduzido)
                     Text(
-                      text = bet.name ?: "",
+                      text = translateBetName(bet.name),
                       fontSize = when (deviceType) {
                         "tv" -> 13.sp
                         "phone" -> 10.sp
@@ -2930,7 +2964,7 @@ fun FootballStatsDialog(
                             modifier = Modifier.fillMaxWidth()
                           ) {
                             Text(
-                              text = value.value ?: "",
+                              text = translateOddValue(value.value),
                               fontSize = when (deviceType) {
                                 "tv" -> 10.sp
                                 "phone" -> 8.sp

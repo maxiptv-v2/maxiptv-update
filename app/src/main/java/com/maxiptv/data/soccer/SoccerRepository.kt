@@ -39,7 +39,7 @@ object SoccerRepository {
                 val request = chain.request().newBuilder()
                     .header("User-Agent", "MaxiPTV/1.1.1 (Android)")
                     .header("Accept", "application/json")
-                    .header("Accept-Encoding", "gzip")
+                    // Não adicionar Accept-Encoding manualmente - OkHttp descomprime gzip automaticamente
                     .build()
                 chain.proceed(request)
             }
@@ -207,57 +207,83 @@ object SoccerRepository {
             
             Log.d(TAG, "   Nomes normalizados: '$normalizedHome' x '$normalizedAway'")
             
-            // ESTRATÉGIA 1: Buscar na API Sports (livescores)
+            // ESTRATÉGIA 1: Buscar em partidas ao vivo E recentes/finalizadas
+            val allFixtures = mutableListOf<ApiSportsFixture>()
+            
+            // 1.1: Buscar partidas ao vivo
             try {
-                val response = api.getLiveFixtures("all", API_KEY)
-                val fixtures = response.response ?: emptyList()
-                Log.d(TAG, "   ✅ Livescores recebidos: ${fixtures.size} partidas")
+                val liveResponse = api.getLiveFixtures("all", API_KEY)
+                val liveFixtures = liveResponse.response ?: emptyList()
+                allFixtures.addAll(liveFixtures)
+                Log.d(TAG, "   ✅ ${liveFixtures.size} partidas ao vivo encontradas")
+            } catch (e: Exception) {
+                Log.w(TAG, "   ⚠️ Erro ao buscar partidas ao vivo: ${e.message}")
+            }
+            
+            // 1.2: Buscar partidas recentes (hoje e ontem) - IMPORTANTE: para encontrar jogos que já passaram
+            try {
+                val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                val yesterday = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(
+                    java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }.time
+                )
                 
-                // Buscar em todas as partidas (ao vivo, intervalo, em andamento, recentes)
-                for (fixture in fixtures) {
-                    val matchHome = fixture.teams?.home?.name ?: ""
-                    val matchAway = fixture.teams?.away?.name ?: ""
+                // Buscar partidas de hoje
+                val todayResponse = api.getFixturesByDate(today, API_KEY)
+                val todayFixtures = todayResponse.response ?: emptyList()
+                allFixtures.addAll(todayFixtures)
+                Log.d(TAG, "   ✅ ${todayFixtures.size} partidas de hoje encontradas")
+                
+                // Buscar partidas de ontem (jogos que já passaram mas podem estar sendo transmitidos)
+                val yesterdayResponse = api.getFixturesByDate(yesterday, API_KEY)
+                val yesterdayFixtures = yesterdayResponse.response ?: emptyList()
+                // Incluir todas as partidas finalizadas de ontem
+                val finishedFixtures = yesterdayFixtures.filter { 
+                    val status = it.fixture?.status?.short?.lowercase() ?: ""
+                    status == "ft" || status == "aet" || status == "pen"
+                }
+                allFixtures.addAll(finishedFixtures)
+                Log.d(TAG, "   ✅ ${finishedFixtures.size} partidas finalizadas de ontem encontradas")
+            } catch (e: Exception) {
+                Log.w(TAG, "   ⚠️ Erro ao buscar partidas recentes: ${e.message}")
+            }
+            
+            // Remover duplicatas
+            val fixtures = allFixtures.distinctBy { it.fixture?.id }.toList()
+            Log.d(TAG, "   ✅ Total: ${fixtures.size} partidas únicas para buscar correspondência")
+            
+            // Buscar correspondência exata pelos nomes dos times
+            for (fixture in fixtures) {
+                val matchHome = fixture.teams?.home?.name ?: ""
+                val matchAway = fixture.teams?.away?.name ?: ""
+                
+                val normalizedMatchHome = normalizeTeamName(matchHome)
+                val normalizedMatchAway = normalizeTeamName(matchAway)
+                
+                // Verificar correspondência (direta ou invertida)
+                // Usar contains para ser mais flexível (ex: "Sao Paulo FC" vs "Sao Paulo")
+                val directMatch = (normalizedMatchHome.contains(normalizedHome) || normalizedHome.contains(normalizedMatchHome)) &&
+                                 (normalizedMatchAway.contains(normalizedAway) || normalizedAway.contains(normalizedMatchAway))
+                
+                val invertedMatch = (normalizedMatchHome.contains(normalizedAway) || normalizedAway.contains(normalizedMatchHome)) &&
+                                   (normalizedMatchAway.contains(normalizedHome) || normalizedHome.contains(normalizedMatchAway))
+                
+                if (directMatch || invertedMatch) {
+                    val status = fixture.fixture?.status?.short?.lowercase() ?: ""
+                    val isCancelled = status.contains("cancelled") || status.contains("postponed")
                     
-                    val normalizedMatchHome = normalizeTeamName(matchHome)
-                    val normalizedMatchAway = normalizeTeamName(matchAway)
-                    
-                    // Verificar correspondência (direta ou invertida)
-                    // Usar contains para ser mais flexível (ex: "Sao Paulo FC" vs "Sao Paulo")
-                    val directMatch = (normalizedMatchHome.contains(normalizedHome) || normalizedHome.contains(normalizedMatchHome)) &&
-                                     (normalizedMatchAway.contains(normalizedAway) || normalizedAway.contains(normalizedMatchAway))
-                    
-                    val invertedMatch = (normalizedMatchHome.contains(normalizedAway) || normalizedAway.contains(normalizedMatchHome)) &&
-                                       (normalizedMatchAway.contains(normalizedHome) || normalizedHome.contains(normalizedMatchAway))
-                    
-                    if (directMatch || invertedMatch) {
-                        val status = fixture.fixture?.status?.short?.lowercase() ?: ""
-                        
-                        // Incluir partidas em andamento, intervalo, ou recentes
-                        // Aceitar qualquer status que não seja "cancelled" ou "postponed"
-                        val isActive = status.contains("1h") || 
-                                     status.contains("2h") || 
-                                     status.contains("ht") || 
-                                     status.contains("half") || 
-                                     status.contains("ft") ||
-                                     status.contains("ns") ||
-                                     status.isBlank()
-                        
-                        val isCancelled = status.contains("cancelled") || status.contains("postponed")
-                        
-                        if (isActive && !isCancelled) {
-                            val fixtureId = fixture.fixture?.id ?: 0L
-                            Log.d(TAG, "✅ Partida encontrada na API Sports: $matchHome x $matchAway (ID: $fixtureId, Status: ${fixture.fixture?.status?.short})")
-                            return fixtureId
-                        } else {
-                            Log.d(TAG, "   ⚠️ Partida encontrada mas status inválido: ${fixture.fixture?.status?.short}")
-                        }
+                    // ✅ ACEITAR TODAS as partidas que correspondem aos times, mesmo que já tenham terminado
+                    // Isso permite mostrar estatísticas de jogos que já passaram mas estão sendo transmitidos
+                    if (!isCancelled) {
+                        val fixtureId = fixture.fixture?.id ?: 0L
+                        Log.d(TAG, "✅ Partida encontrada pelos nomes dos times: $matchHome x $matchAway (ID: $fixtureId, Status: ${fixture.fixture?.status?.short})")
+                        return fixtureId
+                    } else {
+                        Log.d(TAG, "   ⚠️ Partida encontrada mas foi cancelada: ${fixture.fixture?.status?.short}")
                     }
                 }
-                
-                Log.d(TAG, "   ⚠️ Partida não encontrada em livescores")
-            } catch (e: Exception) {
-                Log.e(TAG, "   ❌ Erro ao buscar em livescores: ${e.message}")
             }
+            
+            Log.d(TAG, "   ⚠️ Partida não encontrada em nenhuma fonte (ao vivo ou recente)")
             
             Log.d(TAG, "⚠️ Partida não encontrada em nenhuma fonte: $homeTeam x $awayTeam")
             null
@@ -301,17 +327,54 @@ object SoccerRepository {
                 }
             }
             
-            // ESTRATÉGIA 3: Buscar todas as partidas ao vivo e identificar a mais relevante
-            Log.d(TAG, "🔍 Buscando partidas ao vivo para identificar correspondência...")
-            val response = api.getLiveFixtures("all", API_KEY)
-            val fixtures = response.response ?: emptyList()
+            // ESTRATÉGIA 3: Buscar partidas ao vivo E recentes/finalizadas
+            Log.d(TAG, "🔍 Buscando partidas ao vivo e recentes para identificar correspondência...")
+            val allFixtures = mutableListOf<ApiSportsFixture>()
             
-            if (fixtures.isEmpty()) {
-                Log.w(TAG, "⚠️ Nenhuma partida ao vivo encontrada")
+            // 3.1: Buscar partidas ao vivo
+            try {
+                val liveResponse = api.getLiveFixtures("all", API_KEY)
+                val liveFixtures = liveResponse.response ?: emptyList()
+                allFixtures.addAll(liveFixtures)
+                Log.d(TAG, "   ✅ ${liveFixtures.size} partidas ao vivo encontradas")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Erro ao buscar partidas ao vivo: ${e.message}")
+            }
+            
+            // 3.2: Buscar partidas recentes (hoje e ontem) se não encontrou ao vivo ou para ter mais opções
+            try {
+                val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                val yesterday = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(
+                    java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }.time
+                )
+                
+                // Buscar partidas de hoje
+                val todayResponse = api.getFixturesByDate(today, API_KEY)
+                val todayFixtures = todayResponse.response ?: emptyList()
+                allFixtures.addAll(todayFixtures.filter { it.fixture?.status?.short?.lowercase() != "ns" }) // Filtrar partidas não iniciadas
+                Log.d(TAG, "   ✅ ${todayFixtures.size} partidas de hoje encontradas")
+                
+                // Buscar partidas de ontem (jogos recentes/finalizados)
+                val yesterdayResponse = api.getFixturesByDate(yesterday, API_KEY)
+                val yesterdayFixtures = yesterdayResponse.response ?: emptyList()
+                // Incluir apenas partidas finalizadas ou recentes
+                val recentFixtures = yesterdayFixtures.filter { 
+                    val status = it.fixture?.status?.short?.lowercase() ?: ""
+                    status == "ft" || status == "aet" || status == "pen"
+                }
+                allFixtures.addAll(recentFixtures)
+                Log.d(TAG, "   ✅ ${recentFixtures.size} partidas recentes de ontem encontradas")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Erro ao buscar partidas recentes: ${e.message}")
+            }
+            
+            if (allFixtures.isEmpty()) {
+                Log.w(TAG, "⚠️ Nenhuma partida encontrada (ao vivo ou recente)")
                 return null
             }
             
-            Log.d(TAG, "   ✅ ${fixtures.size} partidas encontradas")
+            val fixtures = allFixtures.distinctBy { it.fixture?.id }.toList() // Remover duplicatas
+            Log.d(TAG, "   ✅ Total: ${fixtures.size} partidas únicas encontradas")
             
             // Normalizar nome do canal para busca
             val normalizedChannel = channelName.lowercase().trim()
@@ -396,16 +459,33 @@ object SoccerRepository {
                 candidates.add(Pair(fixture, score))
             }
             
-            // Processar outras partidas com pontuação menor (fallback)
+            // Processar outras partidas (finalizadas ou recentes) com pontuação menor
             for (fixture in otherMatches) {
-                var score = 100  // Base baixa para partidas não ao vivo
+                var score = 200  // Base média para partidas não ao vivo (podem estar sendo exibidas)
+                val status = fixture.fixture?.status?.short?.lowercase() ?: ""
                 val league = fixture.league?.name ?: ""
                 val country = fixture.league?.country ?: ""
+                
+                // Priorizar partidas finalizadas recentes (FT) - podem estar sendo exibidas
+                if (status == "ft" || status == "aet" || status == "pen") {
+                    score += 100  // Bônus para partidas finalizadas
+                }
                 
                 // Ainda priorizar partidas brasileiras em canais brasileiros
                 if (isBrazilianChannel) {
                     if (country.lowercase() == "brazil" || country.lowercase() == "brasil") {
-                        score += 50
+                        score += 150  // Maior bônus para brasileiras
+                    }
+                    
+                    // Priorizar ligas importantes do Brasil
+                    val brazilianLeagues = listOf(
+                        "brasileirão", "brasileirao", "serie a", "série a",
+                        "copa do brasil", "copa libertadores", "copa sudamericana",
+                        "paulistão", "paulista", "carioca", "gaúcho", "mineiro",
+                        "brasileirão série b", "serie b", "copa verde"
+                    )
+                    if (brazilianLeagues.any { league.lowercase().contains(it) }) {
+                        score += 100
                     }
                 }
                 

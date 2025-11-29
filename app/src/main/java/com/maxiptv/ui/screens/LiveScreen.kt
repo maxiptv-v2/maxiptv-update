@@ -87,6 +87,40 @@ fun LiveScreen(nav: NavHostController) {
   var currentMatchId by remember { mutableStateOf<Long?>(null) }
   val soccerStatsViewModel = remember { SoccerStatsViewModel() }
   
+  // ⚽ NOVO: Buscar Match ID automaticamente quando detectar canal de futebol
+  LaunchedEffect(current?.name) {
+    if (current != null) {
+      val isFootballChannel = MatchIdExtractor.isFootballChannel(current!!.name)
+      if (isFootballChannel) {
+        android.util.Log.i("LiveScreen", "⚽ Canal de futebol detectado: '${current!!.name}' - buscando Match ID automaticamente...")
+        
+        // Primeiro tentar extrair do nome
+        var matchId = MatchIdExtractor.extractMatchId(current!!.name)
+        
+        // Se não encontrar, buscar automaticamente
+        if (matchId == null) {
+          try {
+            matchId = SoccerRepository.findMatchForChannel(current!!.name)
+            if (matchId != null) {
+              android.util.Log.i("LiveScreen", "✅ Match ID identificado automaticamente: $matchId")
+            } else {
+              android.util.Log.w("LiveScreen", "⚠️ Não foi possível identificar a partida para este canal")
+            }
+          } catch (e: Exception) {
+            android.util.Log.e("LiveScreen", "❌ Erro ao buscar Match ID automaticamente", e)
+          }
+        } else {
+          android.util.Log.i("LiveScreen", "✅ Match ID extraído do nome do canal: $matchId")
+        }
+        
+        currentMatchId = matchId
+      } else {
+        // Limpar Match ID se não for canal de futebol
+        currentMatchId = null
+      }
+    }
+  }
+  
   // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando API Sports)
   var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
   var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
@@ -95,6 +129,70 @@ fun LiveScreen(nav: NavHostController) {
   var isLoadingStats by remember { mutableStateOf(false) }
   var statsError by remember { mutableStateOf<String?>(null) }
   val scope = rememberCoroutineScope()
+  
+  // ⚽ NOVO: Buscar Match ID automaticamente quando detectar canal de futebol (igual ao PlayerActivity)
+  LaunchedEffect(current?.name) {
+    if (current != null) {
+      val isFootballChannel = MatchIdExtractor.isFootballChannel(current!!.name)
+      if (isFootballChannel) {
+        android.util.Log.i("LiveScreen", "⚽ Canal de futebol detectado: '${current!!.name}' - buscando Match ID automaticamente...")
+        
+        // Primeiro tentar extrair do nome
+        var matchId = MatchIdExtractor.extractMatchId(current!!.name)
+        
+        // Se não encontrar, buscar automaticamente em partidas recentes/finalizadas
+        if (matchId == null) {
+          try {
+            matchId = SoccerRepository.findMatchForChannel(current!!.name)
+            if (matchId != null) {
+              android.util.Log.i("LiveScreen", "✅ Match ID identificado automaticamente: $matchId")
+            } else {
+              android.util.Log.w("LiveScreen", "⚠️ Não foi possível identificar a partida para este canal")
+            }
+          } catch (e: Exception) {
+            android.util.Log.e("LiveScreen", "❌ Erro ao buscar Match ID automaticamente", e)
+          }
+        } else {
+          android.util.Log.i("LiveScreen", "✅ Match ID extraído do nome do canal: $matchId")
+        }
+        
+        currentMatchId = matchId
+      } else {
+        // Limpar Match ID se não for canal de futebol
+        currentMatchId = null
+      }
+    }
+  }
+  
+  // ⚽ GARANTIR: Match ID continua disponível no fullscreen (preservar do mini player)
+  LaunchedEffect(isFullscreen, current?.name) {
+    if (isFullscreen && current != null) {
+      val isFootballChannel = MatchIdExtractor.isFootballChannel(current!!.name)
+      if (isFootballChannel) {
+        // Se já tem matchId do mini player, preservar e logar
+        if (currentMatchId != null) {
+          android.util.Log.i("LiveScreen", "✅ Match ID preservado no fullscreen: $currentMatchId (encontrado no mini player)")
+        } else {
+          // Se não tem matchId ainda, tentar buscar ao entrar em fullscreen
+          android.util.Log.i("LiveScreen", "⚽ Entrando em fullscreen sem Match ID - buscando automaticamente...")
+          try {
+            var matchId = MatchIdExtractor.extractMatchId(current!!.name)
+            if (matchId == null) {
+              matchId = SoccerRepository.findMatchForChannel(current!!.name)
+            }
+            if (matchId != null) {
+              currentMatchId = matchId
+              android.util.Log.i("LiveScreen", "✅ Match ID encontrado ao entrar em fullscreen: $matchId")
+            } else {
+              android.util.Log.w("LiveScreen", "⚠️ Não foi possível encontrar Match ID ao entrar em fullscreen")
+            }
+          } catch (e: Exception) {
+            android.util.Log.e("LiveScreen", "❌ Erro ao buscar Match ID ao entrar em fullscreen", e)
+          }
+        }
+      }
+    }
+  }
   
   // ⚽ Buscar estatísticas quando o diálogo for aberto
   LaunchedEffect(showFootballStatsDialog, currentMatchId) {
@@ -612,13 +710,33 @@ fun LiveScreen(nav: NavHostController) {
   if (isFullscreen && current != null) {
     // ⚽ Detectar se é canal de futebol
     val isFootballChannel = MatchIdExtractor.isFootballChannel(current!!.name)
+    // ⚽ Usar currentMatchId já encontrado automaticamente (busca em partidas recentes/finalizadas)
     val channelMatchId = if (isFootballChannel) {
-      MatchIdExtractor.extractMatchId(current!!.name) ?: currentMatchId
+      currentMatchId ?: MatchIdExtractor.extractMatchId(current!!.name)
     } else null
     
-    // ✅ Buscar programa atual e próximo do EPG (mesmo estilo do mini player)
-    val currentProgramme = EpgParser.getCurrentProgramme(current!!.name, epgData)
-    val nextProgramme = EpgParser.getNextProgramme(current!!.name, epgData)
+    // ✅ BRASIL: Estado para atualizar programas automaticamente (atualiza a cada 30 minutos)
+    var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
+    
+    // ✅ BRASIL: Atualizar tempo a cada 30 minutos para recalcular programas atual/próximo
+    // NOTA: Isso NÃO chama a API, apenas recalcula qual programa está no ar usando dados já carregados
+    LaunchedEffect(isFullscreen, current?.name) {
+        if (isFullscreen && current != null) {
+            while (true) {
+                kotlinx.coroutines.delay(1800000) // Atualizar a cada 30 minutos (1800000 ms = 30 min)
+                currentTime = System.currentTimeMillis()
+                android.util.Log.d("LiveScreen", "🔄 Atualizando programas EPG (fullscreen) - recalculando programa atual")
+            }
+        }
+    }
+    
+    // ✅ Buscar programa atual e próximo do EPG (atualizado automaticamente quando currentTime muda)
+    val currentProgramme = remember(currentTime, current?.name, epgData) {
+        EpgParser.getCurrentProgramme(current!!.name, epgData)
+    }
+    val nextProgramme = remember(currentTime, current?.name, epgData) {
+        EpgParser.getNextProgramme(current!!.name, epgData)
+    }
     
     // Fullscreen com EPG - player com controles nativos + overlay de EPG
     // BACK do controle remoto sai do fullscreen (BackHandler acima)
@@ -647,10 +765,27 @@ fun LiveScreen(nav: NavHostController) {
             val rootLayout = playerView.parent as? android.widget.FrameLayout ?: android.widget.FrameLayout(ctx).apply {
               addView(playerView)
             }
-            val statsButton = createFootballStatsButtonInView(ctx, rootLayout, current!!.name, channelMatchId, soccerStatsViewModel) {
-              // Extrair matchId e abrir diálogo
-              val matchId = MatchIdExtractor.extractMatchId(current!!.name)
-              currentMatchId = matchId
+            val finalMatchId = currentMatchId ?: channelMatchId
+            android.util.Log.i("LiveScreen", "⚽ Criando botão de estatísticas no FULLSCREEN:")
+            android.util.Log.i("LiveScreen", "   - Canal: ${current!!.name}")
+            android.util.Log.i("LiveScreen", "   - MatchId preservado do mini player: $currentMatchId")
+            android.util.Log.i("LiveScreen", "   - MatchId final usado: $finalMatchId")
+            val statsButton = createFootballStatsButtonInView(ctx, rootLayout, current!!.name, finalMatchId, soccerStatsViewModel) {
+              // Usar matchId já encontrado ou tentar buscar novamente
+              if (currentMatchId == null && current != null) {
+                android.util.Log.i("LiveScreen", "⚽ Match ID não disponível, buscando automaticamente ao clicar no botão...")
+                scope.launch {
+                  try {
+                    val matchId = SoccerRepository.findMatchForChannel(current!!.name)
+                    if (matchId != null) {
+                      currentMatchId = matchId
+                      android.util.Log.i("LiveScreen", "✅ Match ID encontrado: $matchId")
+                    }
+                  } catch (e: Exception) {
+                    android.util.Log.e("LiveScreen", "❌ Erro ao buscar Match ID", e)
+                  }
+                }
+              }
               showFootballStatsDialog = true
             }
             // ✅ CONFIGURAR FOCO: Quando apertar seta para cima no PlayerView, focar no botão de estatísticas
@@ -1085,8 +1220,21 @@ fun LiveScreen(nav: NavHostController) {
               },
               onStatsClick = {
                 try {
-                  val matchId = MatchIdExtractor.extractMatchId(current!!.name)
-                  currentMatchId = matchId
+                  // Usar matchId já encontrado automaticamente ou tentar buscar novamente
+                  if (currentMatchId == null && current != null) {
+                    android.util.Log.i("LiveScreen", "⚽ Match ID não disponível no MiniPlayer, buscando automaticamente...")
+                    scope.launch {
+                      try {
+                        val matchId = SoccerRepository.findMatchForChannel(current!!.name)
+                        if (matchId != null) {
+                          currentMatchId = matchId
+                          android.util.Log.i("LiveScreen", "✅ Match ID encontrado no MiniPlayer: $matchId")
+                        }
+                      } catch (e: Exception) {
+                        android.util.Log.e("LiveScreen", "❌ Erro ao buscar Match ID no MiniPlayer", e)
+                      }
+                    }
+                  }
                   showFootballStatsDialog = true
                 } catch (e: Exception) {
                   android.util.Log.e("LiveScreen", "❌ Erro ao abrir estatísticas: ${e.message}", e)
@@ -1455,9 +1603,26 @@ fun MiniPlayer(
         }
       }
       
-      // Buscar programa atual e próximo do EPG
-      val currentProgramme = EpgParser.getCurrentProgramme(channel.name, epgData)
-      val nextProgramme = EpgParser.getNextProgramme(channel.name, epgData)
+      // ✅ BRASIL: Estado para atualizar programas automaticamente no mini player
+      var currentTimeMini by remember { mutableStateOf(System.currentTimeMillis()) }
+      
+      // ✅ BRASIL: Atualizar tempo a cada 30 minutos para recalcular programas atual/próximo
+      // NOTA: Isso NÃO chama a API, apenas recalcula qual programa está no ar usando dados já carregados
+      LaunchedEffect(channel.stream_id) {
+        while (true) {
+          kotlinx.coroutines.delay(1800000) // Atualizar a cada 30 minutos (1800000 ms = 30 min)
+          currentTimeMini = System.currentTimeMillis()
+          android.util.Log.d("MiniPlayer", "🔄 Atualizando programas EPG (mini player) - recalculando programa atual")
+        }
+      }
+      
+      // ✅ Buscar programa atual e próximo do EPG (atualizado automaticamente quando currentTimeMini muda)
+      val currentProgramme = remember(currentTimeMini, channel.name, epgData) {
+        EpgParser.getCurrentProgramme(channel.name, epgData)
+      }
+      val nextProgramme = remember(currentTimeMini, channel.name, epgData) {
+        EpgParser.getNextProgramme(channel.name, epgData)
+      }
       
       // Log para debug do EPG
       android.util.Log.i("MiniPlayer", "📺 Canal: ${channel.name}")

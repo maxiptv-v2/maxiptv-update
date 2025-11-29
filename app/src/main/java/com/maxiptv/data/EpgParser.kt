@@ -9,13 +9,24 @@ import java.io.StringReader
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Parser para XMLTV EPG (Electronic Program Guide)
  */
 object EpgParser {
     private const val EPG_URL = "http://canais.is/xmltv.php"
-    private val dateFormat = SimpleDateFormat("yyyyMMddHHmmss Z", Locale.getDefault())
+    // ✅ BRASIL: Timezone de Brasília (padrão para canais brasileiros)
+    private val brasiliaTimeZone = TimeZone.getTimeZone("America/Sao_Paulo")
+    // ✅ CORREÇÃO: Formato com timezone (padrão XMLTV: "yyyyMMddHHmmss -0300")
+    // Usar UTC para parse e depois converter para Brasília
+    private val dateFormatWithTimezone = SimpleDateFormat("yyyyMMddHHmmss Z", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC") // Parse em UTC para preservar horário original
+    }
+    // ✅ CORREÇÃO: Formato sem timezone (assume horário de Brasília)
+    private val dateFormatWithoutTimezone = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).apply {
+        timeZone = brasiliaTimeZone
+    }
     
     /**
      * Baixa e faz parse do EPG completo
@@ -141,13 +152,56 @@ object EpgParser {
     
     /**
      * Converte string de data XMLTV para timestamp
+     * ✅ BRASIL: Respeita o timezone que vem da API e armazena timestamp correto
+     * O formato XMLTV pode vir como:
+     * - "yyyyMMddHHmmss -0300" (com timezone do Brasil)
+     * - "yyyyMMddHHmmss" (sem timezone - assume horário de Brasília)
+     * 
+     * IMPORTANTE: 
+     * - Preserva o horário original que vem da API
+     * - Armazena timestamp em UTC para comparações corretas
+     * - Na exibição, sempre mostra em horário de Brasília
      */
     private fun parseDate(dateStr: String?): Long? {
         if (dateStr == null) return null
         return try {
-            dateFormat.parse(dateStr)?.time
+            val parsed: java.util.Date?
+            
+            // ✅ Verificar se a string tem timezone (tem espaço seguido de + ou - e 4 dígitos)
+            val hasTimezone = dateStr.matches(Regex("\\d{14}\\s+[+-]\\d{4}"))
+            
+            if (hasTimezone) {
+                // Tem timezone: parsear respeitando o timezone que vem da API
+                // O SimpleDateFormat faz parse e converte para UTC automaticamente
+                parsed = dateFormatWithTimezone.parse(dateStr)
+                
+                // ✅ Log para debug - mostrar timezone original
+                val timezoneMatch = Regex("([+-]\\d{4})").find(dateStr)
+                val originalTimezone = timezoneMatch?.value ?: "N/A"
+                Log.d("EpgParser", "📅 Data da API com timezone '$originalTimezone': '$dateStr'")
+            } else {
+                // Sem timezone: assumir horário de Brasília (padrão para canais brasileiros)
+                parsed = dateFormatWithoutTimezone.parse(dateStr)
+                Log.d("EpgParser", "📅 Data sem timezone (assumindo Brasília): '$dateStr'")
+            }
+            
+            if (parsed != null) {
+                // Timestamp em UTC (correto para comparações)
+                val timestamp = parsed.time
+                
+                // ✅ LOG para debug: mostrar como será exibido em Brasília
+                val brasiliaFormatter = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).apply {
+                    timeZone = brasiliaTimeZone
+                }
+                val brasiliaTime = brasiliaFormatter.format(java.util.Date(timestamp))
+                Log.d("EpgParser", "   → Exibido em Brasília: $brasiliaTime")
+                
+                timestamp
+            } else {
+                null
+            }
         } catch (e: Exception) {
-            Log.w("EpgParser", "⚠️ Erro ao parsear data: $dateStr")
+            Log.w("EpgParser", "⚠️ Erro ao parsear data: $dateStr - ${e.message}")
             null
         }
     }

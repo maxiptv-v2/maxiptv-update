@@ -35,6 +35,16 @@ interface SoccerApi {
     ): ApiSportsResponse<ApiSportsFixture>
     
     /**
+     * GET /fixtures?date={date}
+     * Retorna partidas de uma data específica (formato: YYYY-MM-DD)
+     */
+    @GET("fixtures")
+    suspend fun getFixturesByDate(
+        @Query("date") date: String,
+        @Header("x-apisports-key") apiKey: String
+    ): ApiSportsResponse<ApiSportsFixture>
+    
+    /**
      * GET /fixtures/statistics?fixture={id}
      * Retorna estatísticas da partida
      */

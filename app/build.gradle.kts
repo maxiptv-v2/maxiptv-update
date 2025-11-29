@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 347
-        versionName = "1.0.347"
+        versionCode = 349
+        versionName = "1.0.349"
     vectorDrawables.useSupportLibrary = true
     ndk {
       abiFilters += listOf("armeabi-v7a", "arm64-v8a")

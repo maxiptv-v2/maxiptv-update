@@ -114,17 +114,25 @@ data class EpgProgramme(
     
     /**
      * Formata o horário de início (HH:mm)
+     * ✅ CORREÇÃO: Sempre exibe no horário de Brasília (padrão para canais brasileiros)
      */
     fun startTime(): String {
-        val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).apply {
+            // ✅ Forçar timezone de Brasília para exibição consistente
+            timeZone = java.util.TimeZone.getTimeZone("America/Sao_Paulo")
+        }
         return formatter.format(java.util.Date(start))
     }
     
     /**
      * Formata o horário de fim (HH:mm)
+     * ✅ CORREÇÃO: Sempre exibe no horário de Brasília (padrão para canais brasileiros)
      */
     fun stopTime(): String {
-        val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).apply {
+            // ✅ Forçar timezone de Brasília para exibição consistente
+            timeZone = java.util.TimeZone.getTimeZone("America/Sao_Paulo")
+        }
         return formatter.format(java.util.Date(stop))
     }
 }
