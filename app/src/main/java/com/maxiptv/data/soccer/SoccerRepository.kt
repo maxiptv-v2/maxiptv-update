@@ -15,11 +15,11 @@ import okhttp3.MediaType.Companion.toMediaType
  * Documentação: https://www.api-sports.io/documentation/football/v3
  */
 object SoccerRepository {
-    private const val BASE_URL = "https://v3.football.api-sports.io/"
+    private const val BASE_URL = "https://v3.football.api-sports.io"
     private const val TAG = "SoccerRepository"
     
     // 🔑 Chave de API da API Sports
-    private const val API_KEY = "bc683b9a8a5e3d87de16635ff3f04f1b"
+    private const val API_KEY = "0d31cc47acb2253a35528ed33962a3b4"
     
     private val api: SoccerApi by lazy {
         val json = Json {
@@ -39,6 +39,7 @@ object SoccerRepository {
                 val request = chain.request().newBuilder()
                     .header("User-Agent", "MaxiPTV/1.1.1 (Android)")
                     .header("Accept", "application/json")
+                    .header("Accept-Language", "pt-BR,pt;q=0.9,en;q=0.8")
                     // Não adicionar Accept-Encoding manualmente - OkHttp descomprime gzip automaticamente
                     .build()
                 chain.proceed(request)
@@ -189,7 +190,7 @@ object SoccerRepository {
         return try {
             Log.d(TAG, "🔍 Buscando partida por nomes: $homeTeam x $awayTeam")
             
-            // Normalizar nomes dos times para comparação (remover acentos, lowercase, espaços)
+            // Normalizar nomes dos times para comparação (remover acentos, lowercase, espaços, prefixos)
             fun normalizeTeamName(name: String): String {
                 return name.lowercase()
                     .replace("ã", "a").replace("á", "a").replace("à", "a").replace("â", "a")
@@ -198,6 +199,9 @@ object SoccerRepository {
                     .replace("ó", "o").replace("ô", "o").replace("õ", "o")
                     .replace("ú", "u").replace("ü", "u")
                     .replace("ç", "c")
+                    // ✅ MELHORIA: Remover prefixos comuns (EC, FC, SC, BA, SP, etc.)
+                    .replace(Regex("^(ec|fc|sc|se|aa|ad|ae|af|ag|ah|ai|aj|ak|al|am|an|ao|ap|aq|ar|as|at|au|av|aw|ax|ay|az|ba|bb|bc|bd|be|bf|bg|bh|bi|bj|bk|bl|bm|bn|bo|bp|bq|br|bs|bt|bu|bv|bw|bx|by|bz|sp|rj|mg|rs|pr|sc|go|pe|ce|df|es|pb|rn|al|pi|ma|ms|mt|ac|ap|ro|rr|to|am|pa)\\s+", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("\\s+(ec|fc|sc|se|ba|sp|rj|mg|rs|pr|sc|go|pe|ce|df|es|pb|rn|al|pi|ma|ms|mt|ac|ap|ro|rr|to|am|pa)$", RegexOption.IGNORE_CASE), "")
                     .replace(Regex("\\s+"), " ")
                     .trim()
             }
@@ -213,43 +217,102 @@ object SoccerRepository {
             // 1.1: Buscar partidas ao vivo
             try {
                 val liveResponse = api.getLiveFixtures("all", API_KEY)
+                
+                // Verificar erros da API
+                if (liveResponse.errors != null && liveResponse.errors!!.isNotEmpty()) {
+                    val errorMsg = liveResponse.errors!!.joinToString(", ")
+                    Log.w(TAG, "   ⚠️ API retornou erros: $errorMsg")
+                    
+                    // Verificar se é limite de requisições
+                    if (errorMsg.contains("request limit", ignoreCase = true) || 
+                        errorMsg.contains("reached the request limit", ignoreCase = true)) {
+                        Log.e(TAG, "   ❌ LIMITE DE REQUISIÇÕES DIÁRIAS ATINGIDO")
+                        Log.e(TAG, "   💡 A chave da API atingiu o limite diário (100 requisições)")
+                        Log.e(TAG, "   💡 Verifique se a chave não está sendo usada em outro lugar")
+                        Log.e(TAG, "   💡 Ou faça upgrade do plano em: https://dashboard.api-football.com")
+                        return null
+                    }
+                }
+                
+                // Verificar resultados
+                val results = liveResponse.results ?: 0
+                Log.d(TAG, "   📊 API retornou: results=$results, get=${liveResponse.get}")
+                
                 val liveFixtures = liveResponse.response ?: emptyList()
                 allFixtures.addAll(liveFixtures)
                 Log.d(TAG, "   ✅ ${liveFixtures.size} partidas ao vivo encontradas")
             } catch (e: Exception) {
-                Log.w(TAG, "   ⚠️ Erro ao buscar partidas ao vivo: ${e.message}")
+                Log.e(TAG, "   ❌ Erro ao buscar partidas ao vivo: ${e.message}", e)
+                e.printStackTrace()
             }
             
-            // 1.2: Buscar partidas recentes (hoje e ontem) - IMPORTANTE: para encontrar jogos que já passaram
+            // 1.2: Buscar partidas de hoje (ao vivo) - APENAS partidas ao vivo de hoje
             try {
-                val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                val yesterday = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(
-                    java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }.time
-                )
+                val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                val today = dateFormat.format(java.util.Date())
                 
-                // Buscar partidas de hoje
-                val todayResponse = api.getFixturesByDate(today, API_KEY)
-                val todayFixtures = todayResponse.response ?: emptyList()
-                allFixtures.addAll(todayFixtures)
-                Log.d(TAG, "   ✅ ${todayFixtures.size} partidas de hoje encontradas")
+                Log.d(TAG, "   📅 Buscando partidas de hoje: $today")
+                val dateResponse = api.getFixturesByDate(today, API_KEY)
                 
-                // Buscar partidas de ontem (jogos que já passaram mas podem estar sendo transmitidos)
-                val yesterdayResponse = api.getFixturesByDate(yesterday, API_KEY)
-                val yesterdayFixtures = yesterdayResponse.response ?: emptyList()
-                // Incluir todas as partidas finalizadas de ontem
-                val finishedFixtures = yesterdayFixtures.filter { 
-                    val status = it.fixture?.status?.short?.lowercase() ?: ""
-                    status == "ft" || status == "aet" || status == "pen"
+                // Verificar erros da API
+                if (dateResponse.errors != null && dateResponse.errors!!.isNotEmpty()) {
+                    val errorMsg = dateResponse.errors!!.joinToString(", ")
+                    Log.w(TAG, "   ⚠️ API retornou erros: $errorMsg")
+                    
+                    // Verificar se é limite de requisições
+                    if (errorMsg.contains("request limit", ignoreCase = true) || 
+                        errorMsg.contains("reached the request limit", ignoreCase = true)) {
+                        Log.e(TAG, "   ❌ LIMITE DE REQUISIÇÕES DIÁRIAS ATINGIDO")
+                        Log.e(TAG, "   💡 A chave da API atingiu o limite diário (100 requisições)")
+                        Log.e(TAG, "   💡 Verifique se a chave não está sendo usada em outro lugar")
+                        Log.e(TAG, "   💡 Ou faça upgrade do plano em: https://dashboard.api-football.com")
+                        return null
+                    }
                 }
-                allFixtures.addAll(finishedFixtures)
-                Log.d(TAG, "   ✅ ${finishedFixtures.size} partidas finalizadas de ontem encontradas")
+                
+                // Verificar resultados
+                val results = dateResponse.results ?: 0
+                Log.d(TAG, "   📊 API retornou: results=$results, get=${dateResponse.get}")
+                
+                val todayFixtures = dateResponse.response ?: emptyList()
+                
+                // Incluir apenas partidas ao vivo de hoje
+                val liveTodayFixtures = todayFixtures.filter { 
+                    val status = it.fixture?.status?.short?.lowercase() ?: ""
+                    status == "live" || status == "1h" || status == "2h" || status == "ht"
+                }
+                allFixtures.addAll(liveTodayFixtures)
+                
+                Log.d(TAG, "   ✅ ${liveTodayFixtures.size} partidas ao vivo de hoje encontradas (de ${todayFixtures.size} total)")
             } catch (e: Exception) {
-                Log.w(TAG, "   ⚠️ Erro ao buscar partidas recentes: ${e.message}")
+                Log.e(TAG, "   ❌ Erro ao buscar partidas de hoje: ${e.message}", e)
+                e.printStackTrace()
             }
             
             // Remover duplicatas
             val fixtures = allFixtures.distinctBy { it.fixture?.id }.toList()
             Log.d(TAG, "   ✅ Total: ${fixtures.size} partidas únicas para buscar correspondência")
+            
+            // ✅ MELHORIA: Função auxiliar para verificar correspondência de nomes (fora do loop)
+            fun namesMatch(name1: String, name2: String): Boolean {
+                if (name1.isEmpty() || name2.isEmpty()) return false
+                // Correspondência exata
+                if (name1 == name2) return true
+                // Um contém o outro (para lidar com "EC Vitória" vs "Vitória")
+                if (name1.contains(name2) || name2.contains(name1)) return true
+                // Verificar palavras-chave principais (primeira palavra de cada nome)
+                val words1 = name1.split(" ").filter { it.length >= 3 }
+                val words2 = name2.split(" ").filter { it.length >= 3 }
+                if (words1.isNotEmpty() && words2.isNotEmpty()) {
+                    // Se a primeira palavra de um está no outro, considerar match
+                    if (words1[0] in words2 || words2[0] in words1) {
+                        // Verificar se pelo menos 1 palavra coincide
+                        val commonWords = words1.intersect(words2.toSet())
+                        if (commonWords.size >= 1) return true
+                    }
+                }
+                return false
+            }
             
             // Buscar correspondência exata pelos nomes dos times
             for (fixture in fixtures) {
@@ -259,13 +322,13 @@ object SoccerRepository {
                 val normalizedMatchHome = normalizeTeamName(matchHome)
                 val normalizedMatchAway = normalizeTeamName(matchAway)
                 
-                // Verificar correspondência (direta ou invertida)
-                // Usar contains para ser mais flexível (ex: "Sao Paulo FC" vs "Sao Paulo")
-                val directMatch = (normalizedMatchHome.contains(normalizedHome) || normalizedHome.contains(normalizedMatchHome)) &&
-                                 (normalizedMatchAway.contains(normalizedAway) || normalizedAway.contains(normalizedMatchAway))
+                // ✅ MELHORIA: Verificar correspondência (direta ou invertida) com mais flexibilidade
+                // Usar contains para ser mais flexível (ex: "Sao Paulo FC" vs "Sao Paulo", "EC Vitória" vs "Vitória")
+                val directMatch = namesMatch(normalizedMatchHome, normalizedHome) &&
+                                 namesMatch(normalizedMatchAway, normalizedAway)
                 
-                val invertedMatch = (normalizedMatchHome.contains(normalizedAway) || normalizedAway.contains(normalizedMatchHome)) &&
-                                   (normalizedMatchAway.contains(normalizedHome) || normalizedHome.contains(normalizedMatchAway))
+                val invertedMatch = namesMatch(normalizedMatchHome, normalizedAway) &&
+                                   namesMatch(normalizedMatchAway, normalizedHome)
                 
                 if (directMatch || invertedMatch) {
                     val status = fixture.fixture?.status?.short?.lowercase() ?: ""
@@ -325,12 +388,17 @@ object SoccerRepository {
             // ESTRATÉGIA 2: Tentar extrair nomes dos times e buscar
             val teamNames = MatchIdExtractor.extractTeamNames(channelName)
             if (teamNames != null) {
-                Log.d(TAG, "🔍 Times extraídos do canal: ${teamNames.first} x ${teamNames.second}")
+                Log.d(TAG, "🔍 Times extraídos do canal: '${teamNames.first}' x '${teamNames.second}'")
+                Log.d(TAG, "   Buscando partida correspondente na API...")
                 val matchIdByTeams = findMatchByTeamNames(teamNames.first, teamNames.second)
                 if (matchIdByTeams != null) {
                     Log.d(TAG, "✅ Match ID encontrado pelo nome dos times: $matchIdByTeams")
                     return matchIdByTeams
+                } else {
+                    Log.w(TAG, "⚠️ Partida não encontrada para: '${teamNames.first}' x '${teamNames.second}'")
                 }
+            } else {
+                Log.d(TAG, "⚠️ Não foi possível extrair nomes dos times do canal: '$channelName'")
             }
             
             // ESTRATÉGIA 3: Buscar partidas ao vivo E recentes/finalizadas
@@ -340,38 +408,76 @@ object SoccerRepository {
             // 3.1: Buscar partidas ao vivo
             try {
                 val liveResponse = api.getLiveFixtures("all", API_KEY)
+                
+                // Verificar erros da API
+                if (liveResponse.errors != null && liveResponse.errors!!.isNotEmpty()) {
+                    val errorMsg = liveResponse.errors!!.joinToString(", ")
+                    Log.w(TAG, "   ⚠️ API retornou erros: $errorMsg")
+                    
+                    // Verificar se é limite de requisições
+                    if (errorMsg.contains("request limit", ignoreCase = true) || 
+                        errorMsg.contains("reached the request limit", ignoreCase = true)) {
+                        Log.e(TAG, "   ❌ LIMITE DE REQUISIÇÕES DIÁRIAS ATINGIDO")
+                        Log.e(TAG, "   💡 A chave da API atingiu o limite diário (100 requisições)")
+                        Log.e(TAG, "   💡 Verifique se a chave não está sendo usada em outro lugar")
+                        Log.e(TAG, "   💡 Ou faça upgrade do plano em: https://dashboard.api-football.com")
+                        return null
+                    }
+                }
+                
+                // Verificar resultados
+                val results = liveResponse.results ?: 0
+                Log.d(TAG, "   📊 API retornou: results=$results, get=${liveResponse.get}")
+                
                 val liveFixtures = liveResponse.response ?: emptyList()
                 allFixtures.addAll(liveFixtures)
                 Log.d(TAG, "   ✅ ${liveFixtures.size} partidas ao vivo encontradas")
             } catch (e: Exception) {
-                Log.w(TAG, "⚠️ Erro ao buscar partidas ao vivo: ${e.message}")
+                Log.e(TAG, "   ❌ Erro ao buscar partidas ao vivo: ${e.message}", e)
+                e.printStackTrace()
             }
             
-            // 3.2: Buscar partidas recentes (hoje e ontem) se não encontrou ao vivo ou para ter mais opções
+            // 3.2: Buscar partidas ao vivo de hoje se não encontrou na busca inicial
             try {
-                val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                val yesterday = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(
-                    java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }.time
-                )
+                val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                val today = dateFormat.format(java.util.Date())
                 
-                // Buscar partidas de hoje
-                val todayResponse = api.getFixturesByDate(today, API_KEY)
-                val todayFixtures = todayResponse.response ?: emptyList()
-                allFixtures.addAll(todayFixtures.filter { it.fixture?.status?.short?.lowercase() != "ns" }) // Filtrar partidas não iniciadas
-                Log.d(TAG, "   ✅ ${todayFixtures.size} partidas de hoje encontradas")
+                Log.d(TAG, "   📅 Buscando partidas de hoje: $today")
+                val dateResponse = api.getFixturesByDate(today, API_KEY)
                 
-                // Buscar partidas de ontem (jogos recentes/finalizados)
-                val yesterdayResponse = api.getFixturesByDate(yesterday, API_KEY)
-                val yesterdayFixtures = yesterdayResponse.response ?: emptyList()
-                // Incluir apenas partidas finalizadas ou recentes
-                val recentFixtures = yesterdayFixtures.filter { 
-                    val status = it.fixture?.status?.short?.lowercase() ?: ""
-                    status == "ft" || status == "aet" || status == "pen"
+                // Verificar erros da API
+                if (dateResponse.errors != null && dateResponse.errors!!.isNotEmpty()) {
+                    val errorMsg = dateResponse.errors!!.joinToString(", ")
+                    Log.w(TAG, "   ⚠️ API retornou erros: $errorMsg")
+                    
+                    // Verificar se é limite de requisições
+                    if (errorMsg.contains("request limit", ignoreCase = true) || 
+                        errorMsg.contains("reached the request limit", ignoreCase = true)) {
+                        Log.e(TAG, "   ❌ LIMITE DE REQUISIÇÕES DIÁRIAS ATINGIDO")
+                        Log.e(TAG, "   💡 A chave da API atingiu o limite diário (100 requisições)")
+                        Log.e(TAG, "   💡 Verifique se a chave não está sendo usada em outro lugar")
+                        Log.e(TAG, "   💡 Ou faça upgrade do plano em: https://dashboard.api-football.com")
+                        return null
+                    }
                 }
-                allFixtures.addAll(recentFixtures)
-                Log.d(TAG, "   ✅ ${recentFixtures.size} partidas recentes de ontem encontradas")
+                
+                // Verificar resultados
+                val results = dateResponse.results ?: 0
+                Log.d(TAG, "   📊 API retornou: results=$results, get=${dateResponse.get}")
+                
+                val todayFixtures = dateResponse.response ?: emptyList()
+                
+                // Incluir apenas partidas ao vivo de hoje
+                val liveTodayFixtures = todayFixtures.filter { 
+                    val status = it.fixture?.status?.short?.lowercase() ?: ""
+                    status == "live" || status == "1h" || status == "2h" || status == "ht"
+                }
+                allFixtures.addAll(liveTodayFixtures)
+                
+                Log.d(TAG, "   ✅ ${liveTodayFixtures.size} partidas ao vivo de hoje encontradas (de ${todayFixtures.size} total)")
             } catch (e: Exception) {
-                Log.w(TAG, "⚠️ Erro ao buscar partidas recentes: ${e.message}")
+                Log.e(TAG, "   ❌ Erro ao buscar partidas de hoje: ${e.message}", e)
+                e.printStackTrace()
             }
             
             if (allFixtures.isEmpty()) {
