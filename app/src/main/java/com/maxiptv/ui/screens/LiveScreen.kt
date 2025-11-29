@@ -615,9 +615,20 @@ fun LiveScreen(nav: NavHostController) {
     androidx.activity.compose.BackHandler(enabled = isFullscreen) {
       // 1x BACK em fullscreen = volta para mini player
       android.util.Log.i("LiveScreen", "🔙 BACK pressionado - saindo do fullscreen")
-      sharedPlayer.volume = 0.3f
-      isFullscreen = false
-      // Continua na mesma tela (LiveScreen)
+      try {
+        // ✅ IMPORTANTE: Ajustar volume de volta para o mini player (30%)
+        sharedPlayer.volume = 0.3f
+        // ✅ Sair do fullscreen - MiniPlayer será renderizado novamente automaticamente
+        isFullscreen = false
+        android.util.Log.i("LiveScreen", "✅ Fullscreen fechado - MiniPlayer será renderizado novamente")
+        android.util.Log.i("LiveScreen", "   - Player continua tocando: ${sharedPlayer.isPlaying}")
+        android.util.Log.i("LiveScreen", "   - Estado do player: ${sharedPlayer.playbackState}")
+      } catch (e: Exception) {
+        android.util.Log.e("LiveScreen", "❌ Erro ao sair do fullscreen: ${e.message}", e)
+        // Garantir que sai do fullscreen mesmo em caso de erro
+        isFullscreen = false
+      }
+      // Continua na mesma tela (LiveScreen) - MiniPlayer será renderizado automaticamente
     }
   }
   
@@ -992,6 +1003,34 @@ fun LiveScreen(nav: NavHostController) {
           }
         }
       }
+      
+      // ⚽ DIÁLOGO DE ESTATÍSTICAS DE FUTEBOL (FULLSCREEN) - renderizar sobre o player
+      if (showFootballStatsDialog && isFootballChannel) {
+        FootballStatsDialog(
+          channelName = current!!.name,
+          matchId = currentMatchId,
+          matchDetail = matchDetail,
+          matchPreview = matchPreview,
+          otherMatches = otherMatches,
+          matchOdds = matchOdds,
+          isLoading = isLoadingStats,
+          error = statsError,
+          onDismiss = { 
+            showFootballStatsDialog = false
+            matchDetail = null
+            matchPreview = null
+            otherMatches = emptyList()
+            matchOdds = null
+            statsError = null
+          },
+          deviceType = when {
+            MaxiApp.isTv -> "tv"
+            MaxiApp.isFireStick -> "tv"
+            else -> "phone"
+          },
+          isVisible = showFootballStatsDialog
+        )
+      }
     }
     return // IMPORTANTE: Sair da função ANTES de renderizar TopBar ou qualquer outro elemento
   }
@@ -1208,11 +1247,19 @@ fun LiveScreen(nav: NavHostController) {
                   // 📺 Canais normais: apenas mudar layout (MESMO PLAYER, SÓ MUDA LAYOUT)
                   android.util.Log.i("MiniPlayer", "🎯 Ativando fullscreen - volume 100%")
                   
+                  // ✅ CRÍTICO: Garantir que apenas UMA PlayerView use o player por vez
+                  // O MiniPlayer será desmontado quando isFullscreen = true (return na função),
+                  // mas para evitar conflitos durante a transição, garantimos que o player continue tocando
+                  
                   // ✅ OTIMIZAÇÃO: Garantir que o player está pronto antes de mudar para fullscreen
                   if (sharedPlayer.playbackState == androidx.media3.common.Player.STATE_READY || 
                       sharedPlayer.playbackState == androidx.media3.common.Player.STATE_BUFFERING) {
+                    // ✅ IMPORTANTE: Não parar o player, apenas ajustar volume e mudar layout
+                    // O player continua tocando, apenas a PlayerView muda (mini -> fullscreen)
                     sharedPlayer.volume = 1.0f // Volume máximo em fullscreen
                     isFullscreen = true // Trocar para layout fullscreen
+                    // ✅ MiniPlayer será desmontado automaticamente pelo return na função
+                    android.util.Log.i("MiniPlayer", "✅ Fullscreen ativado - mesmo player, apenas mudou PlayerView")
                   } else {
                     // Se player não está pronto, aguardar um pouco
                     android.util.Log.w("MiniPlayer", "⚠️ Player não está pronto, aguardando...")
@@ -1220,6 +1267,7 @@ fun LiveScreen(nav: NavHostController) {
                       if (sharedPlayer.playbackState == androidx.media3.common.Player.STATE_READY) {
                         sharedPlayer.volume = 1.0f
                         isFullscreen = true
+                        android.util.Log.i("MiniPlayer", "✅ Fullscreen ativado (após delay) - mesmo player")
                       }
                     }, 500)
                   }
@@ -1546,6 +1594,16 @@ fun MiniPlayer(
     contentAlignment = Alignment.Center
   ) {
     // Player View - USANDO PLAYER COMPARTILHADO
+    // ✅ IMPORTANTE: Desconectar player quando componente for desmontado (ex: ao entrar em fullscreen)
+    androidx.compose.runtime.DisposableEffect(Unit) {
+      onDispose {
+        // Quando MiniPlayer é desmontado (ex: ao entrar em fullscreen), 
+        // o PlayerView será removido automaticamente pelo Compose
+        // O player continua tocando e será usado pelo fullscreen
+        android.util.Log.i("MiniPlayer", "🧹 MiniPlayer desmontado - PlayerView será removido")
+      }
+    }
+    
     androidx.compose.ui.viewinterop.AndroidView(
       factory = { ctx ->
         androidx.media3.ui.PlayerView(ctx).apply {
@@ -1562,6 +1620,12 @@ fun MiniPlayer(
             android.view.ViewGroup.LayoutParams.MATCH_PARENT,
             android.view.ViewGroup.LayoutParams.MATCH_PARENT
           )
+        }
+      },
+      update = { playerView ->
+        // ✅ Atualizar player se mudar (garantir que está sincronizado)
+        if (playerView.player != exoPlayer) {
+          playerView.player = exoPlayer
         }
       },
       modifier = Modifier
