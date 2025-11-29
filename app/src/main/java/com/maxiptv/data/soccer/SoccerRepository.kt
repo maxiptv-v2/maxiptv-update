@@ -307,6 +307,12 @@ object SoccerRepository {
      */
     suspend fun findMatchForChannel(channelName: String): Long? {
         return try {
+            // ✅ CORREÇÃO CRASH: Validar entrada
+            if (channelName.isBlank()) {
+                Log.w(TAG, "⚠️ Nome do canal vazio - retornando null")
+                return null
+            }
+            
             Log.d(TAG, "🔍 Buscando Match ID para canal: '$channelName'")
             
             // ESTRATÉGIA 1: Tentar extrair Match ID diretamente do nome do canal

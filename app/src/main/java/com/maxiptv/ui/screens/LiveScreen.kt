@@ -151,6 +151,9 @@ fun LiveScreen(nav: NavHostController) {
             }
           } catch (e: Exception) {
             android.util.Log.e("LiveScreen", "❌ Erro ao buscar Match ID automaticamente", e)
+            e.printStackTrace()
+            // ✅ CORREÇÃO CRASH: Não propagar exceção - apenas logar e continuar
+            matchId = null
           }
         } else {
           android.util.Log.i("LiveScreen", "✅ Match ID extraído do nome do canal: $matchId")
@@ -197,11 +200,18 @@ fun LiveScreen(nav: NavHostController) {
   // ⚽ Buscar estatísticas quando o diálogo for aberto
   LaunchedEffect(showFootballStatsDialog, currentMatchId) {
     if (showFootballStatsDialog) {
+      // ✅ CORREÇÃO: Inicializar estados imediatamente para mostrar diálogo
+      // O diálogo já deve estar visível (showFootballStatsDialog = true foi definido antes)
       isLoadingStats = true
       statsError = null
-      matchDetail = null
-      matchPreview = null
-      otherMatches = emptyList()
+      
+      // ✅ CORREÇÃO: Limpar dados apenas se necessário (permitir reutilizar dados anteriores)
+      // Isso permite que o diálogo apareça imediatamente com dados anteriores se disponíveis
+      if (matchDetail == null) {
+        matchPreview = null
+        otherMatches = emptyList()
+        matchOdds = null
+      }
       
       try {
         android.util.Log.i("LiveScreen", "═══════════════════════════════════════")

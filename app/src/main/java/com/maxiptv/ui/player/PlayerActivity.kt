@@ -540,9 +540,16 @@ class PlayerActivity : ComponentActivity() {
       }
     })
     
-    pv.setOnTouchListener { _, event ->
-      gestureDetector.onTouchEvent(event)
-      false
+    // ✅ CORREÇÃO SMARTPHONE: Apenas interceptar touch em TV, não em smartphone
+    // Em smartphone, deixar o comportamento padrão do player (toque na tela = pausar/play)
+    if (MaxiApp.isTv || MaxiApp.isFireStick || MaxiApp.isTvBox) {
+      pv.setOnTouchListener { _, event ->
+        gestureDetector.onTouchEvent(event)
+        false
+      }
+    } else {
+      // ✅ SMARTPHONE: Não interceptar touch - deixar o player gerenciar normalmente
+      android.util.Log.d("PlayerActivity", "📱 Modo smartphone: touch não interceptado")
     }
     
     setContentView(rootLayout) // Usar rootLayout em vez de pv diretamente
@@ -590,6 +597,9 @@ class PlayerActivity : ComponentActivity() {
             }
           } catch (e: Exception) {
             android.util.Log.e("PlayerActivity", "❌ Erro ao buscar partida automaticamente", e)
+            e.printStackTrace()
+            // ✅ CORREÇÃO CRASH: Não propagar exceção - apenas logar e continuar
+            currentMatchId = null
           }
         }
       }

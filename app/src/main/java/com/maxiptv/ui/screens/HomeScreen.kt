@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -1591,11 +1592,12 @@ fun EmbeddedPlayer(
   val openStatsDialog: () -> Unit = {
     android.util.Log.i("EmbeddedPlayer", "⚽ Abrindo diálogo de estatísticas para matchId: $matchId")
     
+    // ✅ CORREÇÃO: Mostrar diálogo IMEDIATAMENTE ao clicar no botão
+    showFootballStatsDialog = true
     isLoadingStats = true
     statsError = null
-    showFootballStatsDialog = true
     
-    // Buscar dados da API
+    // Buscar dados da API em background (não bloqueia a abertura do diálogo)
     scope.launch {
       try {
         android.util.Log.i("EmbeddedPlayer", "⚽ INICIANDO BUSCA NA API SPORTS")
@@ -2161,61 +2163,153 @@ fun FootballStatsDialog(
     }
   }
   
-  AlertDialog(
-    onDismissRequest = onDismiss,
-    containerColor = Color(0xFF0F0F0F), // Fundo mais escuro e elegante
-    titleContentColor = Color(0xFFFFD700),
-    textContentColor = Color.White,
-    shape = RoundedCornerShape(20.dp), // Bordas mais arredondadas
-    title = {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-      ) {
-        Text(
-          text = "⚽ $channelName",
-          fontSize = when (deviceType) {
-            "tv" -> 22.sp
-            "phone" -> 17.sp
-            else -> 19.sp
+  // ✅ OVERLAY EM CANTO: Box flutuante em vez de AlertDialog fullscreen
+  Box(
+    modifier = Modifier
+      .fillMaxSize()
+      .clickable(onClick = onDismiss) // Clicar fora fecha
+  ) {
+    // Card de estatísticas no canto superior direito
+    Surface(
+      modifier = Modifier
+        .align(Alignment.TopEnd)
+        .padding(
+          top = when (deviceType) {
+            "tv" -> 80.dp
+            "phone" -> 60.dp
+            else -> 70.dp
           },
-          fontWeight = FontWeight.ExtraBold,
-          fontFamily = FontFamily.SansSerif,
-          color = Color(0xFFFFD700),
-          letterSpacing = 0.5.sp,
-          style = androidx.compose.ui.text.TextStyle(
-            shadow = androidx.compose.ui.graphics.Shadow(
-              color = Color.Black.copy(alpha = 0.8f),
-              offset = androidx.compose.ui.geometry.Offset(2f, 2f),
-              blurRadius = 6f
-            )
-          )
+          end = when (deviceType) {
+            "tv" -> 40.dp
+            "phone" -> 20.dp
+            else -> 30.dp
+          }
         )
-        if (matchId != null) {
-          Spacer(Modifier.width(8.dp))
-          Text(
-            text = "(Match ID: $matchId)",
-            fontSize = when (deviceType) {
-              "tv" -> 12.sp
-              "phone" -> 10.sp
-              else -> 11.sp
-            },
-            color = Color.Gray
-          )
-        }
-      }
-    },
-    text = {
-      // ✅ SCROLL COM D-PAD: ScrollState otimizado para navegação com D-pad em TV
-      val scrollState = rememberScrollState()
-      
+        .widthIn(max = when (deviceType) {
+          "tv" -> 600.dp  // 40% da largura em TV (1920px)
+          "phone" -> 320.dp
+          else -> 450.dp
+        })
+        .heightIn(max = when (deviceType) {
+          "tv" -> 800.dp  // 60% da altura em TV (1080px)
+          "phone" -> 500.dp
+          else -> 650.dp
+        })
+        .clickable(enabled = false) {}, // Prevenir fechar ao clicar dentro
+      shape = RoundedCornerShape(16.dp),
+      color = Color(0xFF0F0F0F),
+      shadowElevation = 24.dp,
+      border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFFD700).copy(alpha = 0.5f))
+    ) {
       Column(
         modifier = Modifier
           .fillMaxWidth()
-          .verticalScroll(scrollState)
-          // ✅ NÃO tornar o conteúdo focável inicialmente - o botão FECHAR deve receber foco primeiro
-          // O scroll funcionará mesmo sem focusable, quando o usuário navegar para dentro do conteúdo
+          .padding(16.dp)
       ) {
+        // ✅ CABEÇALHO: Título e botão fechar
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+          ) {
+            Text(
+              text = "⚽ $channelName",
+              fontSize = when (deviceType) {
+                "tv" -> 18.sp
+                "phone" -> 14.sp
+                else -> 16.sp
+              },
+              fontWeight = FontWeight.ExtraBold,
+              fontFamily = FontFamily.SansSerif,
+              color = Color(0xFFFFD700),
+              letterSpacing = 0.5.sp,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis
+            )
+            if (matchId != null) {
+              Spacer(Modifier.width(8.dp))
+              Text(
+                text = "($matchId)",
+                fontSize = when (deviceType) {
+                  "tv" -> 10.sp
+                  "phone" -> 8.sp
+                  else -> 9.sp
+                },
+                color = Color.Gray
+              )
+            }
+          }
+          
+          // Botão FECHAR
+          Button(
+            onClick = onDismiss,
+            colors = ButtonDefaults.buttonColors(
+              containerColor = if (isCloseButtonFocused && isTv) Color(0xFF00D4FF) else Color(0xFFFFD700),
+              contentColor = Color.Black
+            ),
+            modifier = Modifier
+              .focusRequester(closeButtonFocusRequester)
+              .focusable()
+              .onFocusChanged { 
+                isCloseButtonFocused = it.isFocused
+                if (isCloseButtonFocused && isTv) {
+                  android.util.Log.i("FootballStatsDialog", "✅ Botão FECHAR recebeu foco (D-pad)")
+                }
+              }
+              .then(
+                if (isCloseButtonFocused && isTv) {
+                  Modifier
+                    .border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(8.dp))
+                    .shadow(
+                      elevation = 12.dp,
+                      spotColor = Color(0xFF00D4FF).copy(alpha = 0.9f),
+                      shape = RoundedCornerShape(8.dp)
+                    )
+                } else {
+                  Modifier
+                }
+              )
+          ) {
+            Text(
+              text = "✕",
+              fontWeight = FontWeight.ExtraBold,
+              fontSize = when (deviceType) {
+                "tv" -> 16.sp
+                "phone" -> 12.sp
+                else -> 14.sp
+              }
+            )
+          }
+        }
+        
+        Spacer(Modifier.height(12.dp))
+        
+        // ✅ CONTEÚDO SCROLLÁVEL COM NAVEGAÇÃO D-PAD
+        val scrollState = rememberScrollState()
+        var isContentFocused by remember { mutableStateOf(false) }
+        Column(
+          modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(scrollState)
+            .focusable()
+            .onFocusChanged { 
+              isContentFocused = it.isFocused
+              if (isContentFocused && isTv) {
+                android.util.Log.d("FootballStatsDialog", "✅ Conteúdo recebeu foco (D-pad)")
+              }
+            }
+            .then(
+              if (isContentFocused && isTv) {
+                Modifier.border(2.dp, Color(0xFF00D4FF), RoundedCornerShape(8.dp))
+              } else {
+                Modifier
+              }
+            )
+        ) {
         if (isLoading) {
           Box(
             modifier = Modifier
@@ -2236,9 +2330,9 @@ fun FootballStatsDialog(
           Text(
             text = "Carregando estatísticas...",
             fontSize = when (deviceType) {
-              "tv" -> 18.sp
-              "phone" -> 14.sp
-              else -> 16.sp
+              "tv" -> 14.sp
+              "phone" -> 12.sp
+              else -> 13.sp
             },
             fontWeight = FontWeight.Medium,
             fontFamily = FontFamily.SansSerif,
@@ -2264,18 +2358,18 @@ fun FootballStatsDialog(
               contentDescription = null,
               tint = Color(0xFFFF5252),
               modifier = Modifier.size(when (deviceType) {
-                "tv" -> 24.dp
-                "phone" -> 20.dp
-                else -> 22.dp
+                "tv" -> 20.dp
+                "phone" -> 18.dp
+                else -> 19.dp
               })
             )
             Spacer(Modifier.width(8.dp))
             Text(
               text = error,
               fontSize = when (deviceType) {
-                "tv" -> 16.sp
-                "phone" -> 12.sp
-                else -> 14.sp
+                "tv" -> 13.sp
+                "phone" -> 11.sp
+                else -> 12.sp
               },
               color = Color(0xFFFF5252)
             )
@@ -2284,9 +2378,9 @@ fun FootballStatsDialog(
           Text(
             text = "Verifique se o MatchId está correto no nome do canal ou tente novamente.",
             fontSize = when (deviceType) {
-              "tv" -> 14.sp
-              "phone" -> 10.sp
-              else -> 12.sp
+              "tv" -> 11.sp
+              "phone" -> 9.sp
+              else -> 10.sp
             },
             color = Color.Gray
           )
@@ -2297,9 +2391,9 @@ fun FootballStatsDialog(
           Text(
             text = "${matchDetail.homeTeamName} X ${matchDetail.awayTeamName}",
             fontSize = when (deviceType) {
-              "tv" -> 22.sp
-              "phone" -> 17.sp
-              else -> 19.sp
+              "tv" -> 16.sp
+              "phone" -> 13.sp
+              else -> 14.sp
             },
             fontWeight = FontWeight.ExtraBold,
             fontFamily = FontFamily.SansSerif,
@@ -2324,9 +2418,9 @@ fun FootballStatsDialog(
               Text(
                 text = status.long ?: status.short ?: "",
                 fontSize = when (deviceType) {
-                  "tv" -> 16.sp
-                  "phone" -> 13.sp
-                  else -> 15.sp
+                  "tv" -> 12.sp
+                  "phone" -> 10.sp
+                  else -> 11.sp
                 },
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.SansSerif,
@@ -2344,9 +2438,9 @@ fun FootballStatsDialog(
                 Text(
                   text = "${status.elapsed}'",
                   fontSize = when (deviceType) {
-                    "tv" -> 16.sp
-                    "phone" -> 13.sp
-                    else -> 15.sp
+                    "tv" -> 12.sp
+                    "phone" -> 10.sp
+                    else -> 11.sp
                   },
                   fontWeight = FontWeight.Bold,
                   fontFamily = FontFamily.SansSerif,
@@ -2398,9 +2492,9 @@ fun FootballStatsDialog(
                 Text(
                   text = "${score.home ?: score.current?.home ?: 0}",
                   fontSize = when (deviceType) {
-                    "tv" -> 36.sp
-                    "phone" -> 28.sp
-                    else -> 32.sp
+                    "tv" -> 28.sp
+                    "phone" -> 22.sp
+                    else -> 25.sp
                   },
                   fontWeight = FontWeight.ExtraBold,
                   fontFamily = FontFamily.SansSerif,
@@ -2417,18 +2511,18 @@ fun FootballStatsDialog(
                 Text(
                   text = "X",
                   fontSize = when (deviceType) {
-                    "tv" -> 24.sp
-                    "phone" -> 18.sp
-                    else -> 22.sp
+                    "tv" -> 18.sp
+                    "phone" -> 14.sp
+                    else -> 16.sp
                   },
                   color = Color.Gray
                 )
                 Text(
                   text = "${score.away ?: score.current?.away ?: 0}",
                   fontSize = when (deviceType) {
-                    "tv" -> 36.sp
-                    "phone" -> 28.sp
-                    else -> 32.sp
+                    "tv" -> 28.sp
+                    "phone" -> 22.sp
+                    else -> 25.sp
                   },
                   fontWeight = FontWeight.ExtraBold,
                   fontFamily = FontFamily.SansSerif,
@@ -2491,9 +2585,9 @@ fun FootballStatsDialog(
             Text(
               text = "📊 Estatísticas Detalhadas",
               fontSize = when (deviceType) {
-                "tv" -> 18.sp
-                "phone" -> 14.sp
-                else -> 16.sp
+                "tv" -> 14.sp
+                "phone" -> 12.sp
+                else -> 13.sp
               },
               fontWeight = FontWeight.Bold,
               fontFamily = FontFamily.SansSerif,
@@ -2553,9 +2647,9 @@ fun FootballStatsDialog(
             Text(
               text = "📈 Outras Estatísticas",
               fontSize = when (deviceType) {
-                "tv" -> 18.sp
-                "phone" -> 14.sp
-                else -> 16.sp
+                "tv" -> 14.sp
+                "phone" -> 12.sp
+                else -> 13.sp
               },
               fontWeight = FontWeight.Bold,
               fontFamily = FontFamily.SansSerif,
@@ -2595,9 +2689,9 @@ fun FootballStatsDialog(
           Text(
             text = "⚽ Eventos da Partida",
             fontSize = when (deviceType) {
-              "tv" -> 18.sp
-              "phone" -> 14.sp
-              else -> 16.sp
+              "tv" -> 14.sp
+              "phone" -> 12.sp
+              else -> 13.sp
             },
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.SansSerif,
@@ -2654,9 +2748,9 @@ fun FootballStatsDialog(
             Text(
               text = "📐 Formações Táticas",
               fontSize = when (deviceType) {
-                "tv" -> 18.sp
-                "phone" -> 14.sp
-                else -> 16.sp
+                "tv" -> 14.sp
+                "phone" -> 12.sp
+                else -> 13.sp
               },
               fontWeight = FontWeight.Bold,
               fontFamily = FontFamily.SansSerif,
@@ -2702,9 +2796,9 @@ fun FootballStatsDialog(
             Text(
               text = "🌤️ Preview da Partida",
               fontSize = when (deviceType) {
-                "tv" -> 18.sp
-                "phone" -> 14.sp
-                else -> 16.sp
+                "tv" -> 14.sp
+                "phone" -> 12.sp
+                else -> 13.sp
               },
               fontWeight = FontWeight.Bold,
               fontFamily = FontFamily.SansSerif,
@@ -2766,9 +2860,9 @@ fun FootballStatsDialog(
             Text(
               text = "📺 Outros Jogos ao Vivo",
               fontSize = when (deviceType) {
-                "tv" -> 18.sp
-                "phone" -> 14.sp
-                else -> 16.sp
+                "tv" -> 14.sp
+                "phone" -> 12.sp
+                else -> 13.sp
               },
               fontWeight = FontWeight.Bold,
               fontFamily = FontFamily.SansSerif,
@@ -2825,9 +2919,9 @@ fun FootballStatsDialog(
             Text(
               text = "💰 Odds e Probabilidades",
               fontSize = when (deviceType) {
-                "tv" -> 18.sp
-                "phone" -> 14.sp
-                else -> 16.sp
+                "tv" -> 14.sp
+                "phone" -> 12.sp
+                else -> 13.sp
               },
               fontWeight = FontWeight.Bold,
               fontFamily = FontFamily.SansSerif,
@@ -3009,61 +3103,17 @@ fun FootballStatsDialog(
           Text(
             text = "Estatísticas não disponíveis no momento.",
             fontSize = when (deviceType) {
-              "tv" -> 16.sp
-              "phone" -> 12.sp
-              else -> 14.sp
+              "tv" -> 14.sp
+              "phone" -> 11.sp
+              else -> 12.sp
             },
             color = Color.Gray
           )
         }
+        }
       }
-    },
-    confirmButton = {
-      Button(
-        onClick = onDismiss,
-        colors = ButtonDefaults.buttonColors(
-          containerColor = if (isCloseButtonFocused && isTv) Color(0xFF00D4FF) else Color(0xFFFFD700),
-          contentColor = Color.Black
-        ),
-        modifier = Modifier
-          .focusRequester(closeButtonFocusRequester)
-          .focusable()
-          .onFocusChanged { 
-            isCloseButtonFocused = it.isFocused
-            if (isCloseButtonFocused && isTv) {
-              android.util.Log.i("FootballStatsDialog", "✅ Botão FECHAR recebeu foco (D-pad)")
-            }
-          }
-          .then(
-            if (isCloseButtonFocused && isTv) {
-              Modifier
-                .border(3.dp, Color(0xFF00D4FF), RoundedCornerShape(8.dp))
-                .shadow(
-                  elevation = 12.dp,
-                  spotColor = Color(0xFF00D4FF).copy(alpha = 0.9f),
-                  shape = RoundedCornerShape(8.dp)
-                )
-            } else {
-              Modifier
-            }
-          )
-      ) {
-        Text(
-          text = "FECHAR",
-          fontWeight = FontWeight.ExtraBold,
-          fontFamily = FontFamily.SansSerif,
-          fontSize = when (deviceType) {
-            "tv" -> 18.sp
-            "phone" -> 14.sp
-            else -> 16.sp
-          },
-          letterSpacing = 1.sp
-        )
-      }
-    },
-    modifier = Modifier
-      .fillMaxWidth(if (deviceType == "tv") 0.85f else if (deviceType == "phone") 0.95f else 0.9f)
-  )
+    }
+  }
 }
 
 @Composable
