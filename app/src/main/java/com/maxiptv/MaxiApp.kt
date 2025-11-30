@@ -148,14 +148,30 @@ class MaxiApp : Application() {
                        manufacturer.contains("oneplus") ||
                        manufacturer.contains("oppo") ||
                        manufacturer.contains("vivo") ||
-                       manufacturer.contains("realme")
+                       manufacturer.contains("realme") ||
+                       manufacturer.contains("google") || // Pixel phones
+                       model.contains("pixel") ||
+                       product.contains("emulator") || // Emuladores Android
+                       product.contains("sdk") || // SDK emuladores
+                       model.contains("generic") // Dispositivos genéricos/emuladores
+      
+      // Detecção de emulador
+      val isEmulator = product.contains("emulator") || 
+                      product.contains("sdk") || 
+                      model.contains("generic") ||
+                      model.contains("sdk") ||
+                      brand.contains("generic") ||
+                      manufacturer.contains("unknown")
       
       // Só aplica detecção por tamanho se NÃO for TV
       if (!isTv) {
         // Detecção mais inteligente de smartphone
-        isPhone = (smallestWidth <= 600 && hasTouchscreen && isPhoneLike) ||
+        // Se tem touchscreen e tela pequena, é smartphone (incluindo emuladores)
+        // Emuladores são sempre detectados como smartphone se tiverem touchscreen
+        isPhone = isEmulator && hasTouchscreen || // Emuladores com touchscreen = smartphone
+                 (smallestWidth <= 600 && hasTouchscreen) || // Qualquer dispositivo com touchscreen e tela <= 600dp
                  (smallestWidth <= 480 && hasTouchscreen) // Smartphones pequenos
-        isTablet = smallestWidth > 600 && hasTouchscreen && !isPhone
+        isTablet = smallestWidth > 600 && hasTouchscreen && !isPhone && !isEmulator
       } else {
         // Se é TV, força Phone e Tablet como false
         isPhone = false

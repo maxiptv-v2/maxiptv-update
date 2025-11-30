@@ -1353,8 +1353,24 @@ class PlayerActivity : ComponentActivity() {
   
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
-    // ✅ Quando singleTop reutiliza Activity, liberar player anterior ANTES de criar novo
-    android.util.Log.i("PlayerActivity", "🔄 Nova Intent recebida (singleTop) - liberando player anterior...")
+    // ✅ CORREÇÃO SMARTPHONE: Não recriar Activity, apenas atualizar o player
+    // Recriar Activity causa fechamento do player em smartphones
+    android.util.Log.i("PlayerActivity", "🔄 Nova Intent recebida (singleTop) - atualizando player sem recriar Activity...")
+    
+    val newUrl = intent.getStringExtra("url")
+    if (newUrl == null) {
+      android.util.Log.e("PlayerActivity", "❌ Nova Intent sem URL, ignorando...")
+      return
+    }
+    
+    // ✅ Se a URL é a mesma, não fazer nada (evitar reinicialização desnecessária)
+    val currentUrl = this.intent.getStringExtra("url")
+    if (currentUrl == newUrl) {
+      android.util.Log.d("PlayerActivity", "⏭️ URL não mudou ($newUrl), ignorando...")
+      return
+    }
+    
+    // Liberar player anterior
     player?.let { exo ->
       exo.stop()
       exo.clearMediaItems()
@@ -1369,16 +1385,19 @@ class PlayerActivity : ComponentActivity() {
     lastBufferingTime = 0L
     qualityReduced = false
     currentMaxBitrate = 2_200_000
-    // ✅ FASE 2: Resetar variáveis de failover e detecção de qualidade
     failoverAttempts = 0
     qualityDegradedWarningShown = false
     lastVideoFormat = null
     qualityDegradedToast?.cancel()
     qualityDegradedToast = null
     
-    // Recriar player com nova URL
+    // Atualizar Intent (importante para manter estado)
     setIntent(intent)
-    recreate() // Recriar Activity para garantir limpeza completa
+    
+    // ✅ Recriar Activity apenas se necessário (para garantir limpeza completa)
+    // Mas usar recreate() apenas como último recurso
+    android.util.Log.i("PlayerActivity", "🔄 Recriando Activity para nova URL: $newUrl")
+    recreate()
   }
   
   override fun onDestroy() {

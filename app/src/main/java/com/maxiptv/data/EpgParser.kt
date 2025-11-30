@@ -42,9 +42,17 @@ object EpgParser {
             connection.connectTimeout = 10000
             connection.readTimeout = 15000
             
-            val xml = connection.getInputStream().bufferedReader().use { it.readText() }
-            Log.i("EpgParser", "✅ EPG baixado (${xml.length} bytes)")
-            parseXmlTv(xml)
+            // Processar XML diretamente do stream para evitar OutOfMemoryError
+            val inputStream = connection.getInputStream()
+            try {
+                parseXmlTvFromStream(inputStream)
+            } finally {
+                inputStream.close()
+            }
+        } catch (e: OutOfMemoryError) {
+            Log.e("EpgParser", "❌ OutOfMemoryError ao processar EPG: ${e.message}")
+            e.printStackTrace()
+            emptyMap()
         } catch (e: Exception) {
             Log.e("EpgParser", "❌ Erro ao baixar EPG: ${e.message}")
             e.printStackTrace()
@@ -53,15 +61,15 @@ object EpgParser {
     }
     
     /**
-     * Faz parse do XML XMLTV
+     * Faz parse do XML XMLTV diretamente do InputStream (evita carregar tudo na memória)
      */
-    private fun parseXmlTv(xml: String): Map<String, List<EpgProgramme>> {
+    private fun parseXmlTvFromStream(inputStream: java.io.InputStream): Map<String, List<EpgProgramme>> {
         val programmes = mutableMapOf<String, MutableList<EpgProgramme>>()
         
         try {
             val factory = XmlPullParserFactory.newInstance()
             val parser = factory.newPullParser()
-            parser.setInput(StringReader(xml))
+            parser.setInput(inputStream, "UTF-8")
             
             var eventType = parser.eventType
             var currentChannelId: String? = null

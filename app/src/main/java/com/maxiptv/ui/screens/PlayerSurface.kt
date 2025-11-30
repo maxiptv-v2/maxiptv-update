@@ -30,8 +30,9 @@ fun PlayerSurface(currentUrl: String?, channelName: String? = null) {
           channelName?.let { name ->
             i.putExtra("channelName", name) // Passar nome do canal para identificar futebol
           }
-          // ✅ CORREÇÃO: Usar FLAG_ACTIVITY_SINGLE_TOP para evitar múltiplas instâncias
-          i.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+          // ✅ CORREÇÃO SMARTPHONE: Usar FLAG_ACTIVITY_SINGLE_TOP mas NÃO CLEAR_TOP
+          // CLEAR_TOP pode causar fechamento do player em smartphones
+          i.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
           ctx.startActivity(i)
         } catch (e: Exception) {
           android.util.Log.e("PlayerSurface", "❌ Erro ao abrir PlayerActivity: ${e.message}", e)
