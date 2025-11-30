@@ -107,57 +107,6 @@ fun LiveScreen(nav: NavHostController) {
     }
   }
   
-  // ⚽ CORREÇÃO: Se EPG não mostra jogo mas é canal de futebol, buscar jogo ao vivo na API
-  var correctedEpgTitle by remember { mutableStateOf<String?>(null) }
-  val scopeForEpg = rememberCoroutineScope()
-  
-  LaunchedEffect(current?.name, currentProgramme?.title, isFootballChannel) {
-    if (current != null && isFootballChannel) {
-      val epgTitle = currentProgramme?.title ?: ""
-      // Verificar se o EPG mostra um jogo de futebol (contém " x " ou times conhecidos)
-      val epgShowsFootball = epgTitle.contains(" x ", ignoreCase = true) ||
-                            epgTitle.contains(" vs ", ignoreCase = true) ||
-                            epgTitle.lowercase().contains("futebol") ||
-                            epgTitle.lowercase().contains("jogo") ||
-                            epgTitle.lowercase().contains("partida")
-      
-      // Se EPG não mostra jogo, buscar na API
-      if (!epgShowsFootball && epgTitle.isNotEmpty()) {
-        android.util.Log.i("LiveScreen", "⚠️ EPG mostra '$epgTitle' mas é canal de futebol - buscando jogo ao vivo na API...")
-        scopeForEpg.launch {
-          try {
-            // Buscar jogo ao vivo para este canal
-            val matchId = SoccerRepository.findMatchForChannel(current!!.name, null)
-            if (matchId != null) {
-              // Buscar detalhes do jogo para pegar o título
-              val matchDetail = SoccerRepository.getMatchDetail(matchId)
-              if (matchDetail != null) {
-                val apiTitle = "${matchDetail.homeTeamName} x ${matchDetail.awayTeamName}"
-                correctedEpgTitle = apiTitle
-                android.util.Log.i("LiveScreen", "✅ Título corrigido da API: '$apiTitle'")
-              }
-            }
-          } catch (e: Exception) {
-            android.util.Log.w("LiveScreen", "⚠️ Erro ao buscar título da API: ${e.message}")
-          }
-        }
-      } else {
-        correctedEpgTitle = null // Usar EPG normal
-      }
-    } else {
-      correctedEpgTitle = null
-    }
-  }
-  
-  // Usar título corrigido se disponível, senão usar EPG (removido - não usado)
-  // val displayEpgTitle = correctedEpgTitle ?: currentProgramme?.title
-  
-  // ⚽ REMOVIDO: Busca automática de Match ID - agora só busca quando o botão for clicado
-  // Apenas detectar se é canal de futebol para mostrar o botão
-  // (isFootballChannel já está declarado acima na linha 107)
-  
-  // Código de estatísticas removido
-  
   // Context precisa ser lido FORA do remember
   val context = LocalContext.current
   val isTv = MaxiApp.isTv
@@ -543,7 +492,6 @@ fun LiveScreen(nav: NavHostController) {
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         
         // Configurar flags adicionais para garantir fullscreen completo
-        // ✅ FLAG_FULLSCREEN removido (deprecated em API 30+) - WindowInsetsController já faz isso
         window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
         
@@ -615,12 +563,6 @@ fun LiveScreen(nav: NavHostController) {
     val currentProgrammeFullscreen = remember(currentTime, current?.name, epgData) {
         EpgParser.getCurrentProgramme(current!!.name, epgData)
     }
-    // ⚽ Detectar se é canal de futebol (com verificação de EPG)
-    val isFootballChannelFullscreen = MatchIdExtractor.isFootballChannel(current!!.name, currentProgrammeFullscreen?.title)
-    // ⚽ Extrair Match ID do nome do canal se for futebol
-    val channelMatchId = if (isFootballChannelFullscreen) {
-      MatchIdExtractor.extractMatchId(current!!.name)
-    } else null
     val nextProgramme = remember(currentTime, current?.name, epgData) {
         EpgParser.getNextProgramme(current!!.name, epgData)
     }
@@ -647,16 +589,7 @@ fun LiveScreen(nav: NavHostController) {
             id = android.view.View.generateViewId()
           }
           
-          // ⚽ Adicionar botão de estatísticas se for canal de futebol
-          if (isFootballChannelFullscreen) {
-            val rootLayout = playerView.parent as? android.widget.FrameLayout ?: android.widget.FrameLayout(ctx).apply {
-              addView(playerView)
-            }
-            // Código de botão de estatísticas removido
-            rootLayout
-          } else {
-            playerView
-          }
+          playerView
         },
         modifier = Modifier
           .fillMaxSize()           // Garante que o Compose ocupe 100% da tela
@@ -844,7 +777,6 @@ fun LiveScreen(nav: NavHostController) {
         }
       }
       
-      // Código de diálogo de estatísticas removido
     }
     return // IMPORTANTE: Sair da função ANTES de renderizar TopBar ou qualquer outro elemento
   }
@@ -1089,9 +1021,6 @@ fun LiveScreen(nav: NavHostController) {
                   android.util.Log.e("LiveScreen", "❌ Erro ao ativar fullscreen: ${e.message}", e)
                   e.printStackTrace()
                 }
-              },
-              onStatsClick = {
-                // Código de estatísticas removido
               }
             )
           } else {
@@ -1285,8 +1214,7 @@ fun MiniPlayer(
   player: androidx.media3.exoplayer.ExoPlayer,
   channel: LiveStream,
   epgData: Map<String, List<EpgProgramme>>,
-  onFullscreen: () -> Unit,
-  onStatsClick: (() -> Unit)? = null
+  onFullscreen: () -> Unit
 ) {
   // Atualizar canal quando mudar - MUDAR MÍDIA NO MESMO PLAYER com Low Latency HLS
   LaunchedEffect(channel.stream_id) {
@@ -1620,241 +1548,6 @@ fun MiniPlayer(
       }
     }
     
-    // ⚽ BOTÃO DE ESTATÍSTICAS DE FUTEBOL (se for canal de futebol)
-    val isFootballChannelMini = MatchIdExtractor.isFootballChannel(channel.name)
-    
-    if (isFootballChannelMini && onStatsClick != null) {
-      // ⚽ Estado para controlar foco e zoom animado
-      var isFocused by remember { mutableStateOf(false) }
-      val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.3f else 1.0f, // Aumentado para 1.3f para zoom mais visível
-        animationSpec = spring(
-          dampingRatio = Spring.DampingRatioMediumBouncy,
-          stiffness = Spring.StiffnessMedium // Aumentado para animação mais rápida
-        ),
-        label = "statsButtonZoom"
-      )
-      
-      // ⚽ Adicionar botão de estatísticas no canto superior direito com foco D-pad
-      Box(
-        modifier = Modifier
-          .align(Alignment.TopEnd)
-          .padding(if (MaxiApp.isTv) 16.dp else 12.dp)
-          .graphicsLayer {
-            // ✅ Zoom animado quando focado (1.0f → 1.3f)
-            scaleX = scale
-            scaleY = scale
-            transformOrigin = TransformOrigin.Center
-          }
-          .then(
-            if (isFocused) {
-              // ✅ Borda vermelha quando focado (mesma cor do "AO VIVO")
-              Modifier.border(
-                width = 4.dp,
-                color = Color(0xFFFF1744), // Vermelho neon - mesma cor do "AO VIVO"
-                shape = RoundedCornerShape(50) // Círculo
-              )
-            } else {
-              Modifier
-            }
-          )
-      ) {
-        androidx.compose.ui.viewinterop.AndroidView(
-          factory = { ctx ->
-            val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
-            val density = ctx.resources.displayMetrics.density
-            val sizePx = (buttonSize * density).toInt()
-            
-            android.widget.ImageButton(ctx).apply {
-              // ✅ Tornar focusable para D-pad - SEM interferir com ExoPlayer
-              // O ExoPlayer está com isFocusable = false, então não há conflito
-              isFocusable = true
-              isFocusableInTouchMode = true
-              focusable = android.view.View.FOCUSABLE
-              // ✅ Prioridade de foco: botão pode receber foco antes do PlayerView
-              importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_YES
-              
-              // Criar drawable de bola de futebol
-              val bitmap = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
-              val canvas = android.graphics.Canvas(bitmap)
-              
-              val paint = android.graphics.Paint().apply {
-                isAntiAlias = true
-                style = android.graphics.Paint.Style.FILL
-                color = android.graphics.Color.WHITE
-              }
-              
-              val strokePaint = android.graphics.Paint().apply {
-                isAntiAlias = true
-                style = android.graphics.Paint.Style.STROKE
-                strokeWidth = 4f
-                color = android.graphics.Color.BLACK
-              }
-              
-              val centerX = sizePx / 2f
-              val centerY = sizePx / 2f
-              val radius = (sizePx * 0.4f)
-              
-              canvas.drawCircle(centerX, centerY, radius, paint)
-              canvas.drawCircle(centerX, centerY, radius, strokePaint)
-              
-              val linePaint = android.graphics.Paint().apply {
-                isAntiAlias = true
-                style = android.graphics.Paint.Style.STROKE
-                strokeWidth = 3f
-                color = android.graphics.Color.BLACK
-              }
-              
-              canvas.drawLine(centerX - radius, centerY, centerX + radius, centerY, linePaint)
-              canvas.drawLine(centerX, centerY - radius, centerX, centerY + radius, linePaint)
-              
-              setImageBitmap(bitmap)
-              background = null
-              
-              setOnClickListener {
-                android.util.Log.i("MiniPlayer", "⚽ Botão de estatísticas clicado - Iniciando busca na API Soccer...")
-                android.util.Log.i("MiniPlayer", "   MatchId: ${MatchIdExtractor.extractMatchId(channel.name)}")
-                android.util.Log.i("MiniPlayer", "   Canal: ${channel.name}")
-                onStatsClick() // Usar o callback passado como parâmetro
-              }
-              
-              // Animação de rotação
-              android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
-                duration = 3000
-                repeatCount = android.animation.ObjectAnimator.INFINITE
-                interpolator = android.view.animation.LinearInterpolator()
-                start()
-              }
-              
-              layoutParams = android.widget.FrameLayout.LayoutParams(sizePx, sizePx)
-            }
-          },
-          update = { view ->
-            // ✅ Atualizar listener de foco sempre que o Composable recompor
-            view.setOnFocusChangeListener { _, hasFocus ->
-              // Usar Handler para atualizar estado do Composable na UI thread
-              android.os.Handler(android.os.Looper.getMainLooper()).post {
-                isFocused = hasFocus
-              }
-              android.util.Log.d("MiniPlayer", "⚽ Botão de estatísticas - Foco D-pad: $hasFocus")
-            }
-          }
-        )
-      }
-    }
   }
 }
 
-// Função removida - código de estatísticas removido
-/*
-private fun createFootballStatsButtonInView(
-  ctx: android.content.Context,
-  rootLayout: android.widget.FrameLayout,
-  @Suppress("UNUSED_PARAMETER") channelName: String,
-  @Suppress("UNUSED_PARAMETER") matchId: Long?,
-  @Suppress("UNUSED_PARAMETER") viewModel: SoccerStatsViewModel,
-  onClick: () -> Unit
-): android.widget.ImageButton {
-  val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
-  val density = ctx.resources.displayMetrics.density
-  val sizePx = (buttonSize * density).toInt()
-  val margin = (16f * density).toInt()
-  val bufferingOffset = if (MaxiApp.isTv) (72f * density).toInt() else (64f * density).toInt()
-  val topMargin = bufferingOffset + margin
-  val rightMarginDp = if (MaxiApp.isTv) 48 else 16
-  val rightMargin = (rightMarginDp * density).toInt()
-  
-  return android.widget.ImageButton(ctx).apply {
-    // ✅ CONFIGURAR FOCO PARA D-PAD
-    isFocusable = true
-    isFocusableInTouchMode = true
-    focusable = android.view.View.FOCUSABLE
-    importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_YES
-    // ✅ ID único para navegação de foco
-    id = android.view.View.generateViewId()
-    
-    // ✅ Configurar navegação de foco (seta para baixo volta para o player)
-    nextFocusUpId = android.view.View.NO_ID
-    nextFocusLeftId = android.view.View.NO_ID
-    nextFocusRightId = android.view.View.NO_ID
-    
-    // ✅ Listener para visual de foco
-    setOnFocusChangeListener { _, hasFocus ->
-      if (hasFocus) {
-        android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas FOCO no fullscreen")
-        // Adicionar borda quando focado
-        background = android.graphics.drawable.GradientDrawable().apply {
-          shape = android.graphics.drawable.GradientDrawable.OVAL
-          setStroke((4 * density).toInt(), android.graphics.Color.parseColor("#FF1744")) // Vermelho neon
-          setColor(android.graphics.Color.TRANSPARENT)
-        }
-        // Zoom quando focado
-        scaleX = 1.2f
-        scaleY = 1.2f
-      } else {
-        background = null
-        scaleX = 1.0f
-        scaleY = 1.0f
-      }
-    }
-    
-    // Criar drawable de bola de futebol
-    val bitmap = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
-    val canvas = android.graphics.Canvas(bitmap)
-    
-    val paint = android.graphics.Paint().apply {
-      isAntiAlias = true
-      style = android.graphics.Paint.Style.FILL
-      color = android.graphics.Color.WHITE
-    }
-    
-    val strokePaint = android.graphics.Paint().apply {
-      isAntiAlias = true
-      style = android.graphics.Paint.Style.STROKE
-      strokeWidth = 4f
-      color = android.graphics.Color.BLACK
-    }
-    
-    val centerX = sizePx / 2f
-    val centerY = sizePx / 2f
-    val radius = (sizePx * 0.4f)
-    
-    canvas.drawCircle(centerX, centerY, radius, paint)
-    canvas.drawCircle(centerX, centerY, radius, strokePaint)
-    
-    val linePaint = android.graphics.Paint().apply {
-      isAntiAlias = true
-      style = android.graphics.Paint.Style.STROKE
-      strokeWidth = 3f
-      color = android.graphics.Color.BLACK
-    }
-    
-    canvas.drawLine(centerX - radius, centerY, centerX + radius, centerY, linePaint)
-    canvas.drawLine(centerX, centerY - radius, centerX, centerY + radius, linePaint)
-    
-    setImageBitmap(bitmap)
-    
-    setOnClickListener {
-      android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas clicado")
-      onClick()
-    }
-    
-    // Animação de rotação
-    android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
-      duration = 3000
-      repeatCount = android.animation.ObjectAnimator.INFINITE
-      interpolator = android.view.animation.LinearInterpolator()
-      start()
-    }
-    
-    layoutParams = android.widget.FrameLayout.LayoutParams(sizePx, sizePx).apply {
-      gravity = android.view.Gravity.TOP or android.view.Gravity.END
-      setMargins(0, topMargin, rightMargin, 0)
-    }
-    
-    elevation = 16f
-    rootLayout.addView(this)
-    android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas criado no fullscreen (ID: $id)")
-  }
-}
-*/

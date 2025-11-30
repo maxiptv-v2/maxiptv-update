@@ -689,30 +689,14 @@ object SessionManager {
      */
     @Deprecated("Códigos agora são objeto direto no JSONBin")
     suspend fun getAllSimpleCodes(): Map<String, com.maxiptv.data.ClientCode> = withContext(Dispatchers.IO) {
-        try {
-            // Função antiga - não usar mais
-            return@withContext emptyMap()
-            /*
-            Log.i(TAG, "📋 Buscando todos os códigos simples...")
-            val database = fetchSessions() ?: return@withContext emptyMap()
-            
-            Log.i(TAG, "✅ ${database.simpleCodes.size} códigos simples encontrados")
-            return@withContext database.simpleCodes
-            */
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ Erro ao buscar códigos simples: ${e.message}", e)
-            return@withContext emptyMap()
-        }
+        emptyMap()
     }
     
     /**
      * Remover código simples (FUNÇÃO ANTIGA - não implementada)
      */
     @Deprecated("Implementar remoção de objeto direto quando necessário")
-    suspend fun removeSimpleCode(code: String): Boolean = withContext(Dispatchers.IO) {
-        // TODO: Implementar remoção de código do objeto direto no JSONBin
-        return@withContext false
-    }
+    suspend fun removeSimpleCode(code: String): Boolean = false
     
     /**
      * Salvar código de cliente como objeto direto no JSONBin

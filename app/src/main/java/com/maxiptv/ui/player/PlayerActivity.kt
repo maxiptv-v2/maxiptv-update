@@ -167,7 +167,6 @@ class PlayerActivity : ComponentActivity() {
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
-    // ✅ FLAG_FULLSCREEN removido (deprecated em API 30+) - WindowInsetsController já faz isso
     
     // ✅ Fire Stick: Garantir que diálogos possam ser exibidos mesmo em fullscreen
     if (MaxiApp.isFireStick) {
@@ -451,7 +450,6 @@ class PlayerActivity : ComponentActivity() {
     }
     
     // ✅ BOTÕES A, CC, H REMOVIDOS - Agora estão na tela de detalhes (VodDetailsScreen)
-    // Código removido: criação dos botões qualityButton, subtitleButton e audioButton
     
     // ✅ MELHORIA 2: Criar overlay de tempo restante (VOD/Series apenas)
     remainingTimeOverlay = android.widget.TextView(this).apply {
@@ -477,7 +475,6 @@ class PlayerActivity : ComponentActivity() {
     
     rootLayout.addView(remainingTimeOverlay)
     
-    // ✅ REMOVIDO: Todo o código de criação dos botões A, CC, H foi removido
     // Os botões agora estão na tela de detalhes (VodDetailsScreen)
     
     // ✅ Configurar estilização de legendas do PlayerView
@@ -1246,7 +1243,6 @@ class PlayerActivity : ComponentActivity() {
       // quando necessário (ex: para exibir diálogos do sistema)
       windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
       
-      // ✅ OCULTAR TODOS OS OVERLAYS EM FULLSCREEN
       // Em fullscreen, não mostrar nada sobre o player - só controles nativos quando usuário interagir
       qualityOverlay?.visibility = android.view.View.GONE
       remainingTimeOverlay?.visibility = android.view.View.GONE
