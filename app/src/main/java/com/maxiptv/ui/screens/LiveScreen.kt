@@ -161,7 +161,7 @@ fun LiveScreen(nav: NavHostController) {
   var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
   var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
   var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
-  var matchOdds by remember { mutableStateOf<com.maxiptv.data.soccer.ApiSportsOdds?>(null) }
+  var matchOdds by remember { mutableStateOf<Any?>(null) } // API nova não tem odds, sempre será null
   var isLoadingStats by remember { mutableStateOf(false) }
   var statsError by remember { mutableStateOf<String?>(null) }
   val scope = rememberCoroutineScope()
@@ -240,7 +240,8 @@ fun LiveScreen(nav: NavHostController) {
         android.util.Log.i("LiveScreen", "📡 4/4 - Buscando odds (probabilidades de apostas)...")
         val odds = SoccerRepository.getLiveOdds(finalMatchId) ?: SoccerRepository.getOdds(finalMatchId)
         if (odds != null) {
-          android.util.Log.i("LiveScreen", "   ✅ Odds encontradas: ${odds.bookmakers?.size ?: 0} casas de aposta")
+          // API nova não tem odds, sempre será null
+          android.util.Log.i("LiveScreen", "   ✅ Odds encontradas: ${(odds as? com.maxiptv.data.soccer.ApiSportsOdds)?.bookmakers?.size ?: 0} casas de aposta (API antiga)")
         } else {
           android.util.Log.w("LiveScreen", "   ⚠️ Nenhuma odd encontrada")
         }

@@ -882,7 +882,7 @@ object SoccerRepository {
      * Busca odds (probabilidades de apostas) pré-jogo
      * NOTA: A API football-data.org não fornece odds no plano gratuito, retorna null
      */
-    suspend fun getOdds(matchId: Long): ApiSportsOdds? {
+    suspend fun getOdds(matchId: Long): Any? {
         Log.w(TAG, "⚠️ Odds não disponíveis na API football-data.org para matchId: $matchId")
         return null
     }
@@ -890,7 +890,7 @@ object SoccerRepository {
     /**
      * Alias para getOdds (compatibilidade)
      */
-    suspend fun getMatchOdds(matchId: Long): ApiSportsOdds? {
+    suspend fun getMatchOdds(matchId: Long): Any? {
         return getOdds(matchId)
     }
     
@@ -898,7 +898,7 @@ object SoccerRepository {
      * Busca odds (probabilidades de apostas) ao vivo
      * NOTA: A API football-data.org não fornece odds no plano gratuito, retorna null
      */
-    suspend fun getLiveOdds(matchId: Long): ApiSportsOdds? {
+    suspend fun getLiveOdds(matchId: Long): Any? {
         Log.w(TAG, "⚠️ Odds ao vivo não disponíveis na API football-data.org para matchId: $matchId")
         return null
     }

@@ -1576,7 +1576,7 @@ fun EmbeddedPlayer(
   var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
   var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
   var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
-  var matchOdds by remember { mutableStateOf<com.maxiptv.data.soccer.ApiSportsOdds?>(null) }
+  var matchOdds by remember { mutableStateOf<Any?>(null) } // API nova não tem odds, sempre será null
   var isLoadingStats by remember { mutableStateOf(false) }
   var statsError by remember { mutableStateOf<String?>(null) }
   
@@ -1643,9 +1643,10 @@ fun EmbeddedPlayer(
         android.util.Log.i("EmbeddedPlayer", "📡 4/4 - Buscando odds (probabilidades de apostas)...")
         val odds = com.maxiptv.data.soccer.SoccerRepository.getLiveOdds(finalMatchId) ?: com.maxiptv.data.soccer.SoccerRepository.getOdds(finalMatchId)
         if (odds != null) {
-          android.util.Log.i("EmbeddedPlayer", "   ✅ Odds encontradas: ${odds.bookmakers?.size ?: 0} casas de aposta")
+          // API nova não tem odds, sempre será null
+          android.util.Log.i("EmbeddedPlayer", "   ✅ Odds encontradas: ${(odds as? com.maxiptv.data.soccer.ApiSportsOdds)?.bookmakers?.size ?: 0} casas de aposta (API antiga)")
         } else {
-          android.util.Log.w("EmbeddedPlayer", "   ⚠️ Nenhuma odd encontrada")
+          android.util.Log.w("EmbeddedPlayer", "   ⚠️ Nenhuma odd encontrada (API nova não fornece odds)")
         }
         matchOdds = odds
         
@@ -2124,7 +2125,7 @@ fun FootballStatsDialog(
   matchDetail: com.maxiptv.data.soccer.MatchDetailFull?,
   matchPreview: com.maxiptv.data.soccer.MatchPreviewFull?,
   otherMatches: List<com.maxiptv.data.soccer.MatchSummaryFull>,
-  matchOdds: com.maxiptv.data.soccer.ApiSportsOdds?,
+  matchOdds: Any?, // API nova não tem odds, sempre será null
   isLoading: Boolean,
   error: String?,
   onDismiss: () -> Unit,
@@ -2907,9 +2908,11 @@ fun FootballStatsDialog(
           }
           
           // ============================================================
-          // ODDS (PROBABILIDADES DE APOSTAS) - CARDS MELHORADOS
+          // ODDS (PROBABILIDADES DE APOSTAS) - REMOVIDO (API nova não tem odds)
           // ============================================================
-          if (matchOdds != null && !matchOdds.bookmakers.isNullOrEmpty()) {
+          // NOTA: A API football-data.org não fornece odds no plano gratuito
+          // if (matchOdds != null && matchOdds is ApiSportsOdds && !matchOdds.bookmakers.isNullOrEmpty()) {
+          if (false) { // Sempre false - odds não disponíveis na nova API
             Spacer(Modifier.height(16.dp))
             Text(
               text = "💰 Odds e Probabilidades",
@@ -2934,7 +2937,10 @@ fun FootballStatsDialog(
             Spacer(Modifier.height(8.dp))
             
             // Mostrar até 3 casas de aposta principais com cards
-            matchOdds.bookmakers?.take(3)?.forEach { bookmaker ->
+            // REMOVIDO: matchOdds agora é Any? e sempre null (API nova não tem odds)
+            // TODO: Se a API voltar a fornecer odds, descomentar este bloco
+            /*
+            (matchOdds as? ApiSportsOdds)?.bookmakers?.take(3)?.forEach { bookmaker ->
               Spacer(Modifier.height(12.dp))
               
               // Card da casa de aposta
@@ -3080,6 +3086,7 @@ fun FootballStatsDialog(
                 }
               }
             }
+            */
             
             // Aviso legal
             Spacer(Modifier.height(12.dp))
