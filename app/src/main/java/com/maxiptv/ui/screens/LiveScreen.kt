@@ -98,15 +98,6 @@ fun LiveScreen(nav: NavHostController) {
     }
   }
   
-  // Verificar se é canal de futebol
-  val isFootballChannel = remember(current?.name, currentProgramme?.title) {
-    if (current != null) {
-      MatchIdExtractor.isFootballChannel(current!!.name, currentProgramme?.title)
-    } else {
-      false
-    }
-  }
-  
   // Context precisa ser lido FORA do remember
   val context = LocalContext.current
   val isTv = MaxiApp.isTv
@@ -597,12 +588,13 @@ fun LiveScreen(nav: NavHostController) {
       )
       
       // 🎨 Overlay moderno com EPG (MESMO ESTILO DO MINI PLAYER) - COM SAFE AREA/OVERSCAN
-      // ✅ Aplicar padding de overscan para não cortar na TV (aumentado significativamente)
+      // ✅ Aplicar padding de overscan APENAS em TVs (não em smartphones)
       val overscanPaddingFullscreen = when {
         MaxiApp.isFireStick -> (MaxiApp.fireStickOverscanPadding.coerceAtLeast(20) + 20).dp // Adicionar 20dp extra
         MaxiApp.isNativeTv -> 52.dp // Aumentado de 32dp para 52dp
         MaxiApp.isTvBox -> 48.dp // Aumentado de 28dp para 48dp
-        else -> 0.dp
+        MaxiApp.isPhone -> 0.dp // Smartphone: SEM overscan
+        else -> 0.dp // Padrão: sem overscan
       }
       
       Box(
@@ -623,10 +615,10 @@ fun LiveScreen(nav: NavHostController) {
             shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
           )
           .padding(
-            start = (24.dp + overscanPaddingFullscreen), // Padding mínimo 24dp + overscan (sem limite máximo)
+            start = if (MaxiApp.isPhone) 16.dp else (24.dp + overscanPaddingFullscreen), // Smartphone: padding menor, TV: padding + overscan
             top = 12.dp,
-            end = (24.dp + overscanPaddingFullscreen), // Padding mínimo 24dp + overscan (sem limite máximo)
-            bottom = (24.dp + overscanPaddingFullscreen / 2) // Bottom com menos padding mas ainda seguro
+            end = if (MaxiApp.isPhone) 16.dp else (24.dp + overscanPaddingFullscreen), // Smartphone: padding menor, TV: padding + overscan
+            bottom = if (MaxiApp.isPhone) 16.dp else (24.dp + overscanPaddingFullscreen / 2) // Smartphone: padding menor, TV: padding + overscan
           )
       ) {
         Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
@@ -1327,12 +1319,13 @@ fun MiniPlayer(
     )
     
     // 🎨 Overlay moderno com EPG (APENAS no mini player) - COM SAFE AREA/OVERSCAN
-    // ✅ Aplicar padding de overscan para não cortar na TV (aumentado significativamente)
+    // ✅ Aplicar padding de overscan APENAS em TVs (não em smartphones)
     val overscanPadding = when {
       MaxiApp.isFireStick -> (MaxiApp.fireStickOverscanPadding.coerceAtLeast(20) + 20).dp // Adicionar 20dp extra
       MaxiApp.isNativeTv -> 52.dp // Aumentado de 32dp para 52dp
       MaxiApp.isTvBox -> 48.dp // Aumentado de 28dp para 48dp
-      else -> 0.dp
+      MaxiApp.isPhone -> 0.dp // Smartphone: SEM overscan
+      else -> 0.dp // Padrão: sem overscan
     }
     
     Box(
@@ -1353,10 +1346,10 @@ fun MiniPlayer(
           shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
         )
         .padding(
-          start = (24.dp + overscanPadding), // Padding mínimo 24dp + overscan (sem limite máximo)
+          start = if (MaxiApp.isPhone) 16.dp else (24.dp + overscanPadding), // Smartphone: padding menor, TV: padding + overscan
           top = 12.dp,
-          end = (24.dp + overscanPadding), // Padding mínimo 24dp + overscan (sem limite máximo)
-          bottom = (24.dp + overscanPadding / 2) // Bottom com menos padding mas ainda seguro
+          end = if (MaxiApp.isPhone) 16.dp else (24.dp + overscanPadding), // Smartphone: padding menor, TV: padding + overscan
+          bottom = if (MaxiApp.isPhone) 16.dp else (24.dp + overscanPadding / 2) // Smartphone: padding menor, TV: padding + overscan
         )
     ) {
       // ✅ Recarregar EPG se estiver vazio quando um canal é selecionado
