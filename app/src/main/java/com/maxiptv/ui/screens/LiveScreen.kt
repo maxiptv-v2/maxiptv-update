@@ -48,7 +48,6 @@ import com.maxiptv.data.EpgParser
 import com.maxiptv.ui.player.PlayerActivity
 import com.maxiptv.data.soccer.MatchIdExtractor
 import com.maxiptv.data.soccer.SoccerRepository
-import com.maxiptv.ui.player.soccer.SoccerStatsViewModel
 import com.maxiptv.ui.player.ConnectionQuality
 import com.maxiptv.ui.player.PlayerState
 import com.maxiptv.ui.player.createAdaptiveLoadControl
@@ -85,10 +84,6 @@ fun LiveScreen(nav: NavHostController) {
   // 🔥 ESTADO PARA FULLSCREEN - MESMO PLAYER, SÓ MUDA O LAYOUT!
   var isFullscreen by remember { mutableStateOf(false) }
   
-  // ⚽ ESTADO PARA BOTÃO DE ESTATÍSTICAS DE FUTEBOL
-  var showFootballStatsDialog by remember { mutableStateOf(false) }
-  var currentMatchId by remember { mutableStateOf<Long?>(null) }
-  val soccerStatsViewModel = remember { SoccerStatsViewModel() }
   
   // EPG Data
   val epgData by XRepo.epgData.collectAsState()
@@ -157,112 +152,11 @@ fun LiveScreen(nav: NavHostController) {
   // Usar título corrigido se disponível, senão usar EPG (removido - não usado)
   // val displayEpgTitle = correctedEpgTitle ?: currentProgramme?.title
   
-  // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando API Sports)
-  var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
-  var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
-  var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
-  var matchOdds by remember { mutableStateOf<Any?>(null) } // API nova não tem odds, sempre será null
-  var isLoadingStats by remember { mutableStateOf(false) }
-  var statsError by remember { mutableStateOf<String?>(null) }
-  val scope = rememberCoroutineScope()
-  
   // ⚽ REMOVIDO: Busca automática de Match ID - agora só busca quando o botão for clicado
   // Apenas detectar se é canal de futebol para mostrar o botão
   // (isFootballChannel já está declarado acima na linha 107)
   
-  // ⚽ Buscar estatísticas quando o diálogo for aberto
-  LaunchedEffect(showFootballStatsDialog, currentMatchId) {
-    if (showFootballStatsDialog) {
-      // ✅ CORREÇÃO: Inicializar estados imediatamente para mostrar diálogo
-      // O diálogo já deve estar visível (showFootballStatsDialog = true foi definido antes)
-      isLoadingStats = true
-      statsError = null
-      
-      // ✅ CORREÇÃO: Limpar dados apenas se necessário (permitir reutilizar dados anteriores)
-      // Isso permite que o diálogo apareça imediatamente com dados anteriores se disponíveis
-      if (matchDetail == null) {
-        matchPreview = null
-        otherMatches = emptyList()
-        matchOdds = null
-      }
-      
-      try {
-        android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
-        android.util.Log.i("LiveScreen", "⚽ INICIANDO BUSCA NA API SPORTS")
-        android.util.Log.i("LiveScreen", "   MatchId inicial: $currentMatchId")
-        android.util.Log.i("LiveScreen", "   Canal: ${current?.name}")
-        android.util.Log.i("LiveScreen", "   URL Base: https://v3.football.api-sports.io/")
-        android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
-        
-        // ✅ NOVO: Se não houver Match ID, usar busca inteligente para identificar a partida
-        var finalMatchId = currentMatchId
-        if (finalMatchId == null && current != null) {
-          android.util.Log.i("LiveScreen", "🔍 Match ID não encontrado, buscando automaticamente para o canal...")
-          
-          // Tentar buscar Match ID usando busca inteligente por canal
-          finalMatchId = SoccerRepository.findMatchForChannel(current!!.name)
-          
-          if (finalMatchId != null) {
-            android.util.Log.i("LiveScreen", "   ✅ Match ID identificado automaticamente: $finalMatchId")
-            // Atualizar currentMatchId para uso futuro
-            currentMatchId = finalMatchId
-          } else {
-            android.util.Log.w("LiveScreen", "   ⚠️ Não foi possível identificar a partida para este canal")
-          }
-        }
-        
-        if (finalMatchId == null) {
-          android.util.Log.e("LiveScreen", "❌ Match ID não disponível - não é possível buscar estatísticas")
-          statsError = "Partida não encontrada. Verifique se o jogo está ao vivo."
-          isLoadingStats = false
-          return@LaunchedEffect
-        }
-        
-        // Buscar detalhes da partida
-        android.util.Log.i("LiveScreen", "📡 1/3 - Buscando getMatchDetail($finalMatchId)...")
-        val detail = SoccerRepository.getMatchDetail(finalMatchId)
-        android.util.Log.i("LiveScreen", "   ✅ getMatchDetail retornou: ${detail?.homeTeamName} x ${detail?.awayTeamName}")
-        matchDetail = detail
-        
-        // Buscar preview da partida
-        android.util.Log.i("LiveScreen", "📡 2/3 - Buscando getMatchPreview($finalMatchId)...")
-        val preview = SoccerRepository.getMatchPreview(finalMatchId)
-        android.util.Log.i("LiveScreen", "   ✅ getMatchPreview retornou (word_count: ${preview?.word_count})")
-        matchPreview = preview
-        
-        // Buscar outros jogos
-        android.util.Log.i("LiveScreen", "📡 3/4 - Buscando getOtherMatches()...")
-        val others = SoccerRepository.getOtherMatches()
-        android.util.Log.i("LiveScreen", "   ✅ getOtherMatches retornou ${others.size} partidas")
-        otherMatches = others
-        
-        // Buscar odds (probabilidades de apostas)
-        android.util.Log.i("LiveScreen", "📡 4/4 - Buscando odds (probabilidades de apostas)...")
-        val odds = SoccerRepository.getLiveOdds(finalMatchId) ?: SoccerRepository.getOdds(finalMatchId)
-        if (odds != null) {
-          // API nova não tem odds, sempre será null
-          android.util.Log.i("LiveScreen", "   ✅ Odds encontradas: ${(odds as? com.maxiptv.data.soccer.ApiSportsOdds)?.bookmakers?.size ?: 0} casas de aposta (API antiga)")
-        } else {
-          android.util.Log.w("LiveScreen", "   ⚠️ Nenhuma odd encontrada")
-        }
-        matchOdds = odds
-        
-        isLoadingStats = false
-        android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
-        android.util.Log.i("LiveScreen", "✅ TODAS AS ESTATÍSTICAS CARREGADAS COM SUCESSO!")
-        android.util.Log.i("LiveScreen", "═══════════════════════════════════════")
-      } catch (e: Exception) {
-        android.util.Log.e("LiveScreen", "═══════════════════════════════════════")
-        android.util.Log.e("LiveScreen", "❌ ERRO AO BUSCAR ESTATÍSTICAS")
-        android.util.Log.e("LiveScreen", "   Erro: ${e.message}")
-        android.util.Log.e("LiveScreen", "   Tipo: ${e.javaClass.simpleName}")
-        android.util.Log.e("LiveScreen", "   StackTrace:", e)
-        android.util.Log.e("LiveScreen", "═══════════════════════════════════════")
-        statsError = e.message ?: "Erro desconhecido"
-        isLoadingStats = false
-      }
-    }
-  }
+  // Código de estatísticas removido
   
   // Context precisa ser lido FORA do remember
   val context = LocalContext.current
@@ -603,6 +497,8 @@ fun LiveScreen(nav: NavHostController) {
     }
   }
   
+  val scope = rememberCoroutineScope()
+  
   LaunchedEffect(Unit) { 
     XRepo.ensureLiveLoaded()
     // Carregar EPG em background (não bloqueia a UI)
@@ -721,9 +617,9 @@ fun LiveScreen(nav: NavHostController) {
     }
     // ⚽ Detectar se é canal de futebol (com verificação de EPG)
     val isFootballChannelFullscreen = MatchIdExtractor.isFootballChannel(current!!.name, currentProgrammeFullscreen?.title)
-    // ⚽ Usar currentMatchId já encontrado automaticamente (busca em partidas recentes/finalizadas)
+    // ⚽ Extrair Match ID do nome do canal se for futebol
     val channelMatchId = if (isFootballChannelFullscreen) {
-      currentMatchId ?: MatchIdExtractor.extractMatchId(current!!.name)
+      MatchIdExtractor.extractMatchId(current!!.name)
     } else null
     val nextProgramme = remember(currentTime, current?.name, epgData) {
         EpgParser.getNextProgramme(current!!.name, epgData)
@@ -756,33 +652,7 @@ fun LiveScreen(nav: NavHostController) {
             val rootLayout = playerView.parent as? android.widget.FrameLayout ?: android.widget.FrameLayout(ctx).apply {
               addView(playerView)
             }
-            val finalMatchId = currentMatchId ?: channelMatchId
-            android.util.Log.i("LiveScreen", "⚽ Criando botão de estatísticas no FULLSCREEN:")
-            android.util.Log.i("LiveScreen", "   - Canal: ${current!!.name}")
-            android.util.Log.i("LiveScreen", "   - MatchId preservado do mini player: $currentMatchId")
-            android.util.Log.i("LiveScreen", "   - MatchId final usado: $finalMatchId")
-            val statsButton = createFootballStatsButtonInView(ctx, rootLayout, current!!.name, finalMatchId, soccerStatsViewModel) {
-              // Usar matchId já encontrado ou tentar buscar novamente
-              if (currentMatchId == null && current != null) {
-                android.util.Log.i("LiveScreen", "⚽ Match ID não disponível, buscando automaticamente ao clicar no botão...")
-                scope.launch {
-                  try {
-                    val matchId = SoccerRepository.findMatchForChannel(current!!.name)
-                    if (matchId != null) {
-                      currentMatchId = matchId
-                      android.util.Log.i("LiveScreen", "✅ Match ID encontrado: $matchId")
-                    }
-                  } catch (e: Exception) {
-                    android.util.Log.e("LiveScreen", "❌ Erro ao buscar Match ID", e)
-                  }
-                }
-              }
-              showFootballStatsDialog = true
-            }
-            // ✅ CONFIGURAR FOCO: Quando apertar seta para cima no PlayerView, focar no botão de estatísticas
-            playerView.nextFocusUpId = statsButton.id
-            statsButton.nextFocusDownId = playerView.id
-            android.util.Log.i("LiveScreen", "✅ Navegação de foco configurada: PlayerView (ID: ${playerView.id}) → StatsButton (ID: ${statsButton.id})")
+            // Código de botão de estatísticas removido
             rootLayout
           } else {
             playerView
@@ -974,33 +844,7 @@ fun LiveScreen(nav: NavHostController) {
         }
       }
       
-      // ⚽ DIÁLOGO DE ESTATÍSTICAS DE FUTEBOL (FULLSCREEN) - renderizar sobre o player
-      if (showFootballStatsDialog && isFootballChannel) {
-        FootballStatsDialog(
-          channelName = current!!.name,
-          matchId = currentMatchId,
-          matchDetail = matchDetail,
-          matchPreview = matchPreview,
-          otherMatches = otherMatches,
-          matchOdds = matchOdds,
-          isLoading = isLoadingStats,
-          error = statsError,
-          onDismiss = { 
-            showFootballStatsDialog = false
-            matchDetail = null
-            matchPreview = null
-            otherMatches = emptyList()
-            matchOdds = null
-            statsError = null
-          },
-          deviceType = when {
-            MaxiApp.isTv -> "tv"
-            MaxiApp.isFireStick -> "tv"
-            else -> "phone"
-          },
-          isVisible = showFootballStatsDialog
-        )
-      }
+      // Código de diálogo de estatísticas removido
     }
     return // IMPORTANTE: Sair da função ANTES de renderizar TopBar ou qualquer outro elemento
   }
@@ -1247,80 +1091,7 @@ fun LiveScreen(nav: NavHostController) {
                 }
               },
               onStatsClick = {
-                try {
-                  android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas clicado - iniciando busca de Match ID e dados...")
-                  
-                  // Abrir diálogo imediatamente
-                  showFootballStatsDialog = true
-                  isLoadingStats = true
-                  statsError = null
-                  
-                  // Limpar dados anteriores
-                  matchDetail = null
-                  matchPreview = null
-                  otherMatches = emptyList()
-                  matchOdds = null
-                  currentMatchId = null
-                  
-                  // Buscar Match ID e dados da API apenas quando o botão for clicado
-                  scope.launch {
-                    try {
-                      var matchId: Long? = null
-                      
-                      // 1. Tentar extrair do nome do canal
-                      if (current != null) {
-                        matchId = MatchIdExtractor.extractMatchId(current!!.name)
-                        android.util.Log.i("LiveScreen", "   Tentativa 1 - Extrair do nome: ${matchId ?: "não encontrado"}")
-                      }
-                      
-                      // 2. Se não encontrou, buscar automaticamente na API (usando EPG se disponível)
-                      if (matchId == null && current != null) {
-                        val epgTitle = currentProgramme?.title
-                        android.util.Log.i("LiveScreen", "   Tentativa 2 - Buscar na API para: ${current!!.name}")
-                        if (epgTitle != null) {
-                          android.util.Log.i("LiveScreen", "   Usando EPG: '$epgTitle'")
-                        }
-                        matchId = SoccerRepository.findMatchForChannel(current!!.name, epgTitle)
-                        android.util.Log.i("LiveScreen", "   Resultado da busca: ${matchId ?: "não encontrado"}")
-                      }
-                      
-                      currentMatchId = matchId
-                      
-                      // 3. Se encontrou Match ID, buscar dados da API
-                      if (matchId != null) {
-                        android.util.Log.i("LiveScreen", "   ✅ Match ID encontrado: $matchId - buscando dados da API...")
-                        
-                        // Buscar detalhes, preview, outros jogos e odds em paralelo
-                        coroutineScope {
-                          val detailDeferred = async { SoccerRepository.getMatchDetail(matchId) }
-                          val previewDeferred = async { SoccerRepository.getMatchPreview(matchId) }
-                          val otherMatchesDeferred = async { SoccerRepository.getOtherMatches() }
-                          val oddsDeferred = async { SoccerRepository.getMatchOdds(matchId) } // Retorna null (API não tem odds)
-                          
-                          matchDetail = detailDeferred.await()
-                          matchPreview = previewDeferred.await()
-                          otherMatches = otherMatchesDeferred.await()
-                          matchOdds = oddsDeferred.await() // Será null (API não tem odds)
-                        }
-                        
-                        android.util.Log.i("LiveScreen", "   ✅ Dados carregados com sucesso!")
-                      } else {
-                        android.util.Log.w("LiveScreen", "   ⚠️ Match ID não encontrado - mostrando mensagem de erro")
-                        statsError = "Partida não encontrada ou Match ID não disponível"
-                      }
-                      
-                      isLoadingStats = false
-                    } catch (e: Exception) {
-                      android.util.Log.e("LiveScreen", "   ❌ Erro ao buscar dados: ${e.message}", e)
-                      statsError = "Erro ao buscar dados: ${e.message}"
-                      isLoadingStats = false
-                    }
-                  }
-                } catch (e: Exception) {
-                  android.util.Log.e("LiveScreen", "❌ Erro ao processar clique no botão: ${e.message}", e)
-                  statsError = "Erro: ${e.message}"
-                  isLoadingStats = false
-                }
+                // Código de estatísticas removido
               }
             )
           } else {
@@ -1506,37 +1277,7 @@ fun LiveScreen(nav: NavHostController) {
     }
   }
   
-  // ⚽ DIÁLOGO DE ESTATÍSTICAS DE FUTEBOL (usando API Soccer)
-  if (showFootballStatsDialog && current != null) {
-    val epgTitle = currentProgramme?.title
-    val isFootballChannelDialog = MatchIdExtractor.isFootballChannel(current!!.name, epgTitle)
-    if (isFootballChannelDialog) {
-      FootballStatsDialog(
-        channelName = current!!.name,
-        matchId = currentMatchId,
-        matchDetail = matchDetail,
-        matchPreview = matchPreview,
-        otherMatches = otherMatches,
-        matchOdds = matchOdds,
-        isLoading = isLoadingStats,
-        error = statsError,
-        onDismiss = { 
-          showFootballStatsDialog = false
-          matchDetail = null
-          matchPreview = null
-          otherMatches = emptyList()
-          matchOdds = null
-          statsError = null
-        },
-        deviceType = when {
-          MaxiApp.isTv -> "tv"
-          MaxiApp.isFireStick -> "tv"
-          else -> "phone"
-        },
-        isVisible = showFootballStatsDialog // ✅ Passar estado de visibilidade para controlar foco
-      )
-    }
-  }
+  // Código de diálogo de estatísticas removido
 }
 
 @Composable
@@ -2004,7 +1745,8 @@ fun MiniPlayer(
   }
 }
 
-// ⚽ FUNÇÃO AUXILIAR: Criar botão de estatísticas em AndroidView
+// Função removida - código de estatísticas removido
+/*
 private fun createFootballStatsButtonInView(
   ctx: android.content.Context,
   rootLayout: android.widget.FrameLayout,
@@ -2115,3 +1857,4 @@ private fun createFootballStatsButtonInView(
     android.util.Log.i("LiveScreen", "⚽ Botão de estatísticas criado no fullscreen (ID: $id)")
   }
 }
+*/

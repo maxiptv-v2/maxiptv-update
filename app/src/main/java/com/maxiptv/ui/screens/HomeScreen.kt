@@ -55,8 +55,6 @@ import com.maxiptv.data.UpdateInfo
 import com.maxiptv.data.ApkDownloader
 import com.maxiptv.data.DeviceLogger
 import com.maxiptv.ui.player.PlayerActivity
-import com.maxiptv.ui.player.soccer.SoccerStatsButton
-import com.maxiptv.data.soccer.SoccerRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -1541,9 +1539,6 @@ fun EmbeddedPlayer(
     else -> 180.dp
   }
   
-  // ⚽ ESTADO PARA CONTROLAR DIÁLOGO DE ESTATÍSTICAS
-  var showFootballStatsDialog by remember { mutableStateOf(false) }
-  
   // ⚽ DETECTAR SE É CANAL DE FUTEBOL
   val isFootballChannel = remember(channel.name) {
     val channelNameLower = channel.name.lowercase().trim()
@@ -1569,94 +1564,6 @@ fun EmbeddedPlayer(
       com.maxiptv.data.soccer.MatchIdExtractor.extractMatchId(channel.name)
     } else {
       null
-    }
-  }
-  
-  // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando API Sports)
-  var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
-  var matchPreview by remember { mutableStateOf<com.maxiptv.data.soccer.MatchPreviewFull?>(null) }
-  var otherMatches by remember { mutableStateOf<List<com.maxiptv.data.soccer.MatchSummaryFull>>(emptyList()) }
-  var matchOdds by remember { mutableStateOf<Any?>(null) } // API nova não tem odds, sempre será null
-  var isLoadingStats by remember { mutableStateOf(false) }
-  var statsError by remember { mutableStateOf<String?>(null) }
-  
-  // ✅ CORRIGIDO: rememberCoroutineScope() precisa estar no nível do Composable
-  val scope = rememberCoroutineScope()
-  
-  // ⚽ FUNÇÃO PARA ABRIR DIÁLOGO DE ESTATÍSTICAS
-  val openStatsDialog: () -> Unit = {
-    android.util.Log.i("EmbeddedPlayer", "⚽ Abrindo diálogo de estatísticas para matchId: $matchId")
-    
-    // ✅ CORREÇÃO: Mostrar diálogo IMEDIATAMENTE ao clicar no botão
-    showFootballStatsDialog = true
-    isLoadingStats = true
-    statsError = null
-    
-    // Buscar dados da API em background (não bloqueia a abertura do diálogo)
-    scope.launch {
-      try {
-        android.util.Log.i("EmbeddedPlayer", "⚽ INICIANDO BUSCA NA API SPORTS")
-        android.util.Log.i("EmbeddedPlayer", "   MatchId inicial: $matchId")
-        android.util.Log.i("EmbeddedPlayer", "   Canal: ${channel.name}")
-        
-        // ✅ NOVO: Se não houver Match ID, usar busca inteligente para identificar a partida
-        var finalMatchId = matchId
-        if (finalMatchId == null) {
-          android.util.Log.i("EmbeddedPlayer", "🔍 Match ID não encontrado, buscando automaticamente para o canal...")
-          
-          // Tentar buscar Match ID usando busca inteligente por canal
-          finalMatchId = com.maxiptv.data.soccer.SoccerRepository.findMatchForChannel(channel.name)
-          
-          if (finalMatchId != null) {
-            android.util.Log.i("EmbeddedPlayer", "   ✅ Match ID identificado automaticamente: $finalMatchId")
-          } else {
-            android.util.Log.w("EmbeddedPlayer", "   ⚠️ Não foi possível identificar a partida para este canal")
-          }
-        }
-        
-        if (finalMatchId == null) {
-          android.util.Log.e("EmbeddedPlayer", "❌ Match ID não disponível - não é possível buscar estatísticas")
-          statsError = "Partida não encontrada. Verifique se o jogo está ao vivo."
-          isLoadingStats = false
-          return@launch
-        }
-        
-        // Buscar detalhes da partida
-        android.util.Log.i("EmbeddedPlayer", "📡 1/3 - Buscando getMatchDetail($finalMatchId)...")
-        val detail = com.maxiptv.data.soccer.SoccerRepository.getMatchDetail(finalMatchId)
-        android.util.Log.i("EmbeddedPlayer", "   ✅ getMatchDetail retornou: ${detail?.homeTeamName} x ${detail?.awayTeamName}")
-        matchDetail = detail
-        
-        // Buscar preview da partida
-        android.util.Log.i("EmbeddedPlayer", "📡 2/3 - Buscando getMatchPreview($finalMatchId)...")
-        val preview = com.maxiptv.data.soccer.SoccerRepository.getMatchPreview(finalMatchId)
-        android.util.Log.i("EmbeddedPlayer", "   ✅ getMatchPreview retornou")
-        matchPreview = preview
-        
-        // Buscar outros jogos ao vivo
-        android.util.Log.i("EmbeddedPlayer", "📡 3/4 - Buscando getOtherMatches()...")
-        val other = com.maxiptv.data.soccer.SoccerRepository.getOtherMatches()
-        android.util.Log.i("EmbeddedPlayer", "   ✅ getOtherMatches retornou ${other.size} partidas")
-        otherMatches = other
-        
-        // Buscar odds (probabilidades de apostas)
-        android.util.Log.i("EmbeddedPlayer", "📡 4/4 - Buscando odds (probabilidades de apostas)...")
-        val odds = com.maxiptv.data.soccer.SoccerRepository.getLiveOdds(finalMatchId) ?: com.maxiptv.data.soccer.SoccerRepository.getOdds(finalMatchId)
-        if (odds != null) {
-          // API nova não tem odds, sempre será null
-          android.util.Log.i("EmbeddedPlayer", "   ✅ Odds encontradas: ${(odds as? com.maxiptv.data.soccer.ApiSportsOdds)?.bookmakers?.size ?: 0} casas de aposta (API antiga)")
-        } else {
-          android.util.Log.w("EmbeddedPlayer", "   ⚠️ Nenhuma odd encontrada (API nova não fornece odds)")
-        }
-        matchOdds = odds
-        
-        isLoadingStats = false
-        android.util.Log.i("EmbeddedPlayer", "✅ TODAS AS ESTATÍSTICAS CARREGADAS COM SUCESSO!")
-      } catch (e: Exception) {
-        isLoadingStats = false
-        statsError = e.message ?: "Erro desconhecido ao carregar estatísticas"
-        android.util.Log.e("EmbeddedPlayer", "❌ Erro ao carregar estatísticas: ${e.message}", e)
-      }
     }
   }
   
@@ -2006,52 +1913,6 @@ fun EmbeddedPlayer(
       }
     }
     
-    // ⚽ BOTÃO DE ESTATÍSTICAS DE FUTEBOL (canto superior direito, abaixo do "AO VIVO")
-    if (isFootballChannel) {
-      var isFootballButtonFocused by remember { mutableStateOf(false) }
-      
-      Box(
-        modifier = Modifier
-          .align(Alignment.TopEnd)
-          .padding(
-            top = when (deviceType) {
-              "tv" -> 60.dp  // Abaixo do badge "AO VIVO"
-              "phone" -> 40.dp
-              else -> 50.dp
-            },
-            end = 16.dp
-          )
-          .clickable { openStatsDialog() }
-          .focusable()
-          .onFocusChanged { isFootballButtonFocused = it.isFocused }
-          .then(
-            if (isFootballButtonFocused) {
-              Modifier
-                .border(3.dp, Color(0xFFFFD700), RoundedCornerShape(36.dp))
-                .shadow(
-                  elevation = 16.dp,
-                  spotColor = Color(0xFFFFD700).copy(alpha = 0.9f),
-                  ambientColor = Color(0xFFFFD700).copy(alpha = 0.7f),
-                  shape = CircleShape
-                )
-            } else {
-              Modifier
-            }
-          )
-      ) {
-        SoccerStatsButton(
-          onClick = { openStatsDialog() },
-          modifier = Modifier.size(
-            when (deviceType) {
-              "tv" -> 56.dp
-              "phone" -> 40.dp
-              else -> 48.dp
-            }
-          )
-        )
-      }
-    }
-    
     // ✅ Botão de FULLSCREEN (canto inferior direito)
     var isFullscreenButtonFocused by remember { mutableStateOf(false) }
     
@@ -2090,34 +1951,11 @@ fun EmbeddedPlayer(
       )
     }
     
-    // ⚽ DIÁLOGO DE ESTATÍSTICAS DE FUTEBOL
-    if (showFootballStatsDialog && isFootballChannel) {
-      FootballStatsDialog(
-        channelName = channel.name,
-        matchId = matchId,
-        matchDetail = matchDetail,
-        matchPreview = matchPreview,
-        otherMatches = otherMatches,
-        matchOdds = matchOdds,
-        isLoading = isLoadingStats,
-        error = statsError,
-        onDismiss = { 
-          showFootballStatsDialog = false
-          // Limpar dados quando fechar
-          matchDetail = null
-          matchPreview = null
-          otherMatches = emptyList()
-          matchOdds = null
-          statsError = null
-        },
-        deviceType = deviceType,
-        isVisible = showFootballStatsDialog // ✅ Passar estado de visibilidade para controlar foco
-      )
-    }
   }
 }
 
-// ⚽ DIÁLOGO DE ESTATÍSTICAS DE FUTEBOL PARA MINI PLAYER
+// Função removida - código de estatísticas removido
+/*
 @Composable
 fun FootballStatsDialog(
   channelName: String,
@@ -3117,6 +2955,7 @@ fun FootballStatsDialog(
     }
   }
 }
+*/
 
 @Composable
 fun StatsRow(

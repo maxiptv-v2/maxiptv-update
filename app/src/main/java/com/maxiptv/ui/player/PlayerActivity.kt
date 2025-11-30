@@ -103,16 +103,8 @@ class PlayerActivity : ComponentActivity() {
   private var positionSaveHandler: android.os.Handler? = null // Handler para salvar posição periodicamente
   private var isFootballMode: Boolean = false // Modo futebol ativado
   private var footballOverlay: android.widget.ImageView? = null // Overlay de gramado para modo futebol
-  private var footballStatsButton: android.widget.ImageButton? = null // Botão de estatísticas de futebol
-  private var footballStatsOverlay: android.view.ViewGroup? = null // Overlay de estatísticas
-  private var isStatsOverlayVisible: Boolean = false // Se overlay está visível
-  private var footballStatsButtonEnabled: Boolean = true // Se botão está habilitado
   private var footballAutoZoomEnabled: Boolean = true // Se zoom automático está habilitado
-  private var rotationAnimator: android.animation.ObjectAnimator? = null // Animação de rotação do botão
   private var currentZoomLevel: Float = 1.0f // Nível de zoom atual (1.0 = normal)
-  // ⚽ NOVO: Sistema de estatísticas via API
-  private var currentMatchId: Long? = null // ID da partida atual
-  private var soccerStatsViewModel: com.maxiptv.ui.player.soccer.SoccerStatsViewModel? = null // ViewModel para estatísticas
   private var pauseControlsOverlay: android.view.ViewGroup? = null // Overlay com botões modernos quando pausa
   private var isPausedControlsVisible: Boolean = false // Se controles de pausa estão visíveis
   private val bufferIndicatorRunnable = object : Runnable {
@@ -156,11 +148,6 @@ class PlayerActivity : ComponentActivity() {
     }
     
     // ⚽ Limpar recursos de futebol ao iniciar novo jogo
-    rotationAnimator?.cancel()
-    rotationAnimator = null
-    footballStatsButton = null
-    footballStatsOverlay = null
-    isStatsOverlayVisible = false
     currentZoomLevel = 1.0f
     // ⚠️ pv será inicializado mais tarde, então resetar zoom será feito depois
     
@@ -578,38 +565,10 @@ class PlayerActivity : ComponentActivity() {
     isFootballMode = contentType == "live" && (isSpecificFootballChannel || hasGenericTerm)
     android.util.Log.i("PlayerActivity", "   - isFootballMode: $isFootballMode (contentType='$contentType' && (isSpecific=$isSpecificFootballChannel || generic=$hasGenericTerm))")
     
-    // ⚽ NOVO: Tentar identificar Match ID usando busca inteligente
-    if (isFootballMode) {
-      currentMatchId = com.maxiptv.data.soccer.MatchIdExtractor.extractMatchId(channelName)
-      if (currentMatchId != null) {
-        android.util.Log.i("PlayerActivity", "⚽ MatchId extraído do nome do canal: $currentMatchId")
-      } else {
-        android.util.Log.i("PlayerActivity", "⚽ MatchId não encontrado no nome - buscando automaticamente...")
-        // ⚽ NOVO: Usar busca inteligente para identificar a partida automaticamente
-        lifecycleScope.launch {
-          try {
-            val identifiedMatchId = com.maxiptv.data.soccer.SoccerRepository.findMatchForChannel(channelName)
-            if (identifiedMatchId != null) {
-              currentMatchId = identifiedMatchId
-              android.util.Log.i("PlayerActivity", "⚽ Match ID identificado automaticamente: $currentMatchId")
-            } else {
-              android.util.Log.w("PlayerActivity", "⚠️ Não foi possível identificar a partida para este canal")
-            }
-          } catch (e: Exception) {
-            android.util.Log.e("PlayerActivity", "❌ Erro ao buscar partida automaticamente", e)
-            e.printStackTrace()
-            // ✅ CORREÇÃO CRASH: Não propagar exceção - apenas logar e continuar
-            currentMatchId = null
-          }
-        }
-      }
-    }
-    
     if (isFootballMode) {
       android.util.Log.i("PlayerActivity", "⚽ MODO FUTEBOL ATIVADO para: '$channelName'")
       android.util.Log.i("PlayerActivity", "   - Canal específico: $isSpecificFootballChannel")
       android.util.Log.i("PlayerActivity", "   - Termo genérico: $hasGenericTerm")
-      android.util.Log.i("PlayerActivity", "   - MatchId: ${currentMatchId ?: "não disponível (buscando...)"}")
     } else {
       android.util.Log.d("PlayerActivity", "📺 Modo normal (não é futebol): '$channelName'")
     }
@@ -646,33 +605,8 @@ class PlayerActivity : ComponentActivity() {
       createFootballOverlay(rootLayout)
       android.util.Log.i("PlayerActivity", "⚽ Overlay de gramado criado para modo futebol")
       
-      // ✅ Carregar preferências de futebol e criar botão
-      // ⚽ Novo jogo: sempre reativar botão (mesmo que tenha sido desativado antes)
-      // O usuário pode desativar novamente se não quiser neste jogo específico
-      footballStatsButtonEnabled = true // Sempre ativado em novo jogo
-      
       lifecycleScope.launch {
         footballAutoZoomEnabled = PlayerSettingsManager.isFootballAutoZoomEnabled()
-      }
-      
-      // Criar botão de estatísticas imediatamente (não dentro de corrotina)
-      createFootballStatsButton(rootLayout)
-      android.util.Log.i("PlayerActivity", "⚽ Botão de estatísticas criado para modo futebol")
-      
-      // ⚽ NOVO: Inicializar ViewModel de estatísticas se houver matchId
-      if (currentMatchId != null) {
-        soccerStatsViewModel = com.maxiptv.ui.player.soccer.SoccerStatsViewModel()
-        android.util.Log.i("PlayerActivity", "⚽ ViewModel de estatísticas inicializado para matchId: $currentMatchId")
-      } else {
-        // ⚽ NOVO: Se matchId ainda não está disponível (buscando partidas ao vivo), inicializar ViewModel depois
-        lifecycleScope.launch {
-          // Aguardar um pouco para a busca de partidas ao vivo completar
-          kotlinx.coroutines.delay(2000)
-          if (currentMatchId != null && soccerStatsViewModel == null) {
-            soccerStatsViewModel = com.maxiptv.ui.player.soccer.SoccerStatsViewModel()
-            android.util.Log.i("PlayerActivity", "⚽ ViewModel de estatísticas inicializado após buscar matchId: $currentMatchId")
-          }
-        }
       }
     }
     
@@ -1322,8 +1256,6 @@ class PlayerActivity : ComponentActivity() {
       liveChannelInfoOverlay?.visibility = android.view.View.GONE
       nextEpisodeOverlay?.visibility = android.view.View.GONE
       pauseControlsOverlay?.visibility = android.view.View.GONE
-      // ⚽ Botão de futebol pode ficar (é útil mesmo em fullscreen)
-      // footballStatsButton permanece visível se necessário
       
       android.util.Log.d("PlayerActivity", "🖥️ Fullscreen: Todos os overlays ocultados")
       
@@ -1479,27 +1411,8 @@ class PlayerActivity : ComponentActivity() {
       footballOverlay = null
     }
     
-    // ⚽ Remover botão de estatísticas se existir
-    rotationAnimator?.cancel()
-    rotationAnimator = null
-    footballStatsButton?.let {
-      (it.parent as? android.view.ViewGroup)?.removeView(it)
-      footballStatsButton = null
-    }
-    
-    // ⚽ Remover overlay de estatísticas se existir
-    footballStatsOverlay?.let {
-      (it.parent as? android.view.ViewGroup)?.removeView(it)
-      footballStatsOverlay = null
-    }
-    
     // ✅ Parar verificação de próximo episódio
     stopNextEpisodeCheck()
-    
-    // ⚽ NOVO: Limpar ViewModel de estatísticas
-    soccerStatsViewModel?.clearData()
-    soccerStatsViewModel = null
-    currentMatchId = null
     
     // ⚽ Resetar zoom (se pv estiver inicializado)
     if (::pv.isInitialized) {
@@ -1594,449 +1507,6 @@ class PlayerActivity : ComponentActivity() {
     val insertIndex = 1 // Logo após PlayerView (índice 0)
     rootLayout.addView(footballOverlay, insertIndex)
     android.util.Log.i("PlayerActivity", "⚽ Overlay de gramado adicionado na posição $insertIndex (opacidade: 15%)")
-  }
-  
-  // ⚽ CRIAR BOTÃO DE ESTATÍSTICAS DE FUTEBOL (bola giratória)
-  private fun createFootballStatsButton(rootLayout: FrameLayout) {
-    android.util.Log.i("PlayerActivity", "⚽ createFootballStatsButton chamado")
-    android.util.Log.i("PlayerActivity", "   - isFootballMode: $isFootballMode")
-    android.util.Log.i("PlayerActivity", "   - footballStatsButtonEnabled: $footballStatsButtonEnabled")
-    android.util.Log.i("PlayerActivity", "   - footballStatsButton já existe: ${footballStatsButton != null}")
-    android.util.Log.i("PlayerActivity", "   - rootLayout: ${if (rootLayout != null) "presente" else "ausente"}")
-    android.util.Log.i("PlayerActivity", "   - Dispositivo: ${MaxiApp.deviceCategory}")
-    android.util.Log.i("PlayerActivity", "   - isTv: ${MaxiApp.isTv}, isTvBox: ${MaxiApp.isTvBox}")
-    
-    // ✅ Verificar condições antes de criar
-    if (!isFootballMode) {
-      android.util.Log.w("PlayerActivity", "⚽ Modo futebol não está ativado - botão não será criado")
-      return
-    }
-    if (!footballStatsButtonEnabled) {
-      android.util.Log.w("PlayerActivity", "⚽ Botão de estatísticas desabilitado - botão não será criado")
-      return
-    }
-    
-    // ✅ Verificar se já existe (evitar duplicação)
-    if (footballStatsButton != null) {
-      android.util.Log.w("PlayerActivity", "⚽ Botão de estatísticas já existe - não criando duplicado")
-      // ✅ Mas garantir que está visível
-      footballStatsButton?.visibility = android.view.View.VISIBLE
-      footballStatsButton?.bringToFront()
-      return
-    }
-    
-    android.util.Log.i("PlayerActivity", "⚽ Criando botão de estatísticas de futebol...")
-    
-    val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
-    val density = resources.displayMetrics.density
-    val sizePx = (buttonSize * density).toInt()
-    val margin = (16f * density).toInt() // 16dp de margem
-    
-    // Criar botão customizado (bola de futebol)
-    footballStatsButton = android.widget.ImageButton(this).apply {
-      // Criar drawable de bola de futebol usando Canvas
-      val bitmap = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
-      val canvas = android.graphics.Canvas(bitmap)
-      
-      // Desenhar bola de futebol (padrão hexágono/pentágono)
-      val paint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        style = android.graphics.Paint.Style.FILL
-        color = android.graphics.Color.WHITE
-      }
-      
-      val strokePaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        style = android.graphics.Paint.Style.STROKE
-        strokeWidth = 4f
-        color = android.graphics.Color.BLACK
-      }
-      
-      val centerX = sizePx / 2f
-      val centerY = sizePx / 2f
-      val radius = (sizePx * 0.4f)
-      
-      // Desenhar círculo branco (bola)
-      canvas.drawCircle(centerX, centerY, radius, paint)
-      canvas.drawCircle(centerX, centerY, radius, strokePaint)
-      
-      // Desenhar linhas da bola de futebol (padrão simplificado)
-      val linePaint = android.graphics.Paint().apply {
-        isAntiAlias = true
-        style = android.graphics.Paint.Style.STROKE
-        strokeWidth = 3f
-        color = android.graphics.Color.BLACK
-      }
-      
-      // Linhas horizontais e verticais
-      canvas.drawLine(centerX - radius, centerY, centerX + radius, centerY, linePaint)
-      canvas.drawLine(centerX, centerY - radius, centerX, centerY + radius, linePaint)
-      
-      // Linhas diagonais
-      val diagonalOffset = radius * 0.7f
-      canvas.drawLine(centerX - diagonalOffset, centerY - diagonalOffset, centerX + diagonalOffset, centerY + diagonalOffset, linePaint)
-      canvas.drawLine(centerX - diagonalOffset, centerY + diagonalOffset, centerX + diagonalOffset, centerY - diagonalOffset, linePaint)
-      
-      setImageBitmap(bitmap)
-      background = null // Sem background
-      scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
-      alpha = 1.0f // 100% de opacidade para melhor visibilidade
-      
-      // Configurar foco e clique
-      isFocusable = true
-      isFocusableInTouchMode = true
-      setOnClickListener {
-        showFootballStatsOverlay()
-      }
-      
-      setOnFocusChangeListener { _, hasFocus ->
-        if (hasFocus) {
-          // Zoom e borda vermelha quando focado
-          animate()
-            .scaleX(1.2f)
-            .scaleY(1.2f)
-            .setDuration(200)
-            .start()
-          
-          // Adicionar borda vermelha
-          val borderDrawable = android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.OVAL
-            setStroke((6f * density).toInt(), android.graphics.Color.RED)
-            setColor(android.graphics.Color.TRANSPARENT)
-          }
-          background = borderDrawable
-          
-          // Glow vermelho
-          elevation = 8f
-        } else {
-          // Voltar ao normal quando perder foco
-          animate()
-            .scaleX(1.0f)
-            .scaleY(1.0f)
-            .setDuration(200)
-            .start()
-          background = null
-          elevation = 0f
-        }
-      }
-      
-      // ✅ Reposicionar botão acima do buffering (canto superior direito, mas acima do indicador de buffer)
-      // Calcular posição baseada no tamanho do buffering (geralmente ~48dp em smartphones, ~56dp em TV)
-      val bufferingOffset = if (MaxiApp.isTv) (72f * density).toInt() else (64f * density).toInt()
-      val topMargin = bufferingOffset + margin
-      
-      // ✅ CORREÇÃO TV: Aumentar margem direita para considerar outros overlays
-      // Em TV, outros overlays (qualityOverlay, liveChannelInfoOverlay) usam 40dp de margem direita
-      // IMPORTANTE: Não somar overscanPadding aqui, pois o layout já considera overscan
-      // O overscan já está aplicado no rootLayout, então precisamos apenas garantir que
-      // o botão não fique coberto por outros overlays (que usam 40dp de margem)
-      val rightMarginDp = if (MaxiApp.isTv) {
-        // TV: margem maior para não ficar coberto por outros overlays
-        // Usar 40dp (mesma margem dos outros overlays) + 8dp extra para espaçamento
-        // NÃO somar overscanPadding aqui pois já está aplicado no layout principal
-        val otherOverlaysMargin = 40 // dp - margem usada por qualityOverlay e liveChannelInfoOverlay
-        otherOverlaysMargin + 8 // 8dp extra para garantir espaçamento
-      } else {
-        margin // Smartphone: margem normal (16dp)
-      }
-      val rightMargin = (rightMarginDp * density).toInt()
-      
-      layoutParams = FrameLayout.LayoutParams(sizePx, sizePx).apply {
-        gravity = android.view.Gravity.TOP or android.view.Gravity.END
-        // ✅ Margem superior maior para ficar acima do buffering, margem direita aumentada para TV
-        setMargins(0, topMargin, rightMargin, 0)
-      }
-      
-      android.util.Log.i("PlayerActivity", "⚽ Posicionamento do botão:")
-      android.util.Log.i("PlayerActivity", "   - Top margin: ${topMargin}px (${topMargin / density}dp)")
-      android.util.Log.i("PlayerActivity", "   - Right margin: ${rightMargin}px (${rightMarginDp}dp)")
-      android.util.Log.i("PlayerActivity", "   - Device: ${MaxiApp.deviceCategory}")
-      android.util.Log.i("PlayerActivity", "   - isTv: ${MaxiApp.isTv}, isFireStick: ${MaxiApp.isFireStick}")
-      android.util.Log.i("PlayerActivity", "   - Button size: ${sizePx}px (${buttonSize}dp)")
-      android.util.Log.i("PlayerActivity", "   - Screen width: ${resources.displayMetrics.widthPixels}px")
-      android.util.Log.i("PlayerActivity", "   - Button X position: ${resources.displayMetrics.widthPixels - rightMargin - sizePx}px")
-    }
-    
-    // Adicionar animação de rotação contínua
-    rotationAnimator = android.animation.ObjectAnimator.ofFloat(footballStatsButton, "rotation", 0f, 360f).apply {
-      duration = 3000 // 3 segundos para uma rotação completa
-      repeatCount = android.animation.ObjectAnimator.INFINITE
-      interpolator = android.view.animation.LinearInterpolator()
-      start()
-    }
-    
-    // ✅ Adicionar botão por último para garantir que fique acima de todos os overlays
-    // Usar childCount como índice para adicionar no final da lista de views
-    rootLayout.addView(footballStatsButton, rootLayout.childCount)
-    
-    // ✅ CORREÇÃO TV: Garantir que o botão está visível e ACIMA de todos os outros overlays
-    footballStatsButton?.visibility = android.view.View.VISIBLE
-    footballStatsButton?.bringToFront() // Trazer para frente
-    
-    // ✅ CORREÇÃO TV: Forçar elevação para garantir que está acima de outros overlays
-    footballStatsButton?.elevation = 16f // Elevação alta para ficar acima de outros overlays
-    
-    // ✅ CORREÇÃO TV: Aguardar um frame e garantir visibilidade novamente (workaround para timing)
-    rootLayout.post {
-      footballStatsButton?.visibility = android.view.View.VISIBLE
-      footballStatsButton?.bringToFront()
-      footballStatsButton?.elevation = 16f
-      
-      // ✅ CONFIGURAR NAVEGAÇÃO DE FOCO: Quando apertar seta para cima no PlayerView, focar no botão de estatísticas
-      if (footballStatsButton != null && ::pv.isInitialized) {
-        pv.nextFocusUpId = footballStatsButton!!.id
-        footballStatsButton!!.nextFocusDownId = pv.id
-        android.util.Log.i("PlayerActivity", "✅ Navegação de foco configurada: PlayerView (ID: ${pv.id}) ⬆️ → StatsButton (ID: ${footballStatsButton!!.id}) ⬇️")
-      } else {
-        android.util.Log.w("PlayerActivity", "⚠️ Não foi possível configurar navegação de foco - botão ou PlayerView não estão prontos")
-      }
-      
-      // Log final de verificação
-      android.util.Log.i("PlayerActivity", "⚽ Verificação final do botão:")
-      android.util.Log.i("PlayerActivity", "   - Visibility: ${footballStatsButton?.visibility}")
-      android.util.Log.i("PlayerActivity", "   - Elevation: ${footballStatsButton?.elevation}")
-      android.util.Log.i("PlayerActivity", "   - Parent: ${footballStatsButton?.parent?.javaClass?.simpleName}")
-      android.util.Log.i("PlayerActivity", "   - X: ${footballStatsButton?.x}, Y: ${footballStatsButton?.y}")
-      android.util.Log.i("PlayerActivity", "   - Width: ${footballStatsButton?.width}, Height: ${footballStatsButton?.height}")
-    }
-    
-    android.util.Log.i("PlayerActivity", "⚽ Botão de estatísticas de futebol criado")
-    android.util.Log.i("PlayerActivity", "   - Dispositivo: ${MaxiApp.deviceCategory}")
-    android.util.Log.i("PlayerActivity", "   - isTv: ${MaxiApp.isTv}, isTvBox: ${MaxiApp.isTvBox}, isFireStick: ${MaxiApp.isFireStick}")
-    android.util.Log.i("PlayerActivity", "   - Tamanho do botão: ${sizePx}px (${buttonSize}dp)")
-    android.util.Log.i("PlayerActivity", "   - Visibilidade: ${footballStatsButton?.visibility}")
-    android.util.Log.i("PlayerActivity", "   - Botão habilitado: $footballStatsButtonEnabled")
-  }
-  
-  // ⚽ MOSTRAR OVERLAY DE ESTATÍSTICAS (versão melhorada com API real)
-  private fun showFootballStatsOverlay() {
-    if (footballStatsOverlay != null) {
-      // Se já existe, apenas mostrar/esconder
-      footballStatsOverlay?.visibility = if (isStatsOverlayVisible) android.view.View.GONE else android.view.View.VISIBLE
-      isStatsOverlayVisible = !isStatsOverlayVisible
-      return
-    }
-    
-    val rootLayout = footballStatsButton?.parent as? FrameLayout ?: return
-    val channelName = intent.getStringExtra("channelName") ?: "Canal de Futebol"
-    
-    // ⚽ NOVO: Se houver matchId e ViewModel, usar dados reais da API
-    if (currentMatchId != null && soccerStatsViewModel != null) {
-      android.util.Log.i("PlayerActivity", "⚽ Abrindo overlay com dados reais da API (matchId: $currentMatchId)")
-      soccerStatsViewModel?.openOverlay(currentMatchId!!)
-      // Usar overlay com dados reais do ViewModel
-      createSimpleFootballOverlay(rootLayout, channelName, soccerStatsViewModel)
-    } else {
-      // Fallback: criar overlay simples com dados simulados
-      android.util.Log.i("PlayerActivity", "⚽ Abrindo overlay simples (sem matchId)")
-      createSimpleFootballOverlay(rootLayout, channelName, null)
-    }
-  }
-  
-  // ⚽ CRIAR OVERLAY SIMPLES DE ESTATÍSTICAS
-  private fun createSimpleFootballOverlay(
-    rootLayout: FrameLayout,
-    channelName: String,
-    viewModel: com.maxiptv.ui.player.soccer.SoccerStatsViewModel?
-  ) {
-    val density = resources.displayMetrics.density
-    
-    // Criar overlay simples
-    footballStatsOverlay = FrameLayout(this).apply {
-      layoutParams = FrameLayout.LayoutParams(
-        FrameLayout.LayoutParams.MATCH_PARENT,
-        FrameLayout.LayoutParams.MATCH_PARENT
-      )
-      setBackgroundColor(android.graphics.Color.argb(200, 0, 0, 0)) // Fundo semi-transparente
-      
-      // Container simples
-      val container = android.widget.LinearLayout(this@PlayerActivity).apply {
-        orientation = android.widget.LinearLayout.VERTICAL
-        gravity = android.view.Gravity.CENTER
-        setPadding((32f * density).toInt(), (32f * density).toInt(), (32f * density).toInt(), (32f * density).toInt())
-        
-        layoutParams = FrameLayout.LayoutParams(
-          FrameLayout.LayoutParams.WRAP_CONTENT,
-          FrameLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-          gravity = android.view.Gravity.CENTER
-        }
-      }
-      
-      // Card simples
-      val card = android.widget.FrameLayout(this@PlayerActivity).apply {
-        setBackgroundColor(android.graphics.Color.argb(245, 20, 20, 20))
-        layoutParams = FrameLayout.LayoutParams(
-          (if (MaxiApp.isTv) 600 else 500).toInt(),
-          (if (MaxiApp.isTv) 400 else 300).toInt()
-        ).apply {
-          gravity = android.view.Gravity.CENTER
-        }
-      }
-      
-      val contentLayout = android.widget.LinearLayout(this@PlayerActivity).apply {
-        orientation = android.widget.LinearLayout.VERTICAL
-        setPadding((20f * density).toInt(), (20f * density).toInt(), (20f * density).toInt(), (20f * density).toInt())
-      }
-      
-      // Título
-      val titleView = android.widget.TextView(this@PlayerActivity).apply {
-        text = "⚽ $channelName"
-        textSize = if (MaxiApp.isTv) 20f else 18f
-        setTextColor(android.graphics.Color.argb(255, 0, 212, 255))
-        setTypeface(null, android.graphics.Typeface.BOLD)
-        gravity = android.view.Gravity.CENTER
-        setPadding(0, 0, 0, (16f * density).toInt())
-      }
-      contentLayout.addView(titleView)
-      
-      // TextView para estatísticas (será atualizado com dados reais se disponível)
-      val statsView = android.widget.TextView(this@PlayerActivity).apply {
-        text = if (viewModel != null) {
-          "⏳ Carregando estatísticas..."
-        } else {
-          "📊 Estatísticas do Jogo\n\n" +
-          "🟢 AO VIVO\n" +
-          "⏱️ Tempo: 45'\n" +
-          "⚽ Placar: 2 - 1\n" +
-          "📈 Posse: 55% - 45%\n" +
-          "🎯 Chutes: 8 - 5"
-        }
-        textSize = if (MaxiApp.isTv) 16f else 14f
-        setTextColor(android.graphics.Color.WHITE)
-        gravity = android.view.Gravity.CENTER
-        setPadding(0, (16f * density).toInt(), 0, 0)
-      }
-      contentLayout.addView(statsView)
-      
-      // ⚽ Se houver ViewModel, observar dados e atualizar o texto
-      if (viewModel != null) {
-        lifecycleScope.launch {
-          // Atualizar periodicamente enquanto o overlay estiver visível
-          while (isStatsOverlayVisible && footballStatsOverlay != null) {
-            val matchDetail = viewModel.currentMatchDetail
-            
-            if (matchDetail != null) {
-              // Usar dados reais da API
-              val statsText = buildString {
-                append("📊 Estatísticas do Jogo\n\n")
-                
-                // Nomes dos times
-                val homeName = matchDetail.homeTeamName.ifEmpty { "Time Casa" }
-                val awayName = matchDetail.awayTeamName.ifEmpty { "Time Visitante" }
-                append("$homeName X $awayName\n\n")
-                
-                // Status e tempo
-                val statusText = matchDetail.status?.long ?: matchDetail.status?.short ?: "Não iniciado"
-                val isLive = statusText.contains("Half", ignoreCase = true) || statusText.contains("LIVE", ignoreCase = true)
-                
-                if (isLive) {
-                  append("🟢 AO VIVO\n")
-                } else {
-                  append("⚪ $statusText\n")
-                }
-                
-                val minute = matchDetail.status?.elapsed
-                if (minute != null && minute > 0) {
-                  append("⏱️ Tempo: ${minute}'\n")
-                }
-                
-                // Placar
-                val scoreHome = matchDetail.score?.home ?: matchDetail.score?.current?.home ?: 0
-                val scoreAway = matchDetail.score?.away ?: matchDetail.score?.current?.away ?: 0
-                append("⚽ Placar: $scoreHome - $scoreAway\n\n")
-                
-                // Estatísticas
-                val possHome = matchDetail.possessionHome
-                val possAway = matchDetail.possessionAway
-                if (possHome > 0 || possAway > 0) {
-                  append("📈 Posse: ${possHome}% - ${possAway}%\n")
-                }
-                
-                val shotsHome = matchDetail.shotsHome
-                val shotsAway = matchDetail.shotsAway
-                if (shotsHome > 0 || shotsAway > 0) {
-                  append("🎯 Chutes: $shotsHome - $shotsAway\n")
-                }
-                
-                val cornersHome = matchDetail.cornersHome
-                val cornersAway = matchDetail.cornersAway
-                if (cornersHome > 0 || cornersAway > 0) {
-                  append("📐 Escanteios: $cornersHome - $cornersAway\n")
-                }
-                
-                val foulsHome = matchDetail.foulsHome
-                val foulsAway = matchDetail.foulsAway
-                if (foulsHome > 0 || foulsAway > 0) {
-                  append("⚠️ Faltas: $foulsHome - $foulsAway\n")
-                }
-                
-                // Se não houver estatísticas, mostrar mensagem
-                if (possHome == 0 && possAway == 0 && shotsHome == 0 && shotsAway == 0) {
-                  append("\n📊 Estatísticas serão atualizadas em breve...")
-                }
-              }
-              
-              statsView.text = statsText
-              android.util.Log.i("PlayerActivity", "⚽ Estatísticas atualizadas no overlay")
-            } else {
-              // Ainda carregando
-              statsView.text = "⏳ Carregando estatísticas..."
-            }
-            
-            // Aguardar 2 segundos antes de atualizar novamente
-            kotlinx.coroutines.delay(2000)
-          }
-        }
-      }
-      
-      // Botão fechar
-      val closeButton = android.widget.Button(this@PlayerActivity).apply {
-        text = "✕ FECHAR"
-        textSize = if (MaxiApp.isTv) 16f else 14f
-        setTextColor(android.graphics.Color.WHITE)
-        setTypeface(null, android.graphics.Typeface.BOLD)
-        background = GradientDrawable().apply {
-          setColor(android.graphics.Color.argb(255, 244, 67, 54))
-          cornerRadius = 8f
-        }
-        setPadding((24f * density).toInt(), (12f * density).toInt(), (24f * density).toInt(), (12f * density).toInt())
-        setOnClickListener {
-          hideFootballStatsOverlay()
-        }
-        layoutParams = android.widget.LinearLayout.LayoutParams(
-          FrameLayout.LayoutParams.MATCH_PARENT,
-          FrameLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-          setMargins(0, (24f * density).toInt(), 0, 0)
-        }
-        isFocusable = true
-        isFocusableInTouchMode = true
-      }
-      contentLayout.addView(closeButton)
-      
-      card.addView(contentLayout)
-      container.addView(card)
-      addView(container)
-      
-      // Fechar ao tocar fora
-      setOnClickListener {
-        hideFootballStatsOverlay()
-      }
-    }
-    
-    rootLayout.addView(footballStatsOverlay)
-    isStatsOverlayVisible = true
-    android.util.Log.i("PlayerActivity", "⚽ Overlay simples exibido")
-  }
-  
-  // ⚽ OCULTAR OVERLAY DE ESTATÍSTICAS
-  private fun hideFootballStatsOverlay() {
-    footballStatsOverlay?.visibility = android.view.View.GONE
-    isStatsOverlayVisible = false
-    // ⚽ NOVO: Parar polling quando fechar overlay
-    soccerStatsViewModel?.closeOverlay()
-    android.util.Log.i("PlayerActivity", "⚽ Overlay fechado")
   }
   
   // ⚽ ZOOM EM EVENTOS IMPORTANTES
