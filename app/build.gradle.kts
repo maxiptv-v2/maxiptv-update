@@ -14,8 +14,8 @@ android {
     applicationId = "com.maxiptv"
     minSdk = 21
     targetSdk = 34
-        versionCode = 353
-        versionName = "1.0.353"
+        versionCode = 360
+        versionName = "1.0.360"
     vectorDrawables.useSupportLibrary = true
     ndk {
       abiFilters += listOf("armeabi-v7a", "arm64-v8a")
@@ -23,6 +23,10 @@ android {
     buildConfigField("String", "DEFAULT_PLAYER_API", "\"https://aztv.cx/\"")
     buildConfigField("String", "DEFAULT_USER", "\"max\"")
     buildConfigField("String", "DEFAULT_PASS", "\"1h2yd90\"")
+    // 🔒 API de Futebol - football-data.org via Cloudflare (protege API key e controla rate limiting)
+    buildConfigField("String", "SOCCER_API_BASE_URL", "\"https://fotebolmaa1.fotebolmaa1.workers.dev\"")
+    buildConfigField("Boolean", "USE_CLOUDFLARE_PROXY", "true")
+    buildConfigField("String", "SOCCER_API_TYPE", "\"football-data\"") // "apisports" ou "football-data"
   }
   signingConfigs {
     create("release") {

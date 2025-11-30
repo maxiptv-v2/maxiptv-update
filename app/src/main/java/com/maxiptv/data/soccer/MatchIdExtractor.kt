@@ -36,22 +36,79 @@ object MatchIdExtractor {
     
     /**
      * Verifica se o canal é de futebol baseado em palavras-chave
+     * Ignora variações de HD/FHD e é case-insensitive
+     * 
+     * @param channelName Nome do canal
+     * @param epgTitle Título do programa atual do EPG (opcional) - se contiver termos de futebol, considera como canal de futebol
      */
-    fun isFootballChannel(channelName: String): Boolean {
-        val name = channelName.lowercase()
-
-        return name.contains("premiere") ||
-               name.contains("premier") ||  // ✅ Adicionado: "Premier" (sem "e" no final)
-               name.contains("sportv") ||
-               name.contains("band sport") ||
-               name.contains("espn") ||
-               name.contains("espm") ||
-               name.contains("cazé") ||
-               name.contains("caze") ||
-               name.contains("brasileirao") ||
-               name.contains("copa") ||
-               name.contains("amazon") ||
-               name.contains("prime")
+    fun isFootballChannel(channelName: String, epgTitle: String? = null): Boolean {
+        // Normalizar nome do canal: remover variações HD/FHD/etc e converter para lowercase
+        val normalizedName = channelName.lowercase()
+            .replace(Regex("\\s*(hd|fhd|uhd|4k|sd|full hd|high definition|plus|\\+)\\s*$", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s*(hd|fhd|uhd|4k|sd|full hd|high definition|plus|\\+)\\s+", RegexOption.IGNORE_CASE), " ")
+            .trim()
+        
+        // Verificar canais específicos de futebol (case-insensitive, ignora HD/FHD)
+        val footballChannels = listOf(
+            "premiere", "premier",
+            "sportv", "sport tv", "sport",
+            "band sport", "bandsport", "band",
+            "espn",
+            "espm",
+            "cazé", "caze", "caze tv",
+            "brasileirao", "brasileirão",
+            "copa",
+            "amazon",
+            "prime",
+            "globo",  // ✅ Adicionado: Globo (será verificado com EPG)
+            "record", // ✅ Adicionado: Record (será verificado com EPG)
+            "sbt",    // ✅ Adicionado: SBT (será verificado com EPG)
+            "rede tv", // ✅ Adicionado: Rede TV (será verificado com EPG)
+            "futebol", "futbol" // ✅ Adicionado: Termos genéricos
+        )
+        
+        // Verificar se começa com ou contém algum canal de futebol
+        val isSpecificChannel = footballChannels.any { channel ->
+            normalizedName.startsWith(channel) || 
+            normalizedName.contains(" $channel ") || 
+            normalizedName.endsWith(" $channel") ||
+            normalizedName == channel ||
+            normalizedName.contains(channel) && (normalizedName.contains("futebol") || normalizedName.contains("futbol") || normalizedName.contains("sport"))
+        }
+        
+        // Se for canal aberto (Globo, Record, SBT, Rede TV), verificar se o EPG indica jogo de futebol
+        val openChannels = listOf("globo", "record", "sbt", "rede tv", "redetv")
+        if (openChannels.any { normalizedName.contains(it) } && epgTitle != null) {
+            val epgLower = epgTitle.lowercase()
+            val footballTerms = listOf(
+                "futebol", "futbol", "futebol brasileiro",
+                "brasileirão", "brasileirao", "brasileirão série a", "brasileirao serie a",
+                "copa", "copa do brasil", "copa libertadores", "copa sul-americana",
+                "campeonato", "campeonato brasileiro",
+                "jogo", "partida", "match",
+                "flamengo", "palmeiras", "corinthians", "são paulo", "sao paulo", "santos",
+                "fluminense", "vasco", "botafogo", "atlético", "atletico", "atletico mineiro", "atletico paranaense",
+                "grêmio", "gremio", "internacional", "cruzeiro", "bahia", "fortaleza",
+                "athletico", "athletico paranaense", "coritiba", "goias", "cuiaba",
+                "america", "america mineiro", "bragantino", "red bull bragantino"
+            )
+            
+            val epgHasFootball = footballTerms.any { term ->
+                epgLower.contains(term)
+            }
+            
+            if (epgHasFootball) {
+                return true
+            }
+        }
+        
+        // Verificar se o nome do canal contém padrão de jogo (Time1 x Time2)
+        val hasGamePattern = Regex("([a-záàâãéèêíìîóòôõúùûç]+)\\s*[xX]\\s*([a-záàâãéèêíìîóòôõúùûç]+)", RegexOption.IGNORE_CASE).containsMatchIn(channelName)
+        if (hasGamePattern) {
+            return true
+        }
+        
+        return isSpecificChannel
     }
     
     /**
@@ -73,17 +130,24 @@ object MatchIdExtractor {
     fun extractTeamNames(channelName: String): Pair<String, String>? {
         val name = channelName.trim()
         
-        // Primeiro, tentar encontrar o padrão "Time1 x Time2" ou "Time1 X Time2"
+        // Primeiro, remover prefixos de canais do início (ex: "ESPN 1 - ", "Premiere - ", "ESPN1 FHD - ")
+        // Melhorado para capturar variações como "ESPN 1", "ESPN1", "ESPN1 FHD", etc.
+        val cleanName = name.replace(Regex("^(Premiere|ESPN|Sportv|Band Sport|Cazé|Caze|Amazon|Prime|Globo|Record|SBT|Rede TV)\\s*\\d*\\s*(FHD|HD|UHD|4K|SD|Full HD|High Definition|Plus|\\+)?[\\s-]*", RegexOption.IGNORE_CASE), "").trim()
+        
+        // Se ainda tiver hífen no início, remover
+        val finalCleanName = cleanName.replace(Regex("^[\\s-]+"), "").trim()
+        
+        // Tentar encontrar o padrão "Time1 x Time2" ou "Time1 X Time2"
         // Procurar pela última ocorrência de " x " ou " X " (para evitar pegar números de canais)
         val xPattern = Regex("([^xX]+)[xX]([^xX]+)", RegexOption.IGNORE_CASE)
-        val xMatch = xPattern.findAll(name).lastOrNull()
+        val xMatch = xPattern.findAll(finalCleanName).lastOrNull()
         
         if (xMatch != null) {
             var team1 = xMatch.groupValues[1].trim()
             var team2 = xMatch.groupValues[2].trim()
             
-            // Remover prefixos comuns de canais e números de canais
-            val prefixPattern = Regex("^(Premiere|ESPN|Sportv|Band Sport|Cazé|Caze|Amazon|Prime|\\d+)[\\s-]*", RegexOption.IGNORE_CASE)
+            // Remover prefixos comuns de canais e números de canais (caso ainda tenham)
+            val prefixPattern = Regex("^(Premiere|ESPN|Sportv|Band Sport|Cazé|Caze|Amazon|Prime|Globo|Record|SBT|Rede TV|\\d+)[\\s-]*", RegexOption.IGNORE_CASE)
             team1 = team1.replace(prefixPattern, "").trim()
             team2 = team2.replace(prefixPattern, "").trim()
             

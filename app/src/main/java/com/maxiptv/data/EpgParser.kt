@@ -232,15 +232,30 @@ object EpgParser {
     
     /**
      * Busca o programa atual para um canal
+     * ✅ MELHORADO: Prioriza programas ao vivo e busca mais agressivamente
      */
     fun getCurrentProgramme(channelId: String, epgData: Map<String, List<EpgProgramme>>): EpgProgramme? {
         Log.i("EpgParser", "🔍 Buscando programa atual para: '$channelId'")
         Log.i("EpgParser", "📡 EPG tem ${epgData.size} canais disponíveis: ${epgData.keys.take(5)}")
         
-        // Tentar busca exata primeiro
-        epgData[channelId]?.firstOrNull { it.isCurrentlyAiring() }?.let { 
-            Log.i("EpgParser", "✅ Encontrado programa exato: ${it.title}")
-            return it 
+        val now = System.currentTimeMillis()
+        
+        // ✅ ESTRATÉGIA 1: Tentar busca exata primeiro
+        epgData[channelId]?.let { programmes ->
+            // Priorizar programas que estão ao vivo AGORA
+            val currentlyAiring = programmes.filter { now in it.start..it.stop }
+            if (currentlyAiring.isNotEmpty()) {
+                // Se houver múltiplos, pegar o mais recente (que começou mais próximo de agora)
+                val bestMatch = currentlyAiring.maxByOrNull { it.start }
+                Log.i("EpgParser", "✅ Encontrado programa exato ao vivo: ${bestMatch?.title}")
+                return bestMatch
+            }
+            // Se não houver ao vivo, pegar o próximo programa (que vai começar em breve)
+            val upcoming = programmes.filter { it.start > now }.minByOrNull { it.start }
+            if (upcoming != null && (upcoming.start - now) < 3600000) { // Próximo programa em menos de 1 hora
+                Log.i("EpgParser", "✅ Encontrado próximo programa: ${upcoming.title}")
+                return upcoming
+            }
         }
         
         // Se não encontrar, tentar busca flexível
@@ -295,6 +310,20 @@ object EpgParser {
                         
                         if (normalizedEpgId.contains(variation) || variation.contains(normalizedEpgId)) {
                             Log.i("EpgParser", "🎯 Match específico encontrado: '$epgChannelId' -> '$variation'")
+                            // ✅ PRIORIZAR programas ao vivo AGORA
+                            val currentlyAiring = programmes.filter { now in it.start..it.stop }
+                            if (currentlyAiring.isNotEmpty()) {
+                                val bestMatch = currentlyAiring.maxByOrNull { it.start }
+                                Log.i("EpgParser", "✅ Programa ao vivo encontrado: ${bestMatch?.title}")
+                                return bestMatch
+                            }
+                            // Se não houver ao vivo, pegar programa recente
+                            val recentFinished = programmes.filter { it.stop > now - 3600000 }
+                                .maxByOrNull { it.stop }
+                            if (recentFinished != null) {
+                                Log.i("EpgParser", "✅ Programa recente encontrado: ${recentFinished.title}")
+                                return recentFinished
+                            }
                             programmes.firstOrNull { it.isCurrentlyAiring() }?.let { 
                                 Log.i("EpgParser", "✅ Programa encontrado: ${it.title}")
                                 return it 
@@ -328,6 +357,20 @@ object EpgParser {
             
             if (normalizedEpgId.contains(normalizedChannelId) || normalizedChannelId.contains(normalizedEpgId)) {
                 Log.i("EpgParser", "🎯 Match flexível encontrado: '$epgChannelId' -> '$normalizedEpgId'")
+                // ✅ PRIORIZAR programas ao vivo AGORA
+                val currentlyAiring = programmes.filter { now in it.start..it.stop }
+                if (currentlyAiring.isNotEmpty()) {
+                    val bestMatch = currentlyAiring.maxByOrNull { it.start }
+                    Log.i("EpgParser", "✅ Programa ao vivo encontrado (flexível): ${bestMatch?.title}")
+                    return bestMatch
+                }
+                // Se não houver ao vivo, pegar programa recente
+                val recentFinished = programmes.filter { it.stop > now - 3600000 }
+                    .maxByOrNull { it.stop }
+                if (recentFinished != null) {
+                    Log.i("EpgParser", "✅ Programa recente encontrado (flexível): ${recentFinished.title}")
+                    return recentFinished
+                }
                 programmes.firstOrNull { it.isCurrentlyAiring() }?.let { 
                     Log.i("EpgParser", "✅ Programa encontrado: ${it.title}")
                     return it 
