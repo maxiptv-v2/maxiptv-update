@@ -115,7 +115,7 @@ object MatchIdExtractor {
      * Tenta encontrar matchId padrão para canais conhecidos
      * Retorna null se não conseguir determinar
      */
-    fun getDefaultMatchId(channelName: String): Long? {
+    fun getDefaultMatchId(@Suppress("UNUSED_PARAMETER") channelName: String): Long? {
         // Por enquanto, retorna null - será implementado conforme necessário
         // Pode ser expandido para mapear canais específicos para matchIds conhecidos
         return null

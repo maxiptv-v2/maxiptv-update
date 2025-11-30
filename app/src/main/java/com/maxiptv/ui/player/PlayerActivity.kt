@@ -1602,7 +1602,7 @@ class PlayerActivity : ComponentActivity() {
     android.util.Log.i("PlayerActivity", "   - isFootballMode: $isFootballMode")
     android.util.Log.i("PlayerActivity", "   - footballStatsButtonEnabled: $footballStatsButtonEnabled")
     android.util.Log.i("PlayerActivity", "   - footballStatsButton já existe: ${footballStatsButton != null}")
-    android.util.Log.i("PlayerActivity", "   - rootLayout: ${rootLayout != null}")
+    android.util.Log.i("PlayerActivity", "   - rootLayout: ${if (rootLayout != null) "presente" else "ausente"}")
     android.util.Log.i("PlayerActivity", "   - Dispositivo: ${MaxiApp.deviceCategory}")
     android.util.Log.i("PlayerActivity", "   - isTv: ${MaxiApp.isTv}, isTvBox: ${MaxiApp.isTvBox}")
     
@@ -1915,7 +1915,6 @@ class PlayerActivity : ComponentActivity() {
           // Atualizar periodicamente enquanto o overlay estiver visível
           while (isStatsOverlayVisible && footballStatsOverlay != null) {
             val matchDetail = viewModel.currentMatchDetail
-            val matchPreview = viewModel.currentMatchPreview
             
             if (matchDetail != null) {
               // Usar dados reais da API
@@ -2527,7 +2526,6 @@ class PlayerActivity : ComponentActivity() {
         
         // Buscar programa atual do canal
         val currentProgramme = com.maxiptv.data.EpgParser.getCurrentProgramme(channelName, epgData)
-        val nextProgramme = com.maxiptv.data.EpgParser.getNextProgramme(channelName, epgData)
         
         // Construir texto com informações do canal (SEM próximo programa e SEM subTitle/hashtag)
         val infoText = buildString {
@@ -3017,7 +3015,6 @@ class PlayerActivity : ComponentActivity() {
     if (pauseControlsOverlay != null || player == null) return
     
     val rootLayout = pv.parent as? FrameLayout ?: return
-    val density = resources.displayMetrics.density
     
     pauseControlsOverlay = FrameLayout(this).apply {
       layoutParams = FrameLayout.LayoutParams(

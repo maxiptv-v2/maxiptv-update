@@ -64,7 +64,6 @@ object EpgParser {
             parser.setInput(StringReader(xml))
             
             var eventType = parser.eventType
-            var currentProgramme: EpgProgramme? = null
             var currentChannelId: String? = null
             var currentStart: Long? = null
             var currentStop: Long? = null

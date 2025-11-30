@@ -154,8 +154,8 @@ fun LiveScreen(nav: NavHostController) {
     }
   }
   
-  // Usar título corrigido se disponível, senão usar EPG
-  val displayEpgTitle = correctedEpgTitle ?: currentProgramme?.title
+  // Usar título corrigido se disponível, senão usar EPG (removido - não usado)
+  // val displayEpgTitle = correctedEpgTitle ?: currentProgramme?.title
   
   // ⚽ ESTADOS PARA DADOS DE ESTATÍSTICAS (usando API Sports)
   var matchDetail by remember { mutableStateOf<com.maxiptv.data.soccer.MatchDetailFull?>(null) }
@@ -702,17 +702,6 @@ fun LiveScreen(nav: NavHostController) {
     // ✅ BRASIL: Estado para atualizar programas automaticamente (atualiza a cada 30 minutos)
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     
-    // ✅ Buscar programa atual do EPG para verificar se é jogo de futebol
-    val currentProgrammeFullscreen = remember(currentTime, current?.name, epgData) {
-        EpgParser.getCurrentProgramme(current!!.name, epgData)
-    }
-    // ⚽ Detectar se é canal de futebol (com verificação de EPG) - usar variável já declarada acima
-    val isFootballChannelFullscreen = MatchIdExtractor.isFootballChannel(current!!.name, currentProgrammeFullscreen?.title)
-    // ⚽ Usar currentMatchId já encontrado automaticamente (busca em partidas recentes/finalizadas)
-    val channelMatchId = if (isFootballChannelFullscreen) {
-      currentMatchId ?: MatchIdExtractor.extractMatchId(current!!.name)
-    } else null
-    
     // ✅ BRASIL: Atualizar tempo a cada 30 minutos para recalcular programas atual/próximo
     // NOTA: Isso NÃO chama a API, apenas recalcula qual programa está no ar usando dados já carregados
     LaunchedEffect(isFullscreen, current?.name) {
@@ -726,9 +715,15 @@ fun LiveScreen(nav: NavHostController) {
     }
     
     // ✅ Buscar programa atual e próximo do EPG (atualizado automaticamente quando currentTime muda)
-    val currentProgramme = remember(currentTime, current?.name, epgData) {
+    val currentProgrammeFullscreen = remember(currentTime, current?.name, epgData) {
         EpgParser.getCurrentProgramme(current!!.name, epgData)
     }
+    // ⚽ Detectar se é canal de futebol (com verificação de EPG)
+    val isFootballChannelFullscreen = MatchIdExtractor.isFootballChannel(current!!.name, currentProgrammeFullscreen?.title)
+    // ⚽ Usar currentMatchId já encontrado automaticamente (busca em partidas recentes/finalizadas)
+    val channelMatchId = if (isFootballChannelFullscreen) {
+      currentMatchId ?: MatchIdExtractor.extractMatchId(current!!.name)
+    } else null
     val nextProgramme = remember(currentTime, current?.name, epgData) {
         EpgParser.getNextProgramme(current!!.name, epgData)
     }
@@ -873,7 +868,7 @@ fun LiveScreen(nav: NavHostController) {
               
               // Horário do programa com visual moderno
               Text(
-                text = "${currentProgramme.startTime()} - ${currentProgramme.stopTime()}",
+                text = "${currentProgrammeFullscreen?.startTime() ?: ""} - ${currentProgrammeFullscreen?.stopTime() ?: ""}",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF64B5F6), // Azul moderno mais vibrante
@@ -890,7 +885,7 @@ fun LiveScreen(nav: NavHostController) {
             
             // Título do programa atual com visual moderno
             Text(
-              text = currentProgramme.title,
+              text = currentProgrammeFullscreen?.title ?: "",
               fontSize = 17.sp,
               fontWeight = FontWeight.SemiBold,
               color = Color(0xFFFFEB3B), // Amarelo mais vibrante
@@ -1513,8 +1508,8 @@ fun LiveScreen(nav: NavHostController) {
   // ⚽ DIÁLOGO DE ESTATÍSTICAS DE FUTEBOL (usando API Soccer)
   if (showFootballStatsDialog && current != null) {
     val epgTitle = currentProgramme?.title
-    val isFootballChannel = MatchIdExtractor.isFootballChannel(current!!.name, epgTitle)
-    if (isFootballChannel) {
+    val isFootballChannelDialog = MatchIdExtractor.isFootballChannel(current!!.name, epgTitle)
+    if (isFootballChannelDialog) {
       FootballStatsDialog(
         channelName = current!!.name,
         matchId = currentMatchId,
@@ -1778,7 +1773,7 @@ fun MiniPlayer(
             
             // Horário do programa com visual moderno
             Text(
-              text = "${currentProgramme.startTime()} - ${currentProgramme.stopTime()}",
+              text = "${currentProgramme?.startTime() ?: ""} - ${currentProgramme?.stopTime() ?: ""}",
               fontSize = 14.sp,
               fontWeight = FontWeight.SemiBold,
               color = Color(0xFF64B5F6), // Azul moderno mais vibrante
@@ -1795,7 +1790,7 @@ fun MiniPlayer(
           
           // Título do programa atual com visual moderno
           Text(
-            text = currentProgramme.title,
+            text = currentProgramme?.title ?: "",
             fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFFFFEB3B), // Amarelo mais vibrante
@@ -1884,12 +1879,9 @@ fun MiniPlayer(
     }
     
     // ⚽ BOTÃO DE ESTATÍSTICAS DE FUTEBOL (se for canal de futebol)
-    val isFootballChannel = MatchIdExtractor.isFootballChannel(channel.name)
-    val channelMatchId = if (isFootballChannel) {
-      MatchIdExtractor.extractMatchId(channel.name)
-    } else null
+    val isFootballChannelMini = MatchIdExtractor.isFootballChannel(channel.name)
     
-    if (isFootballChannel && onStatsClick != null) {
+    if (isFootballChannelMini && onStatsClick != null) {
       // ⚽ Estado para controlar foco e zoom animado
       var isFocused by remember { mutableStateOf(false) }
       val scale by animateFloatAsState(
@@ -1985,7 +1977,7 @@ fun MiniPlayer(
               }
               
               // Animação de rotação
-              val rotationAnimator = android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
+              android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
                 duration = 3000
                 repeatCount = android.animation.ObjectAnimator.INFINITE
                 interpolator = android.view.animation.LinearInterpolator()
@@ -2015,9 +2007,9 @@ fun MiniPlayer(
 private fun createFootballStatsButtonInView(
   ctx: android.content.Context,
   rootLayout: android.widget.FrameLayout,
-  channelName: String,
-  matchId: Long?,
-  viewModel: SoccerStatsViewModel,
+  @Suppress("UNUSED_PARAMETER") channelName: String,
+  @Suppress("UNUSED_PARAMETER") matchId: Long?,
+  @Suppress("UNUSED_PARAMETER") viewModel: SoccerStatsViewModel,
   onClick: () -> Unit
 ): android.widget.ImageButton {
   val buttonSize = if (MaxiApp.isTv) 56 else 48 // dp
@@ -2105,7 +2097,7 @@ private fun createFootballStatsButtonInView(
     }
     
     // Animação de rotação
-    val rotationAnimator = android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
+    android.animation.ObjectAnimator.ofFloat(this, "rotation", 0f, 360f).apply {
       duration = 3000
       repeatCount = android.animation.ObjectAnimator.INFINITE
       interpolator = android.view.animation.LinearInterpolator()

@@ -471,9 +471,9 @@ object SoccerRepository {
                 val brasileiraoMatches = brasileiraoResponse.matches?.filter { match ->
                     // Filtrar apenas partidas de hoje ou ao vivo
                     val matchDate = match.utcDate?.substringBefore("T")
-                    val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    val todayDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                         .format(java.util.Date())
-                    matchDate == today || match.status == "LIVE" || match.status == "IN_PLAY"
+                    matchDate == todayDate || match.status == "LIVE" || match.status == "IN_PLAY"
                 } ?: emptyList()
                 allMatches.addAll(brasileiraoMatches)
             } catch (e: Exception) {
@@ -845,7 +845,7 @@ object SoccerRepository {
         return MatchPreviewFull(
             match_id = null,
             league = LeagueInfo(
-                id = if (prediction.league?.id != null) prediction.league!!.id!!.toLong() else null,
+                id = prediction.league?.id?.toLong(),
                 name = prediction.league?.name
             ),
             home = TeamInfo(
@@ -971,8 +971,10 @@ object SoccerRepository {
         val awayTeam = match.awayTeam
         val score = match.score
         
+        val matchId = match.id
+        if (matchId == null) return null
         return MatchSummaryFull(
-            id = match.id ?: 0L,
+            id = matchId,
             name = "${homeTeam?.name ?: ""} x ${awayTeam?.name ?: ""}",
             league = LeagueInfo(
                 id = match.competition?.id?.toLong(),

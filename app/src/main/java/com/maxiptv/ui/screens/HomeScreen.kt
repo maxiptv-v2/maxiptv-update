@@ -438,12 +438,7 @@ fun HomeScreen(nav: NavHostController) {
     else -> 20.dp
   }
   
-  val verticalPadding = when {
-    isFireStick -> (MaxiApp.fireStickSafeAreaPadding / 2).dp.coerceAtLeast(10.dp)
-    isTv -> 14.dp
-    isPhone -> 12.dp
-    else -> 14.dp
-  }
+  // verticalPadding removido - não usado
   
   // Dialog de confirmação de logout
   if (showLogoutDialog) {
@@ -1163,7 +1158,7 @@ fun NeonText(text: String, fontSize: androidx.compose.ui.unit.TextUnit) {
 @Composable
 fun CategoryButton(
   text: String,
-  emoji: String,
+  @Suppress("UNUSED_PARAMETER") emoji: String,
   isFocused: Boolean,
   deviceType: String,
   onFocusChanged: (Boolean) -> Unit,
@@ -2939,7 +2934,7 @@ fun FootballStatsDialog(
             Spacer(Modifier.height(8.dp))
             
             // Mostrar até 3 casas de aposta principais com cards
-            matchOdds.bookmakers!!.take(3).forEach { bookmaker ->
+            matchOdds.bookmakers?.take(3)?.forEach { bookmaker ->
               Spacer(Modifier.height(12.dp))
               
               // Card da casa de aposta
