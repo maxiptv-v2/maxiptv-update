@@ -1,6 +1,4 @@
 package com.maxiptv.ui.screens
-import com.maxiptv.ui.screens.soccer.StatisticBarChart
-import com.maxiptv.ui.screens.soccer.PossessionPieChart
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
